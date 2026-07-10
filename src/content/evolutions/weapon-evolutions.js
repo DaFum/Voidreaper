@@ -24,5 +24,11 @@ export const WEAPON_EVOLUTIONS = [
   evolution("friendly-fire-doctrine", "Friendly Fire Doctrine", "mine-layer", "forbidden", [{ type: "corruption", minimum: 50 }, { type: "tag", id: "Explosive", minimum: 4 }], ["spawn-zone"], { permanentDownside: true }),
   evolution("blood-halo", "Blood Halo", "reaper-blades", "regular", [{ type: "tag", id: "Orbit", minimum: 4 }, { type: "tag", id: "Healing", minimum: 2 }], ["heal-player"]),
   evolution("guillotine-array", "Guillotine Array", "reaper-blades", "alternative", [{ type: "tag", id: "Execute", minimum: 2 }], ["deal-damage"]),
-  evolution("cannibal-crown", "Cannibal Crown", "reaper-blades", "forbidden", [{ type: "corruption", minimum: 50 }, { type: "tag", id: "Sacrifice", minimum: 2 }], ["copy-affix"], { permanentDownside: true })
+  evolution("cannibal-crown", "Cannibal Crown", "reaper-blades", "forbidden", [{ type: "corruption", minimum: 50 }, { type: "tag", id: "Sacrifice", minimum: 2 }], ["copy-affix"], { permanentDownside: true }),
+  evolution("grey-bloom", "Grey Bloom", "nanite-swarm", "regular", [{ type: "tag", id: "Corrosion", minimum: 4 }, { type: "tag", id: "Chain", minimum: 2 }], ["apply-status"]),
+  evolution("symbiotic-armor", "Symbiotic Armor", "nanite-swarm", "alternative", [{ type: "tag", id: "Summon", minimum: 4 }, { type: "tag", id: "Healing", minimum: 2 }], ["heal-player", "grant-shield"]),
+  evolution("replication-plague", "Replication Plague", "nanite-swarm", "forbidden", [{ type: "corruption", minimum: 75 }], ["copy-affix"], { permanentDownside: true }),
+  evolution("probability-engine", "Probability Engine", "anomaly-engine", "regular", [{ type: "tag", id: "Anomaly", minimum: 4 }], ["modify-loot"]),
+  evolution("mirror-collapse", "Mirror Collapse", "anomaly-engine", "alternative", [{ type: "tag", id: "Echo", minimum: 3 }], ["copy-affix"]),
+  evolution("unwritten-weapon", "Unwritten Weapon", "anomaly-engine", "forbidden", [{ type: "corruption", minimum: 75 }, { type: "load", minimum: 1.4 }], ["trigger-fault"], { permanentDownside: true })
 ];
