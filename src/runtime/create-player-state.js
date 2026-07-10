@@ -17,7 +17,7 @@ export function createPlayerState(base = {}) {
       corruption: base.corruption ?? 0
     },
     activeModules: [null, null],
-    loadout: null,
+    loadout: base.loadout ?? null,
     statusEffects: new Map(),
     dodge: {
       cooldown: base.dodgeCooldown ?? 1.2,
