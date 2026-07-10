@@ -1,9 +1,11 @@
 import { createSectorNode } from "../components/sector-node.js";
 import { flattenSectorMap } from "../../features/sectors/sector-map-generator.js";
+import { createSectorMapConnections } from "../components/sector-map-connections.js";
 
 export function createSectorMapScreen(root, { onConfirm = () => {}, onWorkbench = null } = {}) {
   let selectedId = null;
   let model = null;
+  let connections = null;
 
   function statusFor(node) {
     if (model.visitedNodeIds.includes(node.id)) return "visited";
@@ -14,12 +16,15 @@ export function createSectorMapScreen(root, { onConfirm = () => {}, onWorkbench 
   function render(nextModel = model) {
     model = nextModel;
     if (!root || !model?.map) return;
+    connections?.destroy();
+    connections = null;
     const nodes = flattenSectorMap(model.map).filter(node => node.regionIndex === model.regionIndex);
     root.innerHTML = `<section class="sector-map"><header><span>VR // SECTOR TRACE</span><b>REGION ${model.regionIndex + 1}/5</b>${onWorkbench?`<button class="btn small" data-assembly-workbench>WERKBANK</button>`:""}</header><div class="sector-map__graph"></div><aside class="sector-map__detail">Signal wählen. Zweiter Tap bestätigt den erreichbaren Knoten.</aside></section>`;
     root.querySelector("[data-assembly-workbench]")?.addEventListener("click",onWorkbench);
     const graph = root.querySelector(".sector-map__graph");
+    const nodeElements = [];
     for (const node of nodes) {
-      graph.append(createSectorNode(node, {
+      const element=createSectorNode(node, {
         status: statusFor(node),
         selected: selectedId === node.id,
         onSelect(candidate, alreadySelected) {
@@ -27,11 +32,14 @@ export function createSectorMapScreen(root, { onConfirm = () => {}, onWorkbench 
           selectedId = candidate.id;
           render();
         }
-      }));
+      });
+      nodeElements.push(element);
+      graph.append(element);
     }
+    connections=createSectorMapConnections(nodes,nodeElements);
     const selected = nodes.find(node => node.id === selectedId);
     if (selected) root.querySelector(".sector-map__detail").textContent = `${selected.reward} · Korruption ${selected.corruptionDelta >= 0 ? "+" : ""}${selected.corruptionDelta} · erneut tippen zum Bestätigen`;
   }
 
-  return { render, clearSelection() { selectedId = null; } };
+  return { render, clearSelection() { selectedId = null; }, destroy() { connections?.destroy(); connections=null; } };
 }

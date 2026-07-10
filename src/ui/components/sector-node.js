@@ -8,12 +8,17 @@ export function createSectorNode(node, { status, selected, onSelect }) {
   button.type = "button";
   button.className = `sector-node sector-node--${status}`;
   button.dataset.nodeId = node.id;
+  button.dataset.layer = String(node.layer);
+  button.dataset.index = String(node.index);
+  button.dataset.nodeType = node.type;
+  button.style.gridColumn = String(node.layer + 1);
+  button.style.gridRow = String(node.index * 2 + 1);
   button.setAttribute("aria-pressed", String(selected));
   button.disabled = !isSectorNodeInteractive(status);
   const hidden = node.informationLevel < 1 && status !== "visited";
   button.innerHTML = hidden
-    ? `<b>?</b><span>UNBEKANNTE SIGNATUR</span><small>Gefahr ${node.danger}</small>`
-    : `<b>${definition.icon}</b><span>${definition.label}</span><small>${node.regionId.replaceAll("-", " ")} · Gefahr ${node.danger}<br>${node.reward} · Korr. ${node.corruptionDelta >= 0 ? "+" : ""}${node.corruptionDelta}</small>`;
+    ? `<b class="sector-node__sigil" data-sigil="unknown">?</b><span>UNBEKANNTE SIGNATUR</span><small>Gefahr ${node.danger}</small>`
+    : `<b class="sector-node__sigil" data-sigil="${node.type}"><i aria-hidden="true"></i><em>${definition.icon}</em></b><span>${definition.label}</span><small>${node.regionId.replaceAll("-", " ")} · Gefahr ${node.danger}<br>${node.reward} · Korr. ${node.corruptionDelta >= 0 ? "+" : ""}${node.corruptionDelta}</small>`;
   button.addEventListener("click", () => onSelect(node, selected));
   return button;
 }
