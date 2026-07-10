@@ -53,6 +53,7 @@ export function serializeCheckpointRun(run) {
 
 export function hydrateCheckpointRun(snapshot, services) {
   const run = decodeCollections(snapshot);
+  run.pendingAssemblyItems ??= [];
   run.pools = asMap(run.pools);
   run.eventState = asMap(run.eventState);
   run.build.tags = asMap(run.build.tags);

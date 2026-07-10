@@ -20,7 +20,7 @@ export function createWeaponController(services) {
     fire(target) {
       if (!equipped) return false;
       const fired = equipped.definition.adapter.fire(equipped.context, equipped.state, target);
-      if (fired) equipped.shots += 1;
+      if (fired) { const weaponClass=equipped.definition.recoilClass??(equipped.definition.id.includes("rail")?"rail":equipped.definition.tags?.includes?.("Beam")?"beam":"default");equipped.shots += 1; services.recoil?.apply?.(equipped.context.run.player,{weaponClass,worldPosition:equipped.context.mountPosition,direction:equipped.context.aimDirection}); }
       return fired;
     },
     telemetry() {

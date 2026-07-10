@@ -25,7 +25,7 @@ export function createMerchantService({ modules = [], weapons = [], reactors = [
       const cost = offer.currency === "flux" ? { flux: offer.price } : { scrap: offer.price };
       if (!offer.corrupted && !currencyService.spend(run, cost)) return false;
       if (offer.corrupted) changeRunCorruption(run, 15, "merchant-corrupted-offer");
-      else run.inventory.push({ ...offer, ownership: "temporary" });
+      else { const item={...offer,instanceId:offer.instanceId??run.ids?.create?.("merchant-item")??`merchant-${offer.offerId}`,definitionId:offer.definitionId??offer.id,ownership:"temporary"};run.inventory.push(item);eventBus?.emit("run-item-acquired",{item,source:"merchant",run}); }
       eventBus?.emit("merchant-purchase", { offerId: offer.offerId });
       return true;
     },

@@ -1,7 +1,7 @@
 import { createSectorNode } from "../components/sector-node.js";
 import { flattenSectorMap } from "../../features/sectors/sector-map-generator.js";
 
-export function createSectorMapScreen(root, { onConfirm = () => {} } = {}) {
+export function createSectorMapScreen(root, { onConfirm = () => {}, onWorkbench = null } = {}) {
   let selectedId = null;
   let model = null;
 
@@ -15,7 +15,8 @@ export function createSectorMapScreen(root, { onConfirm = () => {} } = {}) {
     model = nextModel;
     if (!root || !model?.map) return;
     const nodes = flattenSectorMap(model.map).filter(node => node.regionIndex === model.regionIndex);
-    root.innerHTML = `<section class="sector-map"><header><span>VR // SECTOR TRACE</span><b>REGION ${model.regionIndex + 1}/5</b></header><div class="sector-map__graph"></div><aside class="sector-map__detail">Signal wählen. Zweiter Tap bestätigt den erreichbaren Knoten.</aside></section>`;
+    root.innerHTML = `<section class="sector-map"><header><span>VR // SECTOR TRACE</span><b>REGION ${model.regionIndex + 1}/5</b>${onWorkbench?`<button class="btn small" data-assembly-workbench>WERKBANK</button>`:""}</header><div class="sector-map__graph"></div><aside class="sector-map__detail">Signal wählen. Zweiter Tap bestätigt den erreichbaren Knoten.</aside></section>`;
+    root.querySelector("[data-assembly-workbench]")?.addEventListener("click",onWorkbench);
     const graph = root.querySelector(".sector-map__graph");
     for (const node of nodes) {
       graph.append(createSectorNode(node, {

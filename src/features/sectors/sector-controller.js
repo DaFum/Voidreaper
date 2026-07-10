@@ -7,6 +7,9 @@ export function createSectorController({ eventBus, contentVersion = "3.0.0" } = 
     return nodes.find(node => node.id === run.campaign.currentNodeId)?.next ?? [];
   }
   return {
+    canOpenAssembly(run) { return ["sector-map","workshop","sector-summary"].includes(run.phase); },
+    openAssembly(run) { if(!this.canOpenAssembly(run))return false;run.previousPhase=run.phase;run.phase="assembly-workbench";eventBus?.emit("assembly-workbench-opened",{});return true; },
+    closeAssembly(run) { if(run.phase!=="assembly-workbench")return false;run.phase=run.previousPhase??"sector-map";delete run.previousPhase;eventBus?.emit("assembly-workbench-closed",{});return true; },
     start(run) { run.campaign.map = generateSectorMap({ seed: run.seed, contentVersion }); run.phase = "sector-map"; return this.model(run); },
     model(run) { return { map: run.campaign.map, regionIndex: run.campaign.regionIndex, currentNodeId: run.campaign.currentNodeId, visitedNodeIds: run.campaign.visitedNodeIds, reachableNodeIds: reachable(run) }; },
     enter(run, nodeId) { const node = flattenSectorMap(run.campaign.map).find(candidate => candidate.id === nodeId); if (!node || !reachable(run).includes(nodeId)) return null; run.phase = node.type; eventBus?.emit("sector-node-entered", { node }); return node; },

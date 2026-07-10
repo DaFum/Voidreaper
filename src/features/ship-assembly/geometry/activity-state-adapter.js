@@ -1,0 +1,1 @@
+export function buildModuleActivityState(telemetry={}){return Object.freeze({charge:telemetry.chargeRatio??0,cooldown:telemetry.cooldownRatio??0,firing:Boolean(telemetry.firing),heat:telemetry.heatRatio??0,energyFlow:telemetry.energyFlowRatio??0,faulting:Boolean(telemetry.faulting),activeUnits:telemetry.activeUnits??0});}

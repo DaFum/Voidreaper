@@ -1,7 +1,7 @@
 import { getRegionRules } from "../features/sectors/region-rules.js";
 
-export function renderWorld(context, run, camera) {
-  const { width, height } = context.canvas;
+export function renderWorld(context, run, camera, viewport = {}) {
+  const width=viewport.width??context.canvas.clientWidth??context.canvas.width,height=viewport.height??context.canvas.clientHeight??context.canvas.height;
   const rules = getRegionRules(run.campaign?.map?.regions?.[run.campaign.regionIndex]?.id, run.time);
   const gradient = context.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.max(width, height));
   gradient.addColorStop(0, rules.region.palette[0]);

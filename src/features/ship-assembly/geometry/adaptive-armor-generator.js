@@ -1,0 +1,3 @@
+import { interpolate } from "./vector-math.js";
+export const ARMOR_FAMILIES = Object.freeze(["tapered-blade","heavy-block","phase-shard","thermal-open","void-organic","carrier-frame","reaper-curve","streamline","industrial-truss","null-fracture"]);
+export function generateAdaptiveArmor(connector, shipStyle) { const family=ARMOR_FAMILIES.includes(shipStyle?.armorFamily)?shipStyle.armorFamily:"tapered-blade",plateCount=Math.max(1,Math.ceil(connector.distance/22)); return Array.from({length:plateCount},(_,index)=>Object.freeze({connectionId:connector.id,family,start:interpolate(connector.spine.from,connector.spine.to,index/plateCount),end:interpolate(connector.spine.from,connector.spine.to,(index+1)/plateCount),taper:1-index/(plateCount*2),overlap:3,index})); }

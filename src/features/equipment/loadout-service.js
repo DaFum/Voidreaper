@@ -60,6 +60,7 @@ export function createLoadoutService({ registry, tagEngine, unlocks }) {
         expectedHeat: equipped.reduce((sum, source) => sum + (source.heat ?? 0), 0),
         startingCorruption: equipped.reduce((sum, source) => sum + (source.corruption ?? 0), 0)
       };
-    }
+    },
+    assemblyItems(loadout) { return sources(loadout).filter(source => source.item?.instanceId).map(source => ({ moduleInstanceId: source.item.instanceId, definitionId: source.id })); }
   };
 }

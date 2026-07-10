@@ -1,6 +1,6 @@
 import { createMetaState } from "../runtime/create-meta-state.js";
 
-export const CURRENT_SAVE_VERSION = 4;
+export const CURRENT_SAVE_VERSION = 5;
 
 export function createDefaultSave() {
   const meta = createMetaState();
@@ -33,6 +33,10 @@ export function createDefaultSave() {
     inventory: meta.inventory,
     overflow: meta.overflow,
     blueprints: meta.blueprints,
+    shipBlueprints: meta.shipBlueprints,
+    activeBlueprintId: meta.activeBlueprintId,
+    blueprintLibraryVersion: meta.blueprintLibraryVersion,
+    assemblyVisualPreferences: meta.assemblyVisualPreferences,
     wreckSignals: meta.wreckSignals,
     codex: meta.codex,
     challenges: meta.challenges,

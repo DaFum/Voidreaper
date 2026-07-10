@@ -44,14 +44,14 @@ export function createFaultScheduler({ rng, profiles, faults, eventBus }) {
       const fault = faultMap.get(faultId);
       state.lastAt = now;
       schedule(now, state.pressure);
-      const occurrence = { fault, componentId: component.id, tier, at: now, pressure: state.pressure };
+      const occurrence = { fault, componentId: component.id, tier, at: now, pressure: state.pressure, source: "overload" };
       eventBus?.emit("fault-triggered", occurrence);
       return occurrence;
     },
     force(profileId = "standard", tier = "light", componentId = "system") {
       const profile = profileMap.get(profileId) ?? profileMap.get("standard");
       const fault = faultMap.get(rng.pick(profile[tier] ?? profile.light));
-      const occurrence = { fault, componentId, tier, at: state.lastAt, pressure: state.pressure };
+      const occurrence = { fault, componentId, tier, at: state.lastAt, pressure: state.pressure, source: "overload" };
       eventBus?.emit("fault-triggered", occurrence);
       return occurrence;
     },
