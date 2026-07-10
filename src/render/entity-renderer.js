@@ -1,4 +1,4 @@
-export function renderEntities(context, run, camera) {
+export function renderEntities(context, run, camera, assemblyRenderer, assemblyGeometry) {
   const cx = context.canvas.width / 2 - camera.x;
   const cy = context.canvas.height / 2 - camera.y;
   context.save();
@@ -11,7 +11,7 @@ export function renderEntities(context, run, camera) {
     context.fillStyle = projectile.color ?? "#4cc9f0";
     context.beginPath(); context.arc(projectile.x, projectile.y, projectile.radius ?? 3, 0, Math.PI * 2); context.fill();
   }
-  context.fillStyle = "#efeaf7";
-  context.beginPath(); context.arc(run.player.x, run.player.y, run.player.radius, 0, Math.PI * 2); context.fill();
+  const rendered = assemblyRenderer?.renderPlayerShip(context, { geometrySnapshot: assemblyGeometry?.getSnapshot(), position: run.player, rotation: run.player.rotation ?? 0, time: run.time ?? 0 });
+  if (!rendered) { context.fillStyle = "#efeaf7"; context.beginPath(); context.arc(run.player.x, run.player.y, run.player.radius, 0, Math.PI * 2); context.fill(); }
   context.restore();
 }

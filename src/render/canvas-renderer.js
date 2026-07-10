@@ -2,7 +2,7 @@ import { renderWorld } from "./world-renderer.js";
 import { renderEntities } from "./entity-renderer.js";
 import { renderEffects } from "./effects-renderer.js";
 
-export function createCanvasRenderer(canvas, settings = {}) {
+export function createCanvasRenderer(canvas, settings = {}, services = {}) {
   const context = canvas.getContext("2d", { alpha: false });
   const resize = () => {
     const ratio = Math.min(2, window.devicePixelRatio || 1);
@@ -17,7 +17,7 @@ export function createCanvasRenderer(canvas, settings = {}) {
       context.save();
       if (settings.screenShake && run.camera.shake) context.translate(run.camera.shakeX ?? 0, run.camera.shakeY ?? 0);
       renderWorld(context, run, run.camera);
-      renderEntities(context, run, run.camera);
+      renderEntities(context, run, run.camera, services.assemblyRenderer, services.assemblyGeometry);
       renderEffects(context, run.effects, run.camera, settings);
       context.restore();
     },
