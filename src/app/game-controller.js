@@ -4,6 +4,14 @@ import { createCorruptionState } from "../features/corruption/corruption-system.
 import { createAssemblyState } from "../features/ship-assembly/model/create-assembly-state.js";
 import { createAssemblyService } from "../features/ship-assembly/model/assembly-service.js";
 import { createAssemblyGeometryService } from "../features/ship-assembly/geometry/assembly-geometry-service.js";
+import { createCompatibilityService } from "../features/ship-assembly/placement/compatibility-service.js";
+import { createPlacementSuggestionService } from "../features/ship-assembly/placement/placement-suggestion-service.js";
+import { createPendingMountService } from "../features/ship-assembly/mounting/pending-mount-service.js";
+import { createAssemblyCommandService } from "../features/ship-assembly/mounting/assembly-command-service.js";
+import { createQuickMountController } from "../features/ship-assembly/mounting/quick-mount-controller.js";
+import { createConstructionWorkbenchController } from "../features/ship-assembly/mounting/construction-workbench-controller.js";
+import { createBuildAnimationController } from "../features/ship-assembly/mounting/build-animation-controller.js";
+import { createStateMachine } from "./state-machine.js";
 
 const UPGRADE_TAGS = {
   multi: ["Projectile"], damage: ["Kinetic"], dmg: ["Kinetic"], rate: ["Cooldown"], speed: ["Movement"],
@@ -40,7 +48,8 @@ export function createGameController(services) {
       const rootNode = { nodeId: rootNodeId, parentNodeId: null, moduleInstanceId: null, definitionId: shipFrameId, visualProfileId: frame.coreGeometryId, localPosition: { x: 0, y: 0 }, localRotation: 0, mass: 24, damageState: "intact", childPortIds: [] };
       const rootPorts = frame.initialPorts.map(template => { const portId=run.ids.create("assembly-port"); rootNode.childPortIds.push(portId); return { ...template, portId, parentNodeId: rootNodeId, occupiedByNodeId: null, localPosition: { x: template.direction.x*46, y: template.direction.y*46 } }; });
       run.assembly = createAssemblyState({ shipFrameId, rootNode, rootPorts });
-      services.currentAssembly = createAssemblyService({ state: run.assembly, eventBus: services.events, idFactory: run.ids });
+      const runInventory={values:()=>run.inventory,store:id=>{const item=run.inventory.find(entry=>entry.instanceId===id);if(item)item.stored=true;return item??null;},addPending:entry=>{run.pendingAssemblyItems.push(structuredClone(entry));return entry;},updatePending:(id,patch)=>{const entry=run.pendingAssemblyItems.find(item=>item.pendingMountId===id);if(entry)Object.assign(entry,patch);return entry??null;},pending:()=>run.pendingAssemblyItems};
+      services.currentAssembly = createAssemblyService({ state: run.assembly, eventBus: services.events, idFactory: run.ids, runInventory });
       services.assemblyGeometry?.destroy?.();
       services.assemblyGeometry = createAssemblyGeometryService({ eventBus: services.events, assemblyService: services.currentAssembly, profileRegistry: services.assemblyProfiles, equipmentRegistry: services.equipment });
       const railDefinition = services.equipment.require("railgun");
@@ -49,6 +58,9 @@ export function createGameController(services) {
       const startPort = rootPorts.find(port => railDefinition.assembly.mountTypes.includes(port.mountType) && !port.occupiedByNodeId);
       if (startPort) services.currentAssembly.mountModule({ moduleInstanceId: railItem.instanceId, definitionId: railDefinition.id, parentPort: startPort, assemblyProfile: railDefinition.assembly, transform: { position: startPort.localPosition, rotation: Math.atan2(startPort.direction.y,startPort.direction.x) } });
       services.assemblyGeometry.rebuildNow();
+      const equipmentService={requireInstance:id=>{const item=run.inventory.find(entry=>entry.instanceId===id);if(!item)throw new Error(`Unknown run item: ${id}`);return item;},requireAssemblyProfile:id=>services.equipment.requireAssemblyProfile(id)};
+      const compatibilityService=createCompatibilityService({profileRegistry:services.assemblyProfiles}),stateMachine=createStateMachine("run",services.events),pendingMountService=createPendingMountService({runInventory}),commandService=createAssemblyCommandService({assemblyService:services.currentAssembly,compatibilityService,geometryService:services.assemblyGeometry,equipmentService,onError:message=>globalThis.__VOIDREAPER_TOAST__?.(message)}),suggestionService=createPlacementSuggestionService({compatibilityService,geometryService:services.assemblyGeometry,flightProfileService:{previewPlacement:()=>({lateralImbalance:0})}});
+      services.buildAnimations=createBuildAnimationController({reducedMotion:globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches});services.pendingMounts=pendingMountService;services.assemblyCommands=commandService;services.quickMount=createQuickMountController({suggestionService,commandService,pendingMountService,runInventory,assemblyService:services.currentAssembly,stateMachine,timeScaleService:{push:(_id,scale)=>{game.timeScale=scale;},pop:()=>{game.timeScale=1;}}});services.assemblyWorkbench=createConstructionWorkbenchController({commandService,assemblyService:services.currentAssembly,geometryService:services.assemblyGeometry,runInventory,stateMachine});
       this.syncLegacy(game, 0);
       services.events.emit("run-started", { run });
       return run;

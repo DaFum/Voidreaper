@@ -71,6 +71,7 @@ import { SHIP_FRAME_ASSEMBLY_PROFILES } from "../features/ship-assembly/content/
 import { createAssemblyRenderer } from "../render/ship-assembly/assembly-renderer.js";
 import { getCoreGeometryIds } from "../features/ship-assembly/geometry/core-geometry-builders.js";
 import { MODULE_VISUAL_PROFILES } from "../features/ship-assembly/content/module-visual-profiles.js";
+import { ASSEMBLY_ACTIONS } from "../input/action-bindings.js";
 
 export async function bootstrap() {
   document.documentElement.dataset.app = "voidreaper-modular";
@@ -120,8 +121,8 @@ export async function bootstrap() {
   console.info(`[content] ${SHIPS.length} ships · ${WEAPONS.length} weapons · ${REACTORS.length} reactors · ${MODULES.length} modules`);
 
   const controller = createGameController(services);
-  if (import.meta.env.DEV) globalThis.__VOIDREAPER_DEBUG__ = { ...(globalThis.__VOIDREAPER_DEBUG__ ?? {}), assembly: { getSnapshot: () => services.currentAssembly?.getSnapshot() ?? null, getGeometry: () => services.assemblyGeometry?.getSnapshot() ?? null, assemblyVisualGallery: () => ({ cores: getCoreGeometryIds(), modules: MODULE_VISUAL_PROFILES.map(profile => profile.rendererId), damageStates: ["intact","armor-broken","core-disrupted"] }) } };
-  const input = createInputController({ eventBus: events, bindings: metaSave.settings.bindings });
+  if (import.meta.env.DEV) globalThis.__VOIDREAPER_DEBUG__ = { ...(globalThis.__VOIDREAPER_DEBUG__ ?? {}), assembly: { getSnapshot: () => services.currentAssembly?.getSnapshot() ?? null, getGeometry: () => services.assemblyGeometry?.getSnapshot() ?? null, getPending: () => services.pendingMounts?.values() ?? [], getQuickMount: () => services.quickMount?.session ?? null, getWorkbench: () => services.assemblyWorkbench?.model() ?? null, assemblyVisualGallery: () => ({ cores: getCoreGeometryIds(), modules: MODULE_VISUAL_PROFILES.map(profile => profile.rendererId), damageStates: ["intact","armor-broken","core-disrupted"] }) } };
+  const input = createInputController({ eventBus: events, bindings: metaSave.settings.bindings, isQuickMount: () => Boolean(services.quickMount?.session) });
   input.start();
   const inspector = createBuildInspector(document.querySelector("#build-inspector"), services);
   const game = legacyRuntime.game;
@@ -238,6 +239,7 @@ export async function bootstrap() {
   };
 
   events.on("action", ({ action }) => {
+    if(services.quickMount?.session){if(action===ASSEMBLY_ACTIONS.PREVIOUS_SUGGESTION)services.quickMount.previous();if(action===ASSEMBLY_ACTIONS.NEXT_SUGGESTION)services.quickMount.next();if(action===ASSEMBLY_ACTIONS.CONFIRM)services.quickMount.confirm();if(action===ASSEMBLY_ACTIONS.DEFER)services.quickMount.defer();return;}
     if (action === "dodge" && game.state === "run") controller.useDodge(game, input.axis());
   });
   for (const button of document.querySelectorAll("[data-action]")) {

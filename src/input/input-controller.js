@@ -1,15 +1,16 @@
-import { ACTIONS, DEFAULT_BINDINGS } from "./action-bindings.js";
+import { ACTIONS, ASSEMBLY_ACTIONS, DEFAULT_BINDINGS, QUICK_MOUNT_BINDINGS } from "./action-bindings.js";
 import { createTouchStick } from "./touch-stick.js";
 
-export function createInputController({ eventBus, bindings = {}, stickElement, stickKnob } = {}) {
+export function createInputController({ eventBus, bindings = {}, stickElement, stickKnob, isQuickMount = () => false } = {}) {
   const resolvedBindings = { ...DEFAULT_BINDINGS, ...bindings };
   const held = new Set();
   const stick = createTouchStick(stickElement, stickKnob);
 
   const onKeyDown = event => {
+    if(isQuickMount()){const assemblyAction=QUICK_MOUNT_BINDINGS[event.code];if(assemblyAction){eventBus?.emit("action",{action:assemblyAction,source:"keyboard"});event.preventDefault();return;}}
     const action = resolvedBindings[event.code];
     if (!action) return;
-    if (!event.repeat && Object.values(ACTIONS).includes(action)) eventBus?.emit("action", { action, source: "keyboard" });
+    if (!event.repeat && (Object.values(ACTIONS).includes(action)||Object.values(ASSEMBLY_ACTIONS).includes(action))) eventBus?.emit("action", { action, source: "keyboard" });
     held.add(action);
     event.preventDefault();
   };
