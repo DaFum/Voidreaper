@@ -1,0 +1,1 @@
+export default { id: "furnace", name: "FURNACE", slot: "ship", hull: 115, speed: 170, energyCapacity: 120, cooling: 6, energyCost: 0, tags: [{ id: "Ship", value: 1 }, { id: "Heat", value: 2 }], effects: ["ship-furnace-pressure"], faultProfileId: "reactor", signature: "Hohe Hitze verstärkt Plasma", downside: "Stärkere Overheat-Fehler", unlockSource: "research" };
