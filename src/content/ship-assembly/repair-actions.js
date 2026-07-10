@@ -1,0 +1,2 @@
+export const REPAIR_ACTIONS=Object.freeze({PATCH_ARMOR:"patch-armor",RESTART_CORE:"restart-core",STABILIZE_BRACE:"stabilize-brace",FULL_REPAIR:"full-repair",REMOUNT_DETACHED:"remount-detached",REPLACE_PORT:"replace-port"});
+export const REPAIR_COSTS=Object.freeze({"patch-armor":{scrap:8},"restart-core":{flux:1},"stabilize-brace":{scrap:12},"full-repair":{scrap:24,flux:1},"remount-detached":{scrap:16},"replace-port":{scrap:20}});

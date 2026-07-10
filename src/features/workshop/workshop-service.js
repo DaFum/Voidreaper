@@ -1,4 +1,4 @@
-const ACTIONS = Object.freeze({ swap: 1, reroll: 1, lock: 1, socket: 2, stabilize: 2, corrupt: 1, overclock: 2 });
+const ACTIONS = Object.freeze({ swap: 1, reroll: 1, lock: 1, socket: 2, stabilize: 2, corrupt: 1, overclock: 2, "full-repair": 2, "replace-port": 2, "remount-detached": 2 });
 
 export function createWorkshopService({ affixRoller, eventBus } = {}) {
   return {
@@ -8,7 +8,7 @@ export function createWorkshopService({ affixRoller, eventBus } = {}) {
       const consequences = {
         swap: "Loadout-Slot wird sofort ersetzt.", reroll: "Ein ungesperrtes Affix wird neu gewürfelt.", lock: "Affix bleibt bei Rerolls erhalten.",
         socket: "Ein Sockel wird dauerhaft für diesen Run geöffnet.", stabilize: "Korruption -10, Item Power -5%.", corrupt: "Korruption +12, Item Power +15%.",
-        overclock: "Reaktor: +15% Leistung, +12% Last, +10 Hitze, höhere Fehlerchance."
+        overclock: "Reaktor: +15% Leistung, +12% Last, +10 Hitze, höhere Fehlerchance.", "full-repair": "Panzerung und Funktionskern werden vollständig repariert.", "replace-port": "Beschädigten Montageport ersetzen.", "remount-detached": "Abgetrenntes Modul wieder montierbar machen."
       };
       return { allowed: session.actionPoints - session.used >= points, points, target: target?.name ?? "System", consequence: consequences[action] ?? action };
     },
@@ -23,6 +23,7 @@ export function createWorkshopService({ affixRoller, eventBus } = {}) {
       if (action === "stabilize") { target.corruption = Math.max(0, (target.corruption ?? 0) - 10); target.itemPower = Math.floor((target.itemPower ?? 100) * .95); }
       if (action === "corrupt") { target.corruption = (target.corruption ?? 0) + 12; target.itemPower = Math.ceil((target.itemPower ?? 100) * 1.15); }
       if (action === "overclock") Object.assign(target, { outputMultiplier: 1.15, loadMultiplier: 1.12, heatOffset: 10, faultMultiplier: 1.25 });
+      if (["full-repair","replace-port","remount-detached"].includes(action)) payload.repairService?.apply?.(action,target.nodeId??target.formerNodeId,{inCombat:false});
       eventBus?.emit("workshop-action", { action, targetId: target.instanceId ?? target.id });
       return true;
     }
