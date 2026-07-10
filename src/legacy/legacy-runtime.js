@@ -403,7 +403,7 @@
       cam: { x: 0, y: 0, shake: 0, sx: 0, sy: 0 },
       wave: 1, spawnTimer: 0, spawnBudget: 0,
       score: 0, kills: 0, time: 0, boss: null, bossKills: 0,
-      arena: 1400, stars: [], rng: mulberry32(1), grng: Math.random,
+      arena: 1400, stars: [], seed: 1, rng: mulberry32(1), grng: mulberry32(1 ^ 0x9E3779B9),
       acc: 0, last: 0, STEP: 1 / 60, menuT: 0,
       upgradeCounts: {}, banished: new Set(), evolutions: 0,
       hitStop: 0, freezeT: 0, corruption: 0,
@@ -419,9 +419,12 @@
 
       reset(mode) {
         this.mode = mode;
-        const seed = mode === "daily" ? hashStr("VR-" + todayKey()) : (Math.random() * 1e9) | 0;
+        const seed = mode === "daily"
+          ? hashStr("VR-" + todayKey())
+          : hashStr(`${Date.now()}-${performance.now()}-${crypto.getRandomValues(new Uint32Array(1))[0]}`);
+        this.seed = seed;
         this.rng = mulberry32(seed);
-        this.grng = mode === "daily" ? mulberry32(seed ^ 0x9E3779B9) : Math.random;
+        this.grng = mulberry32(seed ^ 0x9E3779B9);
         Nebula.bake(mulberry32(seed ^ 0x5F3759DF));
         this.stars = [];
         const palette = ["#4318b8", "#4cc9f0", "#8b30e8", "#efeaf7", "#c77dff"];
@@ -1058,7 +1061,7 @@
             for (const e of this.qbuf) {
               if (dist2(ox, oy, e.x, e.y) < (bladeR + e.r) * (bladeR + e.r) && !e.orbCd) {
                 e.orbCd = 0.25;
-                const crit = Math.random() < p.crit;
+                const crit = this.grng() < p.crit;
                 this.damageEnemy(e, 6 * p.dmgMul * (crit ? 2.5 : 1), crit);
                 if (p.evoHalo) p.hp = Math.min(p.maxHp, p.hp + 0.8);
               }
@@ -1224,7 +1227,7 @@
             const rr = b.r + e.r;
             if (dist2(b.x, b.y, e.x, e.y) < rr * rr) {
               b.hitSet.add(e);
-              const crit = Math.random() < p.crit;
+              const crit = this.grng() < p.crit;
               const hpBefore = e.hp;
               this.damageEnemy(e, b.dmg * (crit ? 2.5 : 1), crit, Math.atan2(b.vy, b.vx));
               if (b.prism && hpBefore > 0 && e.hp <= 0) this.refract(e.x, e.y, b.dmg);
