@@ -1,4 +1,6 @@
 
+    import { LEGACY_EVOLUTIONS } from "../content/evolutions/legacy-evolutions.js";
+
     "use strict";
     /* =====================================================================
        VOIDREAPER: ETERNAL REDUX — full art & feel overhaul
@@ -288,33 +290,15 @@
     ];
 
     /* ---------- evolutions ---------- */
-    const EVOLUTIONS = [
-      {
-        id: "prism", ico: "⟁", nm: "PRISM LANCE", req: ["multi", "bspeed"],
-        ds: "Volleys become hyper-velocity lances that pierce everything and refract on kill.",
-        apply: p => { p.evoPrism = true; p.pierce += 99; p.bulletSpeed *= 1.5; }
-      },
-      {
-        id: "singularity", ico: "◉", nm: "SINGULARITY", req: ["nova", "magnet"],
-        ds: "Nova inverts: pulses drag enemies inward and leave a crushing gravity scar.",
-        apply: p => { p.evoSing = true; p.novaCd = Math.max(2, p.novaCd * 0.8); }
-      },
-      {
-        id: "bloodhalo", ico: "❂", nm: "BLOOD HALO", req: ["orbit", "regen"],
-        ds: "Orbital blades drink. Every blade hit restores hull and blades grow larger.",
-        apply: p => { p.evoHalo = true; p.orbitals += 2; }
-      },
-      {
-        id: "reaperprot", ico: "☠", nm: "REAPER PROTOCOL", req: ["dmg", "crit"],
-        ds: "Crits detonate in a void blast. Crit chance +15%, blast scales with damage.",
-        apply: p => { p.evoReaper = true; p.crit += 0.15; }
-      },
-      {
-        id: "tempest", ico: "※", nm: "ION TEMPEST", req: ["rate", "speed"],
-        ds: "Movement charges a storm: while moving, +40% fire rate and sparks arc off you.",
-        apply: p => { p.evoTempest = true; }
-      },
-    ];
+    let evolutionEffectRunner = null;
+    const EVOLUTIONS = LEGACY_EVOLUTIONS.map(definition => ({
+      id: definition.id,
+      ico: definition.icon,
+      nm: definition.name,
+      req: definition.requirements.filter(requirement => requirement.type === "upgrade").map(requirement => requirement.id),
+      ds: definition.effects.join(" · "),
+      apply: player => evolutionEffectRunner?.(definition.effects[0], player)
+    }));
 
     /* ---------- enemies ---------- */
     const ETYPES = {
@@ -1861,24 +1845,34 @@
       }
     };
 
-    /* ---------- boot ---------- */
-    Input.init();
-    UI.el("startbtn").addEventListener("click", () => { AudioSys.unlock(); AudioSys.resume(); Game.start("standard"); });
-    UI.el("dailybtn").addEventListener("click", () => { AudioSys.unlock(); AudioSys.resume(); Game.start("daily"); });
-    UI.el("retrybtn").addEventListener("click", () => { AudioSys.resume(); Game.start(Game.mode); });
-    UI.el("menubtn").addEventListener("click", () => { Game.state = "menu"; UI.menu(); });
-    UI.el("resumebtn").addEventListener("click", () => Game.resume());
-    UI.el("quitbtn").addEventListener("click", () => Game.quit());
-    UI.el("pausebtn").addEventListener("click", () => Game.pause());
-    UI.el("rerollbtn").addEventListener("click", () => Game.reroll());
-    UI.el("banishbtn").addEventListener("click", () => {
-      if (Game.banishes <= 0) return;
-      Game.banishMode = !Game.banishMode;
-      UI.el("banishbtn").style.background = Game.banishMode ? "rgba(255,45,120,.15)" : "";
-      UI.toast(Game.banishMode ? "TAP A CARD TO BANISH IT" : "BANISH CANCELLED");
+    export const legacyRuntime = Object.freeze({
+      game: Game,
+      ui: UI,
+      input: Input,
+      audio: AudioSys,
+      persistence: Persist,
+      configureEvolutionEffects(runner) {
+        evolutionEffectRunner = runner;
+      },
+      start() {
+        Input.init();
+        UI.el("startbtn").addEventListener("click", () => { AudioSys.unlock(); AudioSys.resume(); Game.start("standard"); });
+        UI.el("dailybtn").addEventListener("click", () => { AudioSys.unlock(); AudioSys.resume(); Game.start("daily"); });
+        UI.el("retrybtn").addEventListener("click", () => { AudioSys.resume(); Game.start(Game.mode); });
+        UI.el("menubtn").addEventListener("click", () => { Game.state = "menu"; UI.menu(); });
+        UI.el("resumebtn").addEventListener("click", () => Game.resume());
+        UI.el("quitbtn").addEventListener("click", () => Game.quit());
+        UI.el("pausebtn").addEventListener("click", () => Game.pause());
+        UI.el("rerollbtn").addEventListener("click", () => Game.reroll());
+        UI.el("banishbtn").addEventListener("click", () => {
+          if (Game.banishes <= 0) return;
+          Game.banishMode = !Game.banishMode;
+          UI.el("banishbtn").style.background = Game.banishMode ? "rgba(255,45,120,.15)" : "";
+          UI.toast(Game.banishMode ? "TAP A CARD TO BANISH IT" : "BANISH CANCELLED");
+        });
+        document.addEventListener("visibilitychange", () => { if (document.hidden && Game.state === "run") Game.pause(); });
+        Persist.load().then(() => UI.menu());
+        requestAnimationFrame(t => Game.loop(t));
+      }
     });
-    document.addEventListener("visibilitychange", () => { if (document.hidden && Game.state === "run") Game.pause(); });
-
-    Persist.load().then(() => UI.menu());
-    requestAnimationFrame(t => Game.loop(t));
   
