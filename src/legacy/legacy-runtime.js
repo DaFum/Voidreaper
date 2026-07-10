@@ -1,6 +1,7 @@
 
     import { LEGACY_EVOLUTIONS } from "../content/evolutions/legacy-evolutions.js";
     import { renderForgedEnemy } from "../render/enemies/enemy-renderer.js";
+    import { renderRegionWorld } from "../render/regions/region-world-renderer.js";
 
     "use strict";
     /* =====================================================================
@@ -1379,8 +1380,16 @@
         const eclipse = this.event && this.event.id === "eclipse";
         const frozen = this.freezeT > 0;
 
-        // hex floor + boundary
-        this.drawHexFloor();
+        // regional Forged Abyss floor + boundary
+        renderRegionWorld(cx, {
+          regionId: this.visualRegionId ?? "shattered-approach",
+          camera: { x: camX, y: camY },
+          viewport: { width: W, height: H },
+          arena: this.arena,
+          time: t,
+          seed: this.seed,
+          reducedMotion: REDUCED
+        });
         const A = this.arena;
         cx.strokeStyle = "rgba(255,45,120,.75)"; cx.lineWidth = 3;
         cx.shadowColor = "#ff2d78"; cx.shadowBlur = 20;
