@@ -1,4 +1,4 @@
 export function renderResearchScreen(container, nodes, { purchased = {}, canPurchase = () => false, onPurchase = () => {} } = {}) {
   container.innerHTML = `<div class="research-grid">${nodes.map(node => `<article class="research-node" data-state="${purchased[node.id] ? "owned" : canPurchase(node) ? "available" : "locked"}"><span>${node.branch.replace("-", " ").toUpperCase()}</span><h3>${node.name}</h3><p>${node.description}</p><small>${Object.entries(node.cost).map(([currency, amount]) => `${amount} ${currency}`).join(" · ") || "CONDITION"}</small><em>${node.unlocks.join(" · ")}</em><button data-research-id="${node.id}" ${purchased[node.id] || !canPurchase(node) ? "disabled" : ""}>${purchased[node.id] ? "ERFORSCHT" : "FORSCHEN"}</button></article>`).join("")}</div>`;
-  container.addEventListener("click", event => { const button = event.target.closest("[data-research-id]"); if (button) onPurchase(button.dataset.researchId); }, { once: true });
+  container.onclick = event => { const button = event.target.closest("[data-research-id]"); if (button) onPurchase(button.dataset.researchId); };
 }

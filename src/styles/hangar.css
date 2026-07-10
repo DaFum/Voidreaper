@@ -1,6 +1,5 @@
 /* ---- hangar ---- */
     #hangar {
-      max-width: 660px;
       width: 100%;
       border: 1px solid rgba(76, 201, 240, .25);
       background: linear-gradient(160deg, rgba(10, 4, 24, .7), rgba(4, 1, 10, .5));
@@ -90,9 +89,11 @@
     }
 
     #hangar { width: min(1120px, 96vw); max-height: 66vh; overflow: hidden; }
-    .hangar-tabs { display: flex; overflow-x: auto; border: 1px solid rgba(76,201,240,.2); background: rgba(4,1,10,.86); }
-    .hangar-tabs button { flex: 0 0 auto; padding: 9px 13px; border: 0; color: rgba(239,234,247,.55); background: transparent; font: 10px var(--font-m); letter-spacing: .08em; }
-    .hangar-tabs button[aria-current="true"] { color: var(--phosphor); box-shadow: inset 0 -2px var(--phosphor); }
+    .hangar-tabs { display: flex; overflow-x: auto; border: 1px solid rgba(76,201,240,.2); background: rgba(4,1,10,.86); scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
+    .hangar-tabs::-webkit-scrollbar { display: none; }
+    .hangar-tabs button { flex: 0 0 auto; min-height: 44px; padding: 9px 13px; border: 0; color: rgba(239,234,247,.55); background: transparent; font: 10px var(--font-m); letter-spacing: .08em; cursor: pointer; }
+    .hangar-tabs button:hover { color: var(--bone); }
+    .hangar-tabs button[aria-selected="true"] { color: var(--phosphor); box-shadow: inset 0 -2px var(--phosphor); }
     .hangar-stage { position: relative; min-height: min(440px, 56vh); border: 1px solid rgba(76,201,240,.18); border-top: 0; background: radial-gradient(circle at 50% 55%, rgba(67,24,184,.2), transparent 42%), linear-gradient(135deg, rgba(10,4,24,.95), rgba(4,1,10,.92)); }
     .hangar-stage::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(90deg, transparent 0 63px, rgba(76,201,240,.035) 64px); }
     .hangar-signal { display: flex; justify-content: space-between; padding: 9px 13px; color: var(--ice); border-bottom: 1px solid rgba(76,201,240,.16); font-size: 9px; letter-spacing: .12em; }
