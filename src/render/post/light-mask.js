@@ -12,6 +12,7 @@ export function createLightMask() {
       if (!mask) mask = document.createElement("canvas");
       if (mask.width !== width || mask.height !== height) { mask.width = width; mask.height = height; }
       const maskCtx = mask.getContext("2d");
+      if (!maskCtx) return;
       maskCtx.globalCompositeOperation = "source-over";
       maskCtx.clearRect(0, 0, width, height);
       maskCtx.fillStyle = `rgba(4,2,12,${darkness})`;

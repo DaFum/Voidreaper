@@ -8,8 +8,10 @@ const DUST_CELL = 1100;
 const layerCache = new Map();
 
 function hexToRgba(hex, alpha) {
-  const value = parseInt(hex.slice(1), 16);
-  return `rgba(${(value >> 16) & 255},${(value >> 8) & 255},${value & 255},${alpha})`;
+  if (typeof hex !== "string" || !hex.startsWith("#")) return hex;
+  const digits = hex.length === 4 ? [...hex.slice(1)].map(digit => digit + digit).join("") : hex.slice(1);
+  const value = parseInt(digits, 16);
+  return Number.isNaN(value) ? hex : `rgba(${(value >> 16) & 255},${(value >> 8) & 255},${value & 255},${alpha})`;
 }
 
 // bake each element at all nine wrap offsets so the tile repeats seamlessly
@@ -104,6 +106,7 @@ function getLayers(regionId, profile) {
 // slides against the world as the camera moves
 function drawTiledLayer(ctx, tile, camera, viewport, factor, driftX, driftY, alpha) {
   const size = tile.width;
+  if (size <= 0) return;
   const anchorX = camera.x * (1 - factor) + driftX;
   const anchorY = camera.y * (1 - factor) + driftY;
   const left = camera.x - viewport.width / 2, top = camera.y - viewport.height / 2;

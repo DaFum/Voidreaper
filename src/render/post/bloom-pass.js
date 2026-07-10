@@ -11,6 +11,7 @@ export function createBloomPass({ strength = .42, blur = 4 } = {}) {
       if (half.width !== halfWidth || half.height !== halfHeight) { half.width = halfWidth; half.height = halfHeight; }
       if (quarter.width !== quarterWidth || quarter.height !== quarterHeight) { quarter.width = quarterWidth; quarter.height = quarterHeight; }
       const halfCtx = half.getContext("2d"), quarterCtx = quarter.getContext("2d");
+      if (!halfCtx || !quarterCtx) return;
       halfCtx.globalCompositeOperation = "copy";
       halfCtx.drawImage(source, 0, 0, halfWidth, halfHeight);
       quarterCtx.globalCompositeOperation = "copy";

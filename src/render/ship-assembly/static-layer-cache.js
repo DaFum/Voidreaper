@@ -19,6 +19,7 @@ function bakeLayer(width, height, originX, originY, paint) {
   canvas.width = Math.ceil(width * BAKE_SCALE);
   canvas.height = Math.ceil(height * BAKE_SCALE);
   const layerCtx = canvas.getContext("2d");
+  if (!layerCtx) return null;
   layerCtx.setTransform(BAKE_SCALE, 0, 0, BAKE_SCALE, -originX * BAKE_SCALE, -originY * BAKE_SCALE);
   paint(layerCtx);
   return canvas;
@@ -39,11 +40,13 @@ export function getShipStaticLayers(snapshot, lod, painters) {
     layersBySnapshot.set(snapshot, null);
     return null;
   }
-  const entry = {
-    lod, x, y, width, height,
-    base: bakeLayer(width, height, x, y, painters.base),
-    armor: bakeLayer(width, height, x, y, painters.armor)
-  };
+  const base = bakeLayer(width, height, x, y, painters.base);
+  const armor = bakeLayer(width, height, x, y, painters.armor);
+  if (!base || !armor) {
+    layersBySnapshot.set(snapshot, null);
+    return null;
+  }
+  const entry = { lod, x, y, width, height, base, armor };
   layersBySnapshot.set(snapshot, entry);
   return entry;
 }

@@ -46,6 +46,7 @@ function motifSprite(profile, seed) {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = extent * 2 * MOTIF_BAKE_SCALE;
   const spriteCtx = canvas.getContext("2d");
+  if (!spriteCtx) return null;
   spriteCtx.setTransform(MOTIF_BAKE_SCALE, 0, 0, MOTIF_BAKE_SCALE, extent * MOTIF_BAKE_SCALE, extent * MOTIF_BAKE_SCALE);
   drawMotifShape(spriteCtx, profile, seed, 0, true);
   const sprite = { canvas, extent };
