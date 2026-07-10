@@ -2,3 +2,4 @@ node_modules/
 dist/
 .vite-dev.*.log
 .claude/launch.json
+.superpowers/
