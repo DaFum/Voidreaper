@@ -4,8 +4,10 @@ import {
   attemptMerchantPurchase,
   attemptWorkshopAction,
   canUseWorkbenchPort,
+  openReplacingQuickMount,
   prepareCheckpointResume,
   resetCampaignResume,
+  subscribeWorkbenchGeometry,
   syncLegacyVoidShards
 } from "../../src/app/click-path-flows.js";
 
@@ -128,4 +130,53 @@ test("fresh campaigns clear pending checkpoint resume state", () => {
   const services = { resumeRun: { id: "checkpoint" } };
   assert.equal(resetCampaignResume(services), null);
   assert.equal("resumeRun" in services, false);
+});
+
+test("opening a replacement quick mount releases the existing overlay first", () => {
+  const calls = [];
+  const opened = openReplacingQuickMount({
+    active: true,
+    close: () => calls.push("close"),
+    open: () => { calls.push("open"); return { opened: true }; }
+  });
+
+  assert.deepEqual(calls, ["close", "open"]);
+  assert.deepEqual(opened, { opened: true });
+});
+
+test("opening the first quick mount needs no cleanup", () => {
+  let closed = false;
+  openReplacingQuickMount({
+    active: false,
+    close: () => { closed = true; },
+    open: () => ({ opened: true })
+  });
+
+  assert.equal(closed, false);
+});
+
+test("workbench refreshes only while active and unsubscribes cleanly", () => {
+  let listener;
+  let active = true;
+  let renders = 0;
+  let unsubscribed = false;
+  const unsubscribe = subscribeWorkbenchGeometry({
+    events: {
+      on(eventName, callback) {
+        assert.equal(eventName, "assembly:geometry-ready");
+        listener = callback;
+        return () => { unsubscribed = true; };
+      }
+    },
+    isActive: () => active,
+    render: () => { renders += 1; }
+  });
+
+  listener();
+  active = false;
+  listener();
+  unsubscribe();
+
+  assert.equal(renders, 1);
+  assert.equal(unsubscribed, true);
 });

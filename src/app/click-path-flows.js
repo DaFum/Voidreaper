@@ -33,6 +33,17 @@ export function syncLegacyVoidShards({ persistence, root, currencies }) {
 
 export const canUseWorkbenchPort = port => Boolean(port && !port.occupiedByNodeId);
 
+export function openReplacingQuickMount({ active, close, open }) {
+  if (active) close();
+  return open();
+}
+
+export function subscribeWorkbenchGeometry({ events, isActive, render }) {
+  return events.on("assembly:geometry-ready", () => {
+    if (isActive()) render();
+  });
+}
+
 export function resetCampaignResume(services) {
   delete services.resumeRun;
   return null;
