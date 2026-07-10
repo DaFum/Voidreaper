@@ -116,6 +116,7 @@ export async function bootstrap() {
   console.info(`[content] ${SHIPS.length} ships · ${WEAPONS.length} weapons · ${REACTORS.length} reactors · ${MODULES.length} modules`);
 
   const controller = createGameController(services);
+  if (import.meta.env.DEV) globalThis.__VOIDREAPER_DEBUG__ = { ...(globalThis.__VOIDREAPER_DEBUG__ ?? {}), assembly: { getSnapshot: () => services.currentAssembly?.getSnapshot() ?? null } };
   const input = createInputController({ eventBus: events, bindings: metaSave.settings.bindings });
   input.start();
   const inspector = createBuildInspector(document.querySelector("#build-inspector"), services);

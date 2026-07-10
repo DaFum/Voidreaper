@@ -13,6 +13,8 @@ export function createRunState({ seed = Date.now(), mode = "campaign", difficult
     mode,
     difficulty,
     phase: "sector-map",
+    assembly: null,
+    pendingAssemblyItems: [],
     campaign: createCampaignState(),
     time: 0,
     score: 0,

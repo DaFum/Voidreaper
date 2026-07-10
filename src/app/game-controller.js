@@ -1,6 +1,8 @@
 import { createRunState } from "../runtime/create-run-state.js";
 import { createHeatState } from "../features/heat/heat-system.js";
 import { createCorruptionState } from "../features/corruption/corruption-system.js";
+import { createAssemblyState } from "../features/ship-assembly/model/create-assembly-state.js";
+import { createAssemblyService } from "../features/ship-assembly/model/assembly-service.js";
 
 const UPGRADE_TAGS = {
   multi: ["Projectile"], damage: ["Kinetic"], dmg: ["Kinetic"], rate: ["Cooldown"], speed: ["Movement"],
@@ -30,6 +32,18 @@ export function createGameController(services) {
       run.corruption = createCorruptionState(game.corruption ?? 0);
       services.sectors?.start(run);
       services.energy.initialize(run.player, { capacity: 100, reserved: 92, regeneration: 12 });
+      const shipFrameId = "vesper";
+      const frame = services.assemblyProfiles.getShipFrame(shipFrameId);
+      const rootNodeId = run.ids.create("assembly-root");
+      const rootNode = { nodeId: rootNodeId, parentNodeId: null, moduleInstanceId: null, definitionId: shipFrameId, visualProfileId: frame.coreGeometryId, localPosition: { x: 0, y: 0 }, localRotation: 0, mass: 24, damageState: "intact", childPortIds: [] };
+      const rootPorts = frame.initialPorts.map(template => { const portId=run.ids.create("assembly-port"); rootNode.childPortIds.push(portId); return { ...template, portId, parentNodeId: rootNodeId, occupiedByNodeId: null, localPosition: { x: template.direction.x*46, y: template.direction.y*46 } }; });
+      run.assembly = createAssemblyState({ shipFrameId, rootNode, rootPorts });
+      services.currentAssembly = createAssemblyService({ state: run.assembly, eventBus: services.events, idFactory: run.ids });
+      const railDefinition = services.equipment.require("railgun");
+      const railItem = { instanceId: run.ids.create("item"), definitionId: railDefinition.id, ownership: "temporary", rarity: "common", itemPower: 100, affixes: [], sockets: [] };
+      run.inventory.push(railItem);
+      const startPort = rootPorts.find(port => railDefinition.assembly.mountTypes.includes(port.mountType) && !port.occupiedByNodeId);
+      if (startPort) services.currentAssembly.mountModule({ moduleInstanceId: railItem.instanceId, definitionId: railDefinition.id, parentPort: startPort, assemblyProfile: railDefinition.assembly, transform: { position: startPort.localPosition, rotation: Math.atan2(startPort.direction.y,startPort.direction.x) } });
       this.syncLegacy(game, 0);
       services.events.emit("run-started", { run });
       return run;
