@@ -26,6 +26,20 @@ import { WEAPONS } from "../content/weapons/index.js";
 import { REACTORS } from "../content/reactors/reactors.js";
 import { MODULES } from "../content/modules/index.js";
 import { createHangarScreen } from "../ui/screens/hangar-screen.js";
+import { createSectorController } from "../features/sectors/sector-controller.js";
+import { createRunCurrencyService } from "../features/economy/run-currency-service.js";
+import { createDailyRunService } from "../features/sectors/daily-run-service.js";
+import { createSectorMapScreen } from "../ui/screens/sector-map-screen.js";
+import { createRunState } from "../runtime/create-run-state.js";
+import { createHeatState } from "../features/heat/heat-system.js";
+import { createCorruptionState } from "../features/corruption/corruption-system.js";
+import { renderMerchantScreen } from "../ui/screens/merchant-screen.js";
+import { createMerchantService } from "../features/merchant/merchant-service.js";
+import { createAnomalyService } from "../features/sectors/anomaly-service.js";
+import { renderAnomalyScreen } from "../ui/screens/anomaly-screen.js";
+import { renderWorkshopScreen } from "../ui/screens/workshop-screen.js";
+import { createWorkshopService } from "../features/workshop/workshop-service.js";
+import { createCheckpointService } from "../features/checkpoints/checkpoint-service.js";
 
 export async function bootstrap() {
   document.documentElement.dataset.app = "voidreaper-modular";
@@ -51,6 +65,10 @@ export async function bootstrap() {
   services.save = createSaveStore(globalThis.storage ?? globalThis.localStorage, {
     onWarning: message => legacyRuntime.ui.toast(message)
   });
+  services.sectors = createSectorController({ eventBus: events });
+  services.currency = createRunCurrencyService(events);
+  services.daily = createDailyRunService({ saveStore: services.save });
+  services.checkpoints = createCheckpointService(services.save, events);
   const initialSave = await services.save.load();
   services.unlocks = createUnlockService(initialSave.unlocks);
   services.equipment = createEquipmentRegistry();
@@ -64,13 +82,56 @@ export async function bootstrap() {
   const game = legacyRuntime.game;
   const ui = legacyRuntime.ui;
   legacyRuntime.configureEvolutionEffects((effectId, player) => effects.execute({ id: effectId }, { player, run: controller.run }));
-  const hangar = createHangarScreen(document.querySelector("#hangar"), {
+  const hangarRoot = document.querySelector("#hangar");
+  let previewRun;
+  let mapScreen;
+  let activeCampaignNodeId = null;
+  let originalStartWave;
+  const showCampaignMap = () => {
+    if (!previewRun) {
+      previewRun = createRunState({ seed: Date.now(), mode: "campaign" });
+      previewRun.heat = createHeatState();
+      previewRun.corruption = createCorruptionState();
+      previewRun.resources.scrap = 80;
+      previewRun.resources.flux = 6;
+      services.sectors.start(previewRun);
+    }
+    const stage = hangarRoot.querySelector(".hangar-content");
+    mapScreen = createSectorMapScreen(stage, { onConfirm: node => {
+      if (!services.sectors.enter(previewRun, node.id)) return;
+      const finish = () => { services.sectors.complete(previewRun, node.id); services.checkpoints.writeAfterNode(previewRun, node.id); showCampaignMap(); };
+      if (["combat", "elite", "salvage", "mid-boss", "boss", "extraction"].includes(node.type)) {
+        activeCampaignNodeId = node.id;
+        if (game.player && game.wave > 0) { game.state = "run"; ui.show("hud"); originalStartWave(game.wave + 1); }
+        else game.start("standard");
+        return;
+      }
+      if (node.type === "merchant") {
+        const merchant = createMerchantService({ modules: MODULES, weapons: WEAPONS, reactors: REACTORS, currencyService: services.currency, eventBus: events });
+        renderMerchantScreen(stage, { offers: merchant.roll(node.seed, node.regionIndex), resources: previewRun.resources, onBuy: offer => { merchant.buy(previewRun, offer); finish(); }, onReroll: () => renderMerchantScreen(stage, { offers: merchant.reroll(node.seed, node.regionIndex), resources: previewRun.resources, onBuy: offer => { merchant.buy(previewRun, offer); finish(); }, onReroll: finish }) });
+        return;
+      }
+      if (node.type === "workshop") {
+        const workshop = createWorkshopService({ eventBus: events }); const session = workshop.open(node.regionIndex); const target = previewRun.inventory[0] ?? { id: "standard-core", name: "Standard Core", itemPower: 100 };
+        renderWorkshopScreen(stage, { service: workshop, session, target, onAction: (action, item) => { workshop.apply(session, action, item); finish(); } }); return;
+      }
+      if (node.type === "anomaly") {
+        const anomaly = createAnomalyService(events); const signal = anomaly.select(node.seed, previewRun.anomalies?.map(entry => entry.eventId));
+        renderAnomalyScreen(stage, { event: signal, onChoose: choiceId => { anomaly.resolve(previewRun, signal, choiceId); finish(); } }); return;
+      }
+      finish();
+    } });
+    mapScreen.render(services.sectors.model(previewRun));
+  };
+  const hangar = createHangarScreen(hangarRoot, {
     ships: SHIPS,
     weapons: WEAPONS,
     reactors: REACTORS,
     modules: MODULES,
+    checkpoint: initialSave.checkpoint,
     isUnlocked: definition => services.unlocks.isUnlocked(definition),
-    onStart: () => { legacyRuntime.audio.unlock(); legacyRuntime.audio.resume(); game.start("standard"); }
+    onStart: showCampaignMap,
+    onResume: checkpoint => { previewRun = checkpoint.run; showCampaignMap(); }
   });
   ui.renderHangar = () => hangar.render();
 
@@ -78,6 +139,20 @@ export async function bootstrap() {
   game.reset = mode => {
     originalReset(mode);
     controller.attachLegacy(game);
+  };
+  originalStartWave = game.startWave.bind(game);
+  game.startWave = wave => {
+    if (activeCampaignNodeId && wave > 1) {
+      services.sectors.complete(previewRun, activeCampaignNodeId);
+      services.checkpoints.writeAfterNode(previewRun, activeCampaignNodeId);
+      activeCampaignNodeId = null;
+      game.state = "sector-map";
+      ui.show("start");
+      hangar.render();
+      showCampaignMap();
+      return;
+    }
+    originalStartWave(wave);
   };
   const originalDraw = game.draw.bind(game);
   game.draw = () => {
@@ -94,6 +169,7 @@ export async function bootstrap() {
       heat: run.heat.value,
       corruption: run.corruption.value,
       load: run.player.energy
+      , scrap: run.resources.scrap, flux: run.resources.flux
     });
   };
   const originalPauseStats = ui.pauseStats.bind(ui);

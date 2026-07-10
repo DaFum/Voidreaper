@@ -28,6 +28,7 @@ export function createGameController(services) {
       run.services = services;
       run.heat = createHeatState();
       run.corruption = createCorruptionState(game.corruption ?? 0);
+      services.sectors?.start(run);
       services.energy.initialize(run.player, { capacity: 100, reserved: 92, regeneration: 12 });
       this.syncLegacy(game, 0);
       services.events.emit("run-started", { run });
