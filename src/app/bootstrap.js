@@ -79,6 +79,7 @@ import { encodeBlueprint, decodeBlueprint } from "../features/ship-assembly/blue
 import { validateBlueprint } from "../features/ship-assembly/blueprints/blueprint-validator.js";
 import { createAssemblyDebugService } from "../features/ship-assembly/debug/assembly-debug-service.js";
 import { createAssemblyDebugScenarios } from "../features/ship-assembly/debug/assembly-debug-scenarios.js";
+import { createAssemblyErrorBoundary } from "../features/ship-assembly/model/assembly-error-boundary.js";
 
 export async function bootstrap() {
   document.documentElement.dataset.app = "voidreaper-modular";
@@ -121,6 +122,7 @@ export async function bootstrap() {
   services.assemblyProfiles = createAssemblyProfileRegistry();
   for (const profile of SHIP_FRAME_ASSEMBLY_PROFILES) services.assemblyProfiles.registerShipFrame(profile);
   services.assemblyRenderer = createAssemblyRenderer();
+  services.assemblyErrors=createAssemblyErrorBoundary();
   console.info(`[assembly] ${services.assemblyProfiles.getCounts().shipFrames} ship profiles`);
   services.unlocks = createUnlockService(initialSave.unlocks);
   services.equipment = createEquipmentRegistry();

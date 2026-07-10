@@ -66,7 +66,7 @@ export function createGameController(services) {
       const runInventory={values:()=>run.inventory,store:id=>{const item=run.inventory.find(entry=>entry.instanceId===id);if(item)item.stored=true;return item??null;},addPending:entry=>{run.pendingAssemblyItems.push(structuredClone(entry));return entry;},updatePending:(id,patch)=>{const entry=run.pendingAssemblyItems.find(item=>item.pendingMountId===id);if(entry)Object.assign(entry,patch);return entry??null;},pending:()=>run.pendingAssemblyItems};
       services.currentAssembly = createAssemblyService({ state: run.assembly, eventBus: services.events, idFactory: run.ids, runInventory });
       services.assemblyGeometry?.destroy?.();
-      services.assemblyGeometry = createAssemblyGeometryService({ eventBus: services.events, assemblyService: services.currentAssembly, profileRegistry: services.assemblyProfiles, equipmentRegistry: services.equipment });
+      services.assemblyGeometry = createAssemblyGeometryService({ eventBus: services.events, assemblyService: services.currentAssembly, profileRegistry: services.assemblyProfiles, equipmentRegistry: services.equipment, errorBoundary: services.assemblyErrors });
       const railDefinition = services.equipment.require("railgun");
       const railItem = { instanceId: run.ids.create("item"), definitionId: railDefinition.id, ownership: "temporary", rarity: "common", itemPower: 100, affixes: [], sockets: [] };
       run.inventory.push(railItem);
