@@ -48,6 +48,6 @@ export function createStateMachine(initialState = "menu", eventBus) {
       eventBus?.emit("state-changed", { previousState, state, detail });
       return state;
     },
-    returnToPrevious() { if (!previousState) return state; const target=previousState;previousState=null;const current=state;state=target;eventBus?.emit("state-changed",{previousState:current,state,detail:{returned:true}});return state; }
+    returnToPrevious() { if (!previousState) return state; const target=previousState;if(!this.can(target))return state;previousState=null;const current=state;state=target;eventBus?.emit("state-changed",{previousState:current,state,detail:{returned:true}});return state; }
   };
 }

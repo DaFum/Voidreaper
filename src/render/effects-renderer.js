@@ -1,7 +1,7 @@
-export function renderEffects(context, effects, camera, settings = {}) {
+export function renderEffects(context, effects, camera, settings = {}, viewport = {}) {
   if (settings.reducedMotion) return;
   context.save();
-  context.translate(context.canvas.width / 2 - camera.x, context.canvas.height / 2 - camera.y);
+  context.translate((viewport.width??context.canvas.clientWidth??context.canvas.width) / 2 - camera.x, (viewport.height??context.canvas.clientHeight??context.canvas.height) / 2 - camera.y);
   for (const effect of effects) {
     if (effect.type === "screen-shake" && settings.screenShake === false) continue;
     if (effect.type === "damage-flash" && settings.damageFlashes === false) continue;

@@ -15,9 +15,10 @@ export function createCanvasRenderer(canvas, settings = {}, services = {}) {
   resize();
   return {
     render(run) {
+      const viewport={width:canvas.clientWidth||innerWidth,height:canvas.clientHeight||innerHeight};
       context.save();
       if (settings.screenShake && run.camera.shake) context.translate(run.camera.shakeX ?? 0, run.camera.shakeY ?? 0);
-      applyWorldCamera(context,run.camera,{width:context.canvas.clientWidth||innerWidth,height:context.canvas.clientHeight||innerHeight},()=>{renderWorld(context, run, run.camera);renderEntities(context, run, run.camera, services.assemblyRenderer, services.assemblyGeometry);renderEffects(context, run.effects, run.camera, settings);});
+      applyWorldCamera(context,run.camera,viewport,()=>{renderWorld(context, run, run.camera,viewport);renderEntities(context, run, run.camera, services.assemblyRenderer, services.assemblyGeometry,viewport);renderEffects(context, run.effects, run.camera, settings,viewport);});
       context.restore();
     },
     destroy() { window.removeEventListener("resize", resize); }

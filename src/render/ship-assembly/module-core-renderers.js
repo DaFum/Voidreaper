@@ -2,13 +2,14 @@ import { traceCapsule, traceCoil, traceCoolingFin, traceLauncherDoor, traceLens,
 
 const damaged = state => state.damageState === "armor-broken" || state.damageState === "core-disrupted";
 const paint = (ctx, state, trace) => { trace(); ctx.fillStyle = state.damageState === "core-disrupted" ? state.palette.fault : state.palette.metal; ctx.strokeStyle = damaged(state) ? state.palette.damage : state.palette.edge; ctx.lineWidth = 1.8; ctx.fill(); ctx.stroke(); };
-const glow = (ctx, state, alpha = 1) => { ctx.strokeStyle = state.damageState === "core-disrupted" ? state.palette.fault : state.palette.energy; ctx.globalAlpha = alpha; ctx.stroke(); ctx.globalAlpha = 1; };
+const glow = (ctx, state, alpha = 1) => { const previousAlpha=ctx.globalAlpha;ctx.strokeStyle = state.damageState === "core-disrupted" ? state.palette.fault : state.palette.energy; ctx.globalAlpha = previousAlpha*alpha; ctx.stroke(); ctx.globalAlpha = previousAlpha; };
 const seedCount = (state, min, spread) => min + Math.abs(state.variantSeed ?? 0) % spread;
 
 export function createModuleCoreRendererRegistry() {
   const renderers = new Map();
+  const warnedRendererIds = new Set();
   const fallback=(ctx,state)=>{paint(ctx,state,()=>traceCapsule(ctx,state.size*1.05,state.size*.48));ctx.strokeStyle=state.palette.energy;ctx.beginPath();ctx.moveTo(-state.size*.28,0);ctx.lineTo(state.size*.28,0);ctx.moveTo(0,-state.size*.28);ctx.lineTo(0,state.size*.28);ctx.stroke();};
-  const registry = { register: (id, renderer) => renderers.set(id, renderer), has: id => renderers.has(id), render(id, ctx, state) { const renderer = renderers.get(id)??fallback; if(!renderers.has(id))console.warn(`[assembly] neutral fallback renderer: ${id}`);ctx.save(); if (state.damageState === "detached-preview") ctx.globalAlpha = .52; renderer(ctx, state); ctx.restore(); }, ids: () => [...renderers.keys()] };
+  const registry = { register: (id, renderer) => renderers.set(id, renderer), has: id => renderers.has(id), render(id, ctx, state) { const renderer = renderers.get(id)??fallback; if(!renderers.has(id)&&!warnedRendererIds.has(id)){warnedRendererIds.add(id);console.warn(`[assembly] neutral fallback renderer: ${id}`);}ctx.save(); if (state.damageState === "detached-preview") ctx.globalAlpha = .52; renderer(ctx, state); ctx.restore(); }, ids: () => [...renderers.keys()] };
   registry.register("core-linear-weapon", (ctx,s) => { paint(ctx,s,()=>traceTaperedPlate(ctx,{length:s.size*1.55,frontWidth:s.size*.55,rearWidth:s.size*.28,notch:s.size*.12})); for(let i=0;i<seedCount(s,3,2);i++){ctx.beginPath();ctx.ellipse(s.size*(.2+i*.3),0,s.size*.07,s.size*.22,0,0,Math.PI*2);glow(ctx,s,.35+s.activity.charge*.65);} });
   registry.register("core-missile-rack", (ctx,s) => { paint(ctx,s,()=>traceCapsule(ctx,s.size*1.35,s.size*.48)); const bays=seedCount(s,4,3); for(let i=0;i<bays;i++){const x=-s.size*.45+(i%(Math.ceil(bays/2)))*s.size*.45,y=(i%2?1:-1)*s.size*.22;traceLauncherDoor(ctx,x,y,s.size*.25,s.size*.2);glow(ctx,s,.45);} });
   registry.register("core-beam-emitter", (ctx,s) => { paint(ctx,s,()=>traceTaperedPlate(ctx,{length:s.size*1.25,frontWidth:s.size*.7,rearWidth:s.size*.2,notch:s.size*.18})); traceLens(ctx,s.size*.42,0,s.size*.22,s.size*.42);glow(ctx,s,.5+s.activity.charge*.5); });

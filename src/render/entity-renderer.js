@@ -1,6 +1,6 @@
-export function renderEntities(context, run, camera, assemblyRenderer, assemblyGeometry) {
-  const cx = context.canvas.width / 2 - camera.x;
-  const cy = context.canvas.height / 2 - camera.y;
+export function renderEntities(context, run, camera, assemblyRenderer, assemblyGeometry, viewport = {}) {
+  const cx = (viewport.width??context.canvas.clientWidth??context.canvas.width) / 2 - camera.x;
+  const cy = (viewport.height??context.canvas.clientHeight??context.canvas.height) / 2 - camera.y;
   context.save();
   context.translate(cx, cy);
   for (const enemy of run.enemies) {

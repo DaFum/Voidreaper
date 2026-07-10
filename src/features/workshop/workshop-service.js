@@ -13,6 +13,7 @@ export function createWorkshopService({ affixRoller, eventBus } = {}) {
       return { allowed: session.actionPoints - session.used >= points, points, target: target?.name ?? "System", consequence: consequences[action] ?? action };
     },
     apply(session, action, target, payload = {}) {
+      if (["full-repair","replace-port","remount-detached"].includes(action) && !payload.repairService?.apply) return false;
       const preview = this.preview(session, action, target);
       if (!preview.allowed) return false;
       session.used += preview.points;
@@ -23,7 +24,7 @@ export function createWorkshopService({ affixRoller, eventBus } = {}) {
       if (action === "stabilize") { target.corruption = Math.max(0, (target.corruption ?? 0) - 10); target.itemPower = Math.floor((target.itemPower ?? 100) * .95); }
       if (action === "corrupt") { target.corruption = (target.corruption ?? 0) + 12; target.itemPower = Math.ceil((target.itemPower ?? 100) * 1.15); }
       if (action === "overclock") Object.assign(target, { outputMultiplier: 1.15, loadMultiplier: 1.12, heatOffset: 10, faultMultiplier: 1.25 });
-      if (["full-repair","replace-port","remount-detached"].includes(action)) payload.repairService?.apply?.(action,target.nodeId??target.formerNodeId,{inCombat:false});
+      if (["full-repair","replace-port","remount-detached"].includes(action)) payload.repairService.apply(action,target.nodeId??target.formerNodeId,{inCombat:false});
       eventBus?.emit("workshop-action", { action, targetId: target.instanceId ?? target.id });
       return true;
     }
