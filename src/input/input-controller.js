@@ -40,6 +40,7 @@ export function createInputController({ eventBus, bindings = {}, stickElement, s
     trigger(action, source = "touch") {
       eventBus?.emit("action", { action, source });
     },
+    rebind(action, code) { for (const [key, bound] of Object.entries(resolvedBindings)) if (bound === action) delete resolvedBindings[key]; resolvedBindings[code] = action; return { ...resolvedBindings }; },
     bindings: resolvedBindings
   };
 }

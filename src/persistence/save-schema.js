@@ -49,6 +49,7 @@ export function createDefaultSave() {
       crt: true,
       uiScale: 1,
       largeTouchControls: false,
+      colorPatterns: true,
       bindings: {}
     },
     migrationHistory: [],
