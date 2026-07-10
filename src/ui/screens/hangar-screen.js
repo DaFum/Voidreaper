@@ -5,7 +5,8 @@ const TABS = ["Run starten", "Loadout", "Schiffe", "Waffen", "Module", "Bauplän
 export function createHangarScreen(container, { ships, weapons, modules, reactors, currencies = {}, checkpoint = null, isUnlocked = () => true, onStart = () => {}, onResume = () => {}, renderTab = () => {} }) {
   let tab = "Run starten";
   const render = () => {
-    container.innerHTML = `<nav class="hangar-tabs">${TABS.map(name => `<button data-hangar-tab="${name}" aria-current="${name === tab}">${name}</button>`).join("")}</nav><section class="hangar-stage" data-active-tab="${tab}"><header class="hangar-signal"><span>VR // HANGAR LINK · ◇${currencies.voidShards ?? 0} · ⬡${currencies.bossCores ?? 0} · ◉${currencies.anomalyData ?? 0} · ✦${currencies.challengeSeals ?? 0} · ▱${currencies.salvageFragments ?? 0}</span><b>${ships.length} FRAMES · ${weapons.length} WEAPONS · ${reactors.length} CORES · ${modules.length} MODULES</b></header><div class="hangar-content"></div></section>`;
+    const focusedTab = container.contains(document.activeElement) ? document.activeElement.dataset?.hangarTab : null;
+    container.innerHTML = `<nav class="hangar-tabs" role="tablist" aria-label="Hangar-Bereiche">${TABS.map(name => `<button data-hangar-tab="${name}" role="tab" aria-selected="${name === tab}">${name}</button>`).join("")}</nav><section class="hangar-stage" data-active-tab="${tab}"><header class="hangar-signal"><span>VR // HANGAR LINK · ◇${currencies.voidShards ?? 0} · ⬡${currencies.bossCores ?? 0} · ◉${currencies.anomalyData ?? 0} · ✦${currencies.challengeSeals ?? 0} · ▱${currencies.salvageFragments ?? 0}</span><b>${ships.length} FRAMES · ${weapons.length} WEAPONS · ${reactors.length} CORES · ${modules.length} MODULES</b></header><div class="hangar-content"></div></section>`;
     const content = container.querySelector(".hangar-content");
     if (tab === "Run starten") content.innerHTML = `<div class="launch-console"><span>CAMPAIGN PATH // ARCHITECT</span><h3>BUILD THE IMPOSSIBLE.<br>PAY ITS PRICE.</h3><p>Loadout prüfen, Last bewusst wählen und den Run-Seed fixieren.</p><button class="btn" data-launch>Standard-Kampagne starten</button>${checkpoint ? `<button class="btn small" data-resume>Checkpoint fortsetzen · ${checkpoint.nodeId}</button>` : ""}</div>`;
     else {
@@ -17,6 +18,8 @@ export function createHangarScreen(container, { ships, weapons, modules, reactor
       } else content.innerHTML = `<div class="hangar-placeholder"><strong>${tab.toUpperCase()}</strong><span>Subsystem ist verbunden. Inhalte werden aus dem persistenten Meta-State geladen.</span></div>`;
     }
     renderTab(tab, content);
+    if (focusedTab) container.querySelector(`[data-hangar-tab="${focusedTab}"]`)?.focus();
+    container.querySelector('[role="tab"][aria-selected="true"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
   };
   container.addEventListener("click", event => {
     const tabButton = event.target.closest("[data-hangar-tab]");

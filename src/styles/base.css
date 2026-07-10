@@ -22,6 +22,31 @@
       color: var(--bone)
     }
 
+    /* keyboard focus must stay visible on the dark theme */
+    :where(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
+      outline: 2px solid var(--ice);
+      outline-offset: 2px
+    }
+
+    /* themed scrollbars instead of native chrome */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(76, 201, 240, .35) rgba(4, 1, 10, .5)
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(76, 201, 240, .3)
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(4, 1, 10, .5)
+    }
+
     #game {
       position: fixed;
       inset: 0;

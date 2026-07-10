@@ -8,5 +8,5 @@ export function renderCodexScreen(root, { entries, onFilter = () => {} }) {
 
 export function renderBuildHistory(root, builds, onToggleFavorite = () => {}) {
   root.innerHTML = `<div class="codex__grid">${builds.map(build => `<article><span>${build.result} · SEED ${build.seed}</span><h3>${build.ship ?? "Unknown"} / ${build.weapon ?? "Unknown"}</h3><p>${build.modules.join(" · ")}</p><button data-favorite="${build.id}">${build.favorite ? "★ Favorit" : "☆ Favorisieren"}</button></article>`).join("")}</div>`;
-  root.addEventListener("click", event => { const button = event.target.closest("[data-favorite]"); if (button) onToggleFavorite(button.dataset.favorite); }, { once: true });
+  root.onclick = event => { const button = event.target.closest("[data-favorite]"); if (button) onToggleFavorite(button.dataset.favorite); };
 }
