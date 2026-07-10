@@ -12,7 +12,8 @@ function dealDamage(effect, context) {
   const healthKey = Number.isFinite(target.health) ? "health" : Number.isFinite(target.hp) ? "hp" : null;
   if (!healthKey) return 0;
   target[healthKey] = Math.max(0, target[healthKey] - amount);
-  context.events?.emit("enemy-hit", { context, target, amount, sourceId: effect.sourceId });
+  const eventBus = context.events ?? context.run?.services?.events;
+  eventBus?.emit("enemy-hit", { context, target, amount, sourceId: effect.sourceId });
   return amount;
 }
 

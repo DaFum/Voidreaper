@@ -47,9 +47,13 @@ export function createActiveModuleSystem({ effects, eventBus } = {}) {
     clearFault(module) { if (module) module.state.faultModifier = null; },
     readiness(module) {
       if (!module) return { ready: false, label: "EMPTY" };
-      if (module.resourceModel === "sector-charges") return { ready: module.state.sectorCharges > 0, label: `${module.state.sectorCharges} CHARGES` };
+      if (module.state.disabledRemaining > 0) return { ready: false, label: "DISABLED" };
+      if (module.state.faultModifier === "blocked") return { ready: false, label: "BLOCKED" };
+      const multiplier = module.state.faultModifier === "double-cost" ? 2 : 1;
+      if (module.resourceModel === "sector-charges") return { ready: module.state.sectorCharges >= multiplier, label: `${module.state.sectorCharges} CHARGES` };
       if (module.resourceModel === "cooldown") return { ready: module.state.remaining <= 0, label: `${module.state.remaining.toFixed(1)}s` };
-      return { ready: (module.state.charge ?? 0) >= (module.activationCost ?? 0), label: `${Math.floor(module.state.charge ?? 0)} / ${module.activationCost ?? 0}` };
+      const cost = (module.activationCost ?? 0) * multiplier;
+      return { ready: (module.state.charge ?? 0) >= cost, label: `${Math.floor(module.state.charge ?? 0)} / ${cost}` };
     }
   };
 }

@@ -8,6 +8,7 @@ function encodeCollections(value) {
   if (value instanceof Set) return { [COLLECTION]: "Set", values: [...value].map(encodeCollections) };
   if (Array.isArray(value)) return value.map(encodeCollections);
   if (!value || typeof value !== "object") return value;
+  if (typeof value.toJSON === "function") return encodeCollections(value.toJSON());
   return Object.fromEntries(Object.entries(value).filter(([, entry]) => typeof entry !== "function").map(([key, entry]) => [key, encodeCollections(entry)]));
 }
 
@@ -22,11 +23,30 @@ function decodeCollections(value) {
 const asMap = value => value instanceof Map ? value : new Map(Array.isArray(value) ? value : Object.entries(value ?? {}));
 const asSet = value => value instanceof Set ? value : new Set(Array.isArray(value) ? value : Object.values(value ?? {}));
 
+function deriveIdCounter(value, runId) {
+  let maximum = 0;
+  const seen = new WeakSet();
+  const visit = entry => {
+    if (typeof entry === "string" && entry.startsWith(`${runId}-`)) {
+      const suffix = entry.slice(entry.lastIndexOf("-") + 1);
+      if (/^[0-9a-z]+$/i.test(suffix)) maximum = Math.max(maximum, Number.parseInt(suffix, 36));
+      return;
+    }
+    if (entry && typeof entry === "object") { if (seen.has(entry)) return; seen.add(entry); }
+    if (entry instanceof Map) { for (const [key, child] of entry) { visit(key); visit(child); } return; }
+    if (entry instanceof Set || Array.isArray(entry)) { for (const child of entry) visit(child); return; }
+    if (entry && typeof entry === "object") for (const child of Object.values(entry)) visit(child);
+  };
+  visit(value);
+  return maximum;
+}
+
 export function serializeCheckpointRun(run) {
   return encodeCollections({
     ...run,
     services: undefined,
     ids: undefined,
+    idCounter: run.ids?.snapshot?.() ?? deriveIdCounter(run, run.id),
     rng: { seed: run.rng.seed, state: run.rng.snapshot() },
   });
 }
@@ -48,7 +68,8 @@ export function hydrateCheckpointRun(snapshot, services) {
     run.heat.disableCounts = asMap(run.heat.disableCounts);
   }
   run.rng = createRunRng(run.rng.seed, run.rng.state);
-  run.ids = createIdService(run.id);
+  run.ids = createIdService(run.id, Number.isFinite(run.idCounter) ? run.idCounter : deriveIdCounter(run, run.id));
+  delete run.idCounter;
   run.services = services;
   return run;
 }

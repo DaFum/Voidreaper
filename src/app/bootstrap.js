@@ -168,7 +168,7 @@ export async function bootstrap() {
     checkpoint: initialSave.checkpoint,
     isUnlocked: definition => services.unlocks.isUnlocked(definition),
     onStart: showCampaignMap,
-    onResume: checkpoint => { previewRun = services.checkpoints.hydrate(checkpoint, services).run; showCampaignMap(); },
+    onResume: checkpoint => { const hydrated = services.checkpoints.hydrate(checkpoint, services); if (!hydrated) return; previewRun = hydrated.run; showCampaignMap(); },
     renderTab: (tab, content) => {
       if (tab === "Forschung") renderResearchScreen(content, RESEARCH_TREE, { purchased: metaSave.research, canPurchase: node => services.research.canPurchase(metaSave, node), onPurchase: async id => { await services.research.purchase(id); metaSave = await services.save.load(); hangar.render(); } });
       if (tab === "Codex") { const show = filters => renderCodexScreen(content, { entries: services.codex.filter(metaSave, filters), onFilter: show }); show({}); }
