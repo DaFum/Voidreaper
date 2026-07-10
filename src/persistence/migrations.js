@@ -1,4 +1,5 @@
 import { CURRENT_SAVE_VERSION, createDefaultSave } from "./save-schema.js";
+import { convertLegacyMeta } from "../content/migrations/legacy-meta-conversion.js";
 
 const clone = value => JSON.parse(JSON.stringify(value));
 
@@ -25,7 +26,7 @@ export function migrateLegacySave(legacy = {}) {
   save.legacy.meta = clone(legacy.meta ?? {});
   save.legacy.achievements = [...new Set(legacy.ach ?? legacy.achievements ?? [])];
   save.migrationHistory.push({ from: "voidreaper-eternal", to: 4, at: new Date().toISOString() });
-  return save;
+  return convertLegacyMeta(save);
 }
 
 export function migrateSave(input) {
@@ -46,5 +47,5 @@ export function migrateSave(input) {
     save.migrationHistory.push({ from: originalVersion, to: CURRENT_SAVE_VERSION, at: new Date().toISOString() });
   }
   save.saveVersion = CURRENT_SAVE_VERSION;
-  return save;
+  return convertLegacyMeta(save);
 }
