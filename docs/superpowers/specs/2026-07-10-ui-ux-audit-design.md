@@ -3,9 +3,11 @@
 Datum: 2026-07-10 · Branch: `ui_ux_fix` · Status: vom Nutzer freigegeben (Ansatz A)
 
 ## Ziel
+
 Systematische Prüfung der kompletten UI/UX im laufenden Spiel (alle Screens, Desktop + Mobile) plus Code-Review des Styling-/UI-Systems. Findings priorisieren, anschließend die wichtigsten Probleme beheben.
 
 ## Vorgehen
+
 1. **Audit-Phase**
    - Dev-Server (`npm run dev`) starten, alle Screens per Browser-Automation aufrufen.
    - Pro Screen: Screenshot, Accessibility-Snapshot, Konsolen-Fehler; Viewports 1280×800 (Desktop) und 375×812 (Mobile).
@@ -19,6 +21,7 @@ Systematische Prüfung der kompletten UI/UX im laufenden Spiel (alle Screens, De
    - `npm run build` (beide Validatoren + Vite-Build) als finale Prüfung.
 
 ## Rahmenbedingungen (aus AGENTS.md)
+
 - CSS wird global aus `src/main.js` importiert → Kaskadeneffekte über Screens hinweg prüfen.
 - `bootstrap.js` ist Integrations-Hub → keine Service-Umbenennungen.
 - Keine breiten Refactorings; Content-IDs und Validatoren unangetastet lassen, sofern nicht nötig.
