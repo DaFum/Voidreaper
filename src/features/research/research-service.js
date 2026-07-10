@@ -4,6 +4,7 @@ export function createResearchService(saveStore, nodes) {
   return {
     canPurchase,
     async purchase(id) { const node = byId.get(id); if (!node) throw new Error(`Unknown research: ${id}`); return saveStore.update(save => { if (!canPurchase(save, node)) throw new Error(`Research unavailable: ${id}`); for (const [currency, amount] of Object.entries(node.cost)) save.currencies[currency] -= amount; save.research[id] = { purchasedAt: new Date().toISOString() }; for (const unlock of node.unlocks) save.unlocks[unlock] = true; return save; }); },
-    refundCredit(save, amount) { save.currencies.voidShards += Math.max(0, amount); return save; }
+    refundCredit(save, amount) { save.currencies.voidShards += Math.max(0, amount); return save; },
+    applyEarlyWeaponProgress(save, amount = 1) { save.earlyWeaponProgress = (save.earlyWeaponProgress ?? 0) + amount; if (save.earlyWeaponProgress >= 3) save.unlocks["plasma-caster"] = true; return save; }
   };
 }
