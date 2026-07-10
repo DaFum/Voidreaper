@@ -27,3 +27,18 @@ DEV-API: `globalThis.__VOIDREAPER_DEBUG__.assembly`
 - `npm run build`: erwartet Content- und Assembly-Validator sowie fehlerfreien Vite-Produktions-Build.
 - Die DEV-Szenarien verändern ausschließlich den aktuellen lokalen Run und sind im Produktionsmodus nicht sichtbar.
 - Baupläne enthalten keine `moduleInstanceId`, Affixe, Items oder Unlock-Zuweisungen.
+
+## Forged-Abyss-Browserabnahme – 10. Juli 2026
+
+Build: Branch `design`, Forged-Abyss-Implementierung nach `9d07368`
+
+| Ansicht | Ergebnis | Beobachtung |
+|---|---|---|
+| Vesper-Kern im Kampf | ☑ | Mehrteilige Silhouette, Void-Reaktor, Panzerung, Triebwerke und montierte Railgun bleiben klar lesbar. |
+| Gegner im Standard-Run | ☑ | Rollenbasierte prozedurale Silhouetten werden dargestellt; Treffer, Beute und automatische Zielerfassung funktionieren weiter. |
+| Shattered-Approach-Arena | ☑ | Regionale Splitter, Raster und Hintergrund liegen hinter Schiff, Gegnern, Geschossen und Gefahrenhinweisen. |
+| Sektorkarte Desktop | ☑ | Zwölf tatsächliche `next`-Verbindungen für den geprüften Seed; Auswahl und Zweitklick-Bestätigung funktionieren. |
+| Sektorkarte Mobil, 390 × 844 | ☑ | Layer bleiben horizontal verfolgbar, Verbindungslayer und Knotensignaturen bleiben sichtbar. |
+| Werkbank Mobil, 390 × 844 | ☑ | Schiff, Ports, Modi und Inspektor bleiben erreichbar; die Bühne ist innerhalb des vorhandenen Scrollbereichs bedienbar. |
+| Browserkonsole | ☑ | Keine neuen Warnungen oder Fehler während Karte, Kampf und Werkbank. |
+| Visuelle Profilabdeckung | ☑ | Validator bestätigt 10 Schiffskerne, 14 Modulfamilien, 11 Gegnerprofile, 5 Regionsprofile und 2 Detailassets. |
