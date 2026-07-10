@@ -1,5 +1,6 @@
 import { createRunRng } from "../../core/rng.js";
 import { MERCHANT_SERVICES, CORRUPT_OFFER } from "../../content/merchant/merchant-pools.js";
+import { changeRunCorruption } from "../corruption/run-corruption.js";
 
 const rarityFactor = { common: 1, uncommon: 1.3, rare: 1.8, prototype: 2.6 };
 export const merchantPrice = (item, regionIndex = 0, tier = 1) => Math.ceil(((item.itemPower ?? item.energyCost ?? 10) * 2 + 12) * (rarityFactor[item.rarity] ?? 1) * (1 + regionIndex * .12) * (1 + (tier - 1) * .08));
@@ -23,7 +24,7 @@ export function createMerchantService({ modules = [], weapons = [], reactors = [
     buy(run, offer) {
       const cost = offer.currency === "flux" ? { flux: offer.price } : { scrap: offer.price };
       if (!offer.corrupted && !currencyService.spend(run, cost)) return false;
-      if (offer.corrupted) run.corruption.value += 15;
+      if (offer.corrupted) changeRunCorruption(run, 15, "merchant-corrupted-offer");
       else run.inventory.push({ ...offer, ownership: "temporary" });
       eventBus?.emit("merchant-purchase", { offerId: offer.offerId });
       return true;

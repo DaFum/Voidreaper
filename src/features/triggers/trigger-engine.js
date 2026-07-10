@@ -19,6 +19,7 @@ export function createTriggerEngine({ eventBus, effects, clock = () => performan
     stepDepth += 1;
     try {
       for (const trigger of triggers) {
+        if (stepEffects >= 100) break;
         if (trigger.event !== eventName) continue;
         const key = trigger.instanceId ?? trigger.id;
         if ((cooldowns.get(key) ?? 0) > clock()) continue;

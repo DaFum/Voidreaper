@@ -31,6 +31,12 @@ export function createSaveStore(storage = globalThis.storage ?? globalThis.local
   const adapter = createStorageAdapter(storage);
   let queue = Promise.resolve();
 
+  function enqueue(operation) {
+    const current = queue.catch(() => undefined).then(operation);
+    queue = current.catch(() => undefined);
+    return current;
+  }
+
   async function readRaw(key) {
     const raw = await adapter.get(key);
     return raw ? JSON.parse(raw) : null;
@@ -67,17 +73,15 @@ export function createSaveStore(storage = globalThis.storage ?? globalThis.local
       }
     },
     async save(data) {
-      queue = queue.then(() => writeAtomic(migrateSave(data)));
-      return queue;
+      return enqueue(() => writeAtomic(migrateSave(data)));
     },
     async update(mutator) {
-      queue = queue.then(async () => {
+      return enqueue(async () => {
         const current = await this.load();
         const draft = structuredClone(current);
         const result = await mutator(draft);
         return writeAtomic(migrateSave(result ?? draft));
       });
-      return queue;
     },
     async getCheckpoint() { return (await this.load()).checkpoint ?? null; },
     async setCheckpoint(checkpoint) { return this.update(save => { save.checkpoint = checkpoint; }); },

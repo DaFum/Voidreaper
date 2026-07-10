@@ -9,10 +9,10 @@ export function createDroneController({ budget = 4 } = {}) {
       return drone;
     },
     update(context, dt) {
-      for (const [index, drone] of drones.entries()) {
+      for (const drone of drones) {
         drone.angle += dt * 0.9;
-        drone.x = context.player.x + Math.cos(drone.angle + index) * 72;
-        drone.y = context.player.y + Math.sin(drone.angle + index) * 72;
+        drone.x = context.player.x + Math.cos(drone.angle) * 72;
+        drone.y = context.player.y + Math.sin(drone.angle) * 72;
         drone.target = context.findTarget({ from: drone, priority: "wounded" });
       }
     },
