@@ -19,15 +19,15 @@ export function renderShipCore(ctx, geometry, palette, { time = 0, lod = "high",
     for(const path of geometry.detailPaths){ctx.strokeStyle=palette.metal;tracePath(ctx,path);ctx.stroke();}
     ctx.globalAlpha = 1; for (const [path, color] of [[geometry.cockpitPath,palette.cockpit],[geometry.reactorPath,palette.energy]]) { ctx.lineWidth = path.width ?? 2; tracePath(ctx, path); ctx.fillStyle = color; ctx.fill(); ctx.strokeStyle = palette.edge; ctx.stroke(); }
     if(geometry.voidPaths.length)for(const path of geometry.voidPaths){tracePath(ctx,path);ctx.strokeStyle=palette.fault;ctx.stroke();}
-    if(lod==="high"&&palette.corrupted)drawCracks(ctx,{radius:Math.min(width,height)*.3,color:palette.fault,seed:detailSeed,count:3,alpha:.42});
+    if((lod==="high"||lod==="ultra")&&palette.corrupted)drawCracks(ctx,{radius:Math.min(width,height)*.3,color:palette.fault,seed:detailSeed,count:lod==="ultra"?5:3,alpha:.42});
   }
   if (layer !== "static") {
     drawVoidCore(ctx,{x:geometry.reactorPath.center?.x??0,y:geometry.reactorPath.center?.y??18,radius:Math.max(4,Math.min(geometry.reactorPath.radiusX??7,geometry.reactorPath.radiusY??7)),palette,time,seed:detailSeed,reducedMotion:lod==="low",intensity:.82});
     for (const path of geometry.lightPaths) {
       if(path.kind==="line")drawEnergyRail(ctx,{from:path.from,to:path.to,color:palette.energy,width:path.width??2,flow:time,reducedMotion:lod==="low"});
-      else{tracePath(ctx,path);ctx.strokeStyle=palette.energy;ctx.globalAlpha=.76;ctx.stroke();ctx.globalAlpha=1;}
+      else{tracePath(ctx,path);ctx.strokeStyle=palette.energy;ctx.globalAlpha=.76;if(lod==="ultra"){ctx.setLineDash([4,4]);ctx.lineDashOffset=-time*10;}ctx.stroke();if(lod==="ultra")ctx.setLineDash([]);ctx.globalAlpha=1;}
     }
-    for (const anchor of geometry.thrusterAnchors) { const flame = 8 + (lod==="low"?0:Math.sin(time * 9 + anchor.x) * 2); const gradient=ctx.createLinearGradient(anchor.x,anchor.y,anchor.x,anchor.y+flame);gradient.addColorStop(0,palette.cockpit);gradient.addColorStop(.45,palette.thruster);gradient.addColorStop(1,"rgba(255,80,20,0)");ctx.fillStyle=gradient;ctx.beginPath(); ctx.moveTo(anchor.x-3,anchor.y); ctx.lineTo(anchor.x,anchor.y+flame); ctx.lineTo(anchor.x+3,anchor.y); ctx.fill(); }
+    for (const anchor of geometry.thrusterAnchors) { const flame = 8 + (lod==="low"?0:Math.sin(time * 9 + anchor.x) * 2); const gradient=ctx.createLinearGradient(anchor.x,anchor.y,anchor.x,anchor.y+flame);gradient.addColorStop(0,palette.cockpit);gradient.addColorStop(.45,palette.thruster);gradient.addColorStop(1,"rgba(255,80,20,0)");ctx.fillStyle=gradient;ctx.beginPath(); ctx.moveTo(anchor.x-3,anchor.y); ctx.lineTo(anchor.x,anchor.y+flame); ctx.lineTo(anchor.x+3,anchor.y); ctx.fill(); if (lod === "ultra") { ctx.fillStyle = palette.cockpit; for (let i = 0; i < 3; i++) { const px = anchor.x - 2 + Math.abs(Math.sin(time * 5 + i)) * 4; const py = anchor.y + flame + (time * 15 + i * 5) % 10; ctx.globalAlpha = 1 - ((time * 15 + i * 5) % 10) / 10; ctx.fillRect(px, py, 1.5, 1.5); } ctx.globalAlpha = 1; } }
   }
   ctx.restore();
 }
