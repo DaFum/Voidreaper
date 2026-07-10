@@ -289,6 +289,37 @@
       outline-offset: 2px
     }
 
+    #combat-actions {
+      position: fixed;
+      right: max(18px, env(safe-area-inset-right));
+      bottom: max(18px, env(safe-area-inset-bottom));
+      z-index: 35;
+      display: none;
+      gap: 8px;
+    }
+
+    body:has(#hud[style*="display: block"]) #combat-actions { display: flex; }
+
+    .combat-action {
+      width: 68px;
+      min-height: 54px;
+      color: var(--ice);
+      border: 1px solid currentColor;
+      background: rgba(4, 1, 10, .78);
+      font: 10px/1.15 var(--font-m);
+      letter-spacing: .08em;
+      clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+    }
+
+    .combat-action span { display: block; color: var(--bone); margin-bottom: 5px; }
+    .combat-action:disabled { opacity: .35; }
+    .combat-action[data-action="dodge"] { color: var(--phosphor); }
+
+    @media (pointer: coarse) {
+      .combat-action { width: 76px; min-height: 64px; }
+      .resource-cluster { bottom: 92px; }
+    }
+
     #stick {
       position: fixed;
       z-index: 32;
