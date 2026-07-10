@@ -7,6 +7,8 @@ export function createInventoryService(items = {}) {
     get(id) { return entries.get(id) ?? null; },
     remove(id) { const item = entries.get(id); entries.delete(id); return item ?? null; },
     values() { return [...entries.values()]; },
+    favorite(id, value = true) { const item = entries.get(id); if (item) item.favorite = value; return Boolean(item); },
+    filtered(predicate) { return [...entries.values()].filter(predicate); },
     serialize() { return Object.fromEntries(entries); }
   };
 }
