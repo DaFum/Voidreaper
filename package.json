@@ -5,12 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "test": "node --test",
     "build": "npm run validate-content && npm run validate:assembly && vite build",
     "preview": "vite preview",
     "validate-content": "node scripts/validate-content.mjs",
     "validate:assembly": "node scripts/validate-ship-assembly-content.mjs"
   },
   "devDependencies": {
-    "vite": "^7.0.0"
+    "vite": "^8.1.4",
+    "vitest": "^4.1.10"
   }
 }
