@@ -1,6 +1,7 @@
 import { createIdService, createRuntimeId } from "../core/ids.js";
 import { createRunRng } from "../core/rng.js";
 import { createPlayerState } from "./create-player-state.js";
+import { createCampaignState } from "../features/sectors/campaign-state.js";
 
 export function createRunState({ seed = Date.now(), mode = "campaign", difficulty = "standard", player = {} } = {}) {
   const runId = createRuntimeId("run");
@@ -12,6 +13,7 @@ export function createRunState({ seed = Date.now(), mode = "campaign", difficult
     mode,
     difficulty,
     phase: "sector-map",
+    campaign: createCampaignState(),
     time: 0,
     score: 0,
     kills: 0,

@@ -4,17 +4,29 @@ export const APP_STATES = Object.freeze([
   "run",
   "levelup",
   "pause",
-  "sector",
+  "sector-map",
+  "merchant",
+  "workshop",
+  "anomaly",
+  "extraction",
+  "sector-summary",
+  "abyss-transition",
   "gameover"
 ]);
 
 const TRANSITIONS = {
   menu: ["hangar", "run"],
   hangar: ["menu", "run"],
-  run: ["levelup", "pause", "sector", "gameover"],
+  run: ["levelup", "pause", "sector-map", "extraction", "sector-summary", "abyss-transition", "gameover"],
   levelup: ["run", "gameover"],
   pause: ["run", "hangar", "gameover"],
-  sector: ["run", "hangar", "gameover"],
+  "sector-map": ["run", "merchant", "workshop", "anomaly", "extraction", "hangar", "gameover"],
+  merchant: ["sector-map", "hangar", "gameover"],
+  workshop: ["sector-map", "hangar", "gameover"],
+  anomaly: ["sector-map", "run", "hangar", "gameover"],
+  extraction: ["run", "sector-map", "hangar", "abyss-transition", "gameover"],
+  "sector-summary": ["sector-map", "extraction", "abyss-transition", "hangar"],
+  "abyss-transition": ["run", "extraction", "hangar"],
   gameover: ["menu", "hangar", "run"]
 };
 
