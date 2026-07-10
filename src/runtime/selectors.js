@@ -4,6 +4,14 @@ export function selectStat(run, statId, fallback = 0) {
   return run.player.stats.get(statId) ?? fallback;
 }
 
+export function selectStatBreakdown(run, statId) {
+  return run.services?.stats?.calculate(statId, { run, player: run.player, sources: run.build.sources }) ?? {
+    value: selectStat(run, statId),
+    baseValue: selectStat(run, statId),
+    contributions: []
+  };
+}
+
 export const selectHullRatio = run => run.player.maxHull > 0 ? run.player.hull / run.player.maxHull : 0;
 export const selectEnergyRatio = run => run.player.resources.maxEnergy > 0
   ? run.player.resources.energy / run.player.resources.maxEnergy
