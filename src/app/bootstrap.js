@@ -105,7 +105,7 @@ export async function bootstrap() {
   console.info(`[content] ${SHIPS.length} ships · ${WEAPONS.length} weapons · ${REACTORS.length} reactors · ${MODULES.length} modules`);
 
   const controller = createGameController(services);
-  const input = createInputController({ eventBus: events });
+  const input = createInputController({ eventBus: events, bindings: metaSave.settings.bindings });
   input.start();
   const inspector = createBuildInspector(document.querySelector("#build-inspector"), services);
   const game = legacyRuntime.game;
@@ -170,7 +170,7 @@ export async function bootstrap() {
       if (tab === "Kampagnen") renderCampaignSelect(content, services.campaignPaths.available(metaSave), async id => { await services.save.update(save => { services.campaignPaths.select(save, id); }); metaSave = await services.save.load(); hangar.show("Run starten"); });
       if (tab === "Simulator") { const render = summary => renderSimulatorScreen(content, { summary, onStart: config => { const simRun = services.simulator.create(config); services.simulator.record(simRun, { dt: 1, damage: 0, heat: 0, energy: 100 }); render(services.simulator.summary(simRun)); } }); render(); }
       if (tab === "Statistiken") renderStatistics(content, metaSave.statistics, metaSave.records);
-      if (tab === "Einstellungen") renderSettingsScreen(content, metaSave.settings, async settings => { await services.save.update(save => { save.settings = structuredClone(settings); }); });
+      if (tab === "Einstellungen") renderSettingsScreen(content, metaSave.settings, async settings => { for (const [code, action] of Object.entries(settings.bindings)) input.rebind(action, code); await services.save.update(save => { save.settings = structuredClone(settings); }); });
       if (tab === "Bergung") { const signal = services.wreckSignals.visible(metaSave.wreckSignals)[0]; if (!signal) content.innerHTML = `<div class="hangar-placeholder"><strong>KEIN AKTIVES WRACK-SIGNAL</strong><span>Legendäre verlorene Prototypen erscheinen nach dem nächsten Run.</span></div>`; else { const mission = services.salvageMissions.create(signal); renderSalvageMission(content, mission, () => game.start("standard")); } }
       if (tab === "Run starten") { const step = services.onboarding.current(metaSave); if (step) content.append(createTutorialCallout(step, { onDismiss: () => {}, onSkip: async () => { await services.onboarding.skip(); metaSave = await services.save.load(); hangar.render(); } })); }
     }
