@@ -1,9 +1,9 @@
 # VOIDREAPER Adaptive Ship Assembly Phase 1: Graph and Content Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `subagent-driven-development` (recommended) or `executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
+> <br>
 > **Verbindliche Projektvorgabe:** Für dieses Feature werden keine Testdateien, kein Testverzeichnis und kein automatisiertes Testframework ergänzt. Kontrollschritte bestehen aus Produktions-Builds, statischer Content-Validierung, reproduzierbaren Entwicklungs-Szenarien und manueller Prüfung im integrierten Assembly-Debugmodus.
-
+> <br>
 > **Verbindliche Gestaltungsregel:** „Handgestaltet“ bedeutet, dass der Coding Agent alle sichtbaren Modulkerne, Panzerungen, Ports, Streben, Leitungen, Animationen, Schadenszustände, Symbole und Oberflächen direkt im Code entwirft und implementiert. Externe Designer, nachzuliefernde Sprites und finale Platzhaltergeometrien sind ausgeschlossen.
 
 **Goal:** Einen stabilen Konstruktionsgraphen, strukturelle Ports, Modul-Assembly-Metadaten, Kompatibilitätsregeln und deterministische Platzierungsvorschläge aufbauen, ohne das bestehende Equipment-System zu duplizieren.
