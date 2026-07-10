@@ -9,6 +9,7 @@ export function createRunInventory() {
     store(id) { const item=items.get(id); if(item)item.stored=true; return item??null; },
     addPending(entry) { pending.set(entry.pendingMountId, structuredClone(entry)); return entry; },
     updatePending(id, patch) { const entry=pending.get(id); if(!entry)return null; Object.assign(entry,patch); return entry; },
+    restorePending(entries=[]) { pending.clear(); for(const entry of entries)pending.set(entry.pendingMountId,structuredClone(entry)); },
     pending() { return [...pending.values()]; },
     serialize() { return [...items.values()].map(item => structuredClone(item)); },
     serializePending() { return [...pending.values()].map(item => structuredClone(item)); }
