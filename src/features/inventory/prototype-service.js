@@ -12,6 +12,7 @@ export function createPrototypeService({ baseMarkLimit = 3 } = {}) {
     selected(inventory) { return inventory.values().filter(item => item.marked && !item.secured); },
     secure(inventory, instanceIds) { for (const id of instanceIds) { const item = inventory.get(id); if (item) { item.secured = true; item.prototypeStatus = "extracted"; } } },
     transferPayload(inventory, instanceIds) { return instanceIds.map(id => inventory.get(id)).filter(Boolean).map(item => ({ ...item, secured: true, prototypeStatus: "extracted" })); },
+    atRisk(inventory) { return inventory.values().filter(item => ["prototype", "relic"].includes(item.ownership) && !item.secured); },
     markLimit(loadoutSources = []) { return baseMarkLimit + (loadoutSources.some(source => source.id === "prototype-locker") ? 1 : 0); }
   };
 }
