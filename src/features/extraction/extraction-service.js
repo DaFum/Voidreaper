@@ -5,7 +5,7 @@ export function createExtractionService({ prototypeService, saveStore, eventBus 
     async secure(run, window) {
       if (!window.complete) return false;
       const items = window.marked.map(item => ({ ...item, secured: true, prototypeStatus: "extracted" }));
-      await saveStore.update(save => { save.inventory ??= []; const known = new Set(save.inventory.map(item => item.instanceId)); for (const item of items) if (!known.has(item.instanceId)) save.inventory.push(item); });
+      await saveStore.update(save => { save.inventory ??= {}; for (const item of items) save.inventory[item.instanceId] ??= item; });
       for (const item of window.marked) { item.secured = true; item.prototypeStatus = "extracted"; }
       eventBus?.emit("prototype-extracted", { instanceIds: items.map(item => item.instanceId) });
       return true;
