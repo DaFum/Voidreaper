@@ -115,6 +115,17 @@
     <button class="btn small" id="menubtn">Hangar</button>
   </div>
 
+    <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+      <filter id="chromatic" x="-2%" y="-2%" width="104%" height="104%" color-interpolation-filters="sRGB">
+        <feColorMatrix in="SourceGraphic" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="red" />
+        <feOffset in="red" dx="2.5" dy="0" result="redShift" />
+        <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="blue" />
+        <feOffset in="blue" dx="-2.5" dy="0" result="blueShift" />
+        <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="green" />
+        <feBlend in="redShift" in2="green" mode="screen" result="redGreen" />
+        <feBlend in="redGreen" in2="blueShift" mode="screen" />
+      </filter>
+    </svg>
     <script type="module" src="/src/main.js"></script>
 </body>
 

@@ -3,6 +3,8 @@
     import { renderForgedEnemy } from "../render/enemies/enemy-renderer.js";
     import { renderRegionWorld } from "../render/regions/region-world-renderer.js";
     import { createBloomPass } from "../render/post/bloom-pass.js";
+    import { createLightMask } from "../render/post/light-mask.js";
+    import { getRegionRules } from "../features/sectors/region-rules.js";
 
     "use strict";
     /* =====================================================================
@@ -125,6 +127,7 @@
     window.addEventListener("resize", resize, { passive: true });
     resize();
     const Bloom = createBloomPass({ strength: .42, blur: 4 });
+    const LightMask = createLightMask();
 
     /* ---------- pre-baked nebula layer (drawn twice with slow drift) ---------- */
     const Nebula = {
@@ -375,6 +378,7 @@
     const mkText = () => ({ x: 0, y: 0, vy: 0, txt: "", color: "#fff", life: 0, maxLife: 0.9, dead: true, size: 12, heavy: false });
     const mkPickup = () => ({ x: 0, y: 0, type: null, t: 0, dead: true, life: 18 });
     const mkZone = () => ({ x: 0, y: 0, r: 0, life: 0, maxLife: 1, dead: true, dps: 0, color: "#c77dff", pull: 0, telegraph: false });
+    const mkShock = () => ({ x: 0, y: 0, maxR: 120, life: 0, maxLife: .5, color: "#4cc9f0", dead: true });
     const mkSpawn = () => ({ x: 0, y: 0, t: 0, type: "", dead: true });
 
     /* ---------- game core ---------- */
@@ -388,6 +392,7 @@
       texts: new Pool(mkText, 90),
       pickups: new Pool(mkPickup, 24),
       zones: new Pool(mkZone, 24),
+      shocks: new Pool(mkShock, 32),
       spawnsQ: new Pool(mkSpawn, 40),
       hash: new SpatialHash(72), qbuf: [],
       cam: { x: 0, y: 0, shake: 0, sx: 0, sy: 0 },
@@ -442,7 +447,7 @@
         };
         this.rerolls = m("mreroll"); this.banishes = m("mbanish"); this.revives = m("mrevive");
         this.enemies.length = 0;
-        [this.bullets, this.ebullets, this.parts, this.gems, this.texts, this.pickups, this.zones, this.spawnsQ].forEach(p => p.releaseAll());
+        [this.bullets, this.ebullets, this.parts, this.gems, this.texts, this.pickups, this.zones, this.spawnsQ, this.shocks].forEach(p => p.releaseAll());
         this.wave = 1; this.spawnBudget = 0; this.spawnTimer = 0;
         this.score = 0; this.kills = 0; this.time = 0; this.boss = null; this.bossKills = 0;
         this.upgradeCounts = {}; this.banished = new Set(); this.evolutions = 0;
@@ -666,6 +671,8 @@
         p.hp -= dmg; p.iframes = 0.7;
         this.combo = 0; this.comboT = 0; this.streakIdx = 0; UI.combo(0, 0, 0);
         this.shake(9); this.glitch(); UI.flash(); AudioSys.hurt();
+        this.hitStop = Math.max(this.hitStop, 0.05);
+        this.shockwave(p.x, p.y, 130, "#ff2d78", .4);
         this.burst(p.x, p.y, 14, "#ff2d78", 240);
         if (p.hp <= 0) {
           if (this.revives > 0) {
@@ -729,6 +736,8 @@
         // death implosion: converging shards then burst
         this.implode(e.x, e.y, e.color, e.r);
         this.burst(e.x, e.y, e.boss ? 60 : 14, e.color, e.boss ? 420 : 190);
+        if (e.boss) this.shockwave(e.x, e.y, 340, "#ffd166", .8);
+        else if (e.r > 18) this.shockwave(e.x, e.y, 90, e.color, .4);
         this.hitStop = Math.max(this.hitStop, e.boss ? 0.12 : (e.r > 18 ? 0.045 : 0.02));
         AudioSys.kill();
 
@@ -799,6 +808,7 @@
 
       bombBlast(x, y, R, dmg) {
         this.ring(x, y, R);
+        this.shockwave(x, y, R * 1.15, "#ff8f1f", .5);
         this.burst(x, y, 50, "#ff8f1f", 400);
         for (const e of this.enemies.slice()) {
           if (dist2(x, y, e.x, e.y) < R * R) {
@@ -877,6 +887,7 @@
         this.burst(p.x, p.y, 46, p.evoSing ? "#c77dff" : "#4cc9f0", 380);
         this.shake(6); AudioSys.noise(0.35, 0.25, 700);
         this.ring(p.x, p.y, R);
+        this.shockwave(p.x, p.y, R * 1.1, p.evoSing ? "#c77dff" : "#4cc9f0", .45);
         for (const e of this.enemies.slice()) {
           if (dist2(p.x, p.y, e.x, e.y) < R * R) {
             this.damageEnemy(e, 14 * p.dmgMul * p.nova, false);
@@ -929,6 +940,10 @@
           pt.vx = -Math.cos(a) * d * 6; pt.vy = -Math.sin(a) * d * 6;
           pt.life = pt.maxLife = 0.16; pt.size = 2; pt.color = color; pt.drag = 1;
         }
+      },
+      shockwave(x, y, maxR, color = "#4cc9f0", duration = .5) {
+        const s = this.shocks.get();
+        s.x = x; s.y = y; s.maxR = maxR; s.color = color; s.life = s.maxLife = duration;
       },
       ring(x, y, R) {
         for (let i = 0; i < 36; i++) {
@@ -1267,6 +1282,7 @@
           pt.vx *= pt.drag; pt.vy *= pt.drag;
           pt.x += pt.vx * dt; pt.y += pt.vy * dt;
         });
+        this.shocks.update(s => { s.life -= dt; if (s.life <= 0) s.dead = true; });
         this.texts.update(t => {
           t.life -= dt;
           if (t.life <= 0) { t.dead = true; return; }
@@ -1529,12 +1545,34 @@
         cx.strokeStyle = "rgba(6,255,165,.07)";
         cx.beginPath(); cx.arc(p.x, p.y, p.magnet, 0, TAU); cx.stroke();
 
-        // additive particles
+        // expanding shockwave rings
+        for (const s of this.shocks.live) {
+          const f = 1 - s.life / s.maxLife;
+          const ease = 1 - Math.pow(1 - f, 3);
+          cx.strokeStyle = s.color;
+          cx.globalAlpha = (1 - f) * .8;
+          cx.lineWidth = 2 + (1 - f) * 4;
+          cx.beginPath(); cx.arc(s.x, s.y, s.maxR * ease, 0, TAU); cx.stroke();
+          cx.globalAlpha = (1 - f) * .3;
+          cx.lineWidth = 1.5;
+          cx.beginPath(); cx.arc(s.x, s.y, s.maxR * ease * .68, 0, TAU); cx.stroke();
+        }
+        cx.globalAlpha = 1;
+
+        // additive particles (fast ones render as velocity-stretched sparks)
+        const sparks = this.bloomOn !== false;
         cx.globalCompositeOperation = "lighter";
+        cx.lineCap = "round";
         for (const pt of this.parts.live) {
           cx.globalAlpha = clamp(pt.life / pt.maxLife, 0, 1);
-          cx.fillStyle = pt.color;
-          cx.fillRect(pt.x - pt.size / 2, pt.y - pt.size / 2, pt.size, pt.size);
+          if (sparks && pt.vx * pt.vx + pt.vy * pt.vy > 2400) {
+            cx.strokeStyle = pt.color;
+            cx.lineWidth = pt.size;
+            cx.beginPath(); cx.moveTo(pt.x - pt.vx * 0.035, pt.y - pt.vy * 0.035); cx.lineTo(pt.x, pt.y); cx.stroke();
+          } else {
+            cx.fillStyle = pt.color;
+            cx.fillRect(pt.x - pt.size / 2, pt.y - pt.size / 2, pt.size, pt.size);
+          }
         }
         cx.globalCompositeOperation = "source-over";
         cx.globalAlpha = 1;
@@ -1575,21 +1613,38 @@
 
         cx.restore();
 
-        // eclipse mask
-        if (eclipse) {
-          cx.save();
-          cx.fillStyle = "rgba(2,1,10,.74)";
-          cx.beginPath();
-          cx.rect(0, 0, W, H);
-          const lx = W / 2 + (p.x - this.cam.x), ly = H / 2 + (p.y - this.cam.y);
-          cx.arc(lx, ly, 170, 0, TAU, true);
-          cx.fill("evenodd");
-          // soft rim
-          const rim = cx.createRadialGradient(lx, ly, 140, lx, ly, 190);
-          rim.addColorStop(0, "rgba(79,109,245,.14)"); rim.addColorStop(1, "rgba(79,109,245,0)");
-          cx.fillStyle = rim;
-          cx.beginPath(); cx.arc(lx, ly, 190, 0, TAU); cx.fill();
-          cx.restore();
+        // darkness veil: region visibility + eclipse event, lit by player/projectiles/effects
+        const rules = getRegionRules(this.visualRegionId ?? "shattered-approach", this.time);
+        const regionDark = Math.min(.6, (1 - (rules?.visibility ?? 1)) * 1.9);
+        const darkness = Math.max(eclipse ? .74 : 0, regionDark);
+        if (darkness > 0) {
+          if (this.bloomOn !== false) {
+            const offX = W / 2 - camX + this.cam.sx, offY = H / 2 - camY + this.cam.sy;
+            const lights = [{ x: p.x, y: p.y, radius: 200, intensity: 1 }];
+            const addLights = (list, limit, radius, intensity) => { for (let i = 0; i < list.length && i < limit; i++) lights.push({ x: list[i].x, y: list[i].y, radius, intensity }); };
+            addLights(this.bullets.live, 24, 46, .75);
+            addLights(this.ebullets.live, 16, 40, .55);
+            addLights(this.gems.live, 14, 28, .5);
+            addLights(this.pickups.live, 8, 48, .7);
+            for (const z of this.zones.live) if (!z.telegraph) lights.push({ x: z.x, y: z.y, radius: z.r, intensity: .5 });
+            for (const s of this.shocks.live) lights.push({ x: s.x, y: s.y, radius: s.maxR * (1 - s.life / s.maxLife) + 40, intensity: .7 * (s.life / s.maxLife) });
+            if (this.boss) lights.push({ x: this.boss.x, y: this.boss.y, radius: 130, intensity: .6 });
+            LightMask.apply(cx, { darkness, lights, viewport: { width: W, height: H }, offsetX: offX, offsetY: offY });
+          } else {
+            // cheap fallback: flat veil with a hard pool of light around the player
+            cx.save();
+            cx.fillStyle = `rgba(2,1,10,${darkness})`;
+            cx.beginPath();
+            cx.rect(0, 0, W, H);
+            const lx = W / 2 + (p.x - this.cam.x), ly = H / 2 + (p.y - this.cam.y);
+            cx.arc(lx, ly, 170, 0, TAU, true);
+            cx.fill("evenodd");
+            const rim = cx.createRadialGradient(lx, ly, 140, lx, ly, 190);
+            rim.addColorStop(0, "rgba(79,109,245,.14)"); rim.addColorStop(1, "rgba(79,109,245,0)");
+            cx.fillStyle = rim;
+            cx.beginPath(); cx.arc(lx, ly, 190, 0, TAU); cx.fill();
+            cx.restore();
+          }
         }
         if (frozen) {
           cx.fillStyle = "rgba(76,201,240,.08)";

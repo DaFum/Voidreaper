@@ -61,6 +61,10 @@
       filter: saturate(1.6) contrast(1.08)
     }
 
+    body.glitching #game {
+      filter: saturate(1.6) contrast(1.08) url(#chromatic)
+    }
+
     /* ---- CRT + atmosphere ---- */
     #crt {
       position: fixed;
@@ -130,6 +134,10 @@
     @media (prefers-reduced-motion: reduce) {
       body.glitching #crt {
         animation: none
+      }
+
+      body.glitching #game {
+        filter: saturate(1.3)
       }
 
       body.lowhp #vignette {

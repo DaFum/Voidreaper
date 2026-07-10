@@ -4,6 +4,7 @@ import { createAssemblyRenderer } from "../../src/render/ship-assembly/assembly-
 import { renderRegionWorld } from "../../src/render/regions/region-world-renderer.js";
 import { createBloomPass } from "../../src/render/post/bloom-pass.js";
 import { renderRegionParallaxBackdrop, renderRegionParallaxDust } from "../../src/render/regions/region-parallax-renderer.js";
+import { createLightMask } from "../../src/render/post/light-mask.js";
 import { buildCoreGeometry } from "../../src/features/ship-assembly/geometry/core-geometry-builders.js";
 import { SHIP_FRAME_ASSEMBLY_PROFILES } from "../../src/features/ship-assembly/content/ship-frame-assembly-profiles.js";
 
@@ -55,6 +56,11 @@ test("renderRegionWorld draws motifs without DOM sprite cache", () => {
 
 test("bloom pass is a no-op without DOM", () => {
   assert.doesNotThrow(() => createBloomPass().apply(createStubContext()));
+});
+
+test("light mask is a no-op without DOM", () => {
+  const mask = createLightMask();
+  assert.doesNotThrow(() => mask.apply(createStubContext(), { darkness: .5, lights: [{ x: 0, y: 0, radius: 100 }], viewport: { width: 640, height: 360 } }));
 });
 
 test("region parallax layers degrade gracefully without DOM", () => {
