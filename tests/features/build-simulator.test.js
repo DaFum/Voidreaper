@@ -25,3 +25,16 @@ test("simulation duration is bounded", () => {
   simulator.simulate(run);
   assert.equal(run.simulator.elapsed, 300);
 });
+
+test("valid simulator bounds can trigger thermal faults", () => {
+  const simulator = createBuildSimulator();
+  let observedFault = false;
+
+  for (let seed = 1; seed <= 20 && !observedFault; seed += 1) {
+    const run = simulator.create({ seed, density: 5, duration: 300 });
+    const summary = simulator.simulate(run);
+    observedFault = summary.faults.includes("thermal-fault");
+  }
+
+  assert.equal(observedFault, true);
+});

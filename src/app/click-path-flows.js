@@ -8,10 +8,11 @@ export function attemptMerchantPurchase({ merchant, run, offer, finish, onReject
   return true;
 }
 
-export function attemptWorkshopAction({ workshop, session, action, target, payload, finish }) {
+export function attemptWorkshopAction({ workshop, session, action, target, payload, finish, onContinue = () => {} }) {
   const applied = workshop.apply(session, action, target, payload);
   if (!applied) return false;
-  finish();
+  if (session.used >= session.actionPoints) finish();
+  else onContinue();
   return true;
 }
 
@@ -28,4 +29,11 @@ export function syncLegacyVoidShards({ persistence, root, currencies }) {
   const counter = root.querySelector("#shards0");
   if (counter) counter.textContent = String(value);
   return value;
+}
+
+export const canUseWorkbenchPort = port => Boolean(port && !port.occupiedByNodeId);
+
+export function resetCampaignResume(services) {
+  delete services.resumeRun;
+  return null;
 }

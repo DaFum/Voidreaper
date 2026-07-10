@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import {
   attemptMerchantPurchase,
   attemptWorkshopAction,
+  canUseWorkbenchPort,
   prepareCheckpointResume,
+  resetCampaignResume,
   syncLegacyVoidShards
 } from "../../src/app/click-path-flows.js";
 
@@ -36,19 +38,42 @@ test("merchant success finishes the node", () => {
   assert.equal(finished, true);
 });
 
-test("successful workshop action finishes the node", () => {
+test("successful workshop action with remaining AP keeps the workshop open", () => {
   let finished = false;
+  let continued = false;
+  const session = { actionPoints: 3, used: 0 };
   const applied = attemptWorkshopAction({
-    workshop: { apply: () => true },
-    session: {},
+    workshop: { apply: () => { session.used = 1; return true; } },
+    session,
     action: "overclock",
     target: {},
     payload: {},
-    finish: () => { finished = true; }
+    finish: () => { finished = true; },
+    onContinue: () => { continued = true; }
+  });
+
+  assert.equal(applied, true);
+  assert.equal(finished, false);
+  assert.equal(continued, true);
+});
+
+test("successful workshop action finishes when AP are exhausted", () => {
+  let finished = false;
+  let continued = false;
+  const session = { actionPoints: 3, used: 1 };
+  const applied = attemptWorkshopAction({
+    workshop: { apply: () => { session.used = 3; return true; } },
+    session,
+    action: "overclock",
+    target: {},
+    payload: {},
+    finish: () => { finished = true; },
+    onContinue: () => { continued = true; }
   });
 
   assert.equal(applied, true);
   assert.equal(finished, true);
+  assert.equal(continued, false);
 });
 
 test("rejected workshop action stays open", () => {
@@ -91,4 +116,16 @@ test("void shard synchronization updates legacy state and its visible counter", 
 
   assert.equal(persistence.data.shards, 45);
   assert.equal(counter.textContent, "45");
+});
+
+test("workbench port selection rejects missing and occupied ports", () => {
+  assert.equal(canUseWorkbenchPort(undefined), false);
+  assert.equal(canUseWorkbenchPort({ occupiedByNodeId: "node" }), false);
+  assert.equal(canUseWorkbenchPort({ occupiedByNodeId: null }), true);
+});
+
+test("fresh campaigns clear pending checkpoint resume state", () => {
+  const services = { resumeRun: { id: "checkpoint" } };
+  assert.equal(resetCampaignResume(services), null);
+  assert.equal("resumeRun" in services, false);
 });

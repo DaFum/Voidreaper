@@ -90,7 +90,7 @@ import { renderBlueprintDetail } from "../ui/ship-assembly/blueprint-detail-scre
 import { createBlueprintImportDialog } from "../ui/ship-assembly/blueprint-import-dialog.js";
 import { createQuickMountOverlay } from "../ui/ship-assembly/quick-mount-overlay.js";
 import { renderPlacementPreview } from "../ui/ship-assembly/placement-preview-overlay.js";
-import { attemptMerchantPurchase, attemptWorkshopAction, prepareCheckpointResume, syncLegacyVoidShards } from "./click-path-flows.js";
+import { attemptMerchantPurchase, attemptWorkshopAction, canUseWorkbenchPort, prepareCheckpointResume, resetCampaignResume, syncLegacyVoidShards } from "./click-path-flows.js";
 import { renderLoadoutScreen } from "../ui/screens/loadout-screen.js";
 
 export async function bootstrap() {
@@ -123,6 +123,11 @@ export async function bootstrap() {
   services.checkpoints = createCheckpointService(services.save, events);
   const initialSave = await services.save.load();
   let metaSave = initialSave;
+  let currentCheckpoint = initialSave.checkpoint;
+  const writeCurrentCheckpoint = async (run, nodeId) => {
+    currentCheckpoint = await services.checkpoints.writeAfterNode(run, nodeId);
+    return currentCheckpoint;
+  };
   services.research = createResearchService(services.save, RESEARCH_TREE);
   services.codex = createCodexService({ ships: SHIPS, weapons: WEAPONS, reactors: REACTORS, modules: MODULES, forbidden: WEAPONS.filter(weapon => weapon.id === "anomaly-engine") });
   services.campaignPaths = createCampaignPathService(CAMPAIGN_PATHS);
@@ -197,7 +202,7 @@ export async function bootstrap() {
       if (action === "select-node") { movingBranch = false; workbench.selectNode(data.id); }
       if (action === "select-port") {
         const port = services.currentAssembly.getSnapshot().portsById[data.id];
-        if (!port?.occupiedByNodeId) {
+        if (canUseWorkbenchPort(port)) {
           workbench.selectPort(data.id);
           const transform = { position: port.localPosition ?? { x: (port.direction?.x ?? 0) * 34, y: (port.direction?.y ?? 0) * 34 }, rotation: Math.atan2(port.direction?.y ?? 0, port.direction?.x ?? 1) };
           if (movingBranch && workbench.session.selectedNodeId) { workbench.move(transform, { branch: true }); movingBranch = false; }
@@ -224,7 +229,7 @@ export async function bootstrap() {
     const stage = hangarRoot.querySelector(".hangar-content");
     mapScreen = createSectorMapScreen(stage, { onWorkbench: showAssemblyWorkbench, onConfirm: node => {
       if (!services.sectors.enter(previewRun, node.id)) return;
-      const finish = () => { services.sectors.complete(previewRun, node.id); services.checkpoints.writeAfterNode(previewRun, node.id); showCampaignMap(); };
+      const finish = async () => { services.sectors.complete(previewRun, node.id); await writeCurrentCheckpoint(previewRun, node.id); showCampaignMap(); };
       if (["combat", "elite", "salvage", "mid-boss", "boss", "extraction"].includes(node.type)) {
         activeCampaignNodeId = node.id;
         if (game.player && game.wave > 0) { game.state = "run"; ui.show("hud"); originalStartWave(game.wave + 1); }
@@ -245,7 +250,8 @@ export async function bootstrap() {
       }
       if (node.type === "workshop") {
         const workshop = createWorkshopService({ affixRoller: services.affixes, eventBus: events }); const session = workshop.open(node.regionIndex); const target = previewRun.inventory[0] ?? { ...REACTORS[0], rarity: "rare", itemPower: 100, affixes: [] };
-        renderWorkshopScreen(stage, { service: workshop, session, target, onAction: (action, item) => attemptWorkshopAction({ workshop, session, action, target: item, payload: { rng: previewRun.rng, sector: node.regionIndex, repairService: services.repairs }, finish }), onLeave: finish }); return;
+        const showWorkshop = () => renderWorkshopScreen(stage, { service: workshop, session, target, onAction: (action, item) => attemptWorkshopAction({ workshop, session, action, target: item, payload: { rng: previewRun.rng, sector: node.regionIndex, repairService: services.repairs }, finish, onContinue: showWorkshop }), onLeave: finish });
+        showWorkshop(); return;
       }
       if (node.type === "anomaly") {
         const anomaly = createAnomalyService(events); const signal = anomaly.select(node.seed, previewRun.anomalies?.map(entry => entry.eventId));
@@ -261,9 +267,9 @@ export async function bootstrap() {
     reactors: REACTORS,
     modules: MODULES,
     currencies: () => metaSave.currencies,
-    checkpoint: initialSave.checkpoint,
+    checkpoint: () => currentCheckpoint,
     isUnlocked: definition => services.unlocks.isUnlocked(definition),
-    onStart: showCampaignMap,
+    onStart: () => { previewRun = resetCampaignResume(services); activeCampaignNodeId = null; showCampaignMap(); },
     onResume: checkpoint => { const hydrated = services.checkpoints.hydrate(checkpoint, services); if (!hydrated) return; previewRun = hydrated.run; prepareCheckpointResume({ services, controller, game, run: previewRun }); showCampaignMap(); },
     renderTab: (tab, content) => {
       if (tab === "Loadout") {
@@ -306,7 +312,7 @@ export async function bootstrap() {
         });
         showLibrary();
       }
-      if (tab === "Codex") { const show = filters => renderCodexScreen(content, { entries: services.codex.filter(metaSave, filters), onFilter: show }); show({}); }
+      if (tab === "Codex") { const show = filters => renderCodexScreen(content, { entries: services.codex.filter(metaSave, filters), filters, onFilter: show }); show({}); }
       if (tab === "Herausforderungen") renderChallengesScreen(content, [...CHALLENGES, ...createMasteryChallenges(SHIPS, WEAPONS)], metaSave.challenges);
       if (tab === "Prototypen") { const vault = createPrototypeVault(metaSave); const show = filters => renderPrototypeVault(content, { items: vault.filter(filters), filters, capacity: vault.capacity, overflowCount: Object.keys(metaSave.overflow).length, onFilter: show, onFavorite: async id => { vault.favorite(id, !metaSave.inventory[id].favorite); await services.save.save(metaSave); hangar.render(); }, onDismantle: async id => { vault.dismantle(id); await services.save.save(metaSave); hangar.render(); } }); show({}); }
       if (tab === "Kampagnen") renderCampaignSelect(content, services.campaignPaths.available(metaSave), async id => { await services.save.update(save => { services.campaignPaths.select(save, id); }); metaSave = await services.save.load(); hangar.show("Run starten"); });
@@ -328,7 +334,7 @@ export async function bootstrap() {
   game.startWave = wave => {
     if (activeCampaignNodeId && wave > 1) {
       services.sectors.complete(previewRun, activeCampaignNodeId);
-      services.checkpoints.writeAfterNode(previewRun, activeCampaignNodeId);
+      void writeCurrentCheckpoint(previewRun, activeCampaignNodeId);
       activeCampaignNodeId = null;
       game.state = "sector-map";
       ui.show("start");

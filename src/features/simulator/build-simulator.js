@@ -27,7 +27,7 @@ export function createBuildSimulator() {
       const crowdFactor = 1 + Math.max(0, density - 1) * .18;
       for (let second = 0; second < duration; second += 1) {
         const variance = .9 + run.rng.next() * .2;
-        const heat = Math.min(100, 4 * density + second * .22);
+        const heat = Math.min(100, 4 * density + second * .32);
         const energy = Math.max(0, 100 - density * 5 - heat * .18);
         this.record(run, {
           dt: 1,
