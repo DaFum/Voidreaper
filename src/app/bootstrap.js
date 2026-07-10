@@ -66,6 +66,8 @@ import { OFFENSIVE_AFFIXES } from "../content/affixes/offensive-affixes.js";
 import { DEFENSIVE_AFFIXES } from "../content/affixes/defensive-affixes.js";
 import { UTILITY_AFFIXES } from "../content/affixes/utility-affixes.js";
 import { CORRUPTED_AFFIXES } from "../content/affixes/corrupted-affixes.js";
+import { createAssemblyProfileRegistry } from "../features/ship-assembly/content/assembly-profile-registry.js";
+import { SHIP_FRAME_ASSEMBLY_PROFILES } from "../features/ship-assembly/content/ship-frame-assembly-profiles.js";
 
 export async function bootstrap() {
   document.documentElement.dataset.app = "voidreaper-modular";
@@ -105,6 +107,9 @@ export async function bootstrap() {
   services.wreckSignals = createWreckSignalService();
   services.salvageMissions = createSalvageMissionService(services.save);
   services.affixes = createAffixRoller([OFFENSIVE_AFFIXES, DEFENSIVE_AFFIXES, UTILITY_AFFIXES, CORRUPTED_AFFIXES]);
+  services.assemblyProfiles = createAssemblyProfileRegistry();
+  for (const profile of SHIP_FRAME_ASSEMBLY_PROFILES) services.assemblyProfiles.registerShipFrame(profile);
+  console.info(`[assembly] ${services.assemblyProfiles.getCounts().shipFrames} ship profiles`);
   services.unlocks = createUnlockService(initialSave.unlocks);
   services.equipment = createEquipmentRegistry();
   for (const definition of [...SHIPS, ...WEAPONS, ...REACTORS, ...MODULES]) services.equipment.register(definition);
