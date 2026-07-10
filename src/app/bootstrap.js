@@ -128,6 +128,7 @@ export async function bootstrap() {
     weapons: WEAPONS,
     reactors: REACTORS,
     modules: MODULES,
+    currencies: initialSave.currencies,
     checkpoint: initialSave.checkpoint,
     isUnlocked: definition => services.unlocks.isUnlocked(definition),
     onStart: showCampaignMap,

@@ -2,10 +2,10 @@ import { createItemCard } from "../components/item-card.js";
 
 const TABS = ["Run starten", "Loadout", "Schiffe", "Waffen", "Module", "Forschung", "Prototypen", "Codex", "Herausforderungen"];
 
-export function createHangarScreen(container, { ships, weapons, modules, reactors, checkpoint = null, isUnlocked = () => true, onStart = () => {}, onResume = () => {} }) {
+export function createHangarScreen(container, { ships, weapons, modules, reactors, currencies = {}, checkpoint = null, isUnlocked = () => true, onStart = () => {}, onResume = () => {} }) {
   let tab = "Run starten";
   const render = () => {
-    container.innerHTML = `<nav class="hangar-tabs">${TABS.map(name => `<button data-hangar-tab="${name}" aria-current="${name === tab}">${name}</button>`).join("")}</nav><section class="hangar-stage" data-active-tab="${tab}"><header class="hangar-signal"><span>VR // HANGAR LINK</span><b>${ships.length} FRAMES · ${weapons.length} WEAPONS · ${reactors.length} CORES · ${modules.length} MODULES</b></header><div class="hangar-content"></div></section>`;
+    container.innerHTML = `<nav class="hangar-tabs">${TABS.map(name => `<button data-hangar-tab="${name}" aria-current="${name === tab}">${name}</button>`).join("")}</nav><section class="hangar-stage" data-active-tab="${tab}"><header class="hangar-signal"><span>VR // HANGAR LINK · ◇${currencies.voidShards ?? 0} · ⬡${currencies.bossCores ?? 0} · ◉${currencies.anomalyData ?? 0} · ✦${currencies.challengeSeals ?? 0} · ▱${currencies.salvageFragments ?? 0}</span><b>${ships.length} FRAMES · ${weapons.length} WEAPONS · ${reactors.length} CORES · ${modules.length} MODULES</b></header><div class="hangar-content"></div></section>`;
     const content = container.querySelector(".hangar-content");
     if (tab === "Run starten") content.innerHTML = `<div class="launch-console"><span>CAMPAIGN PATH // ARCHITECT</span><h3>BUILD THE IMPOSSIBLE.<br>PAY ITS PRICE.</h3><p>Loadout prüfen, Last bewusst wählen und den Run-Seed fixieren.</p><button class="btn" data-launch>Standard-Kampagne starten</button>${checkpoint ? `<button class="btn small" data-resume>Checkpoint fortsetzen · ${checkpoint.nodeId}</button>` : ""}</div>`;
     else {
