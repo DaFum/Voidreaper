@@ -1390,7 +1390,8 @@
           arena: this.arena,
           time: t,
           seed: this.seed,
-          reducedMotion: REDUCED
+          reducedMotion: REDUCED,
+          lowDetail: this.bloomOn === false // frame-cost gate drops the parallax backdrop with the bloom pass
         });
         const A = this.arena;
         cx.strokeStyle = "rgba(255,45,120,.75)"; cx.lineWidth = 3;
