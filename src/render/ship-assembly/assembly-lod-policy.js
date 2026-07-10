@@ -1,0 +1,1 @@
+export function resolveAssemblyLod({zoom=1,visibleSegments=0,particlePressure=0,userSetting="high"}){if(userSetting==="low"||zoom<.68||visibleSegments>16||particlePressure>.85)return"low";if(userSetting==="medium"||zoom<.9||visibleSegments>10||particlePressure>.55)return"medium";return"high";}
