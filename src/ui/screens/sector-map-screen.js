@@ -41,5 +41,5 @@ export function createSectorMapScreen(root, { onConfirm = () => {}, onWorkbench 
     if (selected) root.querySelector(".sector-map__detail").textContent = `${selected.reward} · Korruption ${selected.corruptionDelta >= 0 ? "+" : ""}${selected.corruptionDelta} · erneut tippen zum Bestätigen`;
   }
 
-  return { render, clearSelection() { selectedId = null; }, destroy() { connections?.destroy(); connections=null; } };
+  return { render, clearSelection() { selectedId = null; }, destroy() { connections?.destroy(); connections=null; root?.replaceChildren(); } };
 }

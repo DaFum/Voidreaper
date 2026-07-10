@@ -20,6 +20,7 @@
 
 .sector-map__graph {
   --layer-width: 190px;
+
   position: relative;
   display: grid;
   grid-template-columns: repeat(4, var(--layer-width));
@@ -80,7 +81,7 @@
   transform: translateY(-50%) rotate(45deg);
   display: grid;
   place-items: center;
-  border: 1px solid currentColor;
+  border: 1px solid currentcolor;
   color: var(--phosphor);
   background: rgba(6,255,165,.06);
   font-size: 16px;
@@ -89,7 +90,7 @@
 .sector-node__sigil i {
   position: absolute;
   inset: 6px;
-  border: 1px solid currentColor;
+  border: 1px solid currentcolor;
 }
 
 .sector-node__sigil em {
