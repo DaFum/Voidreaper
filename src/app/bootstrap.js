@@ -19,6 +19,13 @@ import { createInputController } from "../input/input-controller.js";
 import { createBuildInspector } from "../ui/screens/build-inspector.js";
 import { updateResourceMeters } from "../ui/components/resource-meters.js";
 import { createGameController } from "./game-controller.js";
+import { createEquipmentRegistry } from "../features/equipment/equipment-registry.js";
+import { createUnlockService } from "../features/research/unlock-service.js";
+import { SHIPS } from "../content/ships/index.js";
+import { WEAPONS } from "../content/weapons/index.js";
+import { REACTORS } from "../content/reactors/reactors.js";
+import { MODULES } from "../content/modules/index.js";
+import { createHangarScreen } from "../ui/screens/hangar-screen.js";
 
 export async function bootstrap() {
   document.documentElement.dataset.app = "voidreaper-modular";
@@ -44,6 +51,11 @@ export async function bootstrap() {
   services.save = createSaveStore(globalThis.storage ?? globalThis.localStorage, {
     onWarning: message => legacyRuntime.ui.toast(message)
   });
+  const initialSave = await services.save.load();
+  services.unlocks = createUnlockService(initialSave.unlocks);
+  services.equipment = createEquipmentRegistry();
+  for (const definition of [...SHIPS, ...WEAPONS, ...REACTORS, ...MODULES]) services.equipment.register(definition);
+  console.info(`[content] ${SHIPS.length} ships · ${WEAPONS.length} weapons · ${REACTORS.length} reactors · ${MODULES.length} modules`);
 
   const controller = createGameController(services);
   const input = createInputController({ eventBus: events });
@@ -52,6 +64,15 @@ export async function bootstrap() {
   const game = legacyRuntime.game;
   const ui = legacyRuntime.ui;
   legacyRuntime.configureEvolutionEffects((effectId, player) => effects.execute({ id: effectId }, { player, run: controller.run }));
+  const hangar = createHangarScreen(document.querySelector("#hangar"), {
+    ships: SHIPS,
+    weapons: WEAPONS,
+    reactors: REACTORS,
+    modules: MODULES,
+    isUnlocked: definition => services.unlocks.isUnlocked(definition),
+    onStart: () => { legacyRuntime.audio.unlock(); legacyRuntime.audio.resume(); game.start("standard"); }
+  });
+  ui.renderHangar = () => hangar.render();
 
   const originalReset = game.reset.bind(game);
   game.reset = mode => {

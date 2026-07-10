@@ -17,7 +17,17 @@ export function createDefaultSave() {
       meta: {},
       achievements: []
     },
-    loadouts: {},
+    loadouts: {
+      primary: null,
+      saved: {}
+    },
+    unlocks: {
+      vesper: true,
+      railgun: true,
+      "standard-core": true
+    },
+    inventory: {},
+    blueprints: {},
     settings: {
       reducedMotion: false,
       screenShake: true,

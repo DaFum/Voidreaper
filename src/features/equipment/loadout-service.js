@@ -29,7 +29,7 @@ export function createLoadoutService({ registry, tagEngine, unlocks }) {
 
   return {
     equip(loadout, slot, index, item) {
-      if (!loadout.slots[slot]?.[index] && index >= loadout.slots[slot]?.length) throw new Error(`Unknown loadout slot: ${slot}[${index}]`);
+      if (!loadout.slots[slot] || index < 0 || index >= loadout.slots[slot].length) throw new Error(`Unknown loadout slot: ${slot}[${index}]`);
       const definition = registry.require(item.definitionId);
       if (definition.slot !== slot) throw new Error(`${definition.id} cannot be equipped in ${slot}`);
       if (!unlocks.isUnlocked(definition)) throw new Error(`${definition.id} is not unlocked`);
