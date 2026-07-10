@@ -50,7 +50,7 @@ function motifSprite(profile, seed) {
   spriteCtx.setTransform(MOTIF_BAKE_SCALE, 0, 0, MOTIF_BAKE_SCALE, extent * MOTIF_BAKE_SCALE, extent * MOTIF_BAKE_SCALE);
   drawMotifShape(spriteCtx, profile, seed, 0, true);
   const sprite = { canvas, extent };
-  if (motifSprites.size >= MOTIF_CACHE_LIMIT) motifSprites.clear();
+  if (motifSprites.size >= MOTIF_CACHE_LIMIT) motifSprites.delete(motifSprites.keys().next().value);
   motifSprites.set(key, sprite);
   return sprite;
 }
