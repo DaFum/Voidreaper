@@ -24,6 +24,7 @@ export function createGameController(services) {
     get run() { return run; },
     attachLegacy(game) {
       run = createRunState({ seed: game.seed, mode: game.mode === "daily" ? "daily" : "campaign" });
+      if (run.mode === "daily" && services.daily) services.daily.apply(run, services.daily.config());
       run.services = services;
       run.heat = createHeatState();
       run.corruption = createCorruptionState(game.corruption ?? 0);
