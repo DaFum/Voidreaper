@@ -7,11 +7,13 @@ const setMeter = (root, name, ratio, label) => {
   meter.querySelector("b").textContent = label;
 };
 
-export function updateResourceMeters(root, { energy, heat, corruption, load }) {
+export function updateResourceMeters(root, { energy, heat, corruption, load, scrap = 0, flux = 0 }) {
   setMeter(root, "energy", energy.maximum ? energy.value / energy.maximum : 0, `${Math.ceil(energy.value)} / ${energy.maximum}`);
   setMeter(root, "heat", heat / 100, `${Math.round(heat)}°`);
   setMeter(root, "corruption", Math.min(corruption, 100) / 100, `${Math.round(corruption)}%`);
   setMeter(root, "load", Math.min(load.ratio, 1.6) / 1.6, `${Math.round(load.ratio * 100)}% ${load.tier.toUpperCase()}`);
+  root?.setAttribute("data-scrap", String(scrap));
+  root?.setAttribute("data-flux", String(flux));
   root?.setAttribute("data-load-tier", load.tier);
   root?.setAttribute("data-heat-tier", heat >= 100 ? "overheated" : heat >= 85 ? "unstable" : heat >= 60 ? "warm" : "cold");
   root?.setAttribute("data-corruption-tier", corruption >= 100 ? "abyssal" : corruption >= 75 ? "transformed" : corruption >= 50 ? "breach" : corruption >= 25 ? "tainted" : "stable");
