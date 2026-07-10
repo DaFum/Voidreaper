@@ -1,0 +1,1 @@
+export default { id: "specter", name: "SPECTER", slot: "ship", hull: 75, speed: 225, energyCapacity: 90, cooling: 12, energyCost: 0, tags: [{ id: "Ship", value: 1 }, { id: "Dodge", value: 2 }], effects: ["ship-specter-phase"], faultProfileId: "standard", signature: "Dodge garantiert kurz Crits", downside: "Treffer erhöhen Hitze", unlockSource: "challenge" };

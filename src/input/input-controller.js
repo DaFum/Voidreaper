@@ -1,0 +1,46 @@
+import { ACTIONS, DEFAULT_BINDINGS } from "./action-bindings.js";
+import { createTouchStick } from "./touch-stick.js";
+
+export function createInputController({ eventBus, bindings = {}, stickElement, stickKnob } = {}) {
+  const resolvedBindings = { ...DEFAULT_BINDINGS, ...bindings };
+  const held = new Set();
+  const stick = createTouchStick(stickElement, stickKnob);
+
+  const onKeyDown = event => {
+    const action = resolvedBindings[event.code];
+    if (!action) return;
+    if (!event.repeat && Object.values(ACTIONS).includes(action)) eventBus?.emit("action", { action, source: "keyboard" });
+    held.add(action);
+    event.preventDefault();
+  };
+  const onKeyUp = event => {
+    const action = resolvedBindings[event.code];
+    if (action) held.delete(action);
+  };
+
+  return {
+    start() {
+      window.addEventListener("keydown", onKeyDown);
+      window.addEventListener("keyup", onKeyUp);
+    },
+    stop() {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      held.clear();
+      stick.reset();
+    },
+    axis() {
+      const keyboardX = Number(held.has("move-right")) - Number(held.has("move-left"));
+      const keyboardY = Number(held.has("move-down")) - Number(held.has("move-up"));
+      const x = keyboardX || stick.state.x;
+      const y = keyboardY || stick.state.y;
+      const magnitude = Math.hypot(x, y);
+      return magnitude > 1 ? { x: x / magnitude, y: y / magnitude } : { x, y };
+    },
+    trigger(action, source = "touch") {
+      eventBus?.emit("action", { action, source });
+    },
+    rebind(action, code) { for (const [key, bound] of Object.entries(resolvedBindings)) if (bound === action) delete resolvedBindings[key]; resolvedBindings[code] = action; return { ...resolvedBindings }; },
+    bindings: resolvedBindings
+  };
+}

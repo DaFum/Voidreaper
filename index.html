@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#04010a">
+  <title>VOIDREAPER: ETERNAL REDUX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Share+Tech+Mono&display=swap"
+    rel="stylesheet">
+  
+</head>
+
+<body>
+  <canvas id="game" aria-label="Voidreaper game arena" role="img"></canvas>
+  <div id="crt" aria-hidden="true"></div>
+  <div id="vignette" aria-hidden="true"></div>
+  <div id="dmgflash" aria-hidden="true"></div>
+  <div id="freezeflash" aria-hidden="true"></div>
+
+  <div id="hud" aria-hidden="true">
+    <div class="hud-top">
+      <div class="plate">
+        <div class="stat">HULL <b id="hp-t">100</b></div>
+        <div class="bar" id="hpbar"><u id="hpghost"></u><i></i></div>
+        <div id="shieldpip">◈ SHIELD</div>
+        <div class="stat" style="margin-top:9px">LVL <b id="lvl-t">1</b></div>
+        <div class="bar" id="xpbar"><i style="transform:scaleX(0)"></i></div>
+      </div>
+      <div id="wave-tag" class="plate">
+        <div class="stat">WAVE <b id="wave-t" style="color:var(--warn)">1</b></div>
+        <div class="stat">SCORE <b id="score-t">0</b></div>
+        <div class="stat">KILLS <b id="kill-t">0</b></div>
+        <div class="stat" style="color:var(--ice)">◇ <b id="shard-t" style="color:var(--ice)">0</b></div>
+        <div class="stat" id="time-t">00:00</div>
+      </div>
+    </div>
+    <div class="resource-cluster" id="resource-meters" data-load-tier="stable">
+      <div class="resource-meter" data-resource="energy"><span>ENERGY</span><i></i><b>100 / 100</b></div>
+      <div class="resource-meter" data-resource="load"><span>LOAD</span><i></i><b>0% STABLE</b></div>
+      <div class="resource-meter" data-resource="heat"><span>HEAT</span><i></i><b>0°</b></div>
+      <div class="resource-meter" data-resource="corruption"><span>CORRUPTION</span><i></i><b>0%</b></div>
+    </div>
+  </div>
+  <div id="combo">
+    <div class="x" id="combo-x">x2</div>
+    <div class="cbar"><i id="combo-fill"></i></div>
+  </div>
+  <div id="eventbanner"></div>
+  <div id="bossbar">
+    <div id="bossname">VOID ARCHITECT</div>
+    <div class="bar"><i id="bossfill"></i></div>
+  </div>
+  <div id="toasts"></div>
+  <button id="pausebtn" aria-label="Pause game">‖ PAUSE</button>
+  <div id="combat-actions" aria-label="Combat actions">
+    <button class="combat-action" id="dodgebtn" data-action="dodge" aria-label="Dodge"><span>SPACE</span>⇥</button>
+    <button class="combat-action" id="active1btn" data-action="active-1" aria-label="Active module one" disabled><span>Q</span>EMPTY</button>
+    <button class="combat-action" id="active2btn" data-action="active-2" aria-label="Active module two" disabled><span>E</span>EMPTY</button>
+  </div>
+  <div id="stick" aria-hidden="true">
+    <div id="knob"></div>
+  </div>
+
+  <div class="screen" id="start">
+    <h1 data-t="VOIDREAPER">VOID<span>REAPER</span></h1>
+    <div class="sub">ETERNAL PROTOCOL · REDUX</div>
+    <div class="rule"></div>
+    <div class="shards">◇ <span id="shards0">0</span> VOID SHARDS</div>
+    <div class="modes">
+      <button class="btn" id="startbtn">Standard Run</button>
+      <button class="btn gold" id="dailybtn">Daily Seed</button>
+    </div>
+    <div id="hangar">
+      <h3>◢ HANGAR — PERMANENT UPGRADES ◣</h3>
+      <div class="meta-grid" id="metagrid"></div>
+    </div>
+    <div class="hint">
+      Touch &amp; drag anywhere to move — weapons auto-target. Desktop: WASD · P/ESC pause.<br>
+      Chain kills into combos. Fuse mutations into <span style="color:var(--gold)">Evolutions</span>. Harvest shards.
+      Return stronger.
+    </div>
+    <div class="best" id="best0"></div>
+  </div>
+
+  <div class="screen hidden" id="levelup" role="dialog" aria-label="Choose an upgrade">
+    <h2>SIGNAL ACQUIRED</h2>
+    <div class="sub">choose one mutation</div>
+    <div class="cards" id="cards"></div>
+    <div id="rerollrow">
+      <button class="btn small" id="rerollbtn">⟲ Reroll (<span id="reroll-n">0</span>)</button>
+      <button class="btn small" id="banishbtn">✕ Banish (<span id="banish-n">0</span>)</button>
+    </div>
+  </div>
+
+  <div class="screen hidden" id="pausescr">
+    <h1 data-t="STASIS">STA<span>SIS</span></h1>
+    <div class="statsgrid" id="pausestats"></div>
+    <div id="build-inspector" class="build-inspector" aria-label="Build inspector"></div>
+    <button class="btn" id="resumebtn">Resume</button>
+    <button class="btn danger" id="quitbtn">Abandon Run</button>
+  </div>
+
+  <div class="screen hidden" id="over">
+    <h1 data-t="REAPED">REA<span>PED</span></h1>
+    <div class="score-final" id="finalscore">0</div>
+    <div class="sub" id="finalstats"></div>
+    <div class="shards" id="finalshards"></div>
+    <div class="best" id="best1"></div>
+    <button class="btn" id="retrybtn">Re-Initialize</button>
+    <button class="btn small" id="menubtn">Hangar</button>
+  </div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>

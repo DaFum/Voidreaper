@@ -1,0 +1,16 @@
+:root {
+  --void: #04010a;
+  --deep: #0a0418;
+  --phosphor: #06ffa5;
+  --wound: #ff2d78;
+  --dim: #4318b8;
+  --bone: #efeaf7;
+  --warn: #ffd60a;
+  --ice: #4cc9f0;
+  --gold: #ffcf3f;
+  --violet: #c77dff;
+  --font-d: "Chakra Petch", "Courier New", monospace;
+  --font-m: "Share Tech Mono", "Courier New", monospace;
+  color-scheme: dark;
+}
+

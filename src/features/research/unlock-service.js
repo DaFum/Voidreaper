@@ -1,0 +1,16 @@
+export const UNLOCK_TYPES = Object.freeze(["research", "challenge", "blueprint", "secret", "starter"]);
+
+export function createUnlockService(flags = {}) {
+  const unlocked = new Set(Object.keys(flags).filter(id => flags[id]));
+  return {
+    unlock(id, source) { if (!UNLOCK_TYPES.includes(source.type)) throw new Error(`Unknown unlock type: ${source.type}`); unlocked.add(id); return { id, source }; },
+    isUnlocked(definition) { return definition.unlockSource === "starter" || unlocked.has(definition.id); },
+    hint(definition) {
+      if (definition.unlockSource === "secret") return "Unbekannte Signatur. Weitere Analyse erforderlich.";
+      if (definition.unlockSource === "blueprint") return "Blaupause in Anomalie- oder Bossknoten bergen.";
+      if (definition.unlockSource === "challenge") return "Zugehörige Herausforderung abschließen.";
+      return "Im Forschungsnetz freischalten.";
+    },
+    serialize() { return Object.fromEntries([...unlocked].map(id => [id, true])); }
+  };
+}

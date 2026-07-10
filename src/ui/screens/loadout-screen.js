@@ -1,0 +1,5 @@
+import { LOADOUT_SLOT_LAYOUT } from "../../features/equipment/loadout-service.js";
+
+export function renderLoadoutScreen(container, inspection, loadout) {
+  container.innerHTML = `<div class="loadout-orbit"><div class="ship-core"><span>FRAME</span><strong>${inspection.sources.find(source => source.slot === "ship")?.name ?? "NO SHIP"}</strong><small>${Math.round(inspection.load.ratio * 100)}% ${inspection.load.tier}</small></div>${Object.entries(LOADOUT_SLOT_LAYOUT).filter(([slot]) => slot !== "ship").flatMap(([slot, count]) => Array.from({ length: count }, (_, index) => `<button class="loadout-slot" data-slot="${slot}" data-index="${index}"><span>${slot}</span><b>${loadout.slots[slot]?.[index]?.definitionId ?? "EMPTY"}</b></button>`)).join("")}</div><aside class="loadout-telemetry"><div><span>CAPACITY</span><b>${inspection.capacity}</b></div><div><span>RESERVED</span><b>${inspection.reserved}</b></div><div><span>HEAT</span><b>${inspection.expectedHeat}</b></div><div><span>CORRUPTION</span><b>${inspection.startingCorruption}</b></div><div><span>TAGS</span><b>${[...inspection.tags.keys()].join(" · ")}</b></div></aside>`;
+}
