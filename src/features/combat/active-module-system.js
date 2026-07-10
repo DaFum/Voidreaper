@@ -1,12 +1,12 @@
-function canPay(module, context) {
+function canPay(module, context, multiplier = 1) {
   const state = module.state;
-  const cost = module.activationCost ?? 0;
+  const cost = (module.activationCost ?? 0) * multiplier;
   if (module.resourceModel === "energy") return context.energy >= cost;
   if (module.resourceModel === "heat") return context.heat + cost <= (context.maxHeat ?? 100);
   if (module.resourceModel === "corruption") return true;
   if (module.resourceModel === "sacrifice") return context.summons?.length >= cost;
   if (module.resourceModel === "cooldown") return state.remaining <= 0;
-  if (module.resourceModel === "sector-charges") return state.sectorCharges > 0;
+  if (module.resourceModel === "sector-charges") return state.sectorCharges >= multiplier;
   return (state.charge ?? 0) >= cost;
 }
 
@@ -25,15 +25,16 @@ export function createActiveModuleSystem({ effects, eventBus } = {}) {
       module.state.disabledRemaining = Math.max(0, module.state.disabledRemaining - dt);
     },
     activate(module, context) {
-      if (!module || module.state.disabledRemaining > 0 || module.state.faultModifier === "blocked" || !canPay(module, context)) return false;
-      const cost = module.activationCost ?? 0;
+      if (!module || module.state.disabledRemaining > 0 || module.state.faultModifier === "blocked") return false;
       const multiplier = module.state.faultModifier === "double-cost" ? 2 : 1;
-      if (module.resourceModel === "energy") context.spendEnergy(cost * multiplier, module.instanceId);
-      else if (module.resourceModel === "heat") context.addHeat(cost * multiplier, module.instanceId);
-      else if (module.resourceModel === "corruption") context.addCorruption(cost * multiplier, module.instanceId);
+      if (!canPay(module, context, multiplier)) return false;
+      const cost = (module.activationCost ?? 0) * multiplier;
+      if (module.resourceModel === "energy") context.spendEnergy(cost, module.instanceId);
+      else if (module.resourceModel === "heat") context.addHeat(cost, module.instanceId);
+      else if (module.resourceModel === "corruption") context.addCorruption(cost, module.instanceId);
       else if (module.resourceModel === "sacrifice") context.summons.splice(0, cost);
-      else if (module.resourceModel === "cooldown") module.state.remaining = module.cooldown;
-      else if (module.resourceModel === "sector-charges") module.state.sectorCharges -= 1;
+      else if (module.resourceModel === "cooldown") module.state.remaining = module.cooldown * multiplier;
+      else if (module.resourceModel === "sector-charges") module.state.sectorCharges -= multiplier;
       else module.state.charge -= cost;
       for (const effect of module.effects ?? []) effects.execute({ ...effect, sourceId: module.instanceId }, context);
       eventBus?.emit("active-module-used", { module, context });

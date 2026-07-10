@@ -4,8 +4,20 @@ const pushEntity = (collection, effect, context) => context.run[collection]?.pus
   sourceId: effect.sourceId
 });
 
+function dealDamage(effect, context) {
+  const target = effect.target ?? context.target;
+  const amount = Math.max(0, effect.amount ?? 0);
+  if (!target) return 0;
+  if (context.combat?.damage) return context.combat.damage(target, amount, effect.sourceId);
+  const healthKey = Number.isFinite(target.health) ? "health" : Number.isFinite(target.hp) ? "hp" : null;
+  if (!healthKey) return 0;
+  target[healthKey] = Math.max(0, target[healthKey] - amount);
+  context.events?.emit("enemy-hit", { context, target, amount, sourceId: effect.sourceId });
+  return amount;
+}
+
 export const CORE_EFFECT_HANDLERS = Object.freeze({
-  "deal-damage": (effect, context) => context.combat?.damage(effect.target ?? context.target, effect.amount ?? 0, effect.sourceId),
+  "deal-damage": dealDamage,
   "heal-player": (effect, context) => { context.run.player.hull = Math.min(context.run.player.maxHull, context.run.player.hull + (effect.amount ?? 0)); },
   "grant-shield": (effect, context) => { context.run.player.shield += effect.amount ?? 0; },
   "spawn-projectile": (effect, context) => pushEntity("projectiles", effect, context),

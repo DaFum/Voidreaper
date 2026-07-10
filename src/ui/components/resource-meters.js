@@ -11,10 +11,12 @@ export function updateResourceMeters(root, { energy, heat, corruption, load, scr
   setMeter(root, "energy", energy.maximum ? energy.value / energy.maximum : 0, `${Math.ceil(energy.value)} / ${energy.maximum}`);
   setMeter(root, "heat", heat / 100, `${Math.round(heat)}°`);
   setMeter(root, "corruption", Math.min(corruption, 100) / 100, `${Math.round(corruption)}%`);
-  setMeter(root, "load", Math.min(load.ratio, 1.6) / 1.6, `${Math.round(load.ratio * 100)}% ${load.tier.toUpperCase()}`);
+  const loadRatio = load?.ratio ?? 0;
+  const loadTier = load?.tier ?? "stable";
+  setMeter(root, "load", Math.min(loadRatio, 1.6) / 1.6, `${Math.round(loadRatio * 100)}% ${loadTier.toUpperCase()}`);
   root?.setAttribute("data-scrap", String(scrap));
   root?.setAttribute("data-flux", String(flux));
-  root?.setAttribute("data-load-tier", load.tier);
+  root?.setAttribute("data-load-tier", loadTier);
   root?.setAttribute("data-heat-tier", heat >= 100 ? "overheated" : heat >= 85 ? "unstable" : heat >= 60 ? "warm" : "cold");
   root?.setAttribute("data-corruption-tier", corruption >= 100 ? "abyssal" : corruption >= 75 ? "transformed" : corruption >= 50 ? "breach" : corruption >= 25 ? "tainted" : "stable");
 }

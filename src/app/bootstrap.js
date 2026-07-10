@@ -61,6 +61,11 @@ import { createTutorialCallout } from "../ui/components/tutorial-callout.js";
 import { createWreckSignalService } from "../features/salvage/wreck-signal-service.js";
 import { createSalvageMissionService } from "../features/salvage/salvage-mission-service.js";
 import { renderSalvageMission } from "../ui/screens/salvage-mission-screen.js";
+import { createAffixRoller } from "../features/equipment/affix-roller.js";
+import { OFFENSIVE_AFFIXES } from "../content/affixes/offensive-affixes.js";
+import { DEFENSIVE_AFFIXES } from "../content/affixes/defensive-affixes.js";
+import { UTILITY_AFFIXES } from "../content/affixes/utility-affixes.js";
+import { CORRUPTED_AFFIXES } from "../content/affixes/corrupted-affixes.js";
 
 export async function bootstrap() {
   document.documentElement.dataset.app = "voidreaper-modular";
@@ -99,6 +104,7 @@ export async function bootstrap() {
   services.onboarding = createOnboardingService(services.save);
   services.wreckSignals = createWreckSignalService();
   services.salvageMissions = createSalvageMissionService(services.save);
+  services.affixes = createAffixRoller([OFFENSIVE_AFFIXES, DEFENSIVE_AFFIXES, UTILITY_AFFIXES, CORRUPTED_AFFIXES]);
   services.unlocks = createUnlockService(initialSave.unlocks);
   services.equipment = createEquipmentRegistry();
   for (const definition of [...SHIPS, ...WEAPONS, ...REACTORS, ...MODULES]) services.equipment.register(definition);
@@ -123,6 +129,7 @@ export async function bootstrap() {
       previewRun.corruption = createCorruptionState();
       previewRun.resources.scrap = 80;
       previewRun.resources.flux = 6;
+      previewRun.services = services;
       services.sectors.start(previewRun);
     }
     const stage = hangarRoot.querySelector(".hangar-content");
@@ -141,8 +148,8 @@ export async function bootstrap() {
         return;
       }
       if (node.type === "workshop") {
-        const workshop = createWorkshopService({ eventBus: events }); const session = workshop.open(node.regionIndex); const target = previewRun.inventory[0] ?? { id: "standard-core", name: "Standard Core", itemPower: 100 };
-        renderWorkshopScreen(stage, { service: workshop, session, target, onAction: (action, item) => { workshop.apply(session, action, item); finish(); } }); return;
+        const workshop = createWorkshopService({ affixRoller: services.affixes, eventBus: events }); const session = workshop.open(node.regionIndex); const target = previewRun.inventory[0] ?? { ...REACTORS[0], rarity: "rare", itemPower: 100, affixes: [] };
+        renderWorkshopScreen(stage, { service: workshop, session, target, onAction: (action, item) => { workshop.apply(session, action, item, { rng: previewRun.rng, sector: node.regionIndex }); finish(); } }); return;
       }
       if (node.type === "anomaly") {
         const anomaly = createAnomalyService(events); const signal = anomaly.select(node.seed, previewRun.anomalies?.map(entry => entry.eventId));
@@ -161,7 +168,7 @@ export async function bootstrap() {
     checkpoint: initialSave.checkpoint,
     isUnlocked: definition => services.unlocks.isUnlocked(definition),
     onStart: showCampaignMap,
-    onResume: checkpoint => { previewRun = checkpoint.run; showCampaignMap(); },
+    onResume: checkpoint => { previewRun = services.checkpoints.hydrate(checkpoint, services).run; showCampaignMap(); },
     renderTab: (tab, content) => {
       if (tab === "Forschung") renderResearchScreen(content, RESEARCH_TREE, { purchased: metaSave.research, canPurchase: node => services.research.canPurchase(metaSave, node), onPurchase: async id => { await services.research.purchase(id); metaSave = await services.save.load(); hangar.render(); } });
       if (tab === "Codex") { const show = filters => renderCodexScreen(content, { entries: services.codex.filter(metaSave, filters), onFilter: show }); show({}); }

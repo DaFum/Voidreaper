@@ -33,7 +33,8 @@ export function createLoadoutService({ registry, tagEngine, unlocks }) {
       const definition = registry.require(item.definitionId);
       if (definition.slot !== slot) throw new Error(`${definition.id} cannot be equipped in ${slot}`);
       if (!unlocks.isUnlocked(definition)) throw new Error(`${definition.id} is not unlocked`);
-      if (definition.unique && sources(loadout).some(source => source.id === definition.id && source.item.instanceId !== item.instanceId)) {
+      const currentlyEquipped = loadout.slots[slot][index];
+      if (definition.unique && sources(loadout).some(source => source.id === definition.id && source.instanceId !== item.instanceId && source.instanceId !== currentlyEquipped?.instanceId)) {
         throw new Error(`Unique component already equipped: ${definition.id}`);
       }
       loadout.slots[slot][index] = item;
