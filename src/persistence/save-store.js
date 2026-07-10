@@ -78,6 +78,9 @@ export function createSaveStore(storage = globalThis.storage ?? globalThis.local
         return writeAtomic(migrateSave(result ?? draft));
       });
       return queue;
-    }
+    },
+    async getCheckpoint() { return (await this.load()).checkpoint ?? null; },
+    async setCheckpoint(checkpoint) { return this.update(save => { save.checkpoint = checkpoint; }); },
+    async clearCheckpoint() { return this.update(save => { save.checkpoint = null; }); }
   };
 }

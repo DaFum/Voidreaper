@@ -28,6 +28,7 @@ export function createDefaultSave() {
     },
     inventory: {},
     blueprints: {},
+    checkpoint: null,
     settings: {
       reducedMotion: false,
       screenShake: true,
