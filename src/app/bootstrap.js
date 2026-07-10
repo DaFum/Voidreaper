@@ -40,6 +40,27 @@ import { renderAnomalyScreen } from "../ui/screens/anomaly-screen.js";
 import { renderWorkshopScreen } from "../ui/screens/workshop-screen.js";
 import { createWorkshopService } from "../features/workshop/workshop-service.js";
 import { createCheckpointService } from "../features/checkpoints/checkpoint-service.js";
+import { RESEARCH_TREE } from "../content/research/research-tree.js";
+import { createResearchService } from "../features/research/research-service.js";
+import { renderResearchScreen } from "../ui/screens/research-screen.js";
+import { createCodexService } from "../features/codex/codex-service.js";
+import { renderCodexScreen } from "../ui/screens/codex-screen.js";
+import { CHALLENGES, createMasteryChallenges } from "../content/challenges/challenges.js";
+import { renderChallengesScreen } from "../ui/screens/challenges-screen.js";
+import { createPrototypeVault } from "../features/inventory/prototype-vault.js";
+import { renderPrototypeVault } from "../ui/screens/prototype-vault-screen.js";
+import { CAMPAIGN_PATHS } from "../content/campaigns/campaign-paths.js";
+import { createCampaignPathService } from "../features/campaigns/campaign-path-service.js";
+import { renderCampaignSelect } from "../ui/screens/campaign-select-screen.js";
+import { createBuildSimulator } from "../features/simulator/build-simulator.js";
+import { renderSimulatorScreen } from "../ui/screens/simulator-screen.js";
+import { renderStatistics } from "../ui/screens/statistics-screen.js";
+import { renderSettingsScreen } from "../ui/screens/settings-screen.js";
+import { createOnboardingService } from "../features/onboarding/onboarding-service.js";
+import { createTutorialCallout } from "../ui/components/tutorial-callout.js";
+import { createWreckSignalService } from "../features/salvage/wreck-signal-service.js";
+import { createSalvageMissionService } from "../features/salvage/salvage-mission-service.js";
+import { renderSalvageMission } from "../ui/screens/salvage-mission-screen.js";
 
 export async function bootstrap() {
   document.documentElement.dataset.app = "voidreaper-modular";
@@ -70,6 +91,14 @@ export async function bootstrap() {
   services.daily = createDailyRunService({ saveStore: services.save });
   services.checkpoints = createCheckpointService(services.save, events);
   const initialSave = await services.save.load();
+  let metaSave = initialSave;
+  services.research = createResearchService(services.save, RESEARCH_TREE);
+  services.codex = createCodexService({ ships: SHIPS, weapons: WEAPONS, reactors: REACTORS, modules: MODULES, forbidden: WEAPONS.filter(weapon => weapon.id === "anomaly-engine") });
+  services.campaignPaths = createCampaignPathService(CAMPAIGN_PATHS);
+  services.simulator = createBuildSimulator();
+  services.onboarding = createOnboardingService(services.save);
+  services.wreckSignals = createWreckSignalService();
+  services.salvageMissions = createSalvageMissionService(services.save);
   services.unlocks = createUnlockService(initialSave.unlocks);
   services.equipment = createEquipmentRegistry();
   for (const definition of [...SHIPS, ...WEAPONS, ...REACTORS, ...MODULES]) services.equipment.register(definition);
@@ -132,7 +161,19 @@ export async function bootstrap() {
     checkpoint: initialSave.checkpoint,
     isUnlocked: definition => services.unlocks.isUnlocked(definition),
     onStart: showCampaignMap,
-    onResume: checkpoint => { previewRun = checkpoint.run; showCampaignMap(); }
+    onResume: checkpoint => { previewRun = checkpoint.run; showCampaignMap(); },
+    renderTab: (tab, content) => {
+      if (tab === "Forschung") renderResearchScreen(content, RESEARCH_TREE, { purchased: metaSave.research, canPurchase: node => services.research.canPurchase(metaSave, node), onPurchase: async id => { await services.research.purchase(id); metaSave = await services.save.load(); hangar.render(); } });
+      if (tab === "Codex") { const show = filters => renderCodexScreen(content, { entries: services.codex.filter(metaSave, filters), onFilter: show }); show({}); }
+      if (tab === "Herausforderungen") renderChallengesScreen(content, [...CHALLENGES, ...createMasteryChallenges(SHIPS, WEAPONS)], metaSave.challenges);
+      if (tab === "Prototypen") { const vault = createPrototypeVault(metaSave); renderPrototypeVault(content, { items: Object.values(metaSave.inventory), capacity: vault.capacity, overflowCount: Object.keys(metaSave.overflow).length, onFavorite: async id => { vault.favorite(id, !metaSave.inventory[id].favorite); await services.save.save(metaSave); hangar.render(); }, onDismantle: async id => { vault.dismantle(id); await services.save.save(metaSave); hangar.render(); } }); }
+      if (tab === "Kampagnen") renderCampaignSelect(content, services.campaignPaths.available(metaSave), async id => { await services.save.update(save => { services.campaignPaths.select(save, id); }); metaSave = await services.save.load(); hangar.show("Run starten"); });
+      if (tab === "Simulator") { const render = summary => renderSimulatorScreen(content, { summary, onStart: config => { const simRun = services.simulator.create(config); services.simulator.record(simRun, { dt: 1, damage: 0, heat: 0, energy: 100 }); render(services.simulator.summary(simRun)); } }); render(); }
+      if (tab === "Statistiken") renderStatistics(content, metaSave.statistics, metaSave.records);
+      if (tab === "Einstellungen") renderSettingsScreen(content, metaSave.settings, async settings => { await services.save.update(save => { save.settings = structuredClone(settings); }); });
+      if (tab === "Bergung") { const signal = services.wreckSignals.visible(metaSave.wreckSignals)[0]; if (!signal) content.innerHTML = `<div class="hangar-placeholder"><strong>KEIN AKTIVES WRACK-SIGNAL</strong><span>Legendäre verlorene Prototypen erscheinen nach dem nächsten Run.</span></div>`; else { const mission = services.salvageMissions.create(signal); renderSalvageMission(content, mission, () => game.start("standard")); } }
+      if (tab === "Run starten") { const step = services.onboarding.current(metaSave); if (step) content.append(createTutorialCallout(step, { onDismiss: () => {}, onSkip: async () => { await services.onboarding.skip(); metaSave = await services.save.load(); hangar.render(); } })); }
+    }
   });
   ui.renderHangar = () => hangar.render();
 
