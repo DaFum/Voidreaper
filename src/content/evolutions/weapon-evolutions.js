@@ -18,5 +18,11 @@ export const WEAPON_EVOLUTIONS = [
   evolution("blackout-gospel", "Blackout Gospel", "arc-generator", "forbidden", [{ type: "corruption", minimum: 50 }, { type: "load", minimum: 1.3 }], ["disable-module", "deal-damage"], { permanentDownside: true }),
   evolution("erasure-ray", "Erasure Ray", "void-beam", "regular", [{ type: "tag", id: "Beam", minimum: 4 }, { type: "tag", id: "Execute", minimum: 2 }], ["deal-damage"]),
   evolution("graviton-scalpel", "Graviton Scalpel", "void-beam", "alternative", [{ type: "tag", id: "Control", minimum: 3 }], ["move-enemy"]),
-  evolution("mouth-of-nothing", "Mouth of Nothing", "void-beam", "forbidden", [{ type: "corruption", minimum: 75 }], ["spawn-zone"], { permanentDownside: true })
+  evolution("mouth-of-nothing", "Mouth of Nothing", "void-beam", "forbidden", [{ type: "corruption", minimum: 75 }], ["spawn-zone"], { permanentDownside: true }),
+  evolution("quantum-lattice", "Quantum Lattice", "mine-layer", "regular", [{ type: "tag", id: "Mine", minimum: 4 }, { type: "tag", id: "Arc", minimum: 2 }], ["spawn-zone"]),
+  evolution("funeral-orbit", "Funeral Orbit", "mine-layer", "alternative", [{ type: "tag", id: "Mine", minimum: 4 }, { type: "tag", id: "Orbit", minimum: 2 }], ["spawn-zone"]),
+  evolution("friendly-fire-doctrine", "Friendly Fire Doctrine", "mine-layer", "forbidden", [{ type: "corruption", minimum: 50 }, { type: "tag", id: "Explosive", minimum: 4 }], ["spawn-zone"], { permanentDownside: true }),
+  evolution("blood-halo", "Blood Halo", "reaper-blades", "regular", [{ type: "tag", id: "Orbit", minimum: 4 }, { type: "tag", id: "Healing", minimum: 2 }], ["heal-player"]),
+  evolution("guillotine-array", "Guillotine Array", "reaper-blades", "alternative", [{ type: "tag", id: "Execute", minimum: 2 }], ["deal-damage"]),
+  evolution("cannibal-crown", "Cannibal Crown", "reaper-blades", "forbidden", [{ type: "corruption", minimum: 50 }, { type: "tag", id: "Sacrifice", minimum: 2 }], ["copy-affix"], { permanentDownside: true })
 ];
