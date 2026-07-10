@@ -1,5 +1,7 @@
 import { NODE_TYPES } from "../../content/sectors/node-types.js";
 
+export const isSectorNodeInteractive = status => status === "reachable";
+
 export function createSectorNode(node, { status, selected, onSelect }) {
   const definition = NODE_TYPES[node.type] ?? NODE_TYPES.combat;
   const button = document.createElement("button");
@@ -7,7 +9,7 @@ export function createSectorNode(node, { status, selected, onSelect }) {
   button.className = `sector-node sector-node--${status}`;
   button.dataset.nodeId = node.id;
   button.setAttribute("aria-pressed", String(selected));
-  button.disabled = status === "locked";
+  button.disabled = !isSectorNodeInteractive(status);
   const hidden = node.informationLevel < 1 && status !== "visited";
   button.innerHTML = hidden
     ? `<b>?</b><span>UNBEKANNTE SIGNATUR</span><small>Gefahr ${node.danger}</small>`

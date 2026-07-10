@@ -33,6 +33,8 @@ const UPGRADE_TAGS = {
   bspeed: ["Projectile"], magnet: ["Pickup"]
 };
 
+export const shouldSyncLegacyRun = ({ sync = true } = {}) => sync;
+
 export function createGameController(services) {
   let run = null;
 
@@ -48,7 +50,7 @@ export function createGameController(services) {
   return {
     get run() { return run; },
     openPendingMount(pendingMount, context) { return services.quickMount?.open(pendingMount, context) ?? { opened:false, reason:"quick-mount-unavailable" }; },
-    attachLegacy(game) {
+    attachLegacy(game, options = {}) {
       const resumed=services.resumeRun??null;delete services.resumeRun;run = resumed??createRunState({ seed: game.seed, mode: game.mode === "daily" ? "daily" : "campaign" });
       if (!resumed&&run.mode === "daily" && services.daily) services.daily.apply(run, services.daily.config());
       run.services = services;
@@ -70,7 +72,7 @@ export function createGameController(services) {
       services.flightProfile?.destroy?.();services.flightProfile=createFlightProfileService({eventBus:services.events,geometryService:services.assemblyGeometry});services.flightProfile.rebuildNow();const suggestionService=createPlacementSuggestionService({compatibilityService,geometryService:services.assemblyGeometry,flightProfileService:services.flightProfile});
       const branchFailureService=createBranchFailureService({assemblyService:services.currentAssembly,geometryService:services.assemblyGeometry});services.moduleDamage=createModuleDamageService({assemblyService:services.currentAssembly,eventBus:services.events,branchFailureService});services.moduleFaults?.destroy?.();services.moduleFaults=createModuleFaultAdapter({assemblyService:services.currentAssembly,equipmentService,eventBus:services.events});services.moduleFaults.refresh();services.hitZones=createHitZoneIndex();const refreshHitZones=geometry=>services.hitZones.rebuild(geometry.revision,buildAssemblyHitZones(geometry,frame));refreshHitZones(services.assemblyGeometry.getSnapshot());services.geometryReadyUnsubscribe?.();services.geometryReadyUnsubscribe=services.events.on("assembly:geometry-ready",refreshHitZones);services.damageRouter=createDamageRouter({moduleDamageService:services.moduleDamage,playerDamageService:{applyHullDamage:amount=>{run.player.hull=Math.max(0,run.player.hull-amount);}}});services.assemblyCollision=createCollisionSystem({hitZoneIndex:services.hitZones,damageRouter:services.damageRouter});services.repairs=createRepairService({assemblyService:services.currentAssembly,resources:run.resources,eventBus:services.events,remountDetached:item=>pendingMountService.queue({itemInstance:item,profile:services.equipment.requireAssemblyProfile(item.definitionId),source:"repair",acquiredAt:run.time})});services.recoil=createRecoilService({flightProfileService:services.flightProfile});services.flightSmoother=createFlightProfileSmoother(services.flightProfile.getProfile());services.flightProfileUnsubscribe?.();services.flightProfileUnsubscribe=services.events.on("assembly:flight-profile-changed",profile=>services.flightSmoother.setTarget(profile));services.cameraFit=createCameraFitService({camera:run.camera,viewport:()=>({width:innerWidth,height:innerHeight})});services.cameraFit.fit(services.assemblyGeometry.getSnapshot().totalBounds);
       services.pendingMounts=pendingMountService;services.assemblyCommands=commandService;services.quickMount=createQuickMountController({suggestionService,commandService,pendingMountService,runInventory,assemblyService:services.currentAssembly,stateMachine,timeScaleService:{push:(_id,scale)=>{game.timeScale=scale;},pop:()=>{game.timeScale=1;}}});services.assemblyWorkbench=createConstructionWorkbenchController({commandService,assemblyService:services.currentAssembly,geometryService:services.assemblyGeometry,runInventory,stateMachine});
-      this.syncLegacy(game, 0);
+      if (shouldSyncLegacyRun(options)) this.syncLegacy(game, 0);
       services.events.emit("run-started", { run });
       return run;
     },

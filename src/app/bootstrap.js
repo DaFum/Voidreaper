@@ -20,6 +20,7 @@ import { createBuildInspector } from "../ui/screens/build-inspector.js";
 import { updateResourceMeters } from "../ui/components/resource-meters.js";
 import { createGameController } from "./game-controller.js";
 import { createEquipmentRegistry } from "../features/equipment/equipment-registry.js";
+import { createEmptyLoadout, createLoadoutService } from "../features/equipment/loadout-service.js";
 import { createUnlockService } from "../features/research/unlock-service.js";
 import { SHIPS } from "../content/ships/index.js";
 import { WEAPONS } from "../content/weapons/index.js";
@@ -81,13 +82,16 @@ import { createAssemblyDebugService } from "../features/ship-assembly/debug/asse
 import { createAssemblyDebugScenarios } from "../features/ship-assembly/debug/assembly-debug-scenarios.js";
 import { createAssemblyErrorBoundary } from "../features/ship-assembly/model/assembly-error-boundary.js";
 import { createAssemblyWorkbenchScreen } from "../ui/ship-assembly/assembly-workbench-screen.js";
-import { renderAssemblyToolbar } from "../ui/ship-assembly/assembly-view-modes.js";
+import { getViewModeOverlay, renderAssemblyToolbar, renderViewModeOverlay } from "../ui/ship-assembly/assembly-view-modes.js";
 import { portAccessibilityLabel } from "../ui/ship-assembly/port-overlay.js";
 import { renderAssemblyInspector } from "../ui/ship-assembly/assembly-inspector-panel.js";
 import { renderBlueprintLibrary } from "../ui/ship-assembly/blueprint-library-screen.js";
+import { renderBlueprintDetail } from "../ui/ship-assembly/blueprint-detail-screen.js";
 import { createBlueprintImportDialog } from "../ui/ship-assembly/blueprint-import-dialog.js";
 import { createQuickMountOverlay } from "../ui/ship-assembly/quick-mount-overlay.js";
 import { renderPlacementPreview } from "../ui/ship-assembly/placement-preview-overlay.js";
+import { attemptMerchantPurchase, attemptWorkshopAction, prepareCheckpointResume, syncLegacyVoidShards } from "./click-path-flows.js";
+import { renderLoadoutScreen } from "../ui/screens/loadout-screen.js";
 
 export async function bootstrap() {
   document.documentElement.dataset.app = "voidreaper-modular";
@@ -135,6 +139,7 @@ export async function bootstrap() {
   services.unlocks = createUnlockService(initialSave.unlocks);
   services.equipment = createEquipmentRegistry();
   for (const definition of [...SHIPS, ...WEAPONS, ...REACTORS, ...MODULES]) services.equipment.register(definition);
+  services.loadouts = createLoadoutService({ registry: services.equipment, tagEngine: services.tags, unlocks: services.unlocks });
   const blueprintIds=createIdService("meta-blueprints"),thumbnailService=createBlueprintThumbnailService({assemblyRenderer:services.assemblyRenderer,geometryService:{getSnapshot:()=>services.assemblyGeometry?.getSnapshot()}});services.blueprints=createBlueprintService({saveStore:services.save,idFactory:blueprintIds,thumbnailService});services.blueprints.hydrate(initialSave);
   console.info(`[content] ${SHIPS.length} ships · ${WEAPONS.length} weapons · ${REACTORS.length} reactors · ${MODULES.length} modules`);
 
@@ -154,7 +159,58 @@ export async function bootstrap() {
   let mapScreen;
   let activeCampaignNodeId = null;
   let originalStartWave;
-  const showAssemblyWorkbench=()=>{if(!services.assemblyWorkbench||!services.currentAssembly)return legacyRuntime.ui.toast("Werkbank ist nach dem ersten Kampfeinsatz verfügbar.");const stage=hangarRoot.querySelector(".hangar-content"),workbench=services.assemblyWorkbench;workbench.open({source:"sector-map"});let screen;const render=()=>{const model=workbench.model(),geometryById=new Map(model.geometry.nodes.map(node=>[node.nodeId,node])),ports=Object.values(model.assembly.portsById).map(port=>{const parent=geometryById.get(port.parentNodeId),local=port.localPosition??{x:(port.direction?.x??0)*34,y:(port.direction?.y??0)*34};return{...port,position:{x:(parent?.worldPosition.x??0)+local.x,y:(parent?.worldPosition.y??0)+local.y},label:portAccessibilityLabel(port)};});screen.renderInventory(model.inventory.filter(item=>!Object.values(model.assembly.nodesById).some(node=>node.moduleInstanceId===item.instanceId)));screen.renderPorts(ports);renderAssemblyToolbar(stage.querySelector('[data-role="modes"]'),model.session.viewMode,mode=>{workbench.setViewMode(mode);render();});const ctx=screen.canvas.getContext("2d");ctx.clearRect(0,0,screen.canvas.width,screen.canvas.height);ctx.save();ctx.translate(screen.canvas.width/2,screen.canvas.height/2);services.assemblyRenderer.renderPlayerShip(ctx,{geometrySnapshot:model.geometry,position:{x:0,y:0},time:controller.run?.time??0});ctx.restore();const inspector=document.createElement("div"),selected=model.assembly.nodesById[model.session.selectedNodeId],selectedPort=model.assembly.portsById[model.session.selectedPortId];renderAssemblyInspector(inspector,{node:selected,port:selectedPort,warnings:workbench.previewConsequence().warnings});screen.setInspector(inspector);};screen=createAssemblyWorkbenchScreen(stage,{onAction:(action,data)=>{if(action==="close"){workbench.close();showCampaignMap();return;}if(action==="select-item")workbench.selectItem(data.id);if(action==="select-port"){const port=services.currentAssembly.getSnapshot().portsById[data.id];if(!port?.occupiedByNodeId){workbench.selectPort(data.id);if(workbench.session.selectedItemId)workbench.mount({position:port.localPosition??{x:(port.direction?.x??0)*34,y:(port.direction?.y??0)*34},rotation:Math.atan2(port.direction?.y??0,port.direction?.x??1)});}}if(action==="rotate"&&workbench.session.selectedNodeId)workbench.rotate((services.currentAssembly.requireNode(workbench.session.selectedNodeId).localRotation??0)+Math.PI/8);if(action==="move-branch")legacyRuntime.ui.toast("Zielport wählen, um den Ast zu versetzen.");if(action==="dismantle"&&workbench.session.selectedNodeId)workbench.dismantle(false);render();}});render();};
+  const showAssemblyWorkbench = () => {
+    if (!services.assemblyWorkbench || !services.currentAssembly) return legacyRuntime.ui.toast("Werkbank ist nach dem ersten Kampfeinsatz verfügbar.");
+    const stage = hangarRoot.querySelector(".hangar-content");
+    const workbench = services.assemblyWorkbench;
+    let movingBranch = false;
+    let screen;
+    workbench.open({ source: "sector-map" });
+    const render = () => {
+      const model = workbench.model();
+      const geometryById = new Map(model.geometry.nodes.map(node => [node.nodeId, node]));
+      const ports = Object.values(model.assembly.portsById).map(port => {
+        const parent = geometryById.get(port.parentNodeId);
+        const local = port.localPosition ?? { x: (port.direction?.x ?? 0) * 34, y: (port.direction?.y ?? 0) * 34 };
+        return { ...port, position: { x: (parent?.worldPosition.x ?? 0) + local.x, y: (parent?.worldPosition.y ?? 0) + local.y }, label: portAccessibilityLabel(port) };
+      });
+      screen.renderInventory(model.inventory.filter(item => !Object.values(model.assembly.nodesById).some(node => node.moduleInstanceId === item.instanceId)));
+      screen.renderPorts(ports);
+      renderAssemblyToolbar(stage.querySelector('[data-role="modes"]'), model.session.viewMode, mode => { workbench.setViewMode(mode); render(); });
+      const ctx = screen.canvas.getContext("2d");
+      ctx.clearRect(0, 0, screen.canvas.width, screen.canvas.height);
+      ctx.save();
+      ctx.translate(screen.canvas.width / 2, screen.canvas.height / 2);
+      services.assemblyRenderer.renderPlayerShip(ctx, { geometrySnapshot: model.geometry, position: { x: 0, y: 0 }, time: controller.run?.time ?? 0 });
+      renderViewModeOverlay(ctx, getViewModeOverlay(model.session.viewMode, { assembly: model.assembly, geometry: model.geometry, flightProfile: services.flightProfile?.getProfile() }));
+      ctx.restore();
+      const inspector = document.createElement("div");
+      const selected = model.assembly.nodesById[model.session.selectedNodeId];
+      const selectedPort = model.assembly.portsById[model.session.selectedPortId];
+      const consequence = workbench.previewConsequence();
+      renderAssemblyInspector(inspector, { node: selected, port: selectedPort, warnings: consequence.warnings, actions: { rotate: Boolean(selected) && consequence.allowed, moveBranch: Boolean(selected), dismantle: Boolean(selected) && consequence.allowed } });
+      screen.setInspector(inspector);
+    };
+    screen = createAssemblyWorkbenchScreen(stage, { onAction: (action, data) => {
+      if (action === "close") { workbench.close(); showCampaignMap(); return; }
+      if (action === "select-item") { movingBranch = false; workbench.selectItem(data.id); }
+      if (action === "select-node") { movingBranch = false; workbench.selectNode(data.id); }
+      if (action === "select-port") {
+        const port = services.currentAssembly.getSnapshot().portsById[data.id];
+        if (!port?.occupiedByNodeId) {
+          workbench.selectPort(data.id);
+          const transform = { position: port.localPosition ?? { x: (port.direction?.x ?? 0) * 34, y: (port.direction?.y ?? 0) * 34 }, rotation: Math.atan2(port.direction?.y ?? 0, port.direction?.x ?? 1) };
+          if (movingBranch && workbench.session.selectedNodeId) { workbench.move(transform, { branch: true }); movingBranch = false; }
+          else if (workbench.session.selectedItemId) workbench.mount(transform);
+        }
+      }
+      if (action === "rotate" && workbench.session.selectedNodeId) workbench.rotate((services.currentAssembly.requireNode(workbench.session.selectedNodeId).localRotation ?? 0) + Math.PI / 8);
+      if (action === "move-branch") { movingBranch = true; legacyRuntime.ui.toast("Freien Zielport wählen, um den Ast zu versetzen."); }
+      if (action === "dismantle" && workbench.session.selectedNodeId) workbench.dismantle(false);
+      render();
+    } });
+    render();
+  };
   const showCampaignMap = () => {
     if (!previewRun) {
       previewRun = createRunState({ seed: Date.now(), mode: "campaign" });
@@ -177,12 +233,19 @@ export async function bootstrap() {
       }
       if (node.type === "merchant") {
         const merchant = createMerchantService({ modules: MODULES, weapons: WEAPONS, reactors: REACTORS, currencyService: services.currency, eventBus: events });
-        renderMerchantScreen(stage, { offers: merchant.roll(node.seed, node.regionIndex), resources: previewRun.resources, onBuy: offer => { merchant.buy(previewRun, offer); finish(); }, onReroll: () => renderMerchantScreen(stage, { offers: merchant.reroll(node.seed, node.regionIndex), resources: previewRun.resources, onBuy: offer => { merchant.buy(previewRun, offer); finish(); }, onReroll: finish }) });
+        const showMerchant = offers => renderMerchantScreen(stage, {
+          offers,
+          resources: previewRun.resources,
+          onBuy: offer => attemptMerchantPurchase({ merchant, run: previewRun, offer, finish, onRejected: () => legacyRuntime.ui.toast("Nicht genügend Ressourcen.") }),
+          onReroll: () => showMerchant(merchant.reroll(node.seed, node.regionIndex)),
+          onLeave: finish
+        });
+        showMerchant(merchant.roll(node.seed, node.regionIndex));
         return;
       }
       if (node.type === "workshop") {
         const workshop = createWorkshopService({ affixRoller: services.affixes, eventBus: events }); const session = workshop.open(node.regionIndex); const target = previewRun.inventory[0] ?? { ...REACTORS[0], rarity: "rare", itemPower: 100, affixes: [] };
-        renderWorkshopScreen(stage, { service: workshop, session, target, onAction: (action, item) => { workshop.apply(session, action, item, { rng: previewRun.rng, sector: node.regionIndex, repairService: services.repairs }); finish(); } }); return;
+        renderWorkshopScreen(stage, { service: workshop, session, target, onAction: (action, item) => attemptWorkshopAction({ workshop, session, action, target: item, payload: { rng: previewRun.rng, sector: node.regionIndex, repairService: services.repairs }, finish }), onLeave: finish }); return;
       }
       if (node.type === "anomaly") {
         const anomaly = createAnomalyService(events); const signal = anomaly.select(node.seed, previewRun.anomalies?.map(entry => entry.eventId));
@@ -197,19 +260,57 @@ export async function bootstrap() {
     weapons: WEAPONS,
     reactors: REACTORS,
     modules: MODULES,
-    currencies: initialSave.currencies,
+    currencies: () => metaSave.currencies,
     checkpoint: initialSave.checkpoint,
     isUnlocked: definition => services.unlocks.isUnlocked(definition),
     onStart: showCampaignMap,
-    onResume: checkpoint => { const hydrated = services.checkpoints.hydrate(checkpoint, services); if (!hydrated) return; previewRun = hydrated.run; services.resumeRun=previewRun; showCampaignMap(); },
+    onResume: checkpoint => { const hydrated = services.checkpoints.hydrate(checkpoint, services); if (!hydrated) return; previewRun = hydrated.run; prepareCheckpointResume({ services, controller, game, run: previewRun }); showCampaignMap(); },
     renderTab: (tab, content) => {
-      if (tab === "Forschung") renderResearchScreen(content, RESEARCH_TREE, { purchased: metaSave.research, canPurchase: node => services.research.canPurchase(metaSave, node), onPurchase: async id => { await services.research.purchase(id); metaSave = await services.save.load(); hangar.render(); } });
-      if(tab==="Baupläne")renderBlueprintLibrary(content,{blueprints:services.blueprints.list(),onOpen:id=>legacyRuntime.ui.toast(`Bauplan ${services.blueprints.require(id).name}`),onFavorite:async(id,favorite)=>{await services.save.update(save=>{save.shipBlueprints[id].favorite=favorite;});metaSave=await services.save.load();services.blueprints.hydrate(metaSave);hangar.render();},onCreate:async()=>{if(!services.currentAssembly)return legacyRuntime.ui.toast("Starte zuerst einen Run.");await services.blueprints.saveFromAssembly({name:`${services.currentAssembly.getSnapshot().shipFrameId} Konstruktion`,assemblySnapshot:services.currentAssembly.getSnapshot(),geometrySnapshot:services.assemblyGeometry.getSnapshot()});metaSave=await services.save.load();hangar.render();},onImport:()=>{const host=document.createElement("div");content.append(host);createBlueprintImportDialog(host,{validate:blueprint=>validateBlueprint(blueprint,{knownDefinitionIds:new Set(services.equipment.values().map(item=>item.id)),knownShipFrameIds:new Set(SHIP_FRAME_ASSEMBLY_PROFILES.map(item=>item.id))}),onImport:async blueprint=>{await services.blueprints.importBlueprint(blueprint);metaSave=await services.save.load();hangar.render();}}).open();}});
+      if (tab === "Loadout") {
+        const loadout = metaSave.loadouts.primary?.slots ? metaSave.loadouts.primary : createEmptyLoadout();
+        renderLoadoutScreen(content, services.loadouts.inspect(loadout), loadout, {
+          blueprints: services.blueprints.list(),
+          activeBlueprintId: services.blueprints.getActiveId(),
+          onBlueprintChange: async id => {
+            if (id) await services.blueprints.setActive(id);
+            else await services.save.update(save => { save.activeBlueprintId = null; });
+            metaSave = await services.save.load();
+            services.blueprints.hydrate(metaSave);
+            hangar.render();
+          }
+        });
+      }
+      if (tab === "Forschung") renderResearchScreen(content, RESEARCH_TREE, { purchased: metaSave.research, canPurchase: node => services.research.canPurchase(metaSave, node), onPurchase: async id => { await services.research.purchase(id); metaSave = await services.save.load(); syncLegacyVoidShards({ persistence: legacyRuntime.persistence, root: document, currencies: metaSave.currencies }); hangar.render(); } });
+      if (tab === "Baupläne") {
+        const refreshBlueprints = async () => { metaSave = await services.save.load(); services.blueprints.hydrate(metaSave); };
+        const showLibrary = () => renderBlueprintLibrary(content, {
+          blueprints: services.blueprints.list(),
+          onOpen: showDetail,
+          onFavorite: async (id, favorite) => { await services.save.update(save => { save.shipBlueprints[id].favorite = favorite; }); await refreshBlueprints(); showLibrary(); },
+          onCreate: async () => { if (!services.currentAssembly) return legacyRuntime.ui.toast("Starte zuerst einen Run."); await services.blueprints.saveFromAssembly({ name: `${services.currentAssembly.getSnapshot().shipFrameId} Konstruktion`, assemblySnapshot: services.currentAssembly.getSnapshot(), geometrySnapshot: services.assemblyGeometry.getSnapshot() }); await refreshBlueprints(); showLibrary(); },
+          onImport: () => { const host = document.createElement("div"); content.append(host); createBlueprintImportDialog(host, { validate: blueprint => validateBlueprint(blueprint, { knownDefinitionIds: new Set(services.equipment.values().map(item => item.id)), knownShipFrameIds: new Set(SHIP_FRAME_ASSEMBLY_PROFILES.map(item => item.id)) }), onImport: async blueprint => { await services.blueprints.importBlueprint(blueprint); await refreshBlueprints(); showLibrary(); } }).open(); }
+        });
+        const showDetail = id => renderBlueprintDetail(content, {
+          blueprint: services.blueprints.require(id),
+          active: services.blueprints.getActiveId() === id,
+          onAction: async action => {
+            if (action === "back") return showLibrary();
+            if (action === "activate") await services.blueprints.setActive(id);
+            if (action === "rename") { const name = prompt("Neuer Name", services.blueprints.require(id).name); if (name === null) return; await services.blueprints.rename(id, name); }
+            if (action === "duplicate") { const copy = await services.blueprints.duplicate(id); await refreshBlueprints(); return showDetail(copy.blueprintId); }
+            if (action === "variant") { if (!services.currentAssembly) return legacyRuntime.ui.toast("Varianten benötigen eine aktive Konstruktion."); const name = prompt("Name der Variante", "Variante"); if (name === null) return; await services.blueprints.createVariant(id, name, services.currentAssembly.getSnapshot()); }
+            if (action === "export") { const code = encodeBlueprint(services.blueprints.require(id)); if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(code); else prompt("Bauplan-Code kopieren", code); legacyRuntime.ui.toast("Bauplan-Code kopiert."); return; }
+            if (action === "delete") { if (!confirm(`Bauplan ${services.blueprints.require(id).name} löschen?`)) return; await services.blueprints.delete(id); await refreshBlueprints(); return showLibrary(); }
+            await refreshBlueprints(); showDetail(id);
+          }
+        });
+        showLibrary();
+      }
       if (tab === "Codex") { const show = filters => renderCodexScreen(content, { entries: services.codex.filter(metaSave, filters), onFilter: show }); show({}); }
       if (tab === "Herausforderungen") renderChallengesScreen(content, [...CHALLENGES, ...createMasteryChallenges(SHIPS, WEAPONS)], metaSave.challenges);
       if (tab === "Prototypen") { const vault = createPrototypeVault(metaSave); const show = filters => renderPrototypeVault(content, { items: vault.filter(filters), filters, capacity: vault.capacity, overflowCount: Object.keys(metaSave.overflow).length, onFilter: show, onFavorite: async id => { vault.favorite(id, !metaSave.inventory[id].favorite); await services.save.save(metaSave); hangar.render(); }, onDismantle: async id => { vault.dismantle(id); await services.save.save(metaSave); hangar.render(); } }); show({}); }
       if (tab === "Kampagnen") renderCampaignSelect(content, services.campaignPaths.available(metaSave), async id => { await services.save.update(save => { services.campaignPaths.select(save, id); }); metaSave = await services.save.load(); hangar.show("Run starten"); });
-      if (tab === "Simulator") { const render = summary => renderSimulatorScreen(content, { summary, onStart: config => { const simRun = services.simulator.create(config); services.simulator.record(simRun, { dt: 1, damage: 0, heat: 0, energy: 100 }); render(services.simulator.summary(simRun)); } }); render(); }
+      if (tab === "Simulator") { const render = (config = {}, summary) => renderSimulatorScreen(content, { config, summary, onStart: nextConfig => { const simRun = services.simulator.create(nextConfig); render(nextConfig, services.simulator.simulate(simRun)); } }); render(); }
       if (tab === "Statistiken") renderStatistics(content, metaSave.statistics, metaSave.records);
       if (tab === "Einstellungen") renderSettingsScreen(content, metaSave.settings, async settings => { for (const [code, action] of Object.entries(settings.bindings)) input.rebind(action, code); await services.save.update(save => { save.settings = structuredClone(settings); }); });
       if (tab === "Bergung") { const signal = services.wreckSignals.visible(metaSave.wreckSignals)[0]; if (!signal) content.innerHTML = `<div class="hangar-placeholder"><strong>KEIN AKTIVES WRACK-SIGNAL</strong><span>Legendäre verlorene Prototypen erscheinen nach dem nächsten Run.</span></div>`; else { const mission = services.salvageMissions.create(signal); renderSalvageMission(content, mission, () => game.start("standard")); } }

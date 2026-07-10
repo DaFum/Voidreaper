@@ -1,0 +1,33 @@
+Original prompt: Teste im Browser und optimiere alle Klickwege und Features.
+
+- Branch `feature_fix` was clean at the start of this browser-QA pass.
+- User explicitly approved changing or resetting the local game state during testing.
+- Scope: broad end-to-end click-path inventory first; optimize only reproduced UX or functional problems after design approval.
+- Browser QA completed across all 15 Hangar tabs, checkpoint resume, sector map, merchant, workshop, workbench, blueprints, research, simulator, Codex, Standard Run, Daily Seed, combat controls, level-up, pause/resume, and settings persistence.
+- Confirmed critical click-path defects:
+  - unaffordable merchant purchases still finish the node because the controller ignores `merchant.buy(...) === false`;
+  - visited sector nodes remain enabled and enter a confirmation state that can only fail silently;
+  - workshop has no leave/back action, forcing the player to spend AP or reload.
+- Confirmed high-impact incomplete paths:
+  - Hangar resource header is stale after research until reload;
+  - Loadout tab renders the generic catalog although a dedicated loadout screen exists;
+  - blueprint cards only toast despite an existing detail screen; invalid import exposes a raw JSON/base64 parser error;
+  - simulator forgets submitted configuration and produces a one-sample zero-DPS summary;
+  - resumed checkpoints cannot open the workbench until another combat initializes assembly state;
+  - workbench view modes are cosmetic, and module actions stay enabled without a selected module;
+  - Codex category/source selects lack accessible names.
+- Verified working: all Hangar tabs render, research and settings persist, checkpoint resume, reachable sector two-step confirmation, live combat, level-up choice, pause/resume, dodge, workbench opening after combat, blueprint favorite toggle, Standard Run, and dated Daily Seed.
+- Implemented the approved complete repair scope with Node regression tests and browser retesting.
+- Browser verification after implementation:
+  - Loadout uses the dedicated screen and represents an empty build as `0% unconfigured`;
+  - both visible Void Shard counters stay aligned after research purchases;
+  - blueprint detail/back/import paths work, stale detail handlers no longer capture library actions, and malformed codes show actionable copy;
+  - simulator preserves enemy/density/duration/seed and reports deterministic non-zero DPS/triggers;
+  - checkpoint resume initializes the workbench immediately;
+  - visited sector nodes are disabled, workshop has a working map exit, and workbench actions are selection-aware;
+  - assembly view modes render visible overlays;
+  - Codex filters expose accessible names;
+  - 390x844 viewport has no horizontal document overflow and the Loadout tab remains operable;
+  - browser console returned no warnings or errors.
+- The Region-2 merchant route could not be repeated end-to-end in the final fresh run because the test run died at the mid-boss. Purchase rejection, successful completion, affordability, corrupted-offer behavior, and finish gating are covered by focused automated tests; the original browser reproduction established the controller root cause.
+- Final TODO: run fresh `npm test`, `npm run build`, and `git diff --check`; no known product-code TODO remains after those gates.
