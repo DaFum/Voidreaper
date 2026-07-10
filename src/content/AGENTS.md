@@ -14,6 +14,11 @@
 - A content file may look data-only but still be part of a runtime contract through registry lookups, selectors, or validators.
 - If you change a shared definition shape, search for all registries and resolvers that consume it before concluding the edit is local.
 
+## Non-Obvious Pitfalls
+- Content validators enforce fixed catalog sizes in key areas; adding/removing entries usually requires validator updates and design sign-off.
+- ID changes are migration-sensitive even for "meta" content because old saves, blueprint imports, and codex history can reference those IDs.
+- Some shape fields are consumed indirectly through assembly resolvers and effect systems; missing defaults may fail only at runtime, not at import.
+
 ## Validation
 - Run `npm run validate-content` after content edits.
 - Run `npm run validate:assembly` when ship-assembly content changes.

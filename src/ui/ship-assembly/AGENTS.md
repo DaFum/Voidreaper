@@ -13,5 +13,10 @@
 - UI state here should stay derived from the assembly model where possible; duplicating state creates drift between display and gameplay.
 - If you add a new control or overlay, check the matching mobile affordances and any build or blueprint feedback it needs to surface.
 
+## Non-Obvious Pitfalls
+- Keyboard/action bindings and click handlers both drive assembly actions; keep parity so one input method does not bypass validation.
+- Inspector, port overlay, and placement preview depend on stable selection IDs and geometry snapshots. Race conditions appear if render order changes.
+- Blueprint import/export dialogs are user-facing contract surfaces. Error wording and validation hints should remain actionable and consistent.
+
 ## Reference Docs
 - [../../../docs/superpowers/plans/2026-07-10-adaptive-ship-assembly-master.md](../../../docs/superpowers/plans/2026-07-10-adaptive-ship-assembly-master.md)

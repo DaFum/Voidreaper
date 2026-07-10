@@ -13,5 +13,10 @@
 - Geometry state, damage state, and activity telemetry are part of the renderer contract, so verify those inputs before changing draw code.
 - If a visual tweak needs layout changes, update the UI or style layer in the same pass to avoid a mismatch between interaction and display.
 
+## Non-Obvious Pitfalls
+- Coordinate-space mismatches are easy here (local vs world vs canvas). Verify transforms before adjusting offsets or hit visuals.
+- Fallback render paths are useful for development but can hide production regressions if they replace expected profile-specific art silently.
+- Thumbnail and live render paths should stay visually consistent; avoid one-off effects in one path unless intentionally documented.
+
 ## Reference Docs
 - [../../../docs/superpowers/plans/2026-07-10-adaptive-ship-assembly-master.md](../../../docs/superpowers/plans/2026-07-10-adaptive-ship-assembly-master.md)

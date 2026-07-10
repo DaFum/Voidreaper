@@ -14,6 +14,11 @@
 - Feature code should usually orchestrate behavior, not own content validation or save migration logic.
 - If a feature change introduces a new service or registry shape, update the bootstrap wiring and any consumer selectors together.
 
+## Non-Obvious Pitfalls
+- Feature services are often long-lived singletons created in bootstrap; changes to constructor expectations can break startup before screens render.
+- Event payload shapes on the shared event bus act as implicit APIs. Keep backward compatibility when possible or migrate all listeners at once.
+- Avoid putting fallback defaults only in UI. Core feature models should emit stable, complete state for all consumers.
+
 ## Ship-Assembly Note
 - Ship-assembly work is coupled to content, geometry, mounting, damage, flight, UI, and rendering.
 - Use the adaptive ship-assembly docs as the design reference rather than recreating the spec in code comments.

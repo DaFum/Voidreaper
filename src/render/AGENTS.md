@@ -13,5 +13,10 @@
 - Several ship-assembly renderers depend on geometry helpers and registry output, so a visual ID change usually needs both content and renderer updates.
 - Avoid adding gameplay branching here just to work around a missing model field; fix the upstream data contract instead.
 
+## Non-Obvious Pitfalls
+- Rendering bugs can originate in stale caches or memoized geometry snapshots upstream; verify data freshness before rewriting draw logic.
+- Keep render output deterministic for the same snapshot/time inputs, especially where thumbnails or previews are generated.
+- Do not silently swallow unknown profile IDs in hot paths; explicit warnings are preferred so broken content is visible early.
+
 ## Ship-Assembly Note
 - Ship-assembly rendering changes should stay aligned with the ship-assembly feature and its CSS/UI files.

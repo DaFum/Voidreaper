@@ -14,6 +14,11 @@
 - Validators are part of the release gate; do not widen or soften checks unless the content schema genuinely changed.
 - Keep script output stable enough that the failure reason is obvious when a count or ID mismatch occurs.
 
+## Non-Obvious Pitfalls
+- Validators are intentionally opinionated and include product-level contracts (for example fixed catalog counts), not only type/shape checks.
+- These scripts run under Node ESM; avoid CommonJS patterns or path assumptions that only work in bundlers.
+- A "small" import change in a validator can trigger broader side effects by evaluating module init code from features or render layers.
+
 ## Relevant Commands
 - `npm run validate-content`
 - `npm run validate:assembly`

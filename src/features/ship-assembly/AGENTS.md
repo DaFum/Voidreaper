@@ -14,6 +14,11 @@
 - The assembly state feeds both gameplay and display snapshots, so shape changes can break renderers even if the simulation still works.
 - Keep the blueprint version contract in mind when adding fields or changing saved layout data.
 
+## Non-Obvious Pitfalls
+- Blueprint import/export, save hydration, and live workbench state are separate entry points. Test more than one path after model changes.
+- Node/port identity stability matters for overlays, inspector panels, and quick-mount flows; avoid regenerating IDs unless intentionally remapping.
+- Geometry and flight metrics are coupled: a visual or placement tweak can unintentionally affect mass/balance/energy metrics used by gameplay systems.
+
 ## Reference Docs
 - [../../../docs/superpowers/plans/2026-07-10-adaptive-ship-assembly-master.md](../../../docs/superpowers/plans/2026-07-10-adaptive-ship-assembly-master.md)
 - [../../../docs/manual-validation/adaptive-ship-assembly.md](../../../docs/manual-validation/adaptive-ship-assembly.md)

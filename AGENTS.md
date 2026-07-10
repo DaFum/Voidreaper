@@ -20,6 +20,12 @@
 - `npm run build` is the safest final check because it catches content and assembly regressions before Vite compiles.
 - When a change touches save data or blueprint shape, treat it as a compatibility change and verify the migration path.
 
+## Non-Obvious Pitfalls
+- Validators encode hard contracts, not just schema checks. Example: `validate-content` expects fixed counts for several catalogs (ships, weapons, reactors, modules).
+- `validate:assembly` imports feature and renderer modules, so changes outside `scripts/` can fail the script even if content files are unchanged.
+- `src/main.js` imports most CSS globally; visual regressions often come from cross-screen cascade effects rather than the file you edited.
+- `src/app/bootstrap.js` is a high-risk integration hub. Renaming a service key or changing init order can break unrelated screens without compile errors.
+
 ## Working Rules
 - Keep edits small and local to the owning subsystem.
 - Preserve existing conventions and avoid broad refactors unless the task needs them.
