@@ -12,5 +12,11 @@ export const WEAPON_EVOLUTIONS = [
   evolution("judas-swarm", "Judas Swarm", "missile-battery", "forbidden", [{ type: "corruption", minimum: 50 }], ["spawn-projectile"], { permanentDownside: true }),
   evolution("aegis-constellation", "Aegis Constellation", "drone-core", "regular", [{ type: "tag", id: "Drone", minimum: 4 }, { type: "tag", id: "Shield", minimum: 2 }], ["grant-shield"]),
   evolution("predator-mesh", "Predator Mesh", "drone-core", "alternative", [{ type: "tag", id: "Drone", minimum: 4 }, { type: "tag", id: "Execute", minimum: 2 }], ["deal-damage"]),
-  evolution("orphan-protocol", "Orphan Protocol", "drone-core", "forbidden", [{ type: "corruption", minimum: 50 }, { type: "tag", id: "Sacrifice", minimum: 1 }], ["summon-unit"], { permanentDownside: true })
+  evolution("orphan-protocol", "Orphan Protocol", "drone-core", "forbidden", [{ type: "corruption", minimum: 50 }, { type: "tag", id: "Sacrifice", minimum: 1 }], ["summon-unit"], { permanentDownside: true }),
+  evolution("thunder-crown", "Thunder Crown", "arc-generator", "regular", [{ type: "tag", id: "Arc", minimum: 4 }, { type: "tag", id: "Movement", minimum: 2 }], ["deal-damage"]),
+  evolution("neural-storm", "Neural Storm", "arc-generator", "alternative", [{ type: "tag", id: "Shock", minimum: 3 }, { type: "tag", id: "Critical", minimum: 2 }], ["apply-status"]),
+  evolution("blackout-gospel", "Blackout Gospel", "arc-generator", "forbidden", [{ type: "corruption", minimum: 50 }, { type: "load", minimum: 1.3 }], ["disable-module", "deal-damage"], { permanentDownside: true }),
+  evolution("erasure-ray", "Erasure Ray", "void-beam", "regular", [{ type: "tag", id: "Beam", minimum: 4 }, { type: "tag", id: "Execute", minimum: 2 }], ["deal-damage"]),
+  evolution("graviton-scalpel", "Graviton Scalpel", "void-beam", "alternative", [{ type: "tag", id: "Control", minimum: 3 }], ["move-enemy"]),
+  evolution("mouth-of-nothing", "Mouth of Nothing", "void-beam", "forbidden", [{ type: "corruption", minimum: 75 }], ["spawn-zone"], { permanentDownside: true })
 ];
