@@ -68,6 +68,9 @@ import { UTILITY_AFFIXES } from "../content/affixes/utility-affixes.js";
 import { CORRUPTED_AFFIXES } from "../content/affixes/corrupted-affixes.js";
 import { createAssemblyProfileRegistry } from "../features/ship-assembly/content/assembly-profile-registry.js";
 import { SHIP_FRAME_ASSEMBLY_PROFILES } from "../features/ship-assembly/content/ship-frame-assembly-profiles.js";
+import { createAssemblyRenderer } from "../render/ship-assembly/assembly-renderer.js";
+import { getCoreGeometryIds } from "../features/ship-assembly/geometry/core-geometry-builders.js";
+import { MODULE_VISUAL_PROFILES } from "../features/ship-assembly/content/module-visual-profiles.js";
 
 export async function bootstrap() {
   document.documentElement.dataset.app = "voidreaper-modular";
@@ -109,6 +112,7 @@ export async function bootstrap() {
   services.affixes = createAffixRoller([OFFENSIVE_AFFIXES, DEFENSIVE_AFFIXES, UTILITY_AFFIXES, CORRUPTED_AFFIXES]);
   services.assemblyProfiles = createAssemblyProfileRegistry();
   for (const profile of SHIP_FRAME_ASSEMBLY_PROFILES) services.assemblyProfiles.registerShipFrame(profile);
+  services.assemblyRenderer = createAssemblyRenderer();
   console.info(`[assembly] ${services.assemblyProfiles.getCounts().shipFrames} ship profiles`);
   services.unlocks = createUnlockService(initialSave.unlocks);
   services.equipment = createEquipmentRegistry();
@@ -116,7 +120,7 @@ export async function bootstrap() {
   console.info(`[content] ${SHIPS.length} ships · ${WEAPONS.length} weapons · ${REACTORS.length} reactors · ${MODULES.length} modules`);
 
   const controller = createGameController(services);
-  if (import.meta.env.DEV) globalThis.__VOIDREAPER_DEBUG__ = { ...(globalThis.__VOIDREAPER_DEBUG__ ?? {}), assembly: { getSnapshot: () => services.currentAssembly?.getSnapshot() ?? null } };
+  if (import.meta.env.DEV) globalThis.__VOIDREAPER_DEBUG__ = { ...(globalThis.__VOIDREAPER_DEBUG__ ?? {}), assembly: { getSnapshot: () => services.currentAssembly?.getSnapshot() ?? null, getGeometry: () => services.assemblyGeometry?.getSnapshot() ?? null, assemblyVisualGallery: () => ({ cores: getCoreGeometryIds(), modules: MODULE_VISUAL_PROFILES.map(profile => profile.rendererId), damageStates: ["intact","armor-broken","core-disrupted"] }) } };
   const input = createInputController({ eventBus: events, bindings: metaSave.settings.bindings });
   input.start();
   const inspector = createBuildInspector(document.querySelector("#build-inspector"), services);

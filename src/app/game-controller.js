@@ -3,6 +3,7 @@ import { createHeatState } from "../features/heat/heat-system.js";
 import { createCorruptionState } from "../features/corruption/corruption-system.js";
 import { createAssemblyState } from "../features/ship-assembly/model/create-assembly-state.js";
 import { createAssemblyService } from "../features/ship-assembly/model/assembly-service.js";
+import { createAssemblyGeometryService } from "../features/ship-assembly/geometry/assembly-geometry-service.js";
 
 const UPGRADE_TAGS = {
   multi: ["Projectile"], damage: ["Kinetic"], dmg: ["Kinetic"], rate: ["Cooldown"], speed: ["Movement"],
@@ -39,11 +40,14 @@ export function createGameController(services) {
       const rootPorts = frame.initialPorts.map(template => { const portId=run.ids.create("assembly-port"); rootNode.childPortIds.push(portId); return { ...template, portId, parentNodeId: rootNodeId, occupiedByNodeId: null, localPosition: { x: template.direction.x*46, y: template.direction.y*46 } }; });
       run.assembly = createAssemblyState({ shipFrameId, rootNode, rootPorts });
       services.currentAssembly = createAssemblyService({ state: run.assembly, eventBus: services.events, idFactory: run.ids });
+      services.assemblyGeometry?.destroy?.();
+      services.assemblyGeometry = createAssemblyGeometryService({ eventBus: services.events, assemblyService: services.currentAssembly, profileRegistry: services.assemblyProfiles, equipmentRegistry: services.equipment });
       const railDefinition = services.equipment.require("railgun");
       const railItem = { instanceId: run.ids.create("item"), definitionId: railDefinition.id, ownership: "temporary", rarity: "common", itemPower: 100, affixes: [], sockets: [] };
       run.inventory.push(railItem);
       const startPort = rootPorts.find(port => railDefinition.assembly.mountTypes.includes(port.mountType) && !port.occupiedByNodeId);
       if (startPort) services.currentAssembly.mountModule({ moduleInstanceId: railItem.instanceId, definitionId: railDefinition.id, parentPort: startPort, assemblyProfile: railDefinition.assembly, transform: { position: startPort.localPosition, rotation: Math.atan2(startPort.direction.y,startPort.direction.x) } });
+      services.assemblyGeometry.rebuildNow();
       this.syncLegacy(game, 0);
       services.events.emit("run-started", { run });
       return run;
