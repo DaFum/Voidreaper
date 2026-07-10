@@ -8,6 +8,41 @@
       display: none
     }
 
+    .resource-cluster {
+      position: fixed;
+      left: max(16px, env(safe-area-inset-left));
+      bottom: max(18px, env(safe-area-inset-bottom));
+      width: min(330px, calc(100vw - 32px));
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px 12px;
+      pointer-events: none;
+    }
+
+    .resource-meter {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 2px 8px;
+      color: var(--ice);
+      font: 10px/1 var(--font-m);
+      letter-spacing: .08em;
+    }
+
+    .resource-meter i {
+      grid-column: 1 / -1;
+      height: 3px;
+      background: linear-gradient(90deg, currentColor var(--fill, 0%), rgba(255,255,255,.1) var(--fill, 0%));
+      box-shadow: 0 0 8px color-mix(in srgb, currentColor 55%, transparent);
+    }
+
+    .resource-meter b { justify-self: end; font-weight: 500; }
+    .resource-meter[data-resource="heat"] { color: var(--warn); }
+    .resource-meter[data-resource="corruption"] { color: var(--wound); }
+    .resource-cluster[data-load-tier="critical"],
+    .resource-cluster[data-load-tier="collapse"] { animation: meter-warning .8s steps(2) infinite; }
+
+    @keyframes meter-warning { 50% { filter: brightness(1.7); } }
+
     .hud-top {
       display: flex;
       justify-content: space-between;
