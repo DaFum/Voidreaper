@@ -82,6 +82,7 @@ import { createAssemblyDebugService } from "../features/ship-assembly/debug/asse
 import { createAssemblyDebugScenarios } from "../features/ship-assembly/debug/assembly-debug-scenarios.js";
 import { createAssemblyErrorBoundary } from "../features/ship-assembly/model/assembly-error-boundary.js";
 import { createAssemblyWorkbenchScreen } from "../ui/ship-assembly/assembly-workbench-screen.js";
+import { createAssemblyCanvasController } from "../ui/ship-assembly/assembly-canvas-controller.js";
 import { getViewModeOverlay, renderAssemblyToolbar, renderViewModeOverlay } from "../ui/ship-assembly/assembly-view-modes.js";
 import { portAccessibilityLabel } from "../ui/ship-assembly/port-overlay.js";
 import { renderAssemblyInspector } from "../ui/ship-assembly/assembly-inspector-panel.js";
@@ -90,7 +91,7 @@ import { renderBlueprintDetail } from "../ui/ship-assembly/blueprint-detail-scre
 import { createBlueprintImportDialog } from "../ui/ship-assembly/blueprint-import-dialog.js";
 import { createQuickMountOverlay } from "../ui/ship-assembly/quick-mount-overlay.js";
 import { renderPlacementPreview } from "../ui/ship-assembly/placement-preview-overlay.js";
-import { attemptMerchantPurchase, attemptWorkshopAction, canUseWorkbenchPort, prepareCheckpointResume, resetCampaignResume, syncLegacyVoidShards } from "./click-path-flows.js";
+import { attemptMerchantPurchase, attemptWorkshopAction, canUseWorkbenchPort, openReplacingQuickMount, prepareCheckpointResume, resetCampaignResume, subscribeWorkbenchGeometry, syncLegacyVoidShards } from "./click-path-flows.js";
 import { renderLoadoutScreen } from "../ui/screens/loadout-screen.js";
 
 export async function bootstrap() {
@@ -151,7 +152,7 @@ export async function bootstrap() {
   const controller = createGameController(services);
   if(import.meta.env.DEV){const flags=new Map(),firstModule=()=>Object.values(services.currentAssembly?.getSnapshot().nodesById??{}).find(node=>node.moduleInstanceId),buildMaximum=()=>{const run=controller.run;if(!run)return{built:false,reason:"run-required"};const rank={S:1,M:2,L:3,XL:4},definitions=services.equipment.values().filter(definition=>definition.slot!=="ship"),blocked=new Set();let attempts=0;while(Object.keys(services.currentAssembly.getSnapshot().nodesById).length<19&&attempts++<80){const snapshot=services.currentAssembly.getSnapshot(),port=Object.values(snapshot.portsById).filter(item=>!item.occupiedByNodeId&&!blocked.has(item.portId)&&(item.branchDepth??0)<4).sort((a,b)=>(a.branchDepth??0)-(b.branchDepth??0))[0];if(!port)break;const definition=definitions.filter(item=>rank[item.assembly.sizeClass]<=rank[port.sizeClass]&&item.assembly.mountTypes.includes(port.mountType)&&item.assembly.loadDemand<=port.loadCapacity&&(port.acceptedEnergyClasses??[port.energyClass,"standard"]).includes(item.assembly.energyClass)).sort((a,b)=>(b.assembly.childPorts?.length??0)-(a.assembly.childPorts?.length??0))[0];if(!definition){blocked.add(port.portId);continue;}const item={instanceId:run.ids.create("debug-item"),definitionId:definition.id,ownership:"temporary",rarity:"debug",affixes:[],sockets:[]};run.inventory.push(item);services.currentAssembly.mountModule({moduleInstanceId:item.instanceId,definitionId:definition.id,parentPort:port,assemblyProfile:definition.assembly,transform:{position:port.localPosition??{x:(port.direction?.x??0)*34,y:(port.direction?.y??0)*34},rotation:Math.atan2(port.direction?.y??0,port.direction?.x??1)}});services.assemblyGeometry.rebuildNow();}const snapshot=services.currentAssembly.getSnapshot();return{built:true,nodes:Object.keys(snapshot.nodesById).length,segments:Object.keys(snapshot.nodesById).length-1};},scenarioActions={visualGallery:()=>({cores:getCoreGeometryIds(),modules:MODULE_VISUAL_PROFILES.map(profile=>profile.rendererId),damageStates:["intact","armor-broken","core-disrupted"]}),buildMaximum,buildAsymmetric:()=>({maximum:buildMaximum(),flight:services.flightProfile?.rebuildNow()}),damageSingle:()=>{const node=firstModule();return node?services.moduleDamage.applyDamage(node.nodeId,20,"debug"):null;},bridgeSurvival:()=>{const maximum=buildMaximum();if(!maximum.built)return maximum;const snapshot=services.currentAssembly.getSnapshot(),parent=Object.values(snapshot.nodesById).find(node=>node.nodeId!==snapshot.rootNodeId&&Object.values(snapshot.nodesById).some(child=>child.parentNodeId===node.nodeId));if(!parent)return{survived:false,reason:"no-parent"};const child=Object.values(snapshot.nodesById).find(node=>node.parentNodeId===parent.nodeId);services.currentAssembly.addSecondaryConnection({sourceNodeId:child.nodeId,targetNodeId:snapshot.rootNodeId,profile:{structuralStrength:8,energyThroughput:"standard",visualConnectorType:"debug-bridge"}});services.moduleDamage.applyDamage(parent.nodeId,9999,"debug");return{survived:Boolean(services.currentAssembly.getSnapshot().nodesById[child.nodeId]),childNodeId:child.nodeId};},branchCollapse:()=>{const snapshot=services.currentAssembly?.getSnapshot(),parent=Object.values(snapshot?.nodesById??{}).find(node=>node.nodeId!==snapshot.rootNodeId&&Object.values(snapshot.nodesById).some(child=>child.parentNodeId===node.nodeId))??firstModule();return parent?services.moduleDamage.applyDamage(parent.nodeId,9999,"debug"):null;},repairRemount:()=>({detached:services.currentAssembly?.getSnapshot().detachedItems??[],resources:controller.run?.resources}),setLod:lod=>{metaSave.assemblyVisualPreferences.lod=lod;return lod;},blueprintRoundtrip:()=>{const blueprint=services.blueprints.list()[0];if(!blueprint)return{instruction:"Save a blueprint first."};return validateBlueprint(decodeBlueprint(encodeBlueprint(blueprint)),{knownDefinitionIds:new Set(services.equipment.values().map(item=>item.id)),knownShipFrameIds:new Set(SHIP_FRAME_ASSEMBLY_PROFILES.map(item=>item.id))});}};const scenarioRunner=createAssemblyDebugScenarios(scenarioActions),damage={forceState(nodeId,state){const node=services.currentAssembly.requireNode(nodeId);node.damageState=state;if(state==="armor-broken")node.armorIntegrity=0;if(state==="core-disrupted")node.coreIntegrity=node.maxCoreIntegrity*.3;services.currentAssembly.publishDamageChange(nodeId);return node;}},debugFlags={set:(key,value)=>flags.set(key,value),snapshot:()=>Object.fromEntries(flags)},settings={setTemporary:(key,value)=>{flags.set(key,value);return value;}},blueprints={exportCurrent:()=>{const blueprint=services.blueprints.list()[0];return blueprint?encodeBlueprint(blueprint):null;},importCode:code=>validateBlueprint(decodeBlueprint(code),{knownDefinitionIds:new Set(services.equipment.values().map(item=>item.id)),knownShipFrameIds:new Set(SHIP_FRAME_ASSEMBLY_PROFILES.map(item=>item.id))})};services.assemblyDebug=createAssemblyDebugService({inventory:{grantDebugItem:definitionId=>{const run=controller.run,definition=services.equipment.require(definitionId);if(!run)return null;const item={instanceId:run.ids.create("debug-item"),definitionId:definition.id,ownership:"temporary",rarity:"debug",affixes:[],sockets:[]};run.inventory.push(item);services.events.emit("run-item-acquired",{item,source:"debug"});return item;}},damage,assembly:()=>services.currentAssembly,defaultBridge:{structuralStrength:8,energyThroughput:"standard",visualConnectorType:"debug-bridge"},debugFlags,settings,scenarios:scenarioRunner,blueprints});globalThis.__VOIDREAPER_DEBUG__={...(globalThis.__VOIDREAPER_DEBUG__??{}),assembly:{...services.assemblyDebug,getGeometry:()=>services.assemblyGeometry?.getSnapshot()??null,getHitZones:()=>services.hitZones?.all()??[],getFlightProfile:()=>services.flightProfile?.getProfile()??null,getPending:()=>services.pendingMounts?.values()??[],getQuickMount:()=>services.quickMount?.session??null,getWorkbench:()=>services.assemblyWorkbench?.model()??null,scenarios:scenarioRunner}};}
   const input = createInputController({ eventBus: events, bindings: metaSave.settings.bindings, isQuickMount: () => Boolean(services.quickMount?.session) });
-  let quickMountHost=null;const renderQuickMount=()=>{const session=services.quickMount?.session;if(!session||!quickMountHost)return;const suggestion=session.suggestions[session.selectedIndex],definition=services.equipment.require(session.pendingMount.definitionId),overlay=quickMountHost.__overlay;overlay.render({name:definition.name??definition.id,reasons:suggestion.reasons,deltas:[["POSITION",`${session.selectedIndex+1}/${session.suggestions.length}`],["MASSE",suggestion.flightDelta.totalMass?.toFixed?.(1)??"—"],["BALANCE",suggestion.metrics.balance?.toFixed?.(2)??"—"],["ENERGIE",suggestion.metrics.energyPath?.toFixed?.(2)??"—"],["SCHUTZ",suggestion.metrics.protection?.toFixed?.(2)??"—"],["RISIKO",suggestion.metrics.collisionRisk?"HOCH":"NIEDRIG"]],details:[...(definition.tags??[]).map(tag=>typeof tag==="string"?tag:tag.id),`Blueprint ${suggestion.blueprintMatch??"frei"}`]});renderPlacementPreview(overlay.canvas.getContext("2d"),{snapshot:services.assemblyGeometry.getSnapshot(),suggestion,assemblyRenderer:services.assemblyRenderer,time:controller.run?.time??0});};const closeQuickMount=()=>{quickMountHost?.remove();quickMountHost=null;};events.on("run-item-acquired",({item,source,run:owningRun})=>{if(owningRun&&owningRun!==controller.run)return;const definition=services.equipment.require(item.definitionId),pending=services.pendingMounts.queue({itemInstance:item,profile:definition.assembly,source,acquiredAt:(owningRun??controller.run)?.time??0});if(pending.requiresWorkbench){item.stored=true;legacyRuntime.ui.toast("Großmodul für die Werkbank eingelagert.");return;}const opened=controller.openPendingMount(pending,{moduleProfile:{...definition.assembly,definitionId:definition.id,tags:definition.tags},blueprint:services.blueprints.getActiveId()?services.blueprints.require(services.blueprints.getActiveId()):null,settings:{pauseOnMount:metaSave.settings.pauseOnMount??true}});if(!opened.opened)return;quickMountHost=document.createElement("div");document.body.append(quickMountHost);quickMountHost.__overlay=createQuickMountOverlay(quickMountHost,{onAction:action=>{if(action==="previous")services.quickMount.previous();if(action==="next")services.quickMount.next();if(action==="confirm"){services.quickMount.confirm();closeQuickMount();return;}if(action==="defer"){services.quickMount.defer();closeQuickMount();return;}renderQuickMount();}});renderQuickMount();});
+  let quickMountHost=null;const renderQuickMount=()=>{const session=services.quickMount?.session;if(!session||!quickMountHost)return;const suggestion=session.suggestions[session.selectedIndex],definition=services.equipment.require(session.pendingMount.definitionId),overlay=quickMountHost.__overlay;overlay.render({name:definition.name??definition.id,reasons:suggestion.reasons,deltas:[["POSITION",`${session.selectedIndex+1}/${session.suggestions.length}`],["MASSE",suggestion.flightDelta.totalMass?.toFixed?.(1)??"—"],["BALANCE",suggestion.metrics.balance?.toFixed?.(2)??"—"],["ENERGIE",suggestion.metrics.energyPath?.toFixed?.(2)??"—"],["SCHUTZ",suggestion.metrics.protection?.toFixed?.(2)??"—"],["RISIKO",suggestion.metrics.collisionRisk?"HOCH":"NIEDRIG"]],details:[...(definition.tags??[]).map(tag=>typeof tag==="string"?tag:tag.id),`Blueprint ${suggestion.blueprintMatch??"frei"}`]});drawQuickMountPreview();};const drawQuickMountPreview=()=>{const session=services.quickMount?.session;if(!session||!quickMountHost)return;renderPlacementPreview(quickMountHost.__overlay.canvas.getContext("2d"),{snapshot:services.assemblyGeometry.getSnapshot(),suggestion:session.suggestions[session.selectedIndex],assemblyRenderer:services.assemblyRenderer,time:quickMountClock});};let quickMountFrame=null,quickMountClock=0,quickMountLast=0;const animateQuickMount=now=>{if(!quickMountHost){quickMountFrame=null;return;}quickMountClock+=Math.min(.1,(now-quickMountLast)/1000);quickMountLast=now;drawQuickMountPreview();quickMountFrame=requestAnimationFrame(animateQuickMount);};const closeQuickMount=()=>{if(quickMountFrame)cancelAnimationFrame(quickMountFrame);quickMountFrame=null;quickMountHost?.remove();quickMountHost=null;};events.on("run-item-acquired",({item,source,run:owningRun})=>{if(owningRun&&owningRun!==controller.run)return;const definition=services.equipment.require(item.definitionId),pending=services.pendingMounts.queue({itemInstance:item,profile:definition.assembly,source,acquiredAt:(owningRun??controller.run)?.time??0});if(pending.requiresWorkbench){item.stored=true;legacyRuntime.ui.toast("Großmodul für die Werkbank eingelagert.");return;}const opened=openReplacingQuickMount({active:Boolean(quickMountHost||quickMountFrame),close:closeQuickMount,open:()=>controller.openPendingMount(pending,{moduleProfile:{...definition.assembly,definitionId:definition.id,tags:definition.tags},blueprint:services.blueprints.getActiveId()?services.blueprints.require(services.blueprints.getActiveId()):null,settings:{pauseOnMount:metaSave.settings.pauseOnMount??true}})});if(!opened.opened)return;quickMountHost=document.createElement("div");document.body.append(quickMountHost);quickMountHost.__overlay=createQuickMountOverlay(quickMountHost,{onAction:action=>{if(action==="previous")services.quickMount.previous();if(action==="next")services.quickMount.next();if(action==="confirm"){services.quickMount.confirm();closeQuickMount();return;}if(action==="defer"){services.quickMount.defer();closeQuickMount();return;}renderQuickMount();}});renderQuickMount();if(!globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches){quickMountLast=performance.now();quickMountFrame=requestAnimationFrame(animateQuickMount);}});
   input.start();
   const inspector = createBuildInspector(document.querySelector("#build-inspector"), services);
   const game = legacyRuntime.game;
@@ -169,36 +170,71 @@ export async function bootstrap() {
     const stage = hangarRoot.querySelector(".hangar-content");
     const workbench = services.assemblyWorkbench;
     let movingBranch = false;
-    let screen;
+    let screen, cameraController, frameHandle = null, resizeObserver = null, model = null, geometryById = new Map();
     workbench.open({ source: "sector-map" });
+    const equipmentDefinition = definitionId => { try { return services.equipment.require(definitionId); } catch { return null; } };
+    const moduleProfileFor = item => { const definition = item && equipmentDefinition(item.definitionId); return definition ? { ...definition.assembly, definitionId: definition.id, tags: definition.tags } : null; };
+    const evaluatePort = (port, profile) => profile && services.compatibility ? services.compatibility.evaluate({ state: model.assembly, moduleProfile: profile, port, geometrySnapshot: model.geometry }) : null;
+    let unsubscribeGeometry = null;
+    const cleanup = () => { if (frameHandle) cancelAnimationFrame(frameHandle); frameHandle = null; resizeObserver?.disconnect(); cameraController?.destroy(); screen?.destroy?.(); unsubscribeGeometry?.(); unsubscribeGeometry = null; };
     const render = () => {
-      const model = workbench.model();
-      const geometryById = new Map(model.geometry.nodes.map(node => [node.nodeId, node]));
+      model = workbench.model();
+      geometryById = new Map(model.geometry.nodes.map(node => [node.nodeId, node]));
+      const looseInventory = model.inventory.filter(item => !Object.values(model.assembly.nodesById).some(node => node.moduleInstanceId === item.instanceId));
+      const selectedItem = looseInventory.find(item => item.instanceId === model.session.selectedItemId) ?? null;
+      const placementProfile = movingBranch ? null : moduleProfileFor(selectedItem);
+      let validPortCount = 0;
       const ports = Object.values(model.assembly.portsById).map(port => {
         const parent = geometryById.get(port.parentNodeId);
         const local = port.localPosition ?? { x: (port.direction?.x ?? 0) * 34, y: (port.direction?.y ?? 0) * 34 };
-        return { ...port, position: { x: (parent?.worldPosition.x ?? 0) + local.x, y: (parent?.worldPosition.y ?? 0) + local.y }, label: portAccessibilityLabel(port) };
+        const compatibility = port.occupiedByNodeId ? null : evaluatePort(port, placementProfile);
+        let state = "free", reasonText = "";
+        if (compatibility) { state = compatibility.compatible ? "valid" : "invalid"; reasonText = compatibility.compatible ? "" : compatibility.reasonLabels.join(", "); }
+        else if (movingBranch && !port.occupiedByNodeId) state = "valid";
+        if (state === "valid") validPortCount++;
+        return { ...port, state, reasonText, position: { x: (parent?.worldPosition.x ?? 0) + local.x, y: (parent?.worldPosition.y ?? 0) + local.y }, label: portAccessibilityLabel(port, compatibility ?? undefined) };
       });
-      screen.renderInventory(model.inventory.filter(item => !Object.values(model.assembly.nodesById).some(node => node.moduleInstanceId === item.instanceId)));
-      screen.renderPorts(ports);
+      screen.renderInventory(looseInventory.map(item => { const definition = equipmentDefinition(item.definitionId); return { ...item, label: definition?.name ?? item.definitionId, sizeClass: definition?.assembly?.sizeClass }; }), model.session.selectedItemId);
+      screen.renderPorts(ports, { selectedPortId: model.session.selectedPortId, selectedNodeId: model.session.selectedNodeId });
       renderAssemblyToolbar(stage.querySelector('[data-role="modes"]'), model.session.viewMode, mode => { workbench.setViewMode(mode); render(); });
-      const ctx = screen.canvas.getContext("2d");
-      ctx.clearRect(0, 0, screen.canvas.width, screen.canvas.height);
-      ctx.save();
-      ctx.translate(screen.canvas.width / 2, screen.canvas.height / 2);
-      services.assemblyRenderer.renderPlayerShip(ctx, { geometrySnapshot: model.geometry, position: { x: 0, y: 0 }, time: controller.run?.time ?? 0 });
-      renderViewModeOverlay(ctx, getViewModeOverlay(model.session.viewMode, { assembly: model.assembly, geometry: model.geometry, flightProfile: services.flightProfile?.getProfile() }));
-      ctx.restore();
-      const inspector = document.createElement("div");
       const selected = model.assembly.nodesById[model.session.selectedNodeId];
       const selectedPort = model.assembly.portsById[model.session.selectedPortId];
-      const consequence = workbench.previewConsequence();
-      renderAssemblyInspector(inspector, { node: selected, port: selectedPort, warnings: consequence.warnings, actions: { rotate: Boolean(selected) && consequence.allowed, moveBranch: Boolean(selected), dismantle: Boolean(selected) && consequence.allowed } });
+      if (movingBranch) screen.setHint("Freien Zielport wählen, um den Ast zu versetzen.");
+      else if (selectedItem) screen.setHint(validPortCount ? `${validPortCount} kompatible Ports leuchten gold — Port anklicken zum Montieren.` : "Kein freier Port passt zu diesem Modul.");
+      else if (selected) screen.setHint("Aktionen im Inspektor: Drehen, Ast versetzen, Demontieren.");
+      else screen.setHint("Modul im Inventar wählen oder verbautes Modul anklicken. Ziehen verschiebt die Ansicht, Mausrad zoomt.");
+      const inspector = document.createElement("div");
+      const consequence = selected ? workbench.previewConsequence() : { allowed: false, warnings: [] };
+      let deltas = [], title;
+      if (selected) { const definition = equipmentDefinition(selected.definitionId); title = definition?.name ?? selected.definitionId; deltas = [["PANZERUNG", `${Math.round(selected.armorIntegrity ?? 0)} / ${Math.round(selected.maxArmorIntegrity ?? 0)}`], ["KERN", `${Math.round(selected.coreIntegrity ?? 0)}`], ["MASSE", selected.mass ?? "—"], ["ZUSTAND", selected.damageState === "intact" ? "INTAKT" : selected.damageState ?? "—"]]; }
+      else if (selectedItem) { const definition = equipmentDefinition(selectedItem.definitionId); title = definition?.name ?? selectedItem.definitionId; const assembly = definition?.assembly ?? {}; deltas = [["GRÖSSE", assembly.sizeClass ?? "—"], ["ENERGIE", assembly.energyClass ?? "—"], ["LAST", assembly.loadDemand ?? "—"], ["MONTAGE", (assembly.mountTypes ?? []).join(" / ") || "—"]]; }
+      else if (selectedPort) { title = `${selectedPort.sizeClass}-PORT`; deltas = [["KLASSE", selectedPort.sizeClass], ["ENERGIE", selectedPort.energyClass ?? "—"], ["TRAGLAST", selectedPort.loadCapacity ?? "—"], ["TYP", selectedPort.mountType ?? "—"]]; }
+      renderAssemblyInspector(inspector, { node: selected, port: selectedPort, item: selectedItem, title, deltas, warnings: consequence.warnings, actions: { rotate: Boolean(selected) && consequence.allowed, moveBranch: Boolean(selected), dismantle: Boolean(selected) && consequence.allowed } });
       screen.setInspector(inspector);
     };
+    const draw = clock => {
+      const canvas = screen.canvas, dpr = Math.min(2, globalThis.devicePixelRatio ?? 1);
+      const width = canvas.width / dpr, height = canvas.height / dpr, camera = cameraController.camera;
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, width, height);
+      ctx.save();
+      ctx.translate(width / 2, height / 2);
+      ctx.scale(camera.zoom, camera.zoom);
+      ctx.translate(camera.offset.x, camera.offset.y);
+      services.assemblyRenderer.renderPlayerShip(ctx, { geometrySnapshot: model.geometry, position: { x: 0, y: 0 }, time: clock, buildAnimations: services.buildAnimations?.snapshot?.() ?? [], lodOptions: { userSetting: metaSave.assemblyVisualPreferences?.lod === "auto" ? "high" : metaSave.assemblyVisualPreferences?.lod } });
+      const selectedGeometry = geometryById.get(workbench.session?.selectedNodeId);
+      if (selectedGeometry) { ctx.save(); ctx.strokeStyle = "#ffc857"; ctx.lineWidth = 1.5 / camera.zoom; ctx.setLineDash([6, 5]); ctx.lineDashOffset = -clock * 14; ctx.beginPath(); ctx.arc(selectedGeometry.worldPosition.x, selectedGeometry.worldPosition.y, (selectedGeometry.geometry?.size ?? 14) + 9, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
+      renderViewModeOverlay(ctx, getViewModeOverlay(workbench.session?.viewMode ?? "normal", { assembly: model.assembly, geometry: model.geometry, flightProfile: services.flightProfile?.getProfile() }));
+      ctx.restore();
+      screen.portsLayer.style.transform = `scale(${camera.zoom}) translate(${camera.offset.x}px, ${camera.offset.y}px)`;
+    };
     screen = createAssemblyWorkbenchScreen(stage, { onAction: (action, data) => {
-      if (action === "close") { workbench.close(); showCampaignMap(); return; }
-      if (action === "select-item") { movingBranch = false; workbench.selectItem(data.id); }
+      if (action === "close") { cleanup(); workbench.close(); showCampaignMap(); return; }
+      if (action === "zoom-in") { cameraController.zoomBy(.15); return; }
+      if (action === "zoom-out") { cameraController.zoomBy(-.15); return; }
+      if (action === "reset-view") { cameraController.resetView(); return; }
+      if (action === "select-item") { movingBranch = false; workbench.selectItem(workbench.session.selectedItemId === data.id ? null : data.id); }
       if (action === "select-node") { movingBranch = false; workbench.selectNode(data.id); }
       if (action === "select-port") {
         const port = services.currentAssembly.getSnapshot().portsById[data.id];
@@ -206,7 +242,13 @@ export async function bootstrap() {
           workbench.selectPort(data.id);
           const transform = { position: port.localPosition ?? { x: (port.direction?.x ?? 0) * 34, y: (port.direction?.y ?? 0) * 34 }, rotation: Math.atan2(port.direction?.y ?? 0, port.direction?.x ?? 1) };
           if (movingBranch && workbench.session.selectedNodeId) { workbench.move(transform, { branch: true }); movingBranch = false; }
-          else if (workbench.session.selectedItemId) workbench.mount(transform);
+          else if (workbench.session.selectedItemId) {
+            const profile = moduleProfileFor(model.inventory.find(item => item.instanceId === workbench.session.selectedItemId));
+            const compatibility = evaluatePort(port, profile);
+            if (compatibility && !compatibility.compatible) { legacyRuntime.ui.toast(`Nicht montierbar: ${compatibility.reasonLabels.join(", ")}`); render(); return; }
+            const nodeId = workbench.mount(transform);
+            if (nodeId) workbench.selectNode(nodeId);
+          }
         }
       }
       if (action === "rotate" && workbench.session.selectedNodeId) workbench.rotate((services.currentAssembly.requireNode(workbench.session.selectedNodeId).localRotation ?? 0) + Math.PI / 8);
@@ -214,7 +256,24 @@ export async function bootstrap() {
       if (action === "dismantle" && workbench.session.selectedNodeId) workbench.dismantle(false);
       render();
     } });
+    cameraController = createAssemblyCanvasController({ canvas: screen.canvas });
+    const fitCanvas = () => { const dpr = Math.min(2, globalThis.devicePixelRatio ?? 1), { clientWidth, clientHeight } = screen.canvas; if (clientWidth && clientHeight) { screen.canvas.width = Math.round(clientWidth * dpr); screen.canvas.height = Math.round(clientHeight * dpr); } };
+    resizeObserver = globalThis.ResizeObserver ? new ResizeObserver(fitCanvas) : null;
+    resizeObserver?.observe(screen.canvas);
+    fitCanvas();
+    unsubscribeGeometry = subscribeWorkbenchGeometry({ events: services.events, isActive: () => Boolean(workbench.session && screen.canvas.isConnected), render });
     render();
+    let lastFrame = performance.now(), clock = controller.run?.time ?? 0;
+    const reducedMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    const frame = now => {
+      if (!screen.canvas.isConnected || !workbench.session) { cleanup(); return; }
+      const dt = Math.min(.1, (now - lastFrame) / 1000);
+      lastFrame = now; if (!reducedMotion) clock += dt;
+      services.buildAnimations?.update(dt);
+      draw(clock);
+      frameHandle = requestAnimationFrame(frame);
+    };
+    frameHandle = requestAnimationFrame(frame);
   };
   const showCampaignMap = () => {
     if (!previewRun) {
