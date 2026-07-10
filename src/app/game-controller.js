@@ -12,6 +12,20 @@ import { createQuickMountController } from "../features/ship-assembly/mounting/q
 import { createConstructionWorkbenchController } from "../features/ship-assembly/mounting/construction-workbench-controller.js";
 import { createBuildAnimationController } from "../features/ship-assembly/mounting/build-animation-controller.js";
 import { createStateMachine } from "./state-machine.js";
+import { createCoreExposureService } from "../features/ship-assembly/placement/core-exposure-service.js";
+import { createEquipmentService } from "../features/equipment/equipment-service.js";
+import { createBranchFailureService } from "../features/ship-assembly/damage/branch-failure-service.js";
+import { createModuleDamageService } from "../features/ship-assembly/damage/module-damage-service.js";
+import { createModuleFaultAdapter } from "../features/ship-assembly/damage/module-fault-adapter.js";
+import { buildAssemblyHitZones } from "../features/ship-assembly/damage/hit-zone-builder.js";
+import { createHitZoneIndex } from "../features/ship-assembly/damage/hit-zone-index.js";
+import { createDamageRouter } from "../features/ship-assembly/damage/damage-router.js";
+import { createCollisionSystem } from "../features/combat/collision-system.js";
+import { createRepairService } from "../features/ship-assembly/damage/repair-service.js";
+import { createFlightProfileService } from "../features/ship-assembly/flight/flight-profile-service.js";
+import { createFlightProfileSmoother } from "../features/ship-assembly/flight/flight-profile-smoother.js";
+import { createRecoilService } from "../features/ship-assembly/flight/recoil-service.js";
+import { createCameraFitService } from "../features/ship-assembly/flight/camera-fit-service.js";
 
 const UPGRADE_TAGS = {
   multi: ["Projectile"], damage: ["Kinetic"], dmg: ["Kinetic"], rate: ["Cooldown"], speed: ["Movement"],
@@ -58,8 +72,9 @@ export function createGameController(services) {
       const startPort = rootPorts.find(port => railDefinition.assembly.mountTypes.includes(port.mountType) && !port.occupiedByNodeId);
       if (startPort) services.currentAssembly.mountModule({ moduleInstanceId: railItem.instanceId, definitionId: railDefinition.id, parentPort: startPort, assemblyProfile: railDefinition.assembly, transform: { position: startPort.localPosition, rotation: Math.atan2(startPort.direction.y,startPort.direction.x) } });
       services.assemblyGeometry.rebuildNow();
-      const equipmentService={requireInstance:id=>{const item=run.inventory.find(entry=>entry.instanceId===id);if(!item)throw new Error(`Unknown run item: ${id}`);return item;},requireAssemblyProfile:id=>services.equipment.requireAssemblyProfile(id)};
-      const compatibilityService=createCompatibilityService({profileRegistry:services.assemblyProfiles}),stateMachine=createStateMachine("run",services.events),pendingMountService=createPendingMountService({runInventory}),commandService=createAssemblyCommandService({assemblyService:services.currentAssembly,compatibilityService,geometryService:services.assemblyGeometry,equipmentService,onError:message=>globalThis.__VOIDREAPER_TOAST__?.(message)}),suggestionService=createPlacementSuggestionService({compatibilityService,geometryService:services.assemblyGeometry,flightProfileService:{previewPlacement:()=>({lateralImbalance:0})}});
+      const equipmentService=createEquipmentService({registry:services.equipment,inventory:()=>run.inventory}),coreExposureService=createCoreExposureService(),compatibilityService=createCompatibilityService({profileRegistry:services.assemblyProfiles,coreExposureService}),stateMachine=createStateMachine("run",services.events),pendingMountService=createPendingMountService({runInventory}),commandService=createAssemblyCommandService({assemblyService:services.currentAssembly,compatibilityService,geometryService:services.assemblyGeometry,equipmentService,onError:message=>globalThis.__VOIDREAPER_TOAST__?.(message)});
+      services.flightProfile?.destroy?.();services.flightProfile=createFlightProfileService({eventBus:services.events,geometryService:services.assemblyGeometry});services.flightProfile.rebuildNow();const suggestionService=createPlacementSuggestionService({compatibilityService,geometryService:services.assemblyGeometry,flightProfileService:services.flightProfile});
+      const branchFailureService=createBranchFailureService({assemblyService:services.currentAssembly,geometryService:services.assemblyGeometry});services.moduleDamage=createModuleDamageService({assemblyService:services.currentAssembly,eventBus:services.events,branchFailureService});services.moduleFaults?.destroy?.();services.moduleFaults=createModuleFaultAdapter({assemblyService:services.currentAssembly,equipmentService,eventBus:services.events});services.moduleFaults.refresh();services.hitZones=createHitZoneIndex();const refreshHitZones=geometry=>services.hitZones.rebuild(geometry.revision,buildAssemblyHitZones(geometry,frame));refreshHitZones(services.assemblyGeometry.getSnapshot());services.events.on("assembly:geometry-ready",refreshHitZones);services.damageRouter=createDamageRouter({moduleDamageService:services.moduleDamage,playerDamageService:{applyHullDamage:amount=>{run.player.hull=Math.max(0,run.player.hull-amount);}}});services.assemblyCollision=createCollisionSystem({hitZoneIndex:services.hitZones,damageRouter:services.damageRouter});services.repairs=createRepairService({assemblyService:services.currentAssembly,resources:run.resources,eventBus:services.events,remountDetached:item=>pendingMountService.queue({itemInstance:item,profile:services.equipment.requireAssemblyProfile(item.definitionId),source:"repair",acquiredAt:run.time})});services.recoil=createRecoilService({flightProfileService:services.flightProfile});services.flightSmoother=createFlightProfileSmoother(services.flightProfile.getProfile());services.events.on("assembly:flight-profile-changed",profile=>services.flightSmoother.setTarget(profile));services.cameraFit=createCameraFitService({camera:run.camera,viewport:()=>({width:innerWidth,height:innerHeight})});services.cameraFit.fit(services.assemblyGeometry.getSnapshot().totalBounds);
       services.buildAnimations=createBuildAnimationController({reducedMotion:globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches});services.pendingMounts=pendingMountService;services.assemblyCommands=commandService;services.quickMount=createQuickMountController({suggestionService,commandService,pendingMountService,runInventory,assemblyService:services.currentAssembly,stateMachine,timeScaleService:{push:(_id,scale)=>{game.timeScale=scale;},pop:()=>{game.timeScale=1;}}});services.assemblyWorkbench=createConstructionWorkbenchController({commandService,assemblyService:services.currentAssembly,geometryService:services.assemblyGeometry,runInventory,stateMachine});
       this.syncLegacy(game, 0);
       services.events.emit("run-started", { run });
@@ -78,6 +93,8 @@ export function createGameController(services) {
       services.energy.update(run.player, dt);
       services.dodge.update(run.player, dt);
       services.heat.update(run.heat, dt, { coolingRate: 10 });
+      run.player.flightProfile=services.flightSmoother?.update(dt)??services.flightProfile?.getProfile();
+      services.cameraFit?.update(dt,run.player);
       if ((game.corruption ?? 0) !== run.corruption.value) {
         services.corruption.change(run.corruption, (game.corruption ?? 0) - run.corruption.value, "legacy-run", run.time);
       }
@@ -88,8 +105,8 @@ export function createGameController(services) {
       if (!run || !game.player) return false;
       const direction = axis.x || axis.y ? axis : { x: 1, y: 0 };
       if (!services.dodge.use(run.player, direction)) return false;
-      game.player.x += direction.x * 120;
-      game.player.y += direction.y * 120;
+      const distance=120*(run.player.flightProfile?.dodgeDistanceMultiplier??1);game.player.x += direction.x * distance;
+      game.player.y += direction.y * distance;
       return true;
     },
     inspectorModel(game) {
