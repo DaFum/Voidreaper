@@ -13,4 +13,5 @@ export function updateResourceMeters(root, { energy, heat, corruption, load }) {
   setMeter(root, "corruption", Math.min(corruption, 100) / 100, `${Math.round(corruption)}%`);
   setMeter(root, "load", Math.min(load.ratio, 1.6) / 1.6, `${Math.round(load.ratio * 100)}% ${load.tier.toUpperCase()}`);
   root?.setAttribute("data-load-tier", load.tier);
+  root?.setAttribute("data-heat-tier", heat >= 100 ? "overheated" : heat >= 85 ? "unstable" : heat >= 60 ? "warm" : "cold");
 }
