@@ -1,0 +1,92 @@
+/* ---- hangar ---- */
+    #hangar {
+      max-width: 660px;
+      width: 100%;
+      border: 1px solid rgba(76, 201, 240, .25);
+      background: linear-gradient(160deg, rgba(10, 4, 24, .7), rgba(4, 1, 10, .5));
+      padding: 16px 14px 12px;
+      clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px))
+    }
+
+    #hangar h3 {
+      font-family: var(--font-d);
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: .4em;
+      color: var(--ice);
+      margin-bottom: 12px;
+      text-shadow: 0 0 10px rgba(76, 201, 240, .5)
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(152px, 1fr));
+      gap: 9px
+    }
+
+    .meta {
+      pointer-events: auto;
+      cursor: pointer;
+      border: 1px solid rgba(239, 234, 247, .16);
+      background: linear-gradient(150deg, rgba(67, 24, 184, .16), rgba(4, 1, 10, .4));
+      padding: 10px 9px;
+      text-align: left;
+      font-family: var(--font-m);
+      color: var(--bone);
+      transition: border-color .15s, transform .12s;
+      clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 0 100%)
+    }
+
+    .meta:not(:disabled):active,
+    .meta:not(:disabled):hover {
+      border-color: var(--ice);
+      transform: translateY(-2px)
+    }
+
+    .meta:disabled {
+      opacity: .36;
+      cursor: default
+    }
+
+    .meta .mn {
+      font-family: var(--font-d);
+      font-weight: 600;
+      font-size: 11px;
+      letter-spacing: .1em;
+      color: var(--ice);
+      text-transform: uppercase
+    }
+
+    .meta .mp {
+      font-size: 9px;
+      color: rgba(239, 234, 247, .5);
+      margin-top: 4px;
+      line-height: 1.5
+    }
+
+    .meta .mc {
+      font-size: 10px;
+      color: var(--gold);
+      margin-top: 5px;
+      letter-spacing: .12em
+    }
+
+    .pips {
+      display: flex;
+      gap: 2px;
+      margin-top: 5px
+    }
+
+    .pips i {
+      width: 9px;
+      height: 4px;
+      background: rgba(239, 234, 247, .14);
+      transform: skewX(-18deg)
+    }
+
+    .pips i.on {
+      background: var(--phosphor);
+      box-shadow: 0 0 5px var(--phosphor)
+    }
+
+    
