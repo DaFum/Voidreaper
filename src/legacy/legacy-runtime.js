@@ -2,6 +2,7 @@
     import { LEGACY_EVOLUTIONS } from "../content/evolutions/legacy-evolutions.js";
     import { renderForgedEnemy } from "../render/enemies/enemy-renderer.js";
     import { renderRegionWorld } from "../render/regions/region-world-renderer.js";
+    import { createBloomPass } from "../render/post/bloom-pass.js";
 
     "use strict";
     /* =====================================================================
@@ -123,6 +124,7 @@
     }
     window.addEventListener("resize", resize, { passive: true });
     resize();
+    const Bloom = createBloomPass({ strength: .42, blur: 4 });
 
     /* ---------- pre-baked nebula layer (drawn twice with slow drift) ---------- */
     const Nebula = {
@@ -1482,24 +1484,21 @@
           cx.lineCap = "round";
           cx.beginPath(); cx.moveTo(b.x - b.vx * 0.05, b.y - b.vy * 0.05); cx.lineTo(b.x, b.y); cx.stroke();
           cx.globalAlpha = 1;
-          cx.fillStyle = col; cx.shadowColor = frozen ? "#4cc9f0" : "#ff2d78"; cx.shadowBlur = 12;
+          cx.fillStyle = col;
           cx.beginPath(); cx.arc(b.x, b.y, b.r, 0, TAU); cx.fill();
         }
-        cx.shadowBlur = 0;
 
         // player bullets (velocity-stretched tracers)
         for (const b of this.bullets.live) {
           cx.save(); cx.translate(b.x, b.y); cx.rotate(Math.atan2(b.vy, b.vx));
           const L = b.prism ? 26 : 15;
           const g = cx.createLinearGradient(-L, 0, 6, 0);
-          if (b.prism) { g.addColorStop(0, "rgba(255,207,63,0)"); g.addColorStop(1, "#fff6c9"); cx.shadowColor = "#ffd60a"; }
-          else { g.addColorStop(0, "rgba(6,255,165,0)"); g.addColorStop(1, "#e8fff6"); cx.shadowColor = "#06ffa5"; }
-          cx.shadowBlur = 12;
+          if (b.prism) { g.addColorStop(0, "rgba(255,207,63,0)"); g.addColorStop(1, "#fff6c9"); }
+          else { g.addColorStop(0, "rgba(6,255,165,0)"); g.addColorStop(1, "#e8fff6"); }
           cx.fillStyle = g;
           cx.fillRect(-L, b.prism ? -1.5 : -2, L + 6, b.prism ? 3 : 4);
           cx.restore();
         }
-        cx.shadowBlur = 0;
 
         // enemies
         for (const e of this.enemies) this.drawEnemy(e, frozen);
@@ -1625,6 +1624,8 @@
         let frame = (ts - this.last) / 1000;
         this.last = ts;
         if (frame > 0.25) frame = 0.25;
+        // smoothed frame cost gates the bloom pass on slow devices
+        this.frameCost = (this.frameCost ?? 16) * 0.92 + frame * 1000 * 0.08;
         frame *= this.timeScale ?? 1;
         if (this.state === "run") {
           this.acc += frame;
@@ -1634,6 +1635,10 @@
           this.menuT += frame;
         }
         this.draw(); // always draw: menus get ambient nebula/starfield behind them
+        if (this.bloomOn === undefined) this.bloomOn = true;
+        if (this.bloomOn) { if (this.frameCost > 28) this.bloomOn = false; }
+        else if (this.frameCost < 20) this.bloomOn = true;
+        if (this.bloomOn) Bloom.apply(cx);
         if (this.state === "run") {
           // ghost bar update (visual only)
           const p = this.player;

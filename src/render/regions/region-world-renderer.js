@@ -32,10 +32,37 @@ function drawGrid(ctx, profile, bounds, time, reducedMotion) {
   ctx.globalAlpha=1;
 }
 
+const MOTIF_BAKE_SCALE = 2;
+const MOTIF_CACHE_LIMIT = 512;
+const motifSprites = new Map();
+
+function motifSprite(profile, seed) {
+  if (typeof document === "undefined") return null;
+  const key = `${profile.id}:${seed}`;
+  if (motifSprites.has(key)) return motifSprites.get(key);
+  const size = 18 + seededUnit(seed, 1) * 28;
+  const extent = Math.ceil(size * 1.4) + 6;
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = extent * 2 * MOTIF_BAKE_SCALE;
+  const spriteCtx = canvas.getContext("2d");
+  spriteCtx.setTransform(MOTIF_BAKE_SCALE, 0, 0, MOTIF_BAKE_SCALE, extent * MOTIF_BAKE_SCALE, extent * MOTIF_BAKE_SCALE);
+  drawMotifShape(spriteCtx, profile, seed, 0, true);
+  const sprite = { canvas, extent };
+  if (motifSprites.size >= MOTIF_CACHE_LIMIT) motifSprites.clear();
+  motifSprites.set(key, sprite);
+  return sprite;
+}
+
 function drawMotif(ctx, profile, x, y, seed, time, reducedMotion) {
+  const sprite = motifSprite(profile, seed);
+  if (sprite) { ctx.drawImage(sprite.canvas, x - sprite.extent, y - sprite.extent, sprite.extent * 2, sprite.extent * 2); return; }
+  ctx.save();ctx.translate(x,y);drawMotifShape(ctx, profile, seed, time, reducedMotion);ctx.restore();
+}
+
+function drawMotifShape(ctx, profile, seed, time, reducedMotion) {
   const localPalette=mergeVisualPalette({armor:profile.palette.grid,edge:profile.palette.accent,energy:profile.palette.accent,void:profile.palette.void});
   const size=18+seededUnit(seed,1)*28;
-  ctx.save();ctx.translate(x,y);ctx.rotate(seededUnit(seed,2)*Math.PI*2);ctx.globalAlpha=.12+seededUnit(seed,3)*.13;
+  ctx.rotate(seededUnit(seed,2)*Math.PI*2);ctx.globalAlpha=.12+seededUnit(seed,3)*.13;
   if(profile.id==="shattered-approach"){
     ctx.fillStyle=profile.palette.grid;ctx.strokeStyle=profile.palette.accent;ctx.beginPath();ctx.moveTo(0,-size);ctx.lineTo(size*.45,size*.25);ctx.lineTo(-size*.2,size);ctx.lineTo(-size*.55,size*.1);ctx.closePath();ctx.fill();ctx.stroke();
   }else if(profile.id==="furnace-expanse"){
@@ -47,7 +74,6 @@ function drawMotif(ctx, profile, x, y, seed, time, reducedMotion) {
   }else{
     ctx.strokeStyle=profile.palette.accent;ctx.lineWidth=2;ctx.setLineDash([6,5]);ctx.beginPath();ctx.arc(0,0,size,0,Math.PI*1.72);ctx.stroke();ctx.setLineDash([]);traceChamferedPlate(ctx,{width:size,height:size,chamfer:size*.2});ctx.stroke();
   }
-  ctx.restore();
 }
 
 export function renderRegionWorld(ctx,{regionId="shattered-approach",camera={x:0,y:0},viewport={width:1280,height:720},arena=1400,time=0,seed=0,reducedMotion=false}={}){

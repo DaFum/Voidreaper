@@ -94,15 +94,12 @@ export function renderForgedEnemy(ctx, enemy, {
   ctx.rotate(facing + (reducedMotion ? 0 : Math.sin(time) * .08));
   ctx.scale(birthScale, birthScale);
   ctx.globalAlpha *= birthScale;
-  ctx.shadowColor = palette.energy;
-  ctx.shadowBlur = enemy.boss ? 24 : enemy.elite ? 17 : 9;
   traceSilhouette(ctx, profile, radius, seed);
   ctx.fillStyle = enemy.hitT > 0 ? "#ffffff" : shade(baseColor);
   ctx.strokeStyle = palette.edge;
   ctx.lineWidth = enemy.boss ? 2.5 : 1.6;
   ctx.fill();
   ctx.stroke();
-  ctx.shadowBlur = 0;
   drawMechanicalDetails(ctx, profile, radius, palette, time, reducedMotion);
   drawVoidCore(ctx, {
     radius: radius * (enemy.boss ? .28 : .24),
