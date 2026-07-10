@@ -25,6 +25,7 @@ export function createGameController(services) {
 
   return {
     get run() { return run; },
+    openPendingMount(pendingMount, context) { return services.quickMount?.open(pendingMount, context) ?? { opened:false, reason:"quick-mount-unavailable" }; },
     attachLegacy(game) {
       run = createRunState({ seed: game.seed, mode: game.mode === "daily" ? "daily" : "campaign" });
       if (run.mode === "daily" && services.daily) services.daily.apply(run, services.daily.config());
