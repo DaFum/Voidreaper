@@ -23,7 +23,7 @@ export function renderShipCore(ctx, geometry, palette, { time = 0, lod = "high",
     else{tracePath(ctx,path);ctx.strokeStyle=palette.energy;ctx.globalAlpha=.76;ctx.stroke();ctx.globalAlpha=1;}
   }
   if(geometry.voidPaths.length)for(const path of geometry.voidPaths){tracePath(ctx,path);ctx.strokeStyle=palette.fault;ctx.stroke();}
-  if(lod==="high"&&(palette.void==="#24042e"||palette.energy==="#dd63ff"))drawCracks(ctx,{radius:Math.min(width,height)*.3,color:palette.fault,seed:detailSeed,count:3,alpha:.42});
+  if(lod==="high"&&palette.corrupted)drawCracks(ctx,{radius:Math.min(width,height)*.3,color:palette.fault,seed:detailSeed,count:3,alpha:.42});
   for (const anchor of geometry.thrusterAnchors) { const flame = 8 + (lod==="low"?0:Math.sin(time * 9 + anchor.x) * 2); const gradient=ctx.createLinearGradient(anchor.x,anchor.y,anchor.x,anchor.y+flame);gradient.addColorStop(0,palette.cockpit);gradient.addColorStop(.45,palette.thruster);gradient.addColorStop(1,"rgba(255,80,20,0)");ctx.fillStyle=gradient;ctx.beginPath(); ctx.moveTo(anchor.x-3,anchor.y); ctx.lineTo(anchor.x,anchor.y+flame); ctx.lineTo(anchor.x+3,anchor.y); ctx.fill(); }
   ctx.restore();
 }

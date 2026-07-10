@@ -12,9 +12,11 @@ export function createSectorMapConnections(nodes, nodeElements) {
   function refresh() {
     const width = container.scrollWidth;
     const height = container.scrollHeight;
-    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-    svg.setAttribute("width", String(width));
-    svg.setAttribute("height", String(height));
+    if (svg.getAttribute("width") !== String(width) || svg.getAttribute("height") !== String(height)) {
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      svg.setAttribute("width", String(width));
+      svg.setAttribute("height", String(height));
+    }
     const paths = [];
     for (const source of nodes) {
       const sourceElement = elementsById.get(source.id);

@@ -4,14 +4,14 @@ const FRAME_PALETTES = Object.freeze({
   bastion: { hull:"#111922",armor:"#71818a",energy:"#ffd166" },
   specter: { hull:"#111124",armor:"#535284",energy:"#a995ff",void:"#35145c" },
   furnace: { hull:"#1b100d",armor:"#764331",energy:"#ff8a42",thruster:"#ff5d2e" },
-  reliquary: { hull:"#140d1a",armor:"#674b70",energy:"#dd63ff",void:"#431354" },
+  reliquary: { hull:"#140d1a",armor:"#674b70",energy:"#dd63ff",void:"#431354",corrupted:true },
   shepherd: { hull:"#0d1820",armor:"#496c78",energy:"#72dfd1" },
   harrow: { hull:"#180d15",armor:"#784356",energy:"#ff4d6d" },
   vector: { hull:"#091720",armor:"#3b7180",energy:"#88f7ff" },
   gravewright: { hull:"#101516",armor:"#59675e",energy:"#a8d8bd" },
-  "null-choir": { hull:"#130916",armor:"#60396b",energy:"#dd63ff",void:"#24042e",fault:"#ff7de9" }
+  "null-choir": { hull:"#130916",armor:"#60396b",energy:"#dd63ff",void:"#24042e",fault:"#ff7de9",corrupted:true }
 });
-const BASE_PALETTE = Object.freeze({ hull:"#101c2b",metal:"#182a36",structure:"#20323d",armor:"#59778b",edge:"#b9f7ff",energy:"#33e6ff",cockpit:"#eefcff",thruster:"#ffb047",void:"#4a155f",fault:"#dd63ff",damage:"#ff4d6d" });
+const BASE_PALETTE = Object.freeze({ hull:"#101c2b",armor:"#59778b",energy:"#33e6ff",thruster:"#ffb047" });
 const frame = (id, coreGeometryId, width, length, armorFamily, lightPattern, connectorFamily, initialPorts, coreHitZone = { shape: "capsule", length: 40, radius: 15 }) => ({ id, coreGeometryId, coreHitZone, maxBranchDepth: 4, maxVisibleSegments: 18, dimensionLimits: { width, length }, initialPorts, style: { armorFamily, lightPattern, connectorFamily, palette: { ...BASE_PALETTE, ...FRAME_PALETTES[id] } } });
 export const SHIP_FRAME_ASSEMBLY_PROFILES = Object.freeze([
   frame("vesper", "core-vesper-spear", 280, 340, "tapered-blade", "split-cyan", "tapered", [port("left-wing","M","lateral",-1,.15,8),port("right-wing","M","lateral",1,.15,8),port("dorsal","S","dorsal",0,-1,4,"precision"),port("rear","L","structural",0,1,12)]),

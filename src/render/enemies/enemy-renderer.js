@@ -76,7 +76,8 @@ export function renderForgedEnemy(ctx, enemy, {
   reducedMotion = false
 } = {}) {
   const profile = resolveEnemyVisualProfile(enemy.type);
-  const seed = visualHash(`${enemy.type}:${Math.round(enemy.x)}:${Math.round(enemy.y)}`);
+  if (enemy.__visualSeed === undefined) enemy.__visualSeed = visualHash(`${enemy.type}:${Math.round(enemy.x)}:${Math.round(enemy.y)}`);
+  const seed = enemy.__visualSeed;
   const baseColor = frozen ? "#7bb8d4" : enemy.color;
   const palette = mergeVisualPalette({
     armor: baseColor,

@@ -14,8 +14,10 @@ function drawGrid(ctx, profile, bounds, time, reducedMotion) {
   const startY = Math.floor(bounds.minY / TILE) * TILE;
   if (profile.grid === "cathedral") {
     for (let x = startX; x <= bounds.maxX; x += TILE) {
-      ctx.beginPath();ctx.moveTo(x,bounds.maxY);ctx.lineTo(x,bounds.minY+40);
-      ctx.arc(x+TILE/2,bounds.minY+40,TILE/2,Math.PI,0);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(x,bounds.maxY);ctx.lineTo(x,bounds.minY);ctx.stroke();
+      for (let y = startY; y <= bounds.maxY; y += TILE) {
+        ctx.beginPath();ctx.arc(x+TILE/2,y,TILE/2,Math.PI,0);ctx.stroke();
+      }
     }
   } else if (profile.grid === "segments") {
     ctx.save();ctx.rotate(reducedMotion?0:time*.025);
