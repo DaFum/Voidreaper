@@ -1,6 +1,9 @@
-export const CURRENT_SAVE_VERSION = 2;
+import { createMetaState } from "../runtime/create-meta-state.js";
+
+export const CURRENT_SAVE_VERSION = 4;
 
 export function createDefaultSave() {
+  const meta = createMetaState();
   return {
     saveVersion: CURRENT_SAVE_VERSION,
     profile: {
@@ -8,9 +11,8 @@ export function createDefaultSave() {
       totalRuns: 0,
       totalKills: 0
     },
-    currencies: {
-      voidShards: 0
-    },
+    currencies: meta.currencies,
+    currencyHistory: meta.currencyHistory,
     legacy: {
       best: 0,
       dailyBest: {},
@@ -21,13 +23,24 @@ export function createDefaultSave() {
       primary: null,
       saved: {}
     },
+    research: meta.research,
     unlocks: {
+      ...meta.unlocks,
       vesper: true,
       railgun: true,
       "standard-core": true
     },
-    inventory: {},
-    blueprints: {},
+    inventory: meta.inventory,
+    overflow: meta.overflow,
+    blueprints: meta.blueprints,
+    wreckSignals: meta.wreckSignals,
+    codex: meta.codex,
+    challenges: meta.challenges,
+    statistics: meta.statistics,
+    records: meta.records,
+    campaignPaths: meta.campaignPaths,
+    buildHistory: meta.buildHistory,
+    onboarding: meta.onboarding,
     checkpoint: null,
     settings: {
       reducedMotion: false,
@@ -38,6 +51,7 @@ export function createDefaultSave() {
       largeTouchControls: false,
       bindings: {}
     },
-    migrationHistory: []
+    migrationHistory: [],
+    migrationBackups: {}
   };
 }
