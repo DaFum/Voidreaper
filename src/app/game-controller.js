@@ -84,6 +84,7 @@ export function createGameController(services) {
       run.score = game.score;
       run.kills = game.kills;
       run.wave = game.wave;
+      game.visualRegionId = run.campaign?.map?.regions?.[run.campaign.regionIndex]?.id ?? "shattered-approach";
       run.build.sources = legacySources(game);
       run.build.tags = services.tags.collect(run.build.sources);
       services.energy.update(run.player, dt);

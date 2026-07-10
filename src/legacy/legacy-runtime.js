@@ -1,5 +1,7 @@
 
     import { LEGACY_EVOLUTIONS } from "../content/evolutions/legacy-evolutions.js";
+    import { renderForgedEnemy } from "../render/enemies/enemy-renderer.js";
+    import { renderRegionWorld } from "../render/regions/region-world-renderer.js";
 
     "use strict";
     /* =====================================================================
@@ -1378,8 +1380,16 @@
         const eclipse = this.event && this.event.id === "eclipse";
         const frozen = this.freezeT > 0;
 
-        // hex floor + boundary
-        this.drawHexFloor();
+        // regional Forged Abyss floor + boundary
+        renderRegionWorld(cx, {
+          regionId: this.visualRegionId ?? "shattered-approach",
+          camera: { x: camX, y: camY },
+          viewport: { width: W, height: H },
+          arena: this.arena,
+          time: t,
+          seed: this.seed,
+          reducedMotion: REDUCED
+        });
         const A = this.arena;
         cx.strokeStyle = "rgba(255,45,120,.75)"; cx.lineWidth = 3;
         cx.shadowColor = "#ff2d78"; cx.shadowBlur = 20;
@@ -1588,67 +1598,13 @@
       },
 
       drawEnemy(e, frozen) {
-        cx.save();
-        cx.translate(e.x, e.y);
-        // birth scale-in
-        if (e.birth > 0) {
-          const bf = 1 - e.birth / 0.35;
-          cx.scale(bf, bf);
-          cx.globalAlpha = bf;
-        }
-        const flash = e.hitT > 0;
         const fusing = e.fusing !== false && e.fusing !== undefined && ((Math.max(0, e.fusing) * 10) | 0) % 2 === 0;
-        const baseColor = frozen ? "#7bb8d4" : (fusing ? "#ffffff" : e.color);
-        cx.shadowColor = e.elite ? e.elite.tint : e.color;
-        cx.shadowBlur = e.boss ? 28 : (e.elite ? 20 : 13);
-        const r = e.r, wob = Math.sin(e.wobble) * 0.12;
-        cx.rotate(Math.atan2(e.vy, e.vx) + Math.PI / 2 + wob);
-        // outline pass
-        cx.strokeStyle = flash ? "#ffffff" : baseColor;
-        cx.lineWidth = 2;
-        cx.fillStyle = flash ? "#ffffff" : this.shade(baseColor);
-        cx.beginPath();
-        switch (e.shape) {
-          case "tri": cx.moveTo(0, -r); cx.lineTo(r * 0.9, r * 0.8); cx.lineTo(-r * 0.9, r * 0.8); break;
-          case "dia": cx.moveTo(0, -r); cx.lineTo(r * 0.7, 0); cx.lineTo(0, r); cx.lineTo(-r * 0.7, 0); break;
-          case "hex": for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; i ? cx.lineTo(Math.cos(a) * r, Math.sin(a) * r) : cx.moveTo(r, 0); } break;
-          case "pent": for (let i = 0; i < 5; i++) { const a = i / 5 * TAU - Math.PI / 2; i ? cx.lineTo(Math.cos(a) * r, Math.sin(a) * r) : cx.moveTo(Math.cos(-Math.PI / 2) * r, Math.sin(-Math.PI / 2) * r); } break;
-          case "boss": for (let i = 0; i < 10; i++) { const a = i / 10 * TAU, rr = i % 2 ? r * 0.55 : r; i ? cx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : cx.moveTo(r, 0); } break;
-        }
-        cx.closePath(); cx.fill(); cx.stroke();
-        // inner core glow
-        cx.fillStyle = flash ? "#ffffff" : baseColor;
-        cx.beginPath(); cx.arc(0, e.shape === "tri" ? r * 0.15 : 0, r * 0.28 + Math.sin(e.wobble * 2) * 1.5, 0, TAU); cx.fill();
-
-        if (e.elite) {
-          cx.strokeStyle = e.elite.tint; cx.lineWidth = 1.5; cx.globalAlpha *= 0.85;
-          cx.setLineDash([5, 4]);
-          cx.beginPath(); cx.arc(0, 0, r + 7 + Math.sin(e.wobble * 2) * 2, 0, TAU); cx.stroke();
-          cx.setLineDash([]);
-          cx.globalAlpha = 1;
-        }
-        if (e.boss) {
-          cx.fillStyle = "#04010a";
-          cx.beginPath(); cx.arc(0, 0, r * 0.35 + Math.sin(e.wobble * 2) * 3, 0, TAU); cx.fill();
-          cx.fillStyle = "#ffd60a"; cx.shadowColor = "#ffd60a";
-          cx.beginPath(); cx.arc(0, 0, r * 0.14, 0, TAU); cx.fill();
-        }
-        cx.restore();
-
-        // front shield arc (screen-space)
-        if (e.shielded && e.birth <= 0) {
-          const facing = Math.atan2(this.player.y - e.y, this.player.x - e.x);
-          cx.strokeStyle = "#4cc9f0"; cx.lineWidth = 3; cx.shadowColor = "#4cc9f0"; cx.shadowBlur = 10;
-          cx.beginPath(); cx.arc(e.x, e.y, e.r + 6, facing - 0.9, facing + 0.9); cx.stroke();
-          cx.shadowBlur = 0;
-        }
-        cx.shadowBlur = 0;
-        if (!e.boss && e.maxHp > 30 && e.hp < e.maxHp && e.birth <= 0) {
-          cx.fillStyle = "rgba(0,0,0,.6)";
-          cx.fillRect(e.x - 16, e.y - e.r - 11, 32, 4);
-          cx.fillStyle = e.elite ? e.elite.tint : e.color;
-          cx.fillRect(e.x - 15, e.y - e.r - 10, 30 * clamp(e.hp / e.maxHp, 0, 1), 2);
-        }
+        renderForgedEnemy(cx, fusing ? { ...e, color: "#ffffff" } : e, {
+          frozen,
+          target: this.player,
+          shade: color => this.shade(color),
+          reducedMotion: REDUCED
+        });
       },
 
       // simple hex shade: darken a #rrggbb by 45% for fill bodies

@@ -3,7 +3,31 @@ const polygon = points => ({ kind: "polygon", points });
 const line = (from, to, width = 2) => ({ kind: "line", from, to, width });
 const lens = (x, y, radiusX, radiusY, rotation = 0) => ({ kind: "lens", center: { x, y }, radiusX, radiusY, rotation });
 const bounds = (minX, minY, maxX, maxY) => ({ minX, minY, maxX, maxY });
-const core = ({ hullPaths, armorPaths, lightPaths, cockpitPath, reactorPath, thrusterAnchors, portAnchors, bounds: coreBounds }) => ({ hullPaths, armorPaths, lightPaths, cockpitPath, reactorPath, thrusterAnchors, portAnchors, bounds: coreBounds });
+const core = ({
+  hullPaths,
+  armorPaths,
+  lightPaths,
+  cockpitPath,
+  reactorPath,
+  thrusterAnchors,
+  portAnchors,
+  bounds: coreBounds,
+  structurePaths = [],
+  detailPaths = [],
+  voidPaths = []
+}) => ({
+  hullPaths,
+  armorPaths,
+  lightPaths,
+  cockpitPath,
+  reactorPath,
+  thrusterAnchors,
+  portAnchors,
+  bounds: coreBounds,
+  structurePaths,
+  detailPaths,
+  voidPaths
+});
 
 export function registerCoreGeometry(id, builder) { builders.set(id, builder); }
 export function buildCoreGeometry(id, context = {}) { const builder = builders.get(id); if (!builder) throw new Error(`Unknown core geometry: ${id}`); return builder(context); }
