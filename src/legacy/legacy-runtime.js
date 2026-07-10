@@ -291,6 +291,8 @@
 
     /* ---------- evolutions ---------- */
     let evolutionEffectRunner = null;
+    let externalShipRenderer = null;
+    let externalPlayerDamageRouter = null;
     const EVOLUTIONS = LEGACY_EVOLUTIONS.map(definition => ({
       id: definition.id,
       ico: definition.icon,
@@ -656,6 +658,7 @@
           UI.shield(p.shield);
           return;
         }
+        dmg = externalPlayerDamageRouter?.(p, dmg, this) ?? dmg;
         p.hp -= dmg; p.iframes = 0.7;
         this.combo = 0; this.comboT = 0; this.streakIdx = 0; UI.combo(0, 0, 0);
         this.shake(9); this.glitch(); UI.flash(); AudioSys.hurt();
@@ -1511,7 +1514,7 @@
           cx.shadowBlur = 0;
         }
 
-        this.drawShip(p);
+        if (!externalShipRenderer?.(cx, p, this)) this.drawShip(p);
 
         cx.strokeStyle = "rgba(6,255,165,.07)";
         cx.beginPath(); cx.arc(p.x, p.y, p.magnet, 0, TAU); cx.stroke();
@@ -1666,6 +1669,7 @@
         let frame = (ts - this.last) / 1000;
         this.last = ts;
         if (frame > 0.25) frame = 0.25;
+        frame *= this.timeScale ?? 1;
         if (this.state === "run") {
           this.acc += frame;
           let n = 0;
@@ -1853,6 +1857,12 @@
       persistence: Persist,
       configureEvolutionEffects(runner) {
         evolutionEffectRunner = runner;
+      },
+      configureShipRenderer(renderer) {
+        externalShipRenderer = renderer;
+      },
+      configurePlayerDamageRouter(router) {
+        externalPlayerDamageRouter = router;
       },
       start() {
         Input.init();

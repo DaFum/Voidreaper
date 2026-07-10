@@ -1,6 +1,6 @@
 import { createItemCard } from "../components/item-card.js";
 
-const TABS = ["Run starten", "Loadout", "Schiffe", "Waffen", "Module", "Forschung", "Prototypen", "Codex", "Herausforderungen", "Kampagnen", "Bergung", "Simulator", "Statistiken", "Einstellungen"];
+const TABS = ["Run starten", "Loadout", "Schiffe", "Waffen", "Module", "Baupläne", "Forschung", "Prototypen", "Codex", "Herausforderungen", "Kampagnen", "Bergung", "Simulator", "Statistiken", "Einstellungen"];
 
 export function createHangarScreen(container, { ships, weapons, modules, reactors, currencies = {}, checkpoint = null, isUnlocked = () => true, onStart = () => {}, onResume = () => {}, renderTab = () => {} }) {
   let tab = "Run starten";
