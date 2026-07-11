@@ -1,8 +1,9 @@
+import { escapeHtml } from "../escape-html.js";
 export const ASSEMBLY_VIEW_MODES = Object.freeze({ NORMAL: "normal", STRUCTURE: "structure", ENERGY: "energy", DAMAGE: "damage", FLIGHT: "flight" });
 export const ASSEMBLY_VIEW_MODE_LABELS = Object.freeze({ normal: "KONSTRUKTION", structure: "STRUKTUR", energy: "ENERGIE", damage: "SCHADEN", flight: "FLUGPROFIL" });
 
 export function renderAssemblyToolbar(root, active, onChange) {
-  root.innerHTML = Object.values(ASSEMBLY_VIEW_MODES).map(mode => `<button data-mode="${mode}" aria-pressed="${mode === active}">${ASSEMBLY_VIEW_MODE_LABELS[mode]}</button>`).join("");
+  root.innerHTML = Object.values(ASSEMBLY_VIEW_MODES).map(mode => `<button data-mode="${mode}" aria-pressed="${mode === active}">${escapeHtml(ASSEMBLY_VIEW_MODE_LABELS[mode])}</button>`).join("");
   root.onclick = event => { const mode = event.target.closest("[data-mode]")?.dataset.mode; if (mode) onChange(mode); };
 }
 
