@@ -3,3 +3,5 @@ dist/
 .vite-dev.*.log
 .claude/launch.json
 .superpowers/
+npm_output.log
+dev_output.log
