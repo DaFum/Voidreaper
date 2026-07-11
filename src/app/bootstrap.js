@@ -27,6 +27,7 @@ import { WEAPONS } from "../content/weapons/index.js";
 import { REACTORS } from "../content/reactors/reactors.js";
 import { MODULES } from "../content/modules/index.js";
 import { createHangarScreen } from "../ui/screens/hangar-screen.js";
+import { attachStartMenuToggle } from "../ui/screens/start-menu-toggle.js";
 import { createSectorController } from "../features/sectors/sector-controller.js";
 import { createRunCurrencyService } from "../features/economy/run-currency-service.js";
 import { createDailyRunService } from "../features/sectors/daily-run-service.js";
@@ -162,6 +163,10 @@ export async function bootstrap() {
   legacyRuntime.configureShipRenderer((context,player,legacyGame)=>{const geometry=services.assemblyGeometry?.getSnapshot();if(!geometry?.coreGeometry)return false;const rendered=services.assemblyRenderer.renderPlayerShip(context,{geometrySnapshot:geometry,position:player,rotation:player.angle+Math.PI/2,time:legacyGame.time,buildAnimations:services.buildAnimations?.snapshot?.()??[],movement:{x:player.vx,y:player.vy,dodging:player.iframes>0},lodOptions:{userSetting:getAssemblyLod()}});if(rendered&&player.shield>0){context.strokeStyle="#4f6df5";context.shadowColor="#4f6df5";context.shadowBlur=14;context.lineWidth=1.5;context.beginPath();context.arc(player.x,player.y,player.r+8+Math.sin(legacyGame.time*4)*2,0,Math.PI*2);context.stroke();context.shadowBlur=0;}return rendered;});
   legacyRuntime.configurePlayerDamageRouter((_player,damage)=>{const geometry=services.assemblyGeometry?.getSnapshot(),target=geometry?.nodes.filter(node=>!node.isRoot).sort((a,b)=>Math.hypot(b.worldPosition.x,b.worldPosition.y)-Math.hypot(a.worldPosition.x,a.worldPosition.y))[0];return target&&services.moduleDamage?services.moduleDamage.applyDamage(target.nodeId,damage,"legacy-contact").remainingDamage:damage;});
   const hangarRoot = document.querySelector("#hangar");
+  const startMenu = attachStartMenuToggle(document.querySelector("#start"), { openButton: document.querySelector("#menuopenbtn"), closeButton: document.querySelector("#menuclosebtn") });
+  // The game-over screen's "Hangar" button routes through the legacy UI.menu(), which only
+  // shows #start — jump straight to the menu view so the button keeps landing in the hangar.
+  document.querySelector("#menubtn")?.addEventListener("click", () => startMenu.open());
   let previewRun;
   let mapScreen;
   let activeCampaignNodeId = null;

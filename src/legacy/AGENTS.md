@@ -1,0 +1,13 @@
+# Legacy Runtime Instructions
+
+## Purpose
+- [legacy-runtime.js](legacy-runtime.js) is the original monolithic game runtime (~1800 lines). It is being wrapped, not replaced.
+
+## Rules
+- Prefer extending via the hook points bootstrap configures (e.g. `configureShipRenderer`, `configurePlayerDamageRouter`) over editing runtime internals.
+- Do not refactor or split this file as a side effect of another task; that is its own coordinated project.
+
+## Gotchas
+- The runtime holds its own state and update loop; modern services observe and hook into it rather than owning it.
+- Behavior here can duplicate modern feature logic; when both exist, check which path is live before changing either.
+- Edits deep in this file are hard to test in isolation; verify via `npm run build` and a manual click-path.

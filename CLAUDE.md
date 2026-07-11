@@ -9,6 +9,7 @@ Voidreaper is a Vite-based browser game (canvas 2D roguelite). Entry point is `s
 ## Commands
 
 - `npm test` — run all tests (Node's built-in test runner, discovers `tests/**/*.test.js`)
+- `npm run test:frontend` — Vitest + happy-dom suite for the DOM UI layer (`tests/frontend/**/*.spec.js`; kept separate from node:test via the `.spec.js` suffix)
 - `node --test tests/ui/blueprint-ux.test.js` — run a single test file
 - `npm run build` — content validator + assembly validator + Vite production build. This is the release gate and the safest final check.
 - `npm run validate-content` — for content/registry changes
@@ -46,7 +47,7 @@ Cross-cutting facts that bite:
 
 ## Per-Directory Instructions
 
-`AGENTS.md` files at the root and in `src/`, `src/features/`, `src/content/`, `src/persistence/`, `scripts/`, and `docs/` carry layer-specific rules and pitfalls — read the one for the layer you're editing.
+`AGENTS.md` files carry layer-specific rules and pitfalls — read the one for the layer you're editing. They exist at the root, in `scripts/` and `docs/`, and in every `src/` layer folder (`src/`, `src/app/`, `src/core/`, `src/runtime/`, `src/legacy/`, `src/input/`, `src/audio/`, `src/features/`, `src/content/`, `src/render/`, `src/persistence/`, `src/styles/`, `src/ui/`), plus the ship-assembly subfolders of `src/content/`, `src/features/`, `src/render/`, and `src/ui/`.
 
 ## Design Docs (source of truth for intent)
 

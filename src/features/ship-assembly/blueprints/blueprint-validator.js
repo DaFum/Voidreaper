@@ -22,26 +22,50 @@ export function validateBlueprint(
     nodeMap = new Map(nodes.map((node) => [node.blueprintNodeId, node])),
     root = nodes.find((node) => !node.parentBlueprintNodeId);
   const valid = [];
+  // Ancestor verdicts are memoized across nodes so each parent pointer is walked
+  // at most once overall, keeping validation O(N) even for deep chains. A walk
+  // ends safe (reached the root or a known-safe node), in a cycle, or orphaned
+  // (the chain dangles at a missing parent, so the node is disconnected).
+  const safeNodes = new Set(),
+    cycleNodes = new Set(),
+    orphanNodes = new Set();
   for (const node of nodes) {
     if (node !== root && !nodeIds.has(node.parentBlueprintNodeId)) {
       issues.push({ type: "missing-parent", nodeId: node.blueprintNodeId });
       continue;
     }
     const ancestors = new Set([node.blueprintNodeId]);
-    let parent = node.parentBlueprintNodeId,
-      cycle = false;
-    while (parent) {
-      if (ancestors.has(parent)) {
-        cycle = true;
+    let parentId = node.parentBlueprintNodeId,
+      verdict = "safe";
+    while (parentId) {
+      if (safeNodes.has(parentId)) break;
+      if (cycleNodes.has(parentId) || ancestors.has(parentId)) {
+        verdict = "cycle";
         break;
       }
-      ancestors.add(parent);
-      parent = nodeMap.get(parent)?.parentBlueprintNodeId;
+      if (orphanNodes.has(parentId)) {
+        verdict = "orphan";
+        break;
+      }
+      ancestors.add(parentId);
+      const parentNode = nodeMap.get(parentId);
+      if (!parentNode) {
+        verdict = "orphan";
+        break;
+      }
+      parentId = parentNode.parentBlueprintNodeId;
     }
-    if (cycle) {
+    if (verdict === "cycle") {
+      for (const ancestor of ancestors) cycleNodes.add(ancestor);
       issues.push({ type: "cycle", nodeId: node.blueprintNodeId });
       continue;
     }
+    if (verdict === "orphan") {
+      for (const ancestor of ancestors) orphanNodes.add(ancestor);
+      issues.push({ type: "missing-parent", nodeId: node.blueprintNodeId });
+      continue;
+    }
+    for (const ancestor of ancestors) safeNodes.add(ancestor);
     if (
       node.preferredModuleDefinitionId &&
       !knownDefinitionIds.has(node.preferredModuleDefinitionId)
