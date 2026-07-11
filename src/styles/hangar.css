@@ -119,3 +119,16 @@
     @media (max-width: 700px) { .hangar-stage { min-height: 58vh; } .hangar-signal b { display: none; } .item-catalog { grid-template-columns: 1fr; } .loadout-orbit { display: flex; flex-direction: column; } .ship-core { order: -1; } }
 
     
+
+    /* ---- Startseite/Menü-Umschaltung: data-view auf #start steuert, ob die
+       Startseite (Header + Buttons + Footer) oder das Menü (nur Hangar,
+       volle Höhe, mit Zurück-Button) sichtbar ist. ---- */
+    #start[data-view="home"] #hangar, #start[data-view="home"] #menuclosebtn { display: none; }
+    #start[data-view="menu"] h1, #start[data-view="menu"] .sub, #start[data-view="menu"] .rule, #start[data-view="menu"] .shards, #start[data-view="menu"] .modes, #start[data-view="menu"] .hint, #start[data-view="menu"] .best { display: none; }
+    #start[data-view="menu"] { justify-content: flex-start; }
+    #start[data-view="menu"] #menuclosebtn { flex: 0 0 auto; align-self: flex-start; }
+    #start[data-view="menu"] #hangar { flex: 1; min-height: 0; max-height: none; display: flex; flex-direction: column; }
+    #start[data-view="menu"] .hangar-tabs { flex: 0 0 auto; }
+    #start[data-view="menu"] .hangar-stage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    #start[data-view="menu"] .hangar-signal { flex: 0 0 auto; }
+    #start[data-view="menu"] .hangar-content { flex: 1; min-height: 0; height: auto; }
