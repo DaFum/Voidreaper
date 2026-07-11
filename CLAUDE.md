@@ -9,6 +9,7 @@ Voidreaper is a Vite-based browser game (canvas 2D roguelite). Entry point is `s
 ## Commands
 
 - `npm test` — run all tests (Node's built-in test runner, discovers `tests/**/*.test.js`)
+- `npm run test:frontend` — Vitest + happy-dom suite for the DOM UI layer (`tests/frontend/**/*.spec.js`; kept separate from node:test via the `.spec.js` suffix)
 - `node --test tests/ui/blueprint-ux.test.js` — run a single test file
 - `npm run build` — content validator + assembly validator + Vite production build. This is the release gate and the safest final check.
 - `npm run validate-content` — for content/registry changes
