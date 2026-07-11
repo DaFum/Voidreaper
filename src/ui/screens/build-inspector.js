@@ -29,9 +29,9 @@ export function createBuildInspector(container, services) {
         result: services.stats.calculate(definition.id, model.statContext)
       })));
     } else if (activeTab === "Tags") {
-      panel.innerHTML = [...model.tags.entries()].map(([id, value]) => `<article class="tag-entry"><b>${escapeHtml(id)}</b><strong>${escapeHtml(value)}</strong><small>${(model.tags.provenance?.get(id) ?? []).map(source => source.sourceId).join(", ")}</small></article>`).join("");
+      panel.innerHTML = [...model.tags.entries()].map(([id, value]) => `<article class="tag-entry"><b>${escapeHtml(id)}</b><strong>${escapeHtml(value)}</strong><small>${(model.tags.provenance?.get(id) ?? []).map(source => escapeHtml(source.sourceId)).join(", ")}</small></article>`).join("");
     } else if (activeTab === "Evolutionen") {
-      panel.innerHTML = model.evolutions.map(entry => `<article class="evolution-entry" data-ready="${entry.eligible}"><b>${escapeHtml(entry.definition.name)}</b><span>${entry.requirements.filter(requirement => requirement.met).length}/${entry.requirements.length}</span><small>${entry.blockedBy ? `Blockiert durch ${escapeHtml(entry.blockedBy)}` : entry.definition.kind}</small></article>`).join("");
+      panel.innerHTML = model.evolutions.map(entry => `<article class="evolution-entry" data-ready="${entry.eligible}"><b>${escapeHtml(entry.definition.name)}</b><span>${entry.requirements.filter(requirement => requirement.met).length}/${entry.requirements.length}</span><small>${entry.blockedBy ? `Blockiert durch ${escapeHtml(entry.blockedBy)}` : escapeHtml(entry.definition.kind)}</small></article>`).join("");
     } else if (activeTab === "Risiken") {
       panel.innerHTML = `<div class="risk-grid"><span>LAST</span><b>${Math.round(model.load.ratio * 100)}% ${escapeHtml(model.load.tier)}</b><span>HITZE</span><b>${Math.round(model.heat)}°</b><span>KORRUPTION</span><b>${Math.round(model.corruption)}%</b><span>FEHLERDRUCK</span><b>${model.faultPressure.toFixed(2)}</b></div>`;
     } else {
