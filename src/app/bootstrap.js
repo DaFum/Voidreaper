@@ -181,6 +181,22 @@ export async function bootstrap() {
       document.body.classList.add("gpu-environment");
       legacyRuntime.configureEnvironmentRenderer(frame => environmentStage.render(frame));
       console.info("[render] PixiJS environment stage active");
+      // combat FX overlay (particles, shockwaves, bloom) above #game — optional
+      // on top of the environment stage, with its own fallback to the 2D path
+      let fxCanvas = null;
+      try {
+        const { createCombatFxStage } = await import("../render/pixi/combat-fx-stage.js");
+        fxCanvas = document.createElement("canvas");
+        fxCanvas.id = "combat-fx";
+        fxCanvas.setAttribute("aria-hidden", "true");
+        gameCanvas.after(fxCanvas);
+        const combatFxStage = await createCombatFxStage({ canvas: fxCanvas, gameCanvas });
+        legacyRuntime.configureCombatFxRenderer(combatFxStage);
+        console.info("[render] PixiJS combat FX stage active");
+      } catch (fxError) {
+        fxCanvas?.remove();
+        console.warn("[render] PixiJS combat FX stage unavailable — 2D particles/bloom remain active", fxError);
+      }
     } catch (error) {
       stageCanvas?.remove();
       document.body.classList.remove("gpu-environment");

@@ -73,6 +73,17 @@
       background: transparent
     }
 
+    /* GPU combat-FX overlay (particles, shockwaves, bloom) between #game and
+       the HUD/CRT layers. */
+    #combat-fx {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      pointer-events: none
+    }
+
     body.hitfx #game {
       filter: saturate(1.6) contrast(1.08)
     }

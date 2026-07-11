@@ -303,6 +303,7 @@ import { escapeHtml } from "../ui/escape-html.js";
     let externalShipRenderer = null;
     let externalPlayerDamageRouter = null;
     let externalEnvironmentRenderer = null;
+    let externalCombatFxRenderer = null;
     const EVOLUTIONS = LEGACY_EVOLUTIONS.map(definition => ({
       id: definition.id,
       ico: definition.icon,
@@ -1565,37 +1566,45 @@ import { escapeHtml } from "../ui/escape-html.js";
         cx.strokeStyle = "rgba(6,255,165,.07)";
         cx.beginPath(); cx.arc(p.x, p.y, p.magnet, 0, TAU); cx.stroke();
 
-        // expanding shockwave rings
-        for (const s of this.shocks.live) {
-          const f = 1 - s.life / s.maxLife;
-          const ease = 1 - Math.pow(1 - f, 3);
-          cx.strokeStyle = s.color;
-          cx.globalAlpha = (1 - f) * .8;
-          cx.lineWidth = 2 + (1 - f) * 4;
-          cx.beginPath(); cx.arc(s.x, s.y, s.maxR * ease, 0, TAU); cx.stroke();
-          cx.globalAlpha = (1 - f) * .3;
-          cx.lineWidth = 1.5;
-          cx.beginPath(); cx.arc(s.x, s.y, s.maxR * ease * .68, 0, TAU); cx.stroke();
-        }
-        cx.globalAlpha = 1;
-
-        // additive particles (fast ones render as velocity-stretched sparks)
-        const sparks = this.bloomOn !== false;
-        cx.globalCompositeOperation = "lighter";
-        cx.lineCap = "round";
-        for (const pt of this.parts.live) {
-          cx.globalAlpha = clamp(pt.life / pt.maxLife, 0, 1);
-          if (sparks && pt.vx * pt.vx + pt.vy * pt.vy > 2400) {
-            cx.strokeStyle = pt.color;
-            cx.lineWidth = pt.size;
-            cx.beginPath(); cx.moveTo(pt.x - pt.vx * 0.035, pt.y - pt.vy * 0.035); cx.lineTo(pt.x, pt.y); cx.stroke();
-          } else {
-            cx.fillStyle = pt.color;
-            cx.fillRect(pt.x - pt.size / 2, pt.y - pt.size / 2, pt.size, pt.size);
+        // shockwave rings + additive particles — the GPU FX overlay takes over
+        // both when configured (drawn on the transparent canvas above #game)
+        const fxHandled = externalCombatFxRenderer?.capture({
+          parts: this.parts.live, shocks: this.shocks.live,
+          camX, camY, shakeX, shakeY, width: W, height: H
+        }) === true;
+        if (!fxHandled) {
+          // expanding shockwave rings
+          for (const s of this.shocks.live) {
+            const f = 1 - s.life / s.maxLife;
+            const ease = 1 - Math.pow(1 - f, 3);
+            cx.strokeStyle = s.color;
+            cx.globalAlpha = (1 - f) * .8;
+            cx.lineWidth = 2 + (1 - f) * 4;
+            cx.beginPath(); cx.arc(s.x, s.y, s.maxR * ease, 0, TAU); cx.stroke();
+            cx.globalAlpha = (1 - f) * .3;
+            cx.lineWidth = 1.5;
+            cx.beginPath(); cx.arc(s.x, s.y, s.maxR * ease * .68, 0, TAU); cx.stroke();
           }
+          cx.globalAlpha = 1;
+
+          // additive particles (fast ones render as velocity-stretched sparks)
+          const sparks = this.bloomOn !== false;
+          cx.globalCompositeOperation = "lighter";
+          cx.lineCap = "round";
+          for (const pt of this.parts.live) {
+            cx.globalAlpha = clamp(pt.life / pt.maxLife, 0, 1);
+            if (sparks && pt.vx * pt.vx + pt.vy * pt.vy > 2400) {
+              cx.strokeStyle = pt.color;
+              cx.lineWidth = pt.size;
+              cx.beginPath(); cx.moveTo(pt.x - pt.vx * 0.035, pt.y - pt.vy * 0.035); cx.lineTo(pt.x, pt.y); cx.stroke();
+            } else {
+              cx.fillStyle = pt.color;
+              cx.fillRect(pt.x - pt.size / 2, pt.y - pt.size / 2, pt.size, pt.size);
+            }
+          }
+          cx.globalCompositeOperation = "source-over";
+          cx.globalAlpha = 1;
         }
-        cx.globalCompositeOperation = "source-over";
-        cx.globalAlpha = 1;
 
         // floating text (damage pops scale in)
         cx.textAlign = "center";
@@ -1714,7 +1723,10 @@ import { escapeHtml } from "../ui/escape-html.js";
         if (this.bloomOn === undefined) this.bloomOn = true;
         if (this.bloomOn) { if (this.frameCost > 28) this.bloomOn = false; }
         else if (this.frameCost < 20) this.bloomOn = true;
-        if (this.bloomOn) Bloom.apply(cx);
+        // GPU FX overlay presents particles/shockwaves and, when it returns
+        // true, has already applied the bloom pass on the GPU
+        const fxPresented = externalCombatFxRenderer?.present({ bloomOn: this.bloomOn }) === true;
+        if (this.bloomOn && !fxPresented) Bloom.apply(cx);
         if (this.state === "run") {
           // ghost bar update (visual only)
           const p = this.player;
@@ -1900,6 +1912,9 @@ import { escapeHtml } from "../ui/escape-html.js";
       },
       configureEnvironmentRenderer(renderer) {
         externalEnvironmentRenderer = renderer;
+      },
+      configureCombatFxRenderer(renderer) {
+        externalCombatFxRenderer = renderer;
       },
       configurePlayerDamageRouter(router) {
         externalPlayerDamageRouter = router;
