@@ -46,7 +46,7 @@ Cross-cutting facts that bite:
 
 ## Per-Directory Instructions
 
-`AGENTS.md` files at the root and in `src/`, `src/features/`, `src/content/`, `src/persistence/`, `scripts/`, and `docs/` carry layer-specific rules and pitfalls — read the one for the layer you're editing.
+`AGENTS.md` files carry layer-specific rules and pitfalls — read the one for the layer you're editing. They exist at the root, in `scripts/` and `docs/`, and in every `src/` layer folder (`src/`, `src/app/`, `src/core/`, `src/runtime/`, `src/legacy/`, `src/input/`, `src/audio/`, `src/features/`, `src/content/`, `src/render/`, `src/persistence/`, `src/styles/`, `src/ui/`), plus the ship-assembly subfolders of `src/content/`, `src/features/`, `src/render/`, and `src/ui/`.
 
 ## Design Docs (source of truth for intent)
 

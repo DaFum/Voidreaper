@@ -1,4 +1,4 @@
-import { validateBlueprint } from "./src/features/ship-assembly/blueprints/blueprint-validator.js";
+import { validateBlueprint } from "../src/features/ship-assembly/blueprints/blueprint-validator.js";
 
 // Generate a deep chain blueprint
 const N = 5000;
