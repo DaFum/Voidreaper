@@ -22,6 +22,10 @@ export function validateBlueprint(
     nodeMap = new Map(nodes.map((node) => [node.blueprintNodeId, node])),
     root = nodes.find((node) => !node.parentBlueprintNodeId);
   const valid = [];
+  // Ancestor results are memoized across nodes so each parent pointer is walked
+  // at most once overall, keeping cycle detection O(N) even for deep chains.
+  const safeNodes = new Set(),
+    cycleNodes = new Set();
   for (const node of nodes) {
     if (node !== root && !nodeIds.has(node.parentBlueprintNodeId)) {
       issues.push({ type: "missing-parent", nodeId: node.blueprintNodeId });
@@ -31,7 +35,8 @@ export function validateBlueprint(
     let parent = node.parentBlueprintNodeId,
       cycle = false;
     while (parent) {
-      if (ancestors.has(parent)) {
+      if (safeNodes.has(parent)) break;
+      if (cycleNodes.has(parent) || ancestors.has(parent)) {
         cycle = true;
         break;
       }
@@ -39,9 +44,11 @@ export function validateBlueprint(
       parent = nodeMap.get(parent)?.parentBlueprintNodeId;
     }
     if (cycle) {
+      for (const ancestor of ancestors) cycleNodes.add(ancestor);
       issues.push({ type: "cycle", nodeId: node.blueprintNodeId });
       continue;
     }
+    for (const ancestor of ancestors) safeNodes.add(ancestor);
     if (
       node.preferredModuleDefinitionId &&
       !knownDefinitionIds.has(node.preferredModuleDefinitionId)

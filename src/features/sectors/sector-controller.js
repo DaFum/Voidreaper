@@ -4,6 +4,7 @@ export function createSectorController({ eventBus, contentVersion = "3.0.0" } = 
   const mapCache = new WeakMap();
 
   function getNodeById(map, id) {
+    if (!map) return undefined;
     let nodeMap = mapCache.get(map);
     if (!nodeMap) {
       nodeMap = new Map(flattenSectorMap(map).map(n => [n.id, n]));

@@ -14,12 +14,14 @@ function drawGrid(ctx, profile, bounds, time, reducedMotion) {
   const startX = Math.floor(bounds.minX / TILE) * TILE;
   const startY = Math.floor(bounds.minY / TILE) * TILE;
   // ⚡ Bolt Optimization: Batched Canvas Draw Calls
-  // We lift beginPath/stroke outside the loops to minimize canvas state transitions.
+  // Each branch batches its geometry into one path and strokes it under the same
+  // transformation matrix it was defined in (relevant for the rotated "segments" grid).
   // When drawing arcs in a batched path, moveTo() must be called explicitly beforehand
   // to avoid a connecting line extending from the previous sub-path to the arc's starting point.
-  // Expected Impact: Reduces 500+ path instantiation calls to 1 batched path call per frame, reducing rendering time by ~4-8x.
-  ctx.beginPath();
+  // Note: batching composites overlapping segments as one region, so crossings no longer
+  // accumulate alpha; the resulting uniform grid tint is accepted in favor of performance.
   if (profile.grid === "cathedral") {
+    ctx.beginPath();
     for (let x = startX; x <= bounds.maxX; x += TILE) {
       ctx.moveTo(x,bounds.maxY);ctx.lineTo(x,bounds.minY);
       for (let y = startY; y <= bounds.maxY; y += TILE) {
@@ -27,18 +29,22 @@ function drawGrid(ctx, profile, bounds, time, reducedMotion) {
         ctx.arc(x+TILE/2,y,TILE/2,Math.PI,0);
       }
     }
+    ctx.stroke();
   } else if (profile.grid === "segments") {
     ctx.save();ctx.rotate(reducedMotion?0:time*.025);
+    ctx.beginPath();
     for(let radius=TILE;radius<Math.max(bounds.maxX-bounds.minX,bounds.maxY-bounds.minY);radius+=TILE){
       ctx.moveTo(radius, 0);
       ctx.arc(0,0,radius,0,Math.PI*1.72);
     }
+    ctx.stroke();
     ctx.restore();
   } else {
+    ctx.beginPath();
     for(let x=startX;x<=bounds.maxX;x+=TILE){ctx.moveTo(x,bounds.minY);ctx.lineTo(profile.grid==="fracture"?x+TILE*.45:x,bounds.maxY);}
     for(let y=startY;y<=bounds.maxY;y+=TILE){ctx.moveTo(bounds.minX,y);ctx.lineTo(bounds.maxX,profile.grid==="salvage"?y+TILE*.18:y);}
+    ctx.stroke();
   }
-  ctx.stroke();
   ctx.globalAlpha=1;
 }
 

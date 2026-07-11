@@ -1,12 +1,12 @@
 export function createCollisionSystem({hitZoneIndex,damageRouter}) {
+  // Reused across synchronous projectileHit calls to avoid per-call allocations in this hot path.
+  const bounds = { minX: 0, minY: 0, maxX: 0, maxY: 0 };
   return {
     projectileHit({from,to,damage,penetration=0,damageType="kinetic",candidateResolver}) {
-      const bounds = {
-        minX: Math.min(from.x, to.x),
-        minY: Math.min(from.y, to.y),
-        maxX: Math.max(from.x, to.x),
-        maxY: Math.max(from.y, to.y)
-      };
+      bounds.minX = Math.min(from.x, to.x);
+      bounds.minY = Math.min(from.y, to.y);
+      bounds.maxX = Math.max(from.x, to.x);
+      bounds.maxY = Math.max(from.y, to.y);
 
       const queriedZones = hitZoneIndex.query(bounds);
       const candidates = [];
