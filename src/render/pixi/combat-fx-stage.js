@@ -25,7 +25,7 @@ function bakeDotTexture(size = 32) {
   gradient.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
-  return Texture.from(canvas);
+  return Texture.from(canvas, true);
 }
 
 function bakeSparkTexture() {
@@ -44,7 +44,7 @@ function bakeSparkTexture() {
   ctx.arc(58, 4, 3.5, -Math.PI / 2, Math.PI / 2);
   ctx.lineTo(0, 4);
   ctx.fill();
-  return Texture.from(canvas);
+  return Texture.from(canvas, true);
 }
 
 function bakeRingTexture(size = 256) {
@@ -61,7 +61,7 @@ function bakeRingTexture(size = 256) {
   ctx.globalAlpha = 0.38;
   ctx.lineWidth = 4;
   ctx.beginPath(); ctx.arc(half, half, radius * 0.68, 0, TAU); ctx.stroke();
-  return { texture: Texture.from(canvas), radius };
+  return { texture: Texture.from(canvas, true), radius };
 }
 
 export async function createCombatFxStage({ canvas, gameCanvas } = {}) {
@@ -93,7 +93,9 @@ export async function createCombatFxStage({ canvas, gameCanvas } = {}) {
   bloomSprite.visible = false;
   let bloomTexture = null;
   const refreshBloomTexture = () => {
-    if (!gameCanvas) return;
+    // a 0×0 canvas (before the legacy first layout pass) would throw on
+    // texture creation — present() retries lazily once it has valid dimensions
+    if (!gameCanvas || gameCanvas.width === 0 || gameCanvas.height === 0) return;
     const previous = bloomTexture;
     bloomTexture = Texture.from(gameCanvas, true);
     bloomSprite.texture = bloomTexture;
@@ -149,8 +151,12 @@ export async function createCombatFxStage({ canvas, gameCanvas } = {}) {
 
     let bloomHandled = false;
     if (frame) {
-      const { parts = [], shocks = [], camX = 0, camY = 0, shakeX = 0, shakeY = 0, width, height } = frame;
+      const { parts = [], shocks = [], camX = 0, camY = 0, shakeX = 0, shakeY = 0, width, height, darkness = 0 } = frame;
       world.position.set(width / 2 - camX + shakeX, height / 2 - camY + shakeY);
+      // the darkness veil lives on the 2D canvas below this overlay — dim the
+      // FX layer with it so effects don't punch through the visibility mechanic
+      // (kept partially visible: shockwaves/explosions act as light sources)
+      world.alpha = 1 - darkness * 0.7;
 
       let used = 0;
       for (const particle of parts) {
@@ -188,9 +194,9 @@ export async function createCombatFxStage({ canvas, gameCanvas } = {}) {
       }
       hideFrom(shockSprites, usedShocks);
 
-      if (bloomOn && bloomTexture) {
-        // the game canvas resizes with DPR changes — keep the GPU copy in sync
-        if (bloomTexture.source.pixelWidth !== gameCanvas.width || bloomTexture.source.pixelHeight !== gameCanvas.height) refreshBloomTexture();
+      if (bloomOn && gameCanvas?.width > 0 && gameCanvas?.height > 0) {
+        // lazy init after a 0×0 start, and re-sync after canvas/DPR resizes
+        if (!bloomTexture || bloomTexture.source.pixelWidth !== gameCanvas.width || bloomTexture.source.pixelHeight !== gameCanvas.height) refreshBloomTexture();
         bloomTexture.source.update();
         bloomSprite.width = width;
         bloomSprite.height = height;
@@ -213,7 +219,8 @@ export async function createCombatFxStage({ canvas, gameCanvas } = {}) {
     if (destroyed) return;
     destroyed = true;
     window.removeEventListener("resize", resize);
-    app.destroy(false, { children: true, texture: true });
+    // v8 signature: destroy(rendererDestroyOptions, stageDestroyOptions)
+    app.destroy({ removeView: false }, { children: true, texture: true, textureSource: true });
   };
 
   resize();

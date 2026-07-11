@@ -1566,11 +1566,17 @@ import { escapeHtml } from "../ui/escape-html.js";
         cx.strokeStyle = "rgba(6,255,165,.07)";
         cx.beginPath(); cx.arc(p.x, p.y, p.magnet, 0, TAU); cx.stroke();
 
+        // darkness (region visibility + eclipse) is computed here so the GPU FX
+        // overlay can dim itself like the 2D path; the veil below reuses it
+        const rules = getRegionRules(this.visualRegionId ?? "shattered-approach", this.time);
+        const regionDark = Math.min(.6, (1 - (rules?.visibility ?? 1)) * 1.9);
+        const darkness = Math.max(eclipse ? .74 : 0, regionDark);
+
         // shockwave rings + additive particles — the GPU FX overlay takes over
         // both when configured (drawn on the transparent canvas above #game)
         const fxHandled = externalCombatFxRenderer?.capture({
           parts: this.parts.live, shocks: this.shocks.live,
-          camX, camY, shakeX, shakeY, width: W, height: H
+          camX, camY, shakeX, shakeY, width: W, height: H, darkness
         }) === true;
         if (!fxHandled) {
           // expanding shockwave rings
@@ -1642,10 +1648,7 @@ import { escapeHtml } from "../ui/escape-html.js";
 
         cx.restore();
 
-        // darkness veil: region visibility + eclipse event, lit by player/projectiles/effects
-        const rules = getRegionRules(this.visualRegionId ?? "shattered-approach", this.time);
-        const regionDark = Math.min(.6, (1 - (rules?.visibility ?? 1)) * 1.9);
-        const darkness = Math.max(eclipse ? .74 : 0, regionDark);
+        // darkness veil: lit by player/projectiles/effects (darkness computed above)
         if (darkness > 0) {
           if (this.bloomOn !== false) {
             const offX = W / 2 - camX + this.cam.sx, offY = H / 2 - camY + this.cam.sy;

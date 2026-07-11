@@ -31,7 +31,8 @@ function bakeSkyTexture(colors) {
   gradient.addColorStop(1, colors[2]);
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 2, 256);
-  return Texture.from(canvas);
+  // skipCache: baked per theme change, must not pile up in the global cache
+  return Texture.from(canvas, true);
 }
 
 function bakeNebulaTexture({ seed, colors, size = 1024 }) {
@@ -57,7 +58,8 @@ function bakeNebulaTexture({ seed, colors, size = 1024 }) {
       }
     }
   }
-  return Texture.from(canvas);
+  // skipCache: baked per theme change, must not pile up in the global cache
+  return Texture.from(canvas, true);
 }
 
 function bakeGlowTexture(size, hardness = 0.12) {
@@ -72,7 +74,7 @@ function bakeGlowTexture(size, hardness = 0.12) {
   gradient.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
-  return Texture.from(canvas);
+  return Texture.from(canvas, true);
 }
 
 function bakeStreakTexture() {
@@ -86,7 +88,7 @@ function bakeStreakTexture() {
   gradient.addColorStop(1, "rgba(255,255,255,1)");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 128, 4);
-  return Texture.from(canvas);
+  return Texture.from(canvas, true);
 }
 
 export async function createEnvironmentStage({ canvas, seed = 7, reducedMotion = false } = {}) {
@@ -259,7 +261,8 @@ export async function createEnvironmentStage({ canvas, seed = 7, reducedMotion =
     if (destroyed) return;
     destroyed = true;
     window.removeEventListener("resize", resize);
-    app.destroy(false, { children: true, texture: true });
+    // v8 signature: destroy(rendererDestroyOptions, stageDestroyOptions)
+    app.destroy({ removeView: false }, { children: true, texture: true, textureSource: true });
   };
 
   applyTheme(null);
