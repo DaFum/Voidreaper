@@ -36,10 +36,12 @@ export function migrateSave(input) {
   const originalVersion = input.saveVersion;
 
   const processedInput = { ...input };
-  if ('inventory' in processedInput) processedInput.inventory = byId(processedInput.inventory);
-  if ('wreckSignals' in processedInput) processedInput.wreckSignals = byId(processedInput.wreckSignals);
-  if ('codex' in processedInput) processedInput.codex = byId(processedInput.codex);
-  if ('challenges' in processedInput) processedInput.challenges = byId(processedInput.challenges);
+  if (originalVersion < CURRENT_SAVE_VERSION) {
+    if (Array.isArray(processedInput.inventory)) processedInput.inventory = byId(processedInput.inventory);
+    if (Array.isArray(processedInput.wreckSignals)) processedInput.wreckSignals = byId(processedInput.wreckSignals);
+    if (Array.isArray(processedInput.codex)) processedInput.codex = byId(processedInput.codex);
+    if (Array.isArray(processedInput.challenges)) processedInput.challenges = byId(processedInput.challenges);
+  }
 
   let save = mergeDefaults(createDefaultSave(), processedInput);
   if (save.saveVersion > CURRENT_SAVE_VERSION) {
