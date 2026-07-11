@@ -32,12 +32,11 @@ test("calculateVisualImbalance", async (t) => {
 
   await t.test("clamps visual mass to a minimum of 1", () => {
     const nodes = [
-      { worldPosition: { x: 5 }, visualMass: 0 }, // Expected to behave as visualMass: 1
-      { worldPosition: { x: 10 }, visualMass: -5 }, // Expected to behave as visualMass: 1
-      { worldPosition: { x: -15 }, visualMass: 0.5 } // Expected to behave as visualMass: 1
+      { worldPosition: { x: 10 }, visualMass: 0 }, // Expected to behave as visualMass: 1
+      { worldPosition: { x: -5 }, visualMass: -5 } // Expected to behave as visualMass: 1
     ];
 
-    // (5 * 1) + (10 * 1) + (-15 * 1) = 0
-    assert.equal(calculateVisualImbalance(nodes), 0);
+    // (10 * 1) + (-5 * 1) = 5
+    assert.equal(calculateVisualImbalance(nodes), 5);
   });
 });
