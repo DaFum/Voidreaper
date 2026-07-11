@@ -302,6 +302,8 @@ import { escapeHtml } from "../ui/escape-html.js";
     let evolutionEffectRunner = null;
     let externalShipRenderer = null;
     let externalPlayerDamageRouter = null;
+    let externalEnvironmentRenderer = null;
+    let externalCombatFxRenderer = null;
     const EVOLUTIONS = LEGACY_EVOLUTIONS.map(definition => ({
       id: definition.id,
       ico: definition.icon,
@@ -1368,32 +1370,48 @@ import { escapeHtml } from "../ui/escape-html.js";
       },
 
       draw() {
-        // base gradient sky
-        const bg = cx.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, "#070212"); bg.addColorStop(0.6, "#04010a"); bg.addColorStop(1, "#060113");
-        cx.fillStyle = bg;
-        cx.fillRect(0, 0, W, H);
-
         const p = this.player;
         const t = this.state === "menu" ? this.menuT : this.time;
         const camX = p ? this.cam.x : Math.sin(this.menuT * 0.1) * 120;
         const camY = p ? this.cam.y : Math.cos(this.menuT * 0.08) * 90;
+        const shakeX = p ? this.cam.sx : 0, shakeY = p ? this.cam.sy : 0;
 
-        Nebula.draw(camX, camY, t);
+        // GPU environment stage (Pixi) can take over the backdrop; the game
+        // canvas then stays transparent so the layer below shines through.
+        const envHandled = externalEnvironmentRenderer?.({
+          time: t, camX, camY, shakeX, shakeY,
+          width: W, height: H,
+          state: this.state,
+          regionId: this.visualRegionId ?? "shattered-approach",
+          lowDetail: this.bloomOn === false
+        }) === true;
+
+        if (envHandled) {
+          cx.clearRect(0, 0, W, H);
+        } else {
+          // base gradient sky
+          const bg = cx.createLinearGradient(0, 0, 0, H);
+          bg.addColorStop(0, "#070212"); bg.addColorStop(0.6, "#04010a"); bg.addColorStop(1, "#060113");
+          cx.fillStyle = bg;
+          cx.fillRect(0, 0, W, H);
+          Nebula.draw(camX, camY, t);
+        }
 
         cx.save();
-        cx.translate(W / 2 - camX + (p ? this.cam.sx : 0), H / 2 - camY + (p ? this.cam.sy : 0));
+        cx.translate(W / 2 - camX + shakeX, H / 2 - camY + shakeY);
 
-        // twinkling parallax stars
-        for (const s of this.stars) {
-          const px = s.x + camX * (1 - s.z) * 0.4;
-          const py = s.y + camY * (1 - s.z) * 0.4;
-          const tw = 0.6 + Math.sin(t * s.tws + s.tw) * 0.4;
-          cx.globalAlpha = (0.2 + s.z * 0.55) * tw;
-          cx.fillStyle = s.hue;
-          cx.fillRect(px, py, s.s, s.s);
+        if (!envHandled) {
+          // twinkling parallax stars (canvas fallback)
+          for (const s of this.stars) {
+            const px = s.x + camX * (1 - s.z) * 0.4;
+            const py = s.y + camY * (1 - s.z) * 0.4;
+            const tw = 0.6 + Math.sin(t * s.tws + s.tw) * 0.4;
+            cx.globalAlpha = (0.2 + s.z * 0.55) * tw;
+            cx.fillStyle = s.hue;
+            cx.fillRect(px, py, s.s, s.s);
+          }
+          cx.globalAlpha = 1;
         }
-        cx.globalAlpha = 1;
 
         if (!p) { cx.restore(); return; } // menu ambient only
 
@@ -1409,7 +1427,8 @@ import { escapeHtml } from "../ui/escape-html.js";
           time: t,
           seed: this.seed,
           reducedMotion: REDUCED,
-          lowDetail: this.bloomOn === false // frame-cost gate drops the parallax backdrop with the bloom pass
+          lowDetail: this.bloomOn === false, // frame-cost gate drops the parallax backdrop with the bloom pass
+          floorAlpha: envHandled ? 0.82 : 1 // let the GPU nebula/starfield glow through the arena floor
         });
         const A = this.arena;
         cx.strokeStyle = "rgba(255,45,120,.75)"; cx.lineWidth = 3;
@@ -1547,37 +1566,51 @@ import { escapeHtml } from "../ui/escape-html.js";
         cx.strokeStyle = "rgba(6,255,165,.07)";
         cx.beginPath(); cx.arc(p.x, p.y, p.magnet, 0, TAU); cx.stroke();
 
-        // expanding shockwave rings
-        for (const s of this.shocks.live) {
-          const f = 1 - s.life / s.maxLife;
-          const ease = 1 - Math.pow(1 - f, 3);
-          cx.strokeStyle = s.color;
-          cx.globalAlpha = (1 - f) * .8;
-          cx.lineWidth = 2 + (1 - f) * 4;
-          cx.beginPath(); cx.arc(s.x, s.y, s.maxR * ease, 0, TAU); cx.stroke();
-          cx.globalAlpha = (1 - f) * .3;
-          cx.lineWidth = 1.5;
-          cx.beginPath(); cx.arc(s.x, s.y, s.maxR * ease * .68, 0, TAU); cx.stroke();
-        }
-        cx.globalAlpha = 1;
+        // darkness (region visibility + eclipse) is computed here so the GPU FX
+        // overlay can dim itself like the 2D path; the veil below reuses it
+        const rules = getRegionRules(this.visualRegionId ?? "shattered-approach", this.time);
+        const regionDark = Math.min(.6, (1 - (rules?.visibility ?? 1)) * 1.9);
+        const darkness = Math.max(eclipse ? .74 : 0, regionDark);
 
-        // additive particles (fast ones render as velocity-stretched sparks)
-        const sparks = this.bloomOn !== false;
-        cx.globalCompositeOperation = "lighter";
-        cx.lineCap = "round";
-        for (const pt of this.parts.live) {
-          cx.globalAlpha = clamp(pt.life / pt.maxLife, 0, 1);
-          if (sparks && pt.vx * pt.vx + pt.vy * pt.vy > 2400) {
-            cx.strokeStyle = pt.color;
-            cx.lineWidth = pt.size;
-            cx.beginPath(); cx.moveTo(pt.x - pt.vx * 0.035, pt.y - pt.vy * 0.035); cx.lineTo(pt.x, pt.y); cx.stroke();
-          } else {
-            cx.fillStyle = pt.color;
-            cx.fillRect(pt.x - pt.size / 2, pt.y - pt.size / 2, pt.size, pt.size);
+        // shockwave rings + additive particles — the GPU FX overlay takes over
+        // both when configured (drawn on the transparent canvas above #game)
+        const fxHandled = externalCombatFxRenderer?.capture({
+          parts: this.parts.live, shocks: this.shocks.live,
+          camX, camY, shakeX, shakeY, width: W, height: H, darkness
+        }) === true;
+        if (!fxHandled) {
+          // expanding shockwave rings
+          for (const s of this.shocks.live) {
+            const f = 1 - s.life / s.maxLife;
+            const ease = 1 - Math.pow(1 - f, 3);
+            cx.strokeStyle = s.color;
+            cx.globalAlpha = (1 - f) * .8;
+            cx.lineWidth = 2 + (1 - f) * 4;
+            cx.beginPath(); cx.arc(s.x, s.y, s.maxR * ease, 0, TAU); cx.stroke();
+            cx.globalAlpha = (1 - f) * .3;
+            cx.lineWidth = 1.5;
+            cx.beginPath(); cx.arc(s.x, s.y, s.maxR * ease * .68, 0, TAU); cx.stroke();
           }
+          cx.globalAlpha = 1;
+
+          // additive particles (fast ones render as velocity-stretched sparks)
+          const sparks = this.bloomOn !== false;
+          cx.globalCompositeOperation = "lighter";
+          cx.lineCap = "round";
+          for (const pt of this.parts.live) {
+            cx.globalAlpha = clamp(pt.life / pt.maxLife, 0, 1);
+            if (sparks && pt.vx * pt.vx + pt.vy * pt.vy > 2400) {
+              cx.strokeStyle = pt.color;
+              cx.lineWidth = pt.size;
+              cx.beginPath(); cx.moveTo(pt.x - pt.vx * 0.035, pt.y - pt.vy * 0.035); cx.lineTo(pt.x, pt.y); cx.stroke();
+            } else {
+              cx.fillStyle = pt.color;
+              cx.fillRect(pt.x - pt.size / 2, pt.y - pt.size / 2, pt.size, pt.size);
+            }
+          }
+          cx.globalCompositeOperation = "source-over";
+          cx.globalAlpha = 1;
         }
-        cx.globalCompositeOperation = "source-over";
-        cx.globalAlpha = 1;
 
         // floating text (damage pops scale in)
         cx.textAlign = "center";
@@ -1615,10 +1648,7 @@ import { escapeHtml } from "../ui/escape-html.js";
 
         cx.restore();
 
-        // darkness veil: region visibility + eclipse event, lit by player/projectiles/effects
-        const rules = getRegionRules(this.visualRegionId ?? "shattered-approach", this.time);
-        const regionDark = Math.min(.6, (1 - (rules?.visibility ?? 1)) * 1.9);
-        const darkness = Math.max(eclipse ? .74 : 0, regionDark);
+        // darkness veil: lit by player/projectiles/effects (darkness computed above)
         if (darkness > 0) {
           if (this.bloomOn !== false) {
             const offX = W / 2 - camX + this.cam.sx, offY = H / 2 - camY + this.cam.sy;
@@ -1696,7 +1726,10 @@ import { escapeHtml } from "../ui/escape-html.js";
         if (this.bloomOn === undefined) this.bloomOn = true;
         if (this.bloomOn) { if (this.frameCost > 28) this.bloomOn = false; }
         else if (this.frameCost < 20) this.bloomOn = true;
-        if (this.bloomOn) Bloom.apply(cx);
+        // GPU FX overlay presents particles/shockwaves and, when it returns
+        // true, has already applied the bloom pass on the GPU
+        const fxPresented = externalCombatFxRenderer?.present({ bloomOn: this.bloomOn }) === true;
+        if (this.bloomOn && !fxPresented) Bloom.apply(cx);
         if (this.state === "run") {
           // ghost bar update (visual only)
           const p = this.player;
@@ -1879,6 +1912,12 @@ import { escapeHtml } from "../ui/escape-html.js";
       },
       configureShipRenderer(renderer) {
         externalShipRenderer = renderer;
+      },
+      configureEnvironmentRenderer(renderer) {
+        externalEnvironmentRenderer = renderer;
+      },
+      configureCombatFxRenderer(renderer) {
+        externalCombatFxRenderer = renderer;
       },
       configurePlayerDamageRouter(router) {
         externalPlayerDamageRouter = router;

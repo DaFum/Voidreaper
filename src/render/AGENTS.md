@@ -25,3 +25,10 @@
 ## Ship-Assembly Note
 
 - Ship-assembly rendering changes should stay aligned with the ship-assembly feature and its CSS/UI files.
+
+## PixiJS Stages (`pixi/`)
+
+- `pixi/environment-stage.js` renders the backdrop (sky, nebula, starfield, dust) on a separate WebGL canvas *below* `#game`; the legacy runtime drives it via `configureEnvironmentRenderer` and keeps its 2D-canvas backdrop as fallback when Pixi init fails.
+- `pixi/combat-fx-stage.js` renders combat particles, shockwave rings and the bloom post-pass on a transparent overlay canvas *above* `#game` (hook: `configureCombatFxRenderer`, two-phase `capture`/`present` contract — capture is called mid-draw at the particles' z-position, present once per loop after the 2D frame is finished). The legacy 2D particle/bloom path stays as fallback.
+- Keep `pixi/environment-scene.js` and `pixi/combat-fx-scene.js` free of `pixi.js` imports: they hold the pure, seeded spec builders / math helpers and are covered by `tests/render/pixi-environment.test.js` and `tests/render/combat-fx.test.js` (every `REGION_VISUAL_PALETTES` key needs an environment theme).
+- Only the stage modules may import `pixi.js`, and only via the dynamic imports in `bootstrap.js`, so the library stays out of the main bundle, node tests, and validators.
