@@ -33,7 +33,11 @@ function drawGrid(ctx, profile, bounds, time, reducedMotion) {
   } else if (profile.grid === "segments") {
     ctx.save();ctx.rotate(reducedMotion?0:time*.025);
     ctx.beginPath();
-    for(let radius=TILE;radius<Math.max(bounds.maxX-bounds.minX,bounds.maxY-bounds.minY);radius+=TILE){
+    // The rings are centered on the world origin, so they must reach the farthest
+    // viewport corner from (0,0) — the viewport size alone leaves the grid blank
+    // once the camera moves away from the origin.
+    const maxDist = Math.hypot(Math.max(Math.abs(bounds.minX), Math.abs(bounds.maxX)), Math.max(Math.abs(bounds.minY), Math.abs(bounds.maxY)));
+    for(let radius=TILE;radius<maxDist;radius+=TILE){
       ctx.moveTo(radius, 0);
       ctx.arc(0,0,radius,0,Math.PI*1.72);
     }

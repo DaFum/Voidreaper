@@ -3,10 +3,13 @@ import { assertAssemblyInvariants, getBranchNodeIds, getChildren, wouldCreateCyc
 import { createAssemblySnapshot } from "./assembly-snapshot.js";
 
 export function createAssemblyService({ state, eventBus, idFactory, runInventory } = {}) {
-  // Legacy states predate the reverse lookup; backfill it once so selectors can trust the map.
-  if (state && !state.nodeIdByModuleInstanceId) {
-    state.nodeIdByModuleInstanceId = {};
-    for (const node of Object.values(state.nodesById ?? {})) if (node.moduleInstanceId) state.nodeIdByModuleInstanceId[node.moduleInstanceId] = node.nodeId;
+  // Legacy states predate the reverse lookup and detachedItems; backfill them once so service code can trust the shape.
+  if (state) {
+    if (!state.nodeIdByModuleInstanceId) {
+      state.nodeIdByModuleInstanceId = {};
+      for (const node of Object.values(state.nodesById ?? {})) if (node.moduleInstanceId) state.nodeIdByModuleInstanceId[node.moduleInstanceId] = node.nodeId;
+    }
+    if (!state.detachedItems) state.detachedItems = [];
   }
   const getSnapshot = () => createAssemblySnapshot(state);
   const requireNode = nodeId => { const node = state.nodesById[nodeId]; if (!node) throw new Error(`Unknown assembly node: ${nodeId}`); return node; };
