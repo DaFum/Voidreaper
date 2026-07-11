@@ -1,10 +1,11 @@
+import { escapeHtml } from "../escape-html.js";
 export function renderStatBreakdown(container, breakdowns) {
   container.innerHTML = breakdowns.map(({ definition, result }) => `
     <section class="inspector-stat">
-      <header><span>${definition.displayName}</span><b>${formatValue(result.value, definition.displayFormat)}</b></header>
+      <header><span>${escapeHtml(definition.displayName)}</span><b>${formatValue(result.value, definition.displayFormat)}</b></header>
       <div class="inspector-source"><span>BASE</span><span>${formatValue(result.baseValue, definition.displayFormat)}</span></div>
       ${result.contributions.map(contribution => `
-        <div class="inspector-source"><span>${contribution.sourceId}</span><span>${formatDelta(contribution)}</span></div>
+        <div class="inspector-source"><span>${escapeHtml(contribution.sourceId)}</span><span>${formatDelta(contribution)}</span></div>
       `).join("")}
     </section>
   `).join("");

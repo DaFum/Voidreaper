@@ -1,3 +1,4 @@
+import { escapeHtml } from "../escape-html.js";
 const ACTION_LABELS = { swap: "Modul wechseln", reroll: "Affix rerollen", lock: "Affix sperren", socket: "Sockel öffnen", stabilize: "Stabilisieren", corrupt: "Korruptieren", overclock: "Reaktor übertakten" };
 
 export function workshopDisabledReason(session, preview) {
@@ -8,7 +9,7 @@ export function workshopDisabledReason(session, preview) {
 
 export function renderWorkshopScreen(root, { service, session, target, onAction, onLeave }) {
   if (!root) return;
-  root.innerHTML = `<section class="service-screen"><header>COLD FORGE <b>${session.actionPoints - session.used} AP</b></header><h3>${target?.name ?? "Kein System gewählt"}</h3><div class="workshop-actions"></div><aside data-preview>Aktion wählen, um Kosten und endgültige Folgen zu prüfen.</aside><button class="btn small" data-leave>ZURÜCK ZUR KARTE</button></section>`;
+  root.innerHTML = `<section class="service-screen"><header>COLD FORGE <b>${session.actionPoints - session.used} AP</b></header><h3>${escapeHtml(target?.name ?? "Kein System gewählt")}</h3><div class="workshop-actions"></div><aside data-preview>Aktion wählen, um Kosten und endgültige Folgen zu prüfen.</aside><button class="btn small" data-leave>ZURÜCK ZUR KARTE</button></section>`;
   const actions = root.querySelector(".workshop-actions");
   for (const [id, label] of Object.entries(ACTION_LABELS)) {
     const button = document.createElement("button");

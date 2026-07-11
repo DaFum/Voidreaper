@@ -1,3 +1,5 @@
+import { escapeHtml } from "../ui/escape-html.js";
+
 
     import { LEGACY_EVOLUTIONS } from "../content/evolutions/legacy-evolutions.js";
     import { renderForgedEnemy } from "../render/enemies/enemy-renderer.js";
@@ -1744,7 +1746,7 @@
           btn.className = "meta";
           btn.disabled = maxed || Persist.data.shards < cost;
           const pips = Array.from({ length: m.max }, (_, i) => `<i class="${i < lv ? "on" : ""}"></i>`).join("");
-          btn.innerHTML = `<span class="mn">${m.nm}</span><div class="mp">${m.ds}</div><div class="pips">${pips}</div><div class="mc">${maxed ? "MAXED" : "◇ " + cost}</div>`;
+          btn.innerHTML = `<span class="mn">${escapeHtml(m.nm)}</span><div class="mp">${escapeHtml(m.ds)}</div><div class="pips">${pips}</div><div class="mc">${maxed ? "MAXED" : "◇ " + cost}</div>`;
           btn.addEventListener("click", () => {
             if (maxed || Persist.data.shards < cost) return;
             Persist.data.shards -= cost;
@@ -1822,11 +1824,11 @@
           const btn = document.createElement("button");
           if (o.evo) {
             btn.className = "card evo";
-            btn.innerHTML = `<span class="ico">${o.evo.ico}</span><span class="nm">${o.evo.nm}</span> <span class="lv" style="color:var(--gold)">EVOLUTION</span><div class="ds">${o.evo.ds}</div>`;
+            btn.innerHTML = `<span class="ico">${escapeHtml(o.evo.ico)}</span><span class="nm">${escapeHtml(o.evo.nm)}</span> <span class="lv" style="color:var(--gold)">EVOLUTION</span><div class="ds">${escapeHtml(o.evo.ds)}</div>`;
           } else {
             const lv = (Game.upgradeCounts[o.up.id] || 0) + 1;
             btn.className = "card";
-            btn.innerHTML = `<span class="ico">${o.up.ico}</span><span class="nm">${o.up.nm}</span> <span class="lv">LV ${lv}/${o.up.max}</span><div class="ds">${o.up.ds}</div>`;
+            btn.innerHTML = `<span class="ico">${escapeHtml(o.up.ico)}</span><span class="nm">${escapeHtml(o.up.nm)}</span> <span class="lv">LV ${lv}/${o.up.max}</span><div class="ds">${escapeHtml(o.up.ds)}</div>`;
           }
           btn.addEventListener("click", () => {
             if (Game.banishMode && !o.evo) { Game.banishMode = false; Game.banish(o); return; }
@@ -1853,7 +1855,7 @@
           ["Orbitals", p.orbitals], ["Regen", p.regen.toFixed(1) + "/s"]);
         const evos = ["evoPrism", "evoSing", "evoHalo", "evoReaper", "evoTempest"].filter(k => p[k]).length;
         rows.push(["Evolutions", evos]);
-        this.el("pausestats").innerHTML = rows.map(r => `<span>${r[0]}</span><b>${r[1]}</b>`).join("");
+        this.el("pausestats").innerHTML = rows.map(r => `<span>${escapeHtml(r[0])}</span><b>${escapeHtml(r[1])}</b>`).join("");
       },
       gameOver(g, shardsGained, isBest) {
         this.el("finalscore").textContent = "SCORE " + g.score;

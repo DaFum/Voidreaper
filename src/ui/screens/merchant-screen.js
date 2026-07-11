@@ -1,3 +1,4 @@
+import { escapeHtml } from "../escape-html.js";
 export function canAffordOffer(resources, offer) {
   if (offer.corrupted) return true;
   const balance = offer.currency === "flux" ? resources.flux : resources.scrap;
@@ -11,10 +12,10 @@ export function renderMerchantScreen(root, { offers, resources, onBuy, onReroll,
   for (const offer of offers) {
     const button = document.createElement("button");
     button.className = "item-card";
-    button.innerHTML = `<span class="item-card__slot">${offer.corrupted ? "CORRUPTED" : offer.slot ?? "SERVICE"}</span><strong>${offer.name}</strong><small>${offer.description ?? "Einmaliger Sektordienst"}</small><b>${offer.price} ${offer.currency === "flux" ? "F" : "S"}</b>`;
+    button.innerHTML = `<span class="item-card__slot">${offer.corrupted ? "CORRUPTED" : offer.slot ?? "SERVICE"}</span><strong>${escapeHtml(offer.name)}</strong><small>${escapeHtml(offer.description ?? "Einmaliger Sektordienst")}</small><b>${offer.price} ${offer.currency === "flux" ? "F" : "S"}</b>`;
     const affordable = canAffordOffer(resources, offer);
     button.disabled = !affordable;
-    if (!affordable) button.setAttribute("aria-label", `${offer.name} – nicht genügend ${offer.currency === "flux" ? "Flux" : "Scrap"}`);
+    if (!affordable) button.setAttribute("aria-label", `${escapeHtml(offer.name)} – nicht genügend ${offer.currency === "flux" ? "Flux" : "Scrap"}`);
     button.addEventListener("click", () => onBuy(offer));
     catalog.append(button);
   }
