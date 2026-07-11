@@ -57,6 +57,22 @@
       transition: filter .15s
     }
 
+    /* GPU environment stage (PixiJS) sits below #game; the game canvas turns
+       transparent so the WebGL backdrop shows through. */
+    #environment {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: var(--void);
+      pointer-events: none
+    }
+
+    body.gpu-environment #game {
+      background: transparent
+    }
+
     body.hitfx #game {
       filter: saturate(1.6) contrast(1.08)
     }

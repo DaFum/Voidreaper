@@ -161,6 +161,32 @@ export async function bootstrap() {
   legacyRuntime.configureEvolutionEffects((effectId, player) => effects.execute({ id: effectId }, { player, run: controller.run }));
   const getAssemblyLod = () => metaSave.assemblyVisualPreferences?.lod === "auto" ? "ultra" : metaSave.assemblyVisualPreferences?.lod;
   legacyRuntime.configureShipRenderer((context,player,legacyGame)=>{const geometry=services.assemblyGeometry?.getSnapshot();if(!geometry?.coreGeometry)return false;const rendered=services.assemblyRenderer.renderPlayerShip(context,{geometrySnapshot:geometry,position:player,rotation:player.angle+Math.PI/2,time:legacyGame.time,buildAnimations:services.buildAnimations?.snapshot?.()??[],movement:{x:player.vx,y:player.vy,dodging:player.iframes>0},lodOptions:{userSetting:getAssemblyLod()}});if(rendered&&player.shield>0){context.strokeStyle="#4f6df5";context.shadowColor="#4f6df5";context.shadowBlur=14;context.lineWidth=1.5;context.beginPath();context.arc(player.x,player.y,player.r+8+Math.sin(legacyGame.time*4)*2,0,Math.PI*2);context.stroke();context.shadowBlur=0;}return rendered;});
+  // GPU environment stage (PixiJS) below the #game canvas. Loaded lazily and
+  // fire-and-forget: until it is ready (or if WebGL is unavailable) the legacy
+  // runtime keeps drawing its canvas backdrop.
+  void (async () => {
+    let stageCanvas = null;
+    try {
+      const gameCanvas = document.getElementById("game");
+      if (!gameCanvas?.parentNode) return;
+      const { createEnvironmentStage } = await import("../render/pixi/environment-stage.js");
+      stageCanvas = document.createElement("canvas");
+      stageCanvas.id = "environment";
+      stageCanvas.setAttribute("aria-hidden", "true");
+      gameCanvas.parentNode.insertBefore(stageCanvas, gameCanvas);
+      const environmentStage = await createEnvironmentStage({
+        canvas: stageCanvas,
+        reducedMotion: globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
+      });
+      document.body.classList.add("gpu-environment");
+      legacyRuntime.configureEnvironmentRenderer(frame => environmentStage.render(frame));
+      console.info("[render] PixiJS environment stage active");
+    } catch (error) {
+      stageCanvas?.remove();
+      document.body.classList.remove("gpu-environment");
+      console.warn("[render] PixiJS environment stage unavailable — canvas backdrop remains active", error);
+    }
+  })();
   legacyRuntime.configurePlayerDamageRouter((_player,damage)=>{const geometry=services.assemblyGeometry?.getSnapshot(),target=geometry?.nodes.filter(node=>!node.isRoot).sort((a,b)=>Math.hypot(b.worldPosition.x,b.worldPosition.y)-Math.hypot(a.worldPosition.x,a.worldPosition.y))[0];return target&&services.moduleDamage?services.moduleDamage.applyDamage(target.nodeId,damage,"legacy-contact").remainingDamage:damage;});
   const hangarRoot = document.querySelector("#hangar");
   const startMenu = attachStartMenuToggle(document.querySelector("#start"), { openButton: document.querySelector("#menuopenbtn"), closeButton: document.querySelector("#menuclosebtn") });

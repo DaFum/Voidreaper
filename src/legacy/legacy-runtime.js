@@ -302,6 +302,7 @@ import { escapeHtml } from "../ui/escape-html.js";
     let evolutionEffectRunner = null;
     let externalShipRenderer = null;
     let externalPlayerDamageRouter = null;
+    let externalEnvironmentRenderer = null;
     const EVOLUTIONS = LEGACY_EVOLUTIONS.map(definition => ({
       id: definition.id,
       ico: definition.icon,
@@ -1368,32 +1369,48 @@ import { escapeHtml } from "../ui/escape-html.js";
       },
 
       draw() {
-        // base gradient sky
-        const bg = cx.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, "#070212"); bg.addColorStop(0.6, "#04010a"); bg.addColorStop(1, "#060113");
-        cx.fillStyle = bg;
-        cx.fillRect(0, 0, W, H);
-
         const p = this.player;
         const t = this.state === "menu" ? this.menuT : this.time;
         const camX = p ? this.cam.x : Math.sin(this.menuT * 0.1) * 120;
         const camY = p ? this.cam.y : Math.cos(this.menuT * 0.08) * 90;
+        const shakeX = p ? this.cam.sx : 0, shakeY = p ? this.cam.sy : 0;
 
-        Nebula.draw(camX, camY, t);
+        // GPU environment stage (Pixi) can take over the backdrop; the game
+        // canvas then stays transparent so the layer below shines through.
+        const envHandled = externalEnvironmentRenderer?.({
+          time: t, camX, camY, shakeX, shakeY,
+          width: W, height: H,
+          state: this.state,
+          regionId: this.visualRegionId ?? "shattered-approach",
+          lowDetail: this.bloomOn === false
+        }) === true;
+
+        if (envHandled) {
+          cx.clearRect(0, 0, W, H);
+        } else {
+          // base gradient sky
+          const bg = cx.createLinearGradient(0, 0, 0, H);
+          bg.addColorStop(0, "#070212"); bg.addColorStop(0.6, "#04010a"); bg.addColorStop(1, "#060113");
+          cx.fillStyle = bg;
+          cx.fillRect(0, 0, W, H);
+          Nebula.draw(camX, camY, t);
+        }
 
         cx.save();
-        cx.translate(W / 2 - camX + (p ? this.cam.sx : 0), H / 2 - camY + (p ? this.cam.sy : 0));
+        cx.translate(W / 2 - camX + shakeX, H / 2 - camY + shakeY);
 
-        // twinkling parallax stars
-        for (const s of this.stars) {
-          const px = s.x + camX * (1 - s.z) * 0.4;
-          const py = s.y + camY * (1 - s.z) * 0.4;
-          const tw = 0.6 + Math.sin(t * s.tws + s.tw) * 0.4;
-          cx.globalAlpha = (0.2 + s.z * 0.55) * tw;
-          cx.fillStyle = s.hue;
-          cx.fillRect(px, py, s.s, s.s);
+        if (!envHandled) {
+          // twinkling parallax stars (canvas fallback)
+          for (const s of this.stars) {
+            const px = s.x + camX * (1 - s.z) * 0.4;
+            const py = s.y + camY * (1 - s.z) * 0.4;
+            const tw = 0.6 + Math.sin(t * s.tws + s.tw) * 0.4;
+            cx.globalAlpha = (0.2 + s.z * 0.55) * tw;
+            cx.fillStyle = s.hue;
+            cx.fillRect(px, py, s.s, s.s);
+          }
+          cx.globalAlpha = 1;
         }
-        cx.globalAlpha = 1;
 
         if (!p) { cx.restore(); return; } // menu ambient only
 
@@ -1409,7 +1426,8 @@ import { escapeHtml } from "../ui/escape-html.js";
           time: t,
           seed: this.seed,
           reducedMotion: REDUCED,
-          lowDetail: this.bloomOn === false // frame-cost gate drops the parallax backdrop with the bloom pass
+          lowDetail: this.bloomOn === false, // frame-cost gate drops the parallax backdrop with the bloom pass
+          floorAlpha: envHandled ? 0.82 : 1 // let the GPU nebula/starfield glow through the arena floor
         });
         const A = this.arena;
         cx.strokeStyle = "rgba(255,45,120,.75)"; cx.lineWidth = 3;
@@ -1879,6 +1897,9 @@ import { escapeHtml } from "../ui/escape-html.js";
       },
       configureShipRenderer(renderer) {
         externalShipRenderer = renderer;
+      },
+      configureEnvironmentRenderer(renderer) {
+        externalEnvironmentRenderer = renderer;
       },
       configurePlayerDamageRouter(router) {
         externalPlayerDamageRouter = router;

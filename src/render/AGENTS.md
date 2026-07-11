@@ -25,3 +25,9 @@
 ## Ship-Assembly Note
 
 - Ship-assembly rendering changes should stay aligned with the ship-assembly feature and its CSS/UI files.
+
+## PixiJS Environment Stage (`pixi/`)
+
+- `pixi/environment-stage.js` renders the backdrop (sky, nebula, starfield, dust) on a separate WebGL canvas *below* `#game`; the legacy runtime drives it via `configureEnvironmentRenderer` and keeps its 2D-canvas backdrop as fallback when Pixi init fails.
+- Keep `pixi/environment-scene.js` free of `pixi.js` imports: it holds the pure, seeded spec builders and region themes and is covered by `tests/render/pixi-environment.test.js` (every `REGION_VISUAL_PALETTES` key needs a theme there).
+- Only the stage module may import `pixi.js`, and only via the dynamic import in `bootstrap.js`, so the library stays out of the main bundle, node tests, and validators.
