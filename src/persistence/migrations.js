@@ -15,7 +15,7 @@ function mergeDefaults(defaults, value) {
   return merged;
 }
 
-const byId = value => Array.isArray(value) ? Object.fromEntries(value.map((entry, index) => [entry.id ?? entry.instanceId ?? String(index), entry])) : (value ?? {});
+const byId = value => Array.isArray(value) ? Object.fromEntries(value.map((entry, index) => [entry.instanceId ?? entry.id ?? String(index), entry])) : (value ?? {});
 
 export function migrateLegacySave(legacy = {}) {
   const save = createDefaultSave();
