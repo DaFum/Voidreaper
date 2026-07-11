@@ -18,7 +18,43 @@ export function createAssemblyService({ state, eventBus, idFactory, runInventory
   const transaction=operation=>{const previous=structuredClone(state);try{return operation();}catch(error){for(const key of Object.keys(state))delete state[key];Object.assign(state,previous);throw error;}};
   const rebaseBranchDepth=(nodeId,branchDepth)=>{const node=requireNode(nodeId);for(const portId of node.childPortIds??[]){const port=state.portsById[portId];if(!port)continue;state.portsById[portId]={...port,branchDepth};if(port.occupiedByNodeId)rebaseBranchDepth(port.occupiedByNodeId,branchDepth+1);}};
 
-  function mountModule({ moduleInstanceId, definitionId, parentPort, assemblyProfile, transform }) { if (moduleInstanceId && state.nodeIdByModuleInstanceId[moduleInstanceId]) throw new Error(`Module already mounted: ${moduleInstanceId}`); if (!parentPort || parentPort.occupiedByNodeId) throw new Error("Mount port is unavailable"); const nodeId = idFactory.create("assembly-node"); const node = { nodeId, parentNodeId: parentPort.parentNodeId, parentPortId: parentPort.portId, moduleInstanceId, definitionId, visualProfileId: assemblyProfile.visualProfileId, variantSeed: assemblyProfile.variantSeed, sizeClass: assemblyProfile.sizeClass, mountType: parentPort.mountType, mass: assemblyProfile.mass, localPosition: transform.position, localRotation: transform.rotation, armorIntegrity: assemblyProfile.damage.armor, maxArmorIntegrity: assemblyProfile.damage.armor, coreIntegrity: assemblyProfile.damage.core, maxCoreIntegrity: assemblyProfile.damage.core, damageState: "intact", childPortIds: [] }; state.nodesById[nodeId] = node; if (moduleInstanceId) state.nodeIdByModuleInstanceId[moduleInstanceId] = nodeId; state.portsById[parentPort.portId] = { ...parentPort, occupiedByNodeId: nodeId }; const connectionId = idFactory.create("assembly-connection"); state.connectionsById[connectionId] = { connectionId, sourceNodeId: parentPort.parentNodeId, targetNodeId: nodeId, sourcePortId: parentPort.portId, structuralStrength: parentPort.loadCapacity, energyThroughput: parentPort.energyClass, visualConnectorType: parentPort.mountType }; for (const template of assemblyProfile.childPorts ?? []) { const portId = idFactory.create("assembly-port"); state.portsById[portId] = { ...template, portId, parentNodeId: nodeId, branchDepth: (parentPort.branchDepth ?? 0) + 1, occupiedByNodeId: null }; node.childPortIds.push(portId); } publish(ASSEMBLY_EVENTS.MODULE_MOUNTED, { nodeId, moduleInstanceId }); return nodeId; }
+  function mountModule({ moduleInstanceId, definitionId, parentPort, assemblyProfile, transform }) {
+    if (moduleInstanceId && state.nodeIdByModuleInstanceId[moduleInstanceId]) throw new Error(`Module already mounted: ${moduleInstanceId}`);
+    if (!parentPort || parentPort.occupiedByNodeId) throw new Error("Mount port is unavailable");
+    const nodeId = idFactory.create("assembly-node");
+    const node = {
+      nodeId,
+      parentNodeId: parentPort.parentNodeId,
+      parentPortId: parentPort.portId,
+      moduleInstanceId,
+      definitionId,
+      visualProfileId: assemblyProfile.visualProfileId,
+      variantSeed: assemblyProfile.variantSeed,
+      sizeClass: assemblyProfile.sizeClass,
+      mountType: parentPort.mountType,
+      mass: assemblyProfile.mass,
+      localPosition: transform.position,
+      localRotation: transform.rotation,
+      armorIntegrity: assemblyProfile.damage.armor,
+      maxArmorIntegrity: assemblyProfile.damage.armor,
+      coreIntegrity: assemblyProfile.damage.core,
+      maxCoreIntegrity: assemblyProfile.damage.core,
+      damageState: "intact",
+      childPortIds: []
+    };
+    state.nodesById[nodeId] = node;
+    if (moduleInstanceId) state.nodeIdByModuleInstanceId[moduleInstanceId] = nodeId;
+    state.portsById[parentPort.portId] = { ...parentPort, occupiedByNodeId: nodeId };
+    const connectionId = idFactory.create("assembly-connection");
+    state.connectionsById[connectionId] = { connectionId, sourceNodeId: parentPort.parentNodeId, targetNodeId: nodeId, sourcePortId: parentPort.portId, structuralStrength: parentPort.loadCapacity, energyThroughput: parentPort.energyClass, visualConnectorType: parentPort.mountType };
+    for (const template of assemblyProfile.childPorts ?? []) {
+      const portId = idFactory.create("assembly-port");
+      state.portsById[portId] = { ...template, portId, parentNodeId: nodeId, branchDepth: (parentPort.branchDepth ?? 0) + 1, occupiedByNodeId: null };
+      node.childPortIds.push(portId);
+    }
+    publish(ASSEMBLY_EVENTS.MODULE_MOUNTED, { nodeId, moduleInstanceId });
+    return nodeId;
+  }
   function moveNode({ nodeId, targetPort, transform }) { const node = requireNode(nodeId); if (nodeId === state.rootNodeId) throw new Error("Node cannot be moved"); if (!targetPort || targetPort.occupiedByNodeId) throw new Error("Target port is unavailable"); if (wouldCreateCycle(state, nodeId, targetPort.parentNodeId)) throw new Error("Move would create a cycle"); const oldPort = state.portsById[node.parentPortId]; if (oldPort) state.portsById[oldPort.portId] = { ...oldPort, occupiedByNodeId: null }; state.portsById[targetPort.portId] = { ...targetPort, occupiedByNodeId: nodeId }; Object.assign(node, { parentNodeId: targetPort.parentNodeId, parentPortId: targetPort.portId, localPosition: transform.position, localRotation: transform.rotation }); rebaseBranchDepth(nodeId,(targetPort.branchDepth??0)+1);const connection = Object.values(state.connectionsById).find(item => item.targetNodeId === nodeId); if (connection) Object.assign(connection, { sourceNodeId: targetPort.parentNodeId, sourcePortId: targetPort.portId }); publish(ASSEMBLY_EVENTS.MODULE_MOVED, { nodeId, targetPortId: targetPort.portId }); return nodeId; }
   function addSecondaryConnection({ sourceNodeId, targetNodeId, profile }) { requireNode(sourceNodeId); requireNode(targetNodeId); const connectionId = idFactory.create("assembly-bridge"); state.secondaryConnectionsById[connectionId] = { connectionId, sourceNodeId, targetNodeId, structuralStrength: profile.structuralStrength, energyThroughput: profile.energyThroughput, visualConnectorType: profile.visualConnectorType }; publish(ASSEMBLY_EVENTS.CHANGED, { connectionId }); return connectionId; }
   function rotateNode({nodeId,localRotation}){const node=requireNode(nodeId);if(nodeId===state.rootNodeId)throw new Error("Root rotation is controlled by the ship frame");state.nodesById[nodeId]={...node,localRotation};publish(ASSEMBLY_EVENTS.MODULE_MOVED,{nodeId,localRotation});return nodeId;}
