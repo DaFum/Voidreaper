@@ -24,7 +24,8 @@ export function createWorkshopService({ affixRoller, eventBus } = {}) {
         const affixKey = affix => affix?.affixId ?? affix?.id;
         const locked = (target.affixes ?? []).find(affix => affixKey(affix) === target.lockedAffixId) ?? null;
         const rolled = affixRoller?.roll?.({ definition: payload.definition ?? target, rarity: target.rarity ?? "rare", itemPower: target.itemPower ?? 100, sector: payload.sector ?? 0, corruption: target.corruptionLevel ?? target.corruption ?? 0, rng: payload.rng }) ?? target.affixes ?? [];
-        target.affixes = locked ? [locked, ...rolled.filter(affix => affixKey(affix) !== target.lockedAffixId)] : rolled;
+        // Cap at the rolled count so a preserved lock can't grow the affix total on every reroll.
+        target.affixes = locked ? [locked, ...rolled.filter(affix => affixKey(affix) !== target.lockedAffixId)].slice(0, Math.max(rolled.length, 1)) : rolled;
       }
       if (action === "lock") target.lockedAffixId = payload.affixId;
       if (action === "socket") target.sockets = [...(target.sockets ?? []), { chipId: null }];

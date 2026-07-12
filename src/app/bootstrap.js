@@ -464,6 +464,14 @@ export async function bootstrap() {
     }
     originalStartWave(wave);
   };
+  // Reset the trigger engine's chain budget once per simulation step (the legacy
+  // loop can run up to 5 catch-up steps per frame), otherwise the cumulative
+  // counter permanently mutes triggers after 100 effects.
+  const originalStep = game.step.bind(game);
+  game.step = dt => {
+    services.triggers?.beginStep?.();
+    originalStep(dt);
+  };
   const originalDraw = game.draw.bind(game);
   game.draw = () => {
     if (game.state === "run") controller.syncLegacy(game, game.STEP);

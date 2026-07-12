@@ -25,8 +25,9 @@ export function createDroneController({ budget = 4 } = {}) {
       const index = drones.findIndex(drone => drone.id === id);
       if (index < 0) return null;
       const [drone] = drones.splice(index, 1);
-      const summonIndex = context.run.summons.indexOf(drone);
-      if (summonIndex >= 0) context.run.summons.splice(summonIndex, 1);
+      const summons = context?.run?.summons;
+      const summonIndex = summons ? summons.indexOf(drone) : -1;
+      if (summonIndex >= 0) summons.splice(summonIndex, 1);
       return drone;
     },
     setBudget(value) { budget = Math.max(0, value); },

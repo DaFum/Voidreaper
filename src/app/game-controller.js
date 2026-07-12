@@ -78,9 +78,6 @@ export function createGameController(services) {
     },
     syncLegacy(game, dt) {
       if (!run || !game.player) return;
-      // Reset the trigger engine's per-step chain budget each simulation step,
-      // otherwise the cumulative counter permanently mutes triggers after 100 effects.
-      services.triggers?.beginStep?.();
       const player = game.player;
       Object.assign(run.player, { x: player.x, y: player.y, hull: player.hp, maxHull: player.maxHp });
       run.time = game.time;

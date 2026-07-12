@@ -26,13 +26,16 @@ import { createIdService } from "../../src/core/ids.js";
 
 // M5 + M6 + M12 — workshop
 
-test("M5: reroll preserves the locked affix", () => {
+test("M5: reroll preserves the locked affix without growing the affix count", () => {
     const workshop = createWorkshopService({ affixRoller: { roll: () => [{ affixId: "new-a" }, { affixId: "new-b" }] } });
     const session = workshop.open(0);
     const target = { rarity: "rare", itemPower: 100, affixes: [{ affixId: "keep-me" }, { affixId: "reroll-me" }] };
     assert.equal(workshop.apply(session, "lock", target, { affixId: "keep-me" }), true);
     assert.equal(workshop.apply(session, "reroll", target, {}), true);
-    assert.deepEqual(target.affixes.map(affix => affix.affixId), ["keep-me", "new-a", "new-b"]);
+    assert.deepEqual(target.affixes.map(affix => affix.affixId), ["keep-me", "new-a"]);
+    // Repeated rerolls stay at the rolled count instead of accumulating.
+    assert.equal(workshop.apply(session, "reroll", target, {}), true);
+    assert.deepEqual(target.affixes.map(affix => affix.affixId), ["keep-me", "new-a"]);
 });
 
 test("M6: workshop-opened sockets accept chips", () => {
