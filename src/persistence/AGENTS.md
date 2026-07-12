@@ -21,6 +21,9 @@
 - `migrateSave` supports legacy and modern inputs; changes must preserve both paths and keep migration history/backups meaningful.
 - Newer-than-supported saves currently warn instead of hard-failing. Avoid assumptions that every loaded save was produced by this version.
 - Save defaults, migration output, and UI expectations must stay aligned; missing optional fields often fail later in tabs/screens rather than during load.
+- `save-store.js` writes the main key directly — a single-key `setItem` is atomic (it fully replaces the value or throws leaving the old one intact). Do not reintroduce a write-ahead/pending scheme; it doubles peak storage footprint for no safety.
+- A stranded `-pending` key from older builds is recovered on load but only removed after the main-key write succeeds — under quota/private-mode failures it can be the sole durable copy of the save.
+- `save()`/`update()` surface write failures through `onWarning` (wired to a toast in bootstrap) and then rethrow; keep that contract so quota errors are never silent.
 
 ## Validation
 

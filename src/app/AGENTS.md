@@ -15,3 +15,6 @@
 ## Non-Obvious Pitfalls
 - A "small" wiring change can ripple through many systems; verify at least one full click-path per affected screen after editing.
 - [click-path-flows.js](click-path-flows.js) and [state-machine.js](state-machine.js) encode screen-flow assumptions that UI screens depend on implicitly.
+- Bootstrap wraps several legacy game methods (`reset`, `startWave`, `step`, `gameOver`, `draw`); bind the original first and keep the order-sensitive behavior — `startWave` adopts combat-run state via `adoptCombatRunState` before writing the campaign checkpoint, and `gameOver` clears the checkpoint on campaign death.
+- Combat nodes run in a separate run from the map's `previewRun`; checkpoints serialize `previewRun`, so combat-run state must be adopted back first. The two runs also keep separate wallets (`resources`) — do not naively copy one over the other.
+- The trigger engine's chain budget resets in the `game.step` wrapper; the legacy loop runs up to 5 catch-up steps per frame, so resetting per draw frame is not equivalent.
