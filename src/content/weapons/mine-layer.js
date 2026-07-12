@@ -8,4 +8,4 @@ const adapter = {
   fire: () => false, onEquip: () => {}, onUnequip: () => {}, getTelemetry: () => ({ activeMines: mines.mines.length })
 };
 
-export default createWeaponDefinition({ id: "mine-layer", name: "MINE LAYER", energyCost: 32, heat: 3, tags: [{ id: "Weapon", value: 1 }, { id: "Mine", value: 3 }, { id: "Explosive", value: 2 }, { id: "Control", value: 2 }, { id: "Cooldown", value: 1 }], effects: ["spawn-zone"], faultProfileId: "weapon-projectile", unlockSource: "challenge" }, adapter);
+export default createWeaponDefinition({ id: "mine-layer", name: "MINE LAYER", energyCost: 32, heat: 3, tags: [{ id: "Weapon", value: 1 }, { id: "Mine", value: 3 }, { id: "Explosive", value: 2 }, { id: "Control", value: 2 }, { id: "Cooldown", value: 1 }], effects: [{ id: "spawn-zone" }], faultProfileId: "weapon-projectile", unlockSource: "challenge" }, adapter);

@@ -51,7 +51,7 @@ export function createGameController(services) {
     get run() { return run; },
     openPendingMount(pendingMount, context) { return services.quickMount?.open(pendingMount, context) ?? { opened:false, reason:"quick-mount-unavailable" }; },
     attachLegacy(game, options = {}) {
-      const resumed=services.resumeRun??null;delete services.resumeRun;run = resumed??createRunState({ seed: game.seed, mode: game.mode === "daily" ? "daily" : "campaign" });
+      const resumed=services.resumeRun??null;delete services.resumeRun;run = resumed??createRunState({ seed: game.seed, mode: game.mode === "daily" ? "daily" : "campaign", campaignPathId: game.selectedCampaignPath ?? "architect" });
       if (!resumed&&run.mode === "daily" && services.daily) services.daily.apply(run, services.daily.config());
       run.services = services;
       run.heat ??= createHeatState();

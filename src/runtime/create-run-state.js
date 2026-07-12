@@ -3,7 +3,7 @@ import { createRunRng } from "../core/rng.js";
 import { createPlayerState } from "./create-player-state.js";
 import { createCampaignState } from "../features/sectors/campaign-state.js";
 
-export function createRunState({ seed = Date.now(), mode = "campaign", difficulty = "standard", player = {} } = {}) {
+export function createRunState({ seed = Date.now(), mode = "campaign", difficulty = "standard", player = {}, campaignPathId = "architect" } = {}) {
   const runId = createRuntimeId("run");
   return {
     id: runId,
@@ -15,7 +15,7 @@ export function createRunState({ seed = Date.now(), mode = "campaign", difficult
     phase: "sector-map",
     assembly: null,
     pendingAssemblyItems: [],
-    campaign: createCampaignState(),
+    campaign: { ...createCampaignState(), pathId: campaignPathId },
     time: 0,
     score: 0,
     kills: 0,

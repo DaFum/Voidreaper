@@ -1,7 +1,8 @@
 import { createRunRng, hashString } from "../../core/rng.js";
 import { NODE_TYPES, normalizeNodeType } from "../../content/sectors/node-types.js";
+import { CAMPAIGN_PATHS } from "../../content/campaigns/campaign-paths.js";
 
-const REGIONS = ["shattered-approach", "furnace-expanse", "grave-circuit", "null-cathedral", "architects-crown"];
+const DEFAULT_REGIONS = ["shattered-approach", "furnace-expanse", "grave-circuit", "null-cathedral", "architects-crown"];
 const TYPE_ROTATION = ["combat", "elite", "salvage", "merchant", "workshop", "anomaly", "recovery"];
 
 function node(rng, regionIndex, layer, index, type, contentVersion) {
@@ -25,8 +26,10 @@ function node(rng, regionIndex, layer, index, type, contentVersion) {
   };
 }
 
-export function generateSectorMap({ seed, contentVersion = "3.0.0" } = {}) {
+export function generateSectorMap({ seed, contentVersion = "3.0.0", campaignPathId = "architect" } = {}) {
   const mapSeed = hashString(`${seed ?? 0}:${contentVersion}`);
+  const pathDef = CAMPAIGN_PATHS.find(p => p.id === campaignPathId);
+  const REGIONS = pathDef ? pathDef.regions : DEFAULT_REGIONS;
   const rng = createRunRng(mapSeed);
   const regions = REGIONS.map((regionId, regionIndex) => {
     const layers = [];
