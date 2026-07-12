@@ -35,7 +35,7 @@ export function createInputController({ eventBus, bindings = {}, stickElement, s
       const keyboardY = Number(held.has("move-down")) - Number(held.has("move-up"));
       const x = keyboardX || stick.state.x;
       const y = keyboardY || stick.state.y;
-      const magnitude = Math.hypot(x, y);
+      const magnitude = Math.sqrt((x)*(x) + (y)*(y));
       return magnitude > 1 ? { x: x / magnitude, y: y / magnitude } : { x, y };
     },
     trigger(action, source = "touch") {

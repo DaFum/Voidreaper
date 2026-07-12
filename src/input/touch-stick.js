@@ -6,7 +6,7 @@ export function createTouchStick(element, knob, radius = 56) {
   function update(clientX, clientY) {
     const dx = clientX - state.originX;
     const dy = clientY - state.originY;
-    const length = Math.hypot(dx, dy) || 1;
+    const length = Math.sqrt((dx)*(dx) + (dy)*(dy)) || 1;
     const scale = Math.min(1, radius / length);
     const px = dx * scale;
     const py = dy * scale;

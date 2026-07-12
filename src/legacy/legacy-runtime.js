@@ -245,7 +245,7 @@ import { escapeHtml } from "../ui/escape-html.js";
         if (!this.stickActive || e.pointerId !== this.stickId) return;
         e.preventDefault();
         let dx = e.clientX - this.sx, dy = e.clientY - this.sy;
-        const len = Math.hypot(dx, dy), max = 52;
+        const len = Math.sqrt((dx)*(dx) + (dy)*(dy)), max = 52;
         if (len > max) { dx = dx / len * max; dy = dy / len * max; }
         this.dx = dx / max; this.dy = dy / max;
         this.knob.style.transform = `translate(${dx}px,${dy}px)`;
@@ -262,7 +262,7 @@ import { escapeHtml } from "../ui/escape-html.js";
         if (this.keys.has("KeyW") || this.keys.has("ArrowUp")) y -= 1;
         if (this.keys.has("KeyS") || this.keys.has("ArrowDown")) y += 1;
         x += this.dx; y += this.dy;
-        const l = Math.hypot(x, y);
+        const l = Math.sqrt((x)*(x) + (y)*(y));
         if (l > 1) { x /= l; y /= l; }
         return [x, y];
       }
@@ -1115,7 +1115,7 @@ import { escapeHtml } from "../ui/escape-html.js";
           e.wobble += dt * 4;
           if (e.birth > 0) continue; // still materialising
           const dxp = p.x - e.x, dyp = p.y - e.y;
-          const dl = Math.hypot(dxp, dyp) || 1;
+          const dl = Math.sqrt((dxp)*(dxp) + (dyp)*(dyp)) || 1;
           let mvx = dxp / dl, mvy = dyp / dl;
 
           if (e.type === "orbiter" && dl < 240) {
