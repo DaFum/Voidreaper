@@ -1,12 +1,13 @@
 import { createWeaponDefinition } from "./weapon-schema.js";
 import { createDroneController } from "../../features/combat/drone-controller.js";
 
-const controller = createDroneController();
+// The controller holds per-run state (drone list, budget); it must be created per
+// equip via createState, never at module scope, or it leaks across runs.
 const adapter = {
-  createState: () => ({ spawnCooldown: 0 }),
-  update(context, state, dt) { state.spawnCooldown -= dt; if (state.spawnCooldown <= 0) { controller.spawn(context, "drone-core"); state.spawnCooldown = 4; } controller.update(context, dt); },
-  fire(context, _state, target) { if (!target) return false; for (const drone of controller.drones) context.emitEffect({ id: "spawn-projectile", payload: { x: drone.x, y: drone.y, damage: 7, speed: 500 } }, { target }); return controller.drones.length > 0; },
-  onEquip: () => {}, onUnequip: () => {}, getTelemetry: () => ({ activeDrones: controller.drones.length })
+  createState: () => ({ spawnCooldown: 0, controller: createDroneController() }),
+  update(context, state, dt) { state.spawnCooldown -= dt; if (state.spawnCooldown <= 0) { state.controller.spawn(context, "drone-core"); state.spawnCooldown = 4; } state.controller.update(context, dt); },
+  fire(context, state, target) { if (!target) return false; for (const drone of state.controller.drones) context.emitEffect({ id: "spawn-projectile", payload: { x: drone.x, y: drone.y, damage: 7, speed: 500 } }, { target }); return state.controller.drones.length > 0; },
+  onEquip: () => {}, onUnequip: () => {}, getTelemetry: (_context, state) => ({ activeDrones: state.controller.drones.length })
 };
 
 export default createWeaponDefinition({
