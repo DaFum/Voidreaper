@@ -31,7 +31,6 @@ function createStorageAdapter(storage) {
 export function createSaveStore(storage = globalThis.storage ?? globalThis.localStorage, { onWarning } = {}) {
   const adapter = createStorageAdapter(storage);
   let queue = Promise.resolve();
-  let pendingRecovered = false;
 
   function enqueue(operation) {
     const current = queue.catch(() => undefined).then(operation);
@@ -63,31 +62,42 @@ export function createSaveStore(storage = globalThis.storage ?? globalThis.local
 
   // Earlier builds wrote a `${SAVE_KEY}-pending` copy before the main key and
   // could strand it (as a stale duplicate, or as the only surviving write when
-  // the main set hit the quota). Recover it once, then remove it.
-  async function recoverPending() {
-    if (pendingRecovered) return null;
-    pendingRecovered = true;
-    const pendingKey = `${SAVE_KEY}-pending`;
-    let pending = null;
+  // the main set hit the quota). Read it once; it is only removed after the
+  // main key is known-good, since it may be the sole durable copy of the save.
+  const pendingKey = `${SAVE_KEY}-pending`;
+  let pendingChecked = false;
+  let pendingSave = null;
+  async function readPending() {
+    if (pendingChecked) return pendingSave;
+    pendingChecked = true;
     try {
-      pending = await readRaw(pendingKey);
+      pendingSave = await readRaw(pendingKey);
     } catch {
-      pending = null;
+      pendingSave = null;
+      await adapter.remove(pendingKey).catch(() => {});
     }
+    return pendingSave;
+  }
+  async function discardPending() {
+    pendingSave = null;
     await adapter.remove(pendingKey).catch(() => {});
-    return pending;
   }
 
   return {
     key: SAVE_KEY,
     async load() {
-      const pending = await recoverPending();
+      const pending = await readPending();
       try {
         const current = await readRaw(SAVE_KEY);
-        if (current) return migrateSave(current);
+        if (current) {
+          if (pending) await discardPending();
+          return migrateSave(current);
+        }
         if (pending) {
           const migrated = migrateSave(pending);
-          await write(migrated).catch(() => {});
+          // Keep the pending copy until the recovery write lands — if the write
+          // fails (quota, private mode) it stays the only persisted save.
+          try { await write(migrated); await discardPending(); } catch { /* retried on next load */ }
           return migrated;
         }
         const legacy = await readRaw(LEGACY_KEY);

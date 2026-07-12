@@ -75,6 +75,18 @@ test("failed writes surface a warning instead of failing silently", async () => 
     assert.equal(warnings.length, 2);
 });
 
+test("a stranded pending save survives when the recovery write fails", async () => {
+    const pendingSave = { ...createDefaultSave(), currencies: { voidShards: 3 } };
+    const storage = createMemoryLocalStorage({ [PENDING_KEY]: JSON.stringify(pendingSave) });
+    storage.setItem = () => { throw new Error("QuotaExceededError"); };
+    const store = createSaveStore(storage);
+    const loaded = await store.load();
+
+    assert.equal(loaded.currencies.voidShards, 3);
+    // The pending key is the only durable copy; it must not be removed.
+    assert.equal(storage.data.has(PENDING_KEY), true);
+});
+
 test("a failed write during legacy migration still returns the migrated save", async () => {
     const legacySave = { ...createDefaultSave(), currencies: { voidShards: 9 } };
     const storage = createMemoryLocalStorage({ "voidreaper-eternal": JSON.stringify(legacySave) });

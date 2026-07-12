@@ -432,6 +432,12 @@ export async function bootstrap() {
   });
   ui.renderHangar = () => hangar.render();
 
+  // Merchant hull repair targets the map preview run, but between campaign
+  // combat nodes the legacy game.player keeps its damaged hull — heal it too,
+  // or the paid repair never reaches the next fight.
+  events.on("merchant-service-applied", ({ serviceId }) => {
+    if (serviceId === "repair" && game.player) game.player.hp = game.player.maxHp;
+  });
   const originalReset = game.reset.bind(game);
   game.reset = mode => {
     originalReset(mode);
