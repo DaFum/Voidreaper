@@ -30,15 +30,17 @@ Marking: findings labeled **latent** live in code that is not yet wired into `bo
 **Fix:** Removed the `originalVersion < CURRENT_SAVE_VERSION` guard so `byId()` runs unconditionally. Added regression tests for v5 and v6+ saves.
 
 ### 2. [FIXED] Overheat can never trigger
+
 **File:** `src/features/heat/heat-system.js:20-24` (`add`), `:40` (overheat check)
 
 `add()` raises `state.value` without any clamp or threshold check. `update()` captures `previous = state.value` at its top and then only ever *decreases* value (cooling). The overheat condition `state.value >= 100 && previous < 100` is therefore unsatisfiable: by the time `update()` runs, `previous` already includes the heat added by `add()`.
 
-**Failure scenario:** `addRunHeat(run, 100 - run.heat.value, "architect-overload")` (`src/features/encounters/architect-controller.js:8`) or anomaly heat pushes value to 100; the next `services.heat.update(...)` (`src/app/game-controller.js:92`) sees `previous >= 100` → no `overheated` event, no module disable, ever. The `disableCounts` escalation and `sourceHeat.clear()` in `overheat()` are dead code. Fix belongs in `add()` (or detect the crossing before cooling is applied).
+**Historical Failure scenario:** `addRunHeat(run, 100 - run.heat.value, "architect-overload")` (`src/features/encounters/architect-controller.js:8`) or anomaly heat pushed value to 100; the next `services.heat.update(...)` (`src/app/game-controller.js:92`) saw `previous >= 100` → no `overheated` event, no module disable, ever. The `disableCounts` escalation and `sourceHeat.clear()` in `overheat()` were dead code. **Fixed** by explicitly tracking the overheat threshold crossing within `add()` using a `crossedOverheat` flag.
 
-Related (same file, `:35-38`): the heat-warning projection is dimensionally wrong — `projectedSeconds = (100 - value) / max(0.01, generationMultiplier - coolingRate)` subtracts a heat-per-second rate from a unitless multiplier. With the live call (`generationMultiplier` 1, `coolingRate` 10) the denominator clamps to 0.01 → projected ≈ 1500 s → the `heat-warning` event never fires; with `coolingRate <= 0` it short-circuits to 0 → instant warning at 85 even while heat is static.
+Related (same file, `:35-38`): the heat-warning projection was dimensionally wrong — `projectedSeconds = (100 - value) / max(0.01, generationMultiplier - coolingRate)` subtracted a heat-per-second rate from a unitless multiplier. With the live call (`generationMultiplier` 1, `coolingRate` 10) the denominator clamped to 0.01 → projected ≈ 1500 s → the `heat-warning` event never fired. **Fixed**: the system now simply emits the `heat-warning` event with a fixed 1.0 second duration whenever heat exceeds 85 and the system is actively adding heat (`state.coolingDelay > 0`).
 
 ### 3. [FIXED] String `variantSeed` produces NaN and silently disables module detail rendering and damage overlays
+
 **Files:** `src/features/ship-assembly/content/module-assembly-resolver.js:6` (`variantSeed: definition.id`), `src/render/ship-assembly/module-core-renderers.js:7` (`seedCount`), `src/features/ship-assembly/geometry/path-primitives.js:12`, `src/render/ship-assembly/damage-overlay-renderer.js:2`, activity-animation renderer
 
 All 152 equipment profiles get `variantSeed = definition.id` (a **string**; zero definitions carry an explicit `assembly` block). Every numeric-seed render path computes NaN (`Math.abs("splitter-matrix") % 2 → NaN`), which the canvas API swallows silently:
@@ -51,6 +53,7 @@ All 152 equipment profiles get `variantSeed = definition.id` (a **string**; zero
 **Validator blind spot:** `scripts/validate-ship-assembly-content.mjs` checks `mass`/`damage` finiteness but never `variantSeed` type, so the entire greeble layer ships invisible with all gates green. Fix: hash the id to a number in the resolver (or in one shared `seedOf()` helper) and add a finiteness check to the validator.
 
 ### 4. [FIXED] Global keydown handler swallows typing in all text inputs
+
 **File:** `src/input/input-controller.js:9-16`; compounded by `src/legacy/legacy-runtime.js:225`
 
 `onKeyDown` looks up `resolvedBindings[event.code]` and unconditionally calls `event.preventDefault()` with no `event.target` check. The controller is started once in `bootstrap.js` and never stopped, including in menus.
@@ -58,11 +61,13 @@ All 152 equipment profiles get `variantSeed = definition.id` (a **string**; zero
 **Failure scenario:** In the Codex filter input, prototype-vault filters, settings binding fields, or the blueprint import textarea, typing `w/a/s/d/q/e/p`, Space, or using arrow keys inserts nothing — the keydown is cancelled. The legacy runtime's window-level handler additionally blocks Space from activating the focused level-up card button (only Enter works). Fix: bail out when `event.target` is an editable element (`input`, `textarea`, `select`, `isContentEditable`).
 
 ### 5. [FIXED] Escape during quick-mount both defers the module and opens the pause screen
+
 **Files:** `src/legacy/legacy-runtime.js:223-224`, quick-mount wiring in `src/app/game-controller.js:74` / `bootstrap.js:479`
 
 The legacy `Input.init` keydown pauses on Escape/KeyP whenever `Game.state === "run"`. Quick-mount only pushes `timeScale = 0` without changing `Game.state`, so the modern handler defers the mount *and* the legacy window listener fires `Game.pause()` on the same keystroke — the pause screen opens on top of combat. `preventDefault()` in the modern handler cannot stop the second window-level listener.
 
 ### 6. [FIXED] Shared `qbuf` is clobbered while callers are iterating it (Reaper evolution)
+
 **File:** `src/legacy/legacy-runtime.js:710-711` (re-query inside `damageEnemy`), callers at `:1071` (orbital blades), `:1096` (zone DoT), `:1235` (player bullets)
 
 `damageEnemy` with `player.evoReaper` on a crit calls `this.hash.query(e.x, e.y, R, this.qbuf)`, which truncates and refills the shared buffer. But `damageEnemy` is called from inside `for (const e of this.qbuf)` loops; the outer iterator then walks the *new* contents.
