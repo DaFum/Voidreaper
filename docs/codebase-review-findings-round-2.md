@@ -207,12 +207,12 @@ Latent because `createWeaponController` is not yet wired into bootstrap, but the
 
 ### Persistence / core
 
-- **Migration backups permanently inflate the save** — `migrations.js:52-53` embeds the full prior save (including its own backups, checkpoint, and thumbnails) with no pruning; each version bump roughly doubles save size, compounding the quota risk in M1.
-- **`migrateSave` mutates its input for below-current versions** — `migrations.js:9,54`; `mergeDefaults` shares top-level references, so history/backups are written into the caller's object. Benign today, latent shared-snapshot footgun.
-- **Event-bus: listeners (un)registered during emit run within the same emit** — `src/core/event-bus.js:11-18` iterates the live Set. No current listener does this; hazard only. (No listener leaks found — all per-run subscribers are correctly destroyed in `attachLegacy`.)
-- **Registry freeze is shallow** — `src/core/registry.js:9`; nested objects (`assembly`, `tags`, `childPorts`) remain mutable and shared globally. Any in-place decoration silently changes content for all subsequent runs.
-- **`createRuntimeId` can collide across page loads** — `src/core/ids.js:1-6`; per-load counter reset makes same-millisecond ids from different sessions identical. Practically negligible.
-- **`encodeCollections` has no cycle guard** — `checkpoint-service.js:6-13` (unlike `deriveIdCounter`); a cyclic run object stack-overflows checkpoint writes. Current run shape appears acyclic.
+- **[FIXED] Migration backups permanently inflate the save** — `migrations.js:52-53` embeds the full prior save (including its own backups, checkpoint, and thumbnails) with no pruning; each version bump roughly doubles save size, compounding the quota risk in M1.
+- **[FIXED] `migrateSave` mutates its input for below-current versions** — `migrations.js:9,54`; `mergeDefaults` shares top-level references, so history/backups are written into the caller's object. Benign today, latent shared-snapshot footgun.
+- **[FIXED] Event-bus: listeners (un)registered during emit run within the same emit** — `src/core/event-bus.js:11-18` iterates the live Set. No current listener does this; hazard only. (No listener leaks found — all per-run subscribers are correctly destroyed in `attachLegacy`.)
+- **[FIXED] Registry freeze is shallow** — `src/core/registry.js:9`; nested objects (`assembly`, `tags`, `childPorts`) remain mutable and shared globally. Any in-place decoration silently changes content for all subsequent runs.
+- **[FIXED] `createRuntimeId` can collide across page loads** — `src/core/ids.js:1-6`; per-load counter reset makes same-millisecond ids from different sessions identical. Practically negligible.
+- **[FIXED] `encodeCollections` has no cycle guard** — `checkpoint-service.js:6-13` (unlike `deriveIdCounter`); a cyclic run object stack-overflows checkpoint writes. Current run shape appears acyclic.
 
 ### Features
 
