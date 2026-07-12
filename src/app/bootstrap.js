@@ -92,7 +92,7 @@ import { renderBlueprintDetail } from "../ui/ship-assembly/blueprint-detail-scre
 import { createBlueprintImportDialog } from "../ui/ship-assembly/blueprint-import-dialog.js";
 import { createQuickMountOverlay } from "../ui/ship-assembly/quick-mount-overlay.js";
 import { renderPlacementPreview } from "../ui/ship-assembly/placement-preview-overlay.js";
-import { attemptMerchantPurchase, attemptWorkshopAction, canUseWorkbenchPort, openReplacingQuickMount, prepareCheckpointResume, resetCampaignResume, subscribeWorkbenchGeometry, syncLegacyVoidShards } from "./click-path-flows.js";
+import { adoptCombatRunState, attemptMerchantPurchase, attemptWorkshopAction, canUseWorkbenchPort, openReplacingQuickMount, prepareCheckpointResume, resetCampaignResume, subscribeWorkbenchGeometry, syncLegacyVoidShards } from "./click-path-flows.js";
 import { renderLoadoutScreen } from "../ui/screens/loadout-screen.js";
 
 export async function bootstrap() {
@@ -336,7 +336,7 @@ export async function bootstrap() {
     const stage = hangarRoot.querySelector(".hangar-content");
     mapScreen = createSectorMapScreen(stage, { onWorkbench: showAssemblyWorkbench, onConfirm: node => {
       if (!services.sectors.enter(previewRun, node.id)) return;
-      const finish = async () => { services.sectors.complete(previewRun, node.id); await writeCurrentCheckpoint(previewRun, node.id); showCampaignMap(); };
+      const finish = async () => { services.sectors.complete(previewRun, node.id); await writeCurrentCheckpoint(previewRun, node.id).catch(() => {}); showCampaignMap(); };
       if (["combat", "elite", "salvage", "mid-boss", "boss", "extraction"].includes(node.type)) {
         activeCampaignNodeId = node.id;
         if (game.player && game.wave > 0) { game.state = "run"; ui.show("hud"); originalStartWave(game.wave + 1); }
@@ -437,11 +437,24 @@ export async function bootstrap() {
     originalReset(mode);
     controller.attachLegacy(game);
   };
+  // Dying inside a campaign node must invalidate the checkpoint, otherwise
+  // "Fortsetzen" replays the pre-death state as a free death-undo.
+  const originalGameOver = game.gameOver.bind(game);
+  game.gameOver = () => {
+    originalGameOver();
+    if (!activeCampaignNodeId) return;
+    activeCampaignNodeId = null;
+    currentCheckpoint = null;
+    previewRun = resetCampaignResume(services);
+    void services.checkpoints.clear("player-death").catch(() => {});
+    hangar.render();
+  };
   originalStartWave = game.startWave.bind(game);
   game.startWave = wave => {
     if (activeCampaignNodeId && wave > 1) {
+      adoptCombatRunState(previewRun, controller.run);
       services.sectors.complete(previewRun, activeCampaignNodeId);
-      void writeCurrentCheckpoint(previewRun, activeCampaignNodeId);
+      void writeCurrentCheckpoint(previewRun, activeCampaignNodeId).catch(() => {});
       activeCampaignNodeId = null;
       game.state = "sector-map";
       ui.show("start");

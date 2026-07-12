@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createRunState } from "../../src/runtime/create-run-state.js";
+import { serializeCheckpointRun, hydrateCheckpointRun } from "../../src/features/checkpoints/checkpoint-service.js";
 import {
+  adoptCombatRunState,
   attemptMerchantPurchase,
   attemptWorkshopAction,
   canUseWorkbenchPort,
@@ -124,6 +127,47 @@ test("workbench port selection rejects missing and occupied ports", () => {
   assert.equal(canUseWorkbenchPort(undefined), false);
   assert.equal(canUseWorkbenchPort({ occupiedByNodeId: "node" }), false);
   assert.equal(canUseWorkbenchPort({ occupiedByNodeId: null }), true);
+});
+
+test("combat run build state is adopted into the preview run before checkpointing", () => {
+  const previewRun = createRunState({ seed: 1 });
+  const combatRun = createRunState({ seed: 2 });
+  combatRun.assembly = { version: 1, shipFrameId: "vesper", rootNodeId: "root", nodesById: { root: { nodeId: "root" } }, portsById: {} };
+  combatRun.inventory = [{ instanceId: "item-1", definitionId: "railgun" }];
+  combatRun.pendingAssemblyItems = [{ pendingMountId: "pending-1" }];
+  combatRun.activeBlueprintId = "blueprint-1";
+
+  const adopted = adoptCombatRunState(previewRun, combatRun);
+
+  assert.equal(adopted, previewRun);
+  assert.equal(previewRun.assembly, combatRun.assembly);
+  assert.equal(previewRun.inventory, combatRun.inventory);
+  assert.deepEqual(previewRun.pendingAssemblyItems, [{ pendingMountId: "pending-1" }]);
+  assert.equal(previewRun.activeBlueprintId, "blueprint-1");
+});
+
+test("adopting is a no-op when the combat run is the preview run (checkpoint resume)", () => {
+  const run = createRunState({ seed: 1 });
+  run.inventory = [{ instanceId: "item-1" }];
+  assert.equal(adoptCombatRunState(run, run), run);
+  assert.deepEqual(run.inventory, [{ instanceId: "item-1" }]);
+  assert.equal(adoptCombatRunState(null, run), null);
+});
+
+test("adopted combat build survives a checkpoint serialize/hydrate round-trip", () => {
+  const previewRun = createRunState({ seed: 3 });
+  const combatRun = createRunState({ seed: 4 });
+  combatRun.assembly = { version: 1, shipFrameId: "vesper", rootNodeId: "root", nodesById: { root: { nodeId: "root", childPortIds: [] } }, portsById: {} };
+  combatRun.inventory = [{ instanceId: "item-1", definitionId: "railgun", affixes: [], sockets: [] }];
+  adoptCombatRunState(previewRun, combatRun);
+
+  const services = { marker: true };
+  const hydrated = hydrateCheckpointRun(serializeCheckpointRun(previewRun), services);
+
+  assert.equal(hydrated.assembly.shipFrameId, "vesper");
+  assert.equal(hydrated.assembly.nodesById.root.nodeId, "root");
+  assert.equal(hydrated.inventory[0].definitionId, "railgun");
+  assert.equal(hydrated.services, services);
 });
 
 test("fresh campaigns clear pending checkpoint resume state", () => {

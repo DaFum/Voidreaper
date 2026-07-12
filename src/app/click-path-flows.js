@@ -48,3 +48,19 @@ export function resetCampaignResume(services) {
   delete services.resumeRun;
   return null;
 }
+
+// Combat nodes play out in a separate run created by controller.attachLegacy,
+// while campaign checkpoints are serialized from the map's preview run. Pull
+// the combat run's build back into the preview run before writing a
+// checkpoint, or mounted modules and run items are lost across a restart.
+export function adoptCombatRunState(previewRun, combatRun) {
+  if (!previewRun || !combatRun || previewRun === combatRun) return previewRun;
+  previewRun.assembly = combatRun.assembly;
+  previewRun.inventory = combatRun.inventory;
+  previewRun.pendingAssemblyItems = combatRun.pendingAssemblyItems ?? [];
+  previewRun.heat = combatRun.heat ?? previewRun.heat;
+  previewRun.corruption = combatRun.corruption ?? previewRun.corruption;
+  previewRun.activeBlueprintId = combatRun.activeBlueprintId ?? previewRun.activeBlueprintId ?? null;
+  previewRun.activeBlueprintVariantId = combatRun.activeBlueprintVariantId ?? previewRun.activeBlueprintVariantId ?? null;
+  return previewRun;
+}
