@@ -7,7 +7,8 @@ export function createInputController({ eventBus, bindings = {}, stickElement, s
   const stick = createTouchStick(stickElement, stickKnob);
 
   const onKeyDown = event => {
-    if(isQuickMount()){const assemblyAction=QUICK_MOUNT_BINDINGS[event.code];if(assemblyAction){if(!event.repeat)eventBus?.emit("action",{action:assemblyAction,source:"keyboard"});event.preventDefault();return;}}
+    if (event.target && (['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName) || event.target.isContentEditable)) return;
+    if(isQuickMount()){const assemblyAction=QUICK_MOUNT_BINDINGS[event.code];if(assemblyAction){if(!event.repeat)eventBus?.emit("action",{action:assemblyAction,source:"keyboard"});event.preventDefault();event.stopImmediatePropagation();return;}}
     const action = resolvedBindings[event.code];
     if (!action) return;
     if (!event.repeat && (Object.values(ACTIONS).includes(action)||Object.values(ASSEMBLY_ACTIONS).includes(action))) eventBus?.emit("action", { action, source: "keyboard" });

@@ -9,7 +9,8 @@ export function createHeatState() {
     overheatedAt: null,
     sourceHeat: new Map(),
     disableCounts: new Map(),
-    warningIssued: false
+    warningIssued: false,
+    crossedOverheat: false
   };
 }
 
@@ -18,6 +19,7 @@ const thresholdFor = value => [...HEAT_THRESHOLDS].reverse().find(threshold => v
 export function createHeatSystem({ eventBus, modules } = {}) {
   return {
     add(state, amount, sourceId = "unknown") {
+      state.crossedOverheat = state.crossedOverheat || (state.value < 100 && state.value + amount >= 100);
       state.value += amount;
       state.coolingDelay = Math.max(state.coolingDelay, 0.65);
       state.sourceHeat.set(sourceId, (state.sourceHeat.get(sourceId) ?? 0) + amount);
@@ -32,12 +34,15 @@ export function createHeatSystem({ eventBus, modules } = {}) {
         state.lastThreshold = threshold;
         eventBus?.emit("heat-threshold", { threshold, value: state.value, previous });
       }
-      const projectedSeconds = coolingRate > 0 ? (100 - state.value) / Math.max(0.01, generationMultiplier - coolingRate) : 0;
+      const projectedSeconds = coolingRate > 0 ? (100 - state.value) / coolingRate : 0;
       if (!state.warningIssued && state.value >= 85 && projectedSeconds <= 1.2) {
         state.warningIssued = true;
         eventBus?.emit("heat-warning", { seconds: Math.max(0, projectedSeconds) });
       }
-      if (state.value >= 100 && previous < 100) this.overheat(state);
+      if (state.crossedOverheat) {
+        this.overheat(state);
+        state.crossedOverheat = false;
+      }
       if (state.value < 80) state.warningIssued = false;
       return state.value;
     },
