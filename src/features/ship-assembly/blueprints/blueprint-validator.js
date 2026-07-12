@@ -98,10 +98,13 @@ export function validateBlueprint(
       return validConnection;
     });
   if (!root) issues.push({ type: "missing-root" });
-  if (source.shipFrameId && !knownShipFrameIds.has(source.shipFrameId))
+  // An unknown frame must fail validation: geometry lookup throws downstream,
+  // so an imported blueprint with a bogus shipFrameId is unusable.
+  const unknownFrame = Boolean(source.shipFrameId) && !knownShipFrameIds.has(source.shipFrameId);
+  if (unknownFrame)
     issues.push({ type: "unknown-frame", shipFrameId: source.shipFrameId });
   return {
-    valid: Boolean(root && source.shipFrameId),
+    valid: Boolean(root && source.shipFrameId && !unknownFrame),
     blueprint: {
       ...source,
       blueprintVersion: BLUEPRINT_VERSION,

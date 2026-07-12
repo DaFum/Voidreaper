@@ -4,7 +4,7 @@ export function createPrototypeLossService({ saveStore, wreckSignalService } = {
     for (const item of items.filter(entry => !entry.secured)) {
       if (difficulty === "initiate" && ["common", "rare"].includes(item.rarity)) continue;
       if (["common", "rare"].includes(item.rarity)) outcome.removed.push(item.instanceId);
-      else if (item.rarity === "epic") { outcome.fragments += 12; if ((item.corruption ?? 0) >= 50) outcome.wrecks.push(wreckSignalService.create(item, runSnapshot)); }
+      else if (item.rarity === "epic") { outcome.fragments += 12; if ((item.corruptionLevel ?? item.corruption ?? 0) >= 50) outcome.wrecks.push(wreckSignalService.create(item, runSnapshot)); }
       else if (["legendary", "unique"].includes(item.rarity)) { item.prototypeStatus = "lost"; outcome.wrecks.push(wreckSignalService.create(item, runSnapshot)); }
     }
     return outcome;

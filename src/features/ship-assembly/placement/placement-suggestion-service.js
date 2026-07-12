@@ -16,7 +16,9 @@ export function createPlacementSuggestionService({ compatibilityService, geometr
           blueprintMatch: blueprintMatchBonus(target?.match)
         };
         const flightDelta = flightProfileService.previewPlacement(entry.port, moduleProfile);
-        const score = scorePlacement({ ...metrics, massAsymmetry: Math.abs(flightDelta.lateralImbalance ?? 0) });
+        // lateralImbalance is an absolute coordinate (tens of units); normalize it
+        // to the 0-1 range of the other metrics so it doesn't dominate the score.
+        const score = scorePlacement({ ...metrics, massAsymmetry: Math.min(1, Math.abs(flightDelta.lateralImbalance ?? 0) / 60) });
         const candidate = entry.result.candidate;
         const transform = {
           position: candidate.center ?? { x: (candidate.minX + candidate.maxX) / 2, y: (candidate.minY + candidate.maxY) / 2 },

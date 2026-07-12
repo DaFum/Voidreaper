@@ -18,6 +18,9 @@
 - Content validators enforce fixed catalog sizes in key areas; adding/removing entries usually requires validator updates and design sign-off.
 - ID changes are migration-sensitive even for "meta" content because old saves, blueprint imports, and codex history can reference those IDs.
 - Some shape fields are consumed indirectly through assembly resolvers and effect systems; missing defaults may fail only at runtime, not at import.
+- Weapon adapter modules must not hold per-run state at module scope (drone/mine/nanite controllers once leaked across runs this way). Create controllers inside `createState()` and store them on the weapon state so each equip gets a fresh instance.
+- New module effect ids must also be added to `src/content/effects/module-effect-manifest.js` or `npm run validate-content` fails — the validator deliberately does not trust the module catalog for its own allowlist.
+- Item *instances* carry `corruptionLevel` (set by item-factory); the `corruption` field on content definitions is a separate, definition-level value. Do not mix the two.
 
 ## Validation
 - Run `npm run validate-content` after content edits.

@@ -25,6 +25,7 @@ Marking: findings labeled **latent** live in code that is not yet wired into `bo
 ## High severity
 
 ### 1. [FIXED] Array-shaped save fields at current/newer save versions are still silently wiped
+
 **Files:** `src/persistence/migrations.js` (array guard), `tests/features/persistence/migrations.test.js`
 
 **Fix:** Removed the `originalVersion < CURRENT_SAVE_VERSION` guard so `byId()` runs unconditionally. Added regression tests for v5 and v6+ saves.
@@ -74,8 +75,11 @@ The legacy `Input.init` keydown pauses on Escape/KeyP whenever `Game.state === "
 
 **Failure scenario:** Player has the Reaper evolution plus orbitals/zones; an orbital crit triggers the reaper AoE mid-loop, and the outer loop continues over enemies from the reaper query — arbitrary double-hits or missed hits on every crit. Fix: use a dedicated buffer (or a local array) for the reaper query.
 
-### 7. Module-scope singleton combat controllers leak state across runs (latent)
+### 7. [FIXED] Module-scope singleton combat controllers leak state across runs (latent)
+
 **Files:** `src/features/combat/drone-controller.js`, `mine-controller.js`, `nanite-controller.js`, instantiated at import time by `src/content/weapons/drone-core.js:4`, `mine-layer.js:4`, `nanite-swarm.js:4`
+
+**Fix:** Controllers are now created per equip in each adapter's `createState()` (called with a fresh per-run context by `weapon-controller.equip`) and stored on the weapon state instead of at module scope, so drone budget, mine list, and nanite infections reset with every run. The drone controller additionally keeps `run.summons` in sync in both directions: `destroy(context, id)` also splices the drone out of `run.summons`, and `update()` drops drones that were removed externally (e.g. by the sacrifice cost in `active-module-system.js`). Regression tests in `tests/features/combat-controller-run-isolation.test.js`.
 
 The controllers hold per-run state (`drones`, `mines`, `infections`) but are created once per page load:
 
@@ -91,55 +95,99 @@ Latent because `createWeaponController` is not yet wired into bootstrap, but the
 
 ### Persistence / app wiring
 
-**M1. `writeAtomic` is not atomic and can permanently strand a duplicate save** — `src/persistence/save-store.js:45-52`. The pending key is written first, but `load()` never reads or cleans `${SAVE_KEY}-pending`, so the scheme provides zero recovery while doubling peak localStorage footprint per write. If the main `set` throws (quota), the pending copy is stranded forever; the `{get,set}` adapter without `delete` (`:17-19`) makes `remove` a no-op, so a duplicate persists even on success. With `thumbnailDataUrl` blobs and `migrationBackups` embedding full prior saves, quota exhaustion is realistic.
+**M1. [FIXED] `writeAtomic` is not atomic and can permanently strand a duplicate save** — `src/persistence/save-store.js:45-52`. The pending key is written first, but `load()` never reads or cleans `${SAVE_KEY}-pending`, so the scheme provides zero recovery while doubling peak localStorage footprint per write. If the main `set` throws (quota), the pending copy is stranded forever; the `{get,set}` adapter without `delete` (`:17-19`) makes `remove` a no-op, so a duplicate persists even on success. With `thumbnailDataUrl` blobs and `migrationBackups` embedding full prior saves, quota exhaustion is realistic.
 
-**M2. Campaign checkpoints don't capture combat-run state (possible)** — checkpoints are always serialized from `previewRun` (`bootstrap.js:129-132`, `:339`, `:443-444`), but combat nodes run in a **separate** run created by `game-controller.js:54`; nothing syncs assembly/inventory back into `previewRun` before `writeCurrentCheckpoint`. On resume, `attachLegacy` sees `!run.assembly` and rebuilds a default frame with only the starter railgun — mounted modules and run items are lost across a browser restart mid-campaign.
+**Fix:** Dropped the write-ahead pending key entirely — a single-key `setItem` is already atomic (it either replaces the value or throws and leaves the old one intact), so the pending copy only doubled peak footprint. `load()` now recovers a pending key stranded by earlier builds once (using it as the save if the main key is missing) and removes it; the `{get,set}` adapter's `remove` falls back to overwriting with `""` when `delete` is absent. Tests in `tests/features/persistence/save-store.test.js`.
 
-**M3. Checkpoints are never cleared (possible)** — `src/features/checkpoints/checkpoint-service.js:83` defines `clear(...)` with zero callers. After a death or campaign completion, the last checkpoint remains in the save, so "Resume" indefinitely offers re-entry into the pre-death state — a free death-undo in a roguelite.
+**M2. [FIXED] Campaign checkpoints don't capture combat-run state (possible)** — checkpoints are always serialized from `previewRun` (`bootstrap.js:129-132`, `:339`, `:443-444`), but combat nodes run in a **separate** run created by `game-controller.js:54`; nothing syncs assembly/inventory back into `previewRun` before `writeCurrentCheckpoint`. On resume, `attachLegacy` sees `!run.assembly` and rebuilds a default frame with only the starter railgun — mounted modules and run items are lost across a browser restart mid-campaign.
 
-**M4. Save-write failures are silent in UI handlers** — `save-store.js:34-38` rejections propagate to `await services.save.update(...)` calls in async DOM handlers with no try/catch (`bootstrap.js:396, 402, 424, 425, 428`). On a quota error the purchase/favorite appears applied in-memory but is never persisted; the only trace is an unhandled-rejection console entry.
+**Fix:** `adoptCombatRunState(previewRun, combatRun)` in `src/app/click-path-flows.js` pulls assembly, inventory, pending assembly items, heat, corruption, and the active blueprint ids from the combat run into the preview run; the `game.startWave` campaign hook calls it before `writeCurrentCheckpoint`. It is a no-op after a checkpoint resume, where both runs are the same object. Round-trip test in `tests/app/click-path-flows.test.js`.
+
+**M3. [FIXED] Checkpoints are never cleared (possible)** — `src/features/checkpoints/checkpoint-service.js:83` defines `clear(...)` with zero callers. After a death or campaign completion, the last checkpoint remains in the save, so "Resume" indefinitely offers re-entry into the pre-death state — a free death-undo in a roguelite.
+
+**Fix:** `bootstrap.js` now wraps `game.gameOver` (next to the existing `reset`/`startWave` wrappers): dying inside a campaign node clears the in-memory checkpoint, the preview run, and the pending resume state, calls `services.checkpoints.clear("player-death")`, and re-renders the hangar so "Fortsetzen" disappears. Non-campaign deaths (daily runs, salvage missions) leave the checkpoint untouched.
+
+**M4. [FIXED] Save-write failures are silent in UI handlers** — `save-store.js:34-38` rejections propagate to `await services.save.update(...)` calls in async DOM handlers with no try/catch (`bootstrap.js:396, 402, 424, 425, 428`). On a quota error the purchase/favorite appears applied in-memory but is never persisted; the only trace is an unhandled-rejection console entry.
+
+**Fix:** Centralized in the store: `save()`/`update()` route through a `persist()` wrapper that calls `onWarning` ("Speichern fehlgeschlagen …", surfaced as a toast via the existing bootstrap wiring) before rethrowing, so every current and future call site reports failures to the player. The fire-and-forget checkpoint writes in `bootstrap.js` now `.catch(() => {})` so the campaign flow continues after the warning, and a failed write during legacy-save migration no longer discards the migrated data (it is returned anyway instead of falling through to the corrupt-save path).
 
 ### Features
 
-**M5. Affix lock is ignored by reroll** — `src/features/workshop/workshop-service.js:23-24`. `lock` sets `lockedAffixId` and its preview promises "Affix bleibt bei Rerolls erhalten", but `reroll` replaces `target.affixes` wholesale. Lock → reroll destroys the locked affix the player paid to protect.
+**M5. [FIXED] Affix lock is ignored by reroll** — `src/features/workshop/workshop-service.js:23-24`. `lock` sets `lockedAffixId` and its preview promises "Affix bleibt bei Rerolls erhalten", but `reroll` replaces `target.affixes` wholesale. Lock → reroll destroys the locked affix the player paid to protect.
 
-**M6. Workshop-opened sockets can never be filled** — `workshop-service.js:25` pushes `null` into `target.sockets`, but `src/features/equipment/socket-service.js:6` rejects falsy sockets (`if (!item.sockets?.[socketIndex]) throw`). The player spends 2 AP to open a socket that can never accept a chip. Should push `{ chipId: null }`.
+**Fix:** `reroll` now keeps the affix whose id matches `lockedAffixId` in front of the freshly rolled set (matching on `affixId ?? id`), so lock → reroll preserves the protected affix.
 
-**M7. Merchant services are mispriced and inert** — `src/features/merchant/merchant-service.js:6,16,28`. `merchantPrice` never reads `basePrice` from `MERCHANT_SERVICES` (content says `stabilize` costs 3 flux; the computed price is ~22+, unaffordable with the 6 starting flux). And `buy()` pushes non-corrupted services like "Hull-Reparatur" into `run.inventory` as items — no repair happens. Related (possible): the `CORRUPT_OFFER` buy path adds +15 corruption but grants nothing in return (`:26-28`).
+**M6. [FIXED] Workshop-opened sockets can never be filled** — `workshop-service.js:25` pushes `null` into `target.sockets`, but `src/features/equipment/socket-service.js:6` rejects falsy sockets (`if (!item.sockets?.[socketIndex]) throw`). The player spends 2 AP to open a socket that can never accept a chip. Should push `{ chipId: null }`.
 
-**M8. Hit-zone broadphase AABB truncates capsules (latent)** — `src/features/ship-assembly/damage/hit-zone-index.js:1`. `boundsFor` uses `radius ?? outerRadius ?? length/2`; capsules define *both* radius and length, so a Bastion core capsule spanning ±43 along its axis is indexed as ±20 — projectiles crossing capsule ends miss silently. Related schema inconsistency: the frame core zone uses key `shape: "capsule"` while module zones use `kind: "capsule"` (`hit-zone-builder.js:2`) — narrowphase code keyed on `.kind` won't recognize the core zone.
+**Fix:** The socket action pushes `{ chipId: null }`, which `socket-service.insert` accepts.
 
-**M9. Saved blueprints can never match placement targets in a later run (possible)** — `src/features/ship-assembly/blueprints/blueprint-matcher.js:3`. `findBlueprintTarget` matches on `parentBlueprintNodeId === port.parentNodeId || node.parentPortKey === port.key`, but blueprint nodes store the *original run's* node ids and `toBlueprintNode` never writes `parentPortKey`. In a new run both clauses are always false → `blueprintMatch` is always 0 and blueprint-guided quick-mount is a cross-session no-op.
+**M7. [FIXED] Merchant services are mispriced and inert** — `src/features/merchant/merchant-service.js:6,16,28`. `merchantPrice` never reads `basePrice` from `MERCHANT_SERVICES` (content says `stabilize` costs 3 flux; the computed price is ~22+, unaffordable with the 6 starting flux). And `buy()` pushes non-corrupted services like "Hull-Reparatur" into `run.inventory` as items — no repair happens. Related (possible): the `CORRUPT_OFFER` buy path adds +15 corruption but grants nothing in return (`:26-28`).
 
-**M10. Blueprint validation passes unknown ship frames** — `blueprint-validator.js:100-104`. `unknown-frame` is recorded as an issue but `valid` stays true; an imported blueprint with a bogus `shipFrameId` validates, then `assembly-geometry-service.js:19` throws `Unknown ship frame geometry` downstream.
+**Fix:** `merchantPrice` returns the content `basePrice` for service offers (stabilize really costs 3 flux). Services are flagged `service: true` in content and `buy()` applies their effect instead of pushing an inventory item: repair restores hull to max, stabilize removes 10 run corruption via the corruption system, reveal raises node information levels. `CORRUPT_OFFER` now declares `grants: { scrap: 40, flux: 2 }` which `buy()` credits alongside the +15 corruption.
 
-**M11. Trigger budget never resets (latent)** — `src/features/triggers/trigger-engine.js:15,48`. `stepEffects` is cumulative and only reset by `beginStep()`, which nothing calls. After 100 trigger effects in a session, every subsequent trigger is discarded forever.
+**M8. [FIXED] Hit-zone broadphase AABB truncates capsules (latent)** — `src/features/ship-assembly/damage/hit-zone-index.js:1`. `boundsFor` uses `radius ?? outerRadius ?? length/2`; capsules define *both* radius and length, so a Bastion core capsule spanning ±43 along its axis is indexed as ±20 — projectiles crossing capsule ends miss silently. Related schema inconsistency: the frame core zone uses key `shape: "capsule"` while module zones use `kind: "capsule"` (`hit-zone-builder.js:2`) — narrowphase code keyed on `.kind` won't recognize the core zone.
 
-**M12. `corruption` vs `corruptionLevel` field mismatch** — `src/features/equipment/item-factory.js:9` creates items with `corruptionLevel`; `prototype-loss-service.js:7` and `salvage-mission-service.js:7` read `item.corruption` (so the "corrupted epic → wreck signal" path never fires for factory items); `workshop-service.js:26-27` writes a third parallel `corruption` field while `corruptionLevel` stays untouched.
+**Fix:** `boundsFor` uses `length/2 + radius` for capsules (both axes, orientation-agnostic) and the farthest vertex for polygons. `buildAssemblyHitZones` normalizes the frame `coreHitZone`'s legacy `shape:` key to `kind:` so narrowphase code sees one schema. Regression test covers a Bastion-sized capsule at |x| = 40.
 
-**M13. Fault scheduler excludes components without `disabledUntil` (latent)** — `src/features/faults/fault-scheduler.js:39`. `component.disabledUntil <= now` is false for `undefined`, so components that never carried the field are filtered out and faults always fall back to the generic `{id: "system"}` profile.
+**M9. [FIXED] Saved blueprints can never match placement targets in a later run (possible)** — `src/features/ship-assembly/blueprints/blueprint-matcher.js:3`. `findBlueprintTarget` matches on `parentBlueprintNodeId === port.parentNodeId || node.parentPortKey === port.key`, but blueprint nodes store the *original run's* node ids and `toBlueprintNode` never writes `parentPortKey`. In a new run both clauses are always false → `blueprintMatch` is always 0 and blueprint-guided quick-mount is a cross-session no-op.
 
-**M14. Architect overload desyncs energy tier (latent)** — `src/features/encounters/architect-controller.js:8` sets `run.player.energy.ratio` directly without `energySystem.recalculate`, so `energy.tier` still reads "stable" while ratio is 1.5 (critical); every `LOAD_MODIFIERS[tier]` consumer sees the wrong tier. It also relies on the overheat path broken in High #2.
+**Fix:** `toBlueprintNode(node, portsById)` records the frame-stable `parentPortKey` (looked up from the node's `parentPortId`); both blueprint-service call sites pass the snapshot's `portsById`. `findBlueprintTarget`'s existing `node.parentPortKey === port.key` clause now matches in later runs. Blueprints saved before this change still lack the key and keep matching 0 — acceptable since blueprint-guided quick-mount never worked for them anyway.
 
-**M15. Reactor emits a fake `corruption-changed` event (latent)** — `src/features/equipment/reactor-service.js:13` emits the event for abyssal-heart without calling the corruption system: state never changes, and the payload lacks the `previous`/`value` fields the real event carries (`corruption-system.js:24`) — HUD listeners would render a phantom change.
+**M10. [FIXED] Blueprint validation passes unknown ship frames** — `blueprint-validator.js:100-104`. `unknown-frame` is recorded as an issue but `valid` stays true; an imported blueprint with a bogus `shipFrameId` validates, then `assembly-geometry-service.js:19` throws `Unknown ship frame geometry` downstream.
 
-**M16. Dismantled modules pollute the detached-items ledger** — `src/features/ship-assembly/model/assembly-service.js:73,89`. `detachNode` always records `damageState: "detached"` into `state.detachedItems`, including when called from `dismantleNode` — any "remount detached" repair flow will list deliberate dismantles as combat damage.
+**Fix:** `valid` is now false when `shipFrameId` is not in `knownShipFrameIds`, so bogus imports are rejected before the geometry service throws.
 
-**M17. Placement score scale mismatch (possible)** — `placement-suggestion-service.js:19`. `previewPlacement` returns `lateralImbalance` as an absolute coordinate (tens of units) subtracted raw against otherwise 0–1 metrics, so this one term dominates suggestion ranking. Also `explainPlacement` reads `delta.rotationalInertia`, which `previewPlacement` never returns — dead branch.
+**M11. [FIXED] Trigger budget never resets (latent)** — `src/features/triggers/trigger-engine.js:15,48`. `stepEffects` is cumulative and only reset by `beginStep()`, which nothing calls. After 100 trigger effects in a session, every subsequent trigger is discarded forever.
 
-**M18. Daily-mode `run.seed` doesn't match the RNG actually used** — `sectors/daily-run-service.js:7` overwrites `run.seed` with a different hash than the one that seeded `run.rng` (`game-controller.js:54` + `legacy-runtime.js:421`). Dailies stay fair (both are date-stable), but build history, build codes, and records store a seed that does not reproduce the run.
+**Fix:** `game-controller.syncLegacy` calls `services.triggers.beginStep()` once per simulation step, resetting the chain budget each frame.
+
+**M12. [FIXED] `corruption` vs `corruptionLevel` field mismatch** — `src/features/equipment/item-factory.js:9` creates items with `corruptionLevel`; `prototype-loss-service.js:7` and `salvage-mission-service.js:7` read `item.corruption` (so the "corrupted epic → wreck signal" path never fires for factory items); `workshop-service.js:26-27` writes a third parallel `corruption` field while `corruptionLevel` stays untouched.
+
+**Fix:** Canonical instance field is `corruptionLevel` (item-factory's). Workshop stabilize/corrupt and the reroll context now read/write `corruptionLevel` (falling back to legacy `corruption`), and `prototype-loss-service` / `salvage-mission-service` read `corruptionLevel ?? corruption`. Definition-level `corruption` on content stays untouched.
+
+**M13. [FIXED] Fault scheduler excludes components without `disabledUntil` (latent)** — `src/features/faults/fault-scheduler.js:39`. `component.disabledUntil <= now` is false for `undefined`, so components that never carried the field are filtered out and faults always fall back to the generic `{id: "system"}` profile.
+
+**Fix:** The candidate filter uses `(component.disabledUntil ?? 0) <= now`, so components that never carried the field are eligible fault targets.
+
+**M14. [FIXED] Architect overload desyncs energy tier (latent)** — `src/features/encounters/architect-controller.js:8` sets `run.player.energy.ratio` directly without `energySystem.recalculate`, so `energy.tier` still reads "stable" while ratio is 1.5 (critical); every `LOAD_MODIFIERS[tier]` consumer sees the wrong tier. It also relies on the overheat path broken in High #2.
+
+**Fix:** The overload choice raises `reserved` to 1.5× capacity through `energySystem.recalculate` (with a local `calculateLoad` fallback), so ratio and tier move together and `load-changed` fires.
+
+**M15. [FIXED] Reactor emits a fake `corruption-changed` event (latent)** — `src/features/equipment/reactor-service.js:13` emits the event for abyssal-heart without calling the corruption system: state never changes, and the payload lacks the `previous`/`value` fields the real event carries (`corruption-system.js:24`) — HUD listeners would render a phantom change.
+
+**Fix:** `enterSector` for abyssal-heart calls `changeRunCorruption(context.run, 5, ...)` — state actually changes and the real `corruption-changed` event (with `previous`/`value`) reaches listeners.
+
+**M16. [FIXED] Dismantled modules pollute the detached-items ledger** — `src/features/ship-assembly/model/assembly-service.js:73,89`. `detachNode` always records `damageState: "detached"` into `state.detachedItems`, including when called from `dismantleNode` — any "remount detached" repair flow will list deliberate dismantles as combat damage.
+
+**Fix:** `detachNode` takes `recordDetached` (default true); `dismantleNode` passes false, so deliberate dismantles no longer appear in the remount-detached repair ledger while combat detaches still do.
+
+**M17. [FIXED] Placement score scale mismatch (possible)** — `placement-suggestion-service.js:19`. `previewPlacement` returns `lateralImbalance` as an absolute coordinate (tens of units) subtracted raw against otherwise 0–1 metrics, so this one term dominates suggestion ranking. Also `explainPlacement` reads `delta.rotationalInertia`, which `previewPlacement` never returns — dead branch.
+
+**Fix:** The suggestion service normalizes `massAsymmetry` to `min(1, |lateralImbalance| / 60)` so it scores on the same 0–1 scale as the other metrics, and `previewPlacement` now returns a relative `rotationalInertia` delta so `explainPlacement`'s "Erhöht Trägheit" branch is live.
+
+**M18. [FIXED] Daily-mode `run.seed` doesn't match the RNG actually used** — `sectors/daily-run-service.js:7` overwrites `run.seed` with a different hash than the one that seeded `run.rng` (`game-controller.js:54` + `legacy-runtime.js:421`). Dailies stay fair (both are date-stable), but build history, build codes, and records store a seed that does not reproduce the run.
+
+**Fix:** `daily.apply` reseeds `run.rng` from the normalized daily `config.seed` and sets `run.seed` to the same value, so recorded seeds (build history, codes, records) reproduce the run.
 
 ### UI / input
 
 **M19. [FIXED] OVERDRIVE event restore erases fire-rate upgrades taken during the event** — `src/legacy/legacy-runtime.js:574,579`. `triggerEvent` saves `p.fireRate` and `endEvent` restores it; picking "Overclock" (`fireRate *= 0.85`) during the 8-second frenzy is silently reverted while still consuming one of the max-8 stack.
 
-**M20. Stale validated blueprint can be imported after the textarea is edited** — `src/ui/ship-assembly/blueprint-import-dialog.js:9`. `result` is set on PRÜFEN and the import button stays enabled with no `input` listener to invalidate it: paste code A, validate, replace with code B, import → blueprint A is imported.
+**M20. [FIXED] Stale validated blueprint can be imported after the textarea is edited** — `src/ui/ship-assembly/blueprint-import-dialog.js:9`. `result` is set on PRÜFEN and the import button stays enabled with no `input` listener to invalidate it: paste code A, validate, replace with code B, import → blueprint A is imported.
 
-**M21. Key rebinding stores raw typed text, not a `KeyboardEvent.code`** — `src/ui/screens/settings-screen.js:6` + `bootstrap.js:428`. Typing `f` into the Dodge field deletes the Space binding and registers `"f"`, which never matches `event.code` (`"KeyF"`). Dodge stops working immediately and the broken binding is persisted. Needs a keydown-capture UI or code-format validation.
+**Fix:** An `input` listener on the textarea clears the cached result, disables the import button, and empties the report; the import handler additionally refuses to run without a `valid` result.
 
-**M22. Import-time DOM queries with no null guards** — `src/legacy/legacy-runtime.js:120-121, 219`. `cv`/`cx`/`Input.el` are resolved at module import; any consumer importing this module without the game DOM (tests, future screen split) throws at import time.
+**M21. [FIXED] Key rebinding stores raw typed text, not a `KeyboardEvent.code`** — `src/ui/screens/settings-screen.js:6` + `bootstrap.js:428`. Typing `f` into the Dodge field deletes the Space binding and registers `"f"`, which never matches `event.code` (`"KeyF"`). Dodge stops working immediately and the broken binding is persisted. Needs a keydown-capture UI or code-format validation.
 
-**M23. Assembly canvas pan-drag can get stuck on touch** — `src/ui/ship-assembly/assembly-canvas-controller.js:1`. No `pointercancel` handler and no `pointerId` filtering: a browser-cancelled touch drag leaves `pointer` set, so subsequent moves pan the camera with no button held; a second finger causes pan jumps.
+**Fix:** Binding inputs are readonly and capture the physical key from the `keydown` itself (`event.code`, Tab exempted for keyboard navigation), so only real codes like `KeyF` are stored and persisted.
+
+**M22. [FIXED] Import-time DOM queries with no null guards** — `src/legacy/legacy-runtime.js:120-121, 219`. `cv`/`cx`/`Input.el` are resolved at module import; any consumer importing this module without the game DOM (tests, future screen split) throws at import time.
+
+**Fix:** `cv` and `Input.el`/`knob` fall back to detached elements when the game DOM is absent, and `resize()` bails when no 2D context exists — importing the module headless no longer throws.
+
+**M23. [FIXED] Assembly canvas pan-drag can get stuck on touch** — `src/ui/ship-assembly/assembly-canvas-controller.js:1`. No `pointercancel` handler and no `pointerId` filtering: a browser-cancelled touch drag leaves `pointer` set, so subsequent moves pan the camera with no button held; a second finger causes pan jumps.
+
+**Fix:** Pan tracking is keyed to the initiating `pointerId` (moves and releases from other pointers are ignored, a second pointerdown doesn't hijack the drag), and `pointercancel`/`lostpointercapture` release the drag like `pointerup`.
 
 ### Content / validator blind spots
 

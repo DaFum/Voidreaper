@@ -18,6 +18,10 @@
 - Blueprint import/export, save hydration, and live workbench state are separate entry points. Test more than one path after model changes.
 - Node/port identity stability matters for overlays, inspector panels, and quick-mount flows; avoid regenerating IDs unless intentionally remapping.
 - Geometry and flight metrics are coupled: a visual or placement tweak can unintentionally affect mass/balance/energy metrics used by gameplay systems.
+- Blueprint nodes store run-local node ids; cross-run matching relies on the frame-stable `parentPortKey`, so `toBlueprintNode(node, portsById)` must receive the snapshot's `portsById` at every call site.
+- Hit-zone shapes use the `kind` key everywhere; frame profiles' `coreHitZone` historically used `shape` and is normalized in `hit-zone-builder`. Broadphase bounds must cover the full capsule extent (`length/2 + radius`).
+- `detachNode` records into the detached-items ledger (combat damage → remount-detached repair flow); deliberate removals go through `dismantleNode`, which passes `recordDetached: false`.
+- Placement score metrics are on a 0–1 scale; any new metric fed to `scorePlacement` must be normalized to that range or it dominates the ranking.
 
 ## Reference Docs
 - [../../../docs/superpowers/plans/2026-07-10-adaptive-ship-assembly-master.md](../../../docs/superpowers/plans/2026-07-10-adaptive-ship-assembly-master.md)

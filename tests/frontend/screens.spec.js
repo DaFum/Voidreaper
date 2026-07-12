@@ -396,16 +396,43 @@ describe("settings screen", () => {
     expect(document.documentElement.dataset.reducedMotion).toBe("true");
   });
 
-  test("rebinding a key removes the previous code for that action", () => {
+  test("rebinding captures the pressed key's code and removes the previous code for that action", () => {
+    const container = root(), onChange = vi.fn();
+    const settings = makeSettings();
+    renderSettingsScreen(container, settings, onChange);
+    const dodge = container.querySelector('[data-binding="dodge"]');
+    expect(dodge.value).toBe("Space");
+    expect(dodge.readOnly).toBe(true);
+    const keydown = new KeyboardEvent("keydown", { code: "KeyF", key: "f", bubbles: true, cancelable: true });
+    dodge.dispatchEvent(keydown);
+    expect(keydown.defaultPrevented).toBe(true);
+    expect(dodge.value).toBe("KeyF");
+    expect(settings.bindings.KeyF).toBe("dodge");
+    expect(settings.bindings.Space).toBeUndefined();
+    expect(onChange).toHaveBeenCalledWith(settings);
+  });
+
+  test("rebinding to a key owned by another action swaps the two bindings", () => {
     const container = root();
     const settings = makeSettings();
     renderSettingsScreen(container, settings, () => {});
     const dodge = container.querySelector('[data-binding="dodge"]');
-    expect(dodge.value).toBe("Space");
-    dodge.value = "KeyF";
-    dodge.dispatchEvent(new Event("change", { bubbles: true }));
-    expect(settings.bindings.KeyF).toBe("dodge");
-    expect(settings.bindings.Space).toBeUndefined();
+    dodge.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyE", key: "e", bubbles: true, cancelable: true }));
+    expect(settings.bindings.KeyE).toBe("dodge");
+    // active-2 is not silently unbound — it takes over dodge's freed code.
+    expect(settings.bindings.Space).toBe("active-2");
+    expect(container.querySelector('[data-binding="active-2"]').value).toBe("Space");
+    expect(dodge.value).toBe("KeyE");
+  });
+
+  test("Tab keeps keyboard navigation instead of being captured as a binding", () => {
+    const container = root();
+    const settings = makeSettings();
+    renderSettingsScreen(container, settings, () => {});
+    const dodge = container.querySelector('[data-binding="dodge"]');
+    dodge.dispatchEvent(new KeyboardEvent("keydown", { code: "Tab", key: "Tab", bubbles: true, cancelable: true }));
+    expect(settings.bindings.Space).toBe("dodge");
+    expect(settings.bindings.Tab).toBeUndefined();
   });
 });
 

@@ -11,3 +11,5 @@
 - The runtime holds its own state and update loop; modern services observe and hook into it rather than owning it.
 - Behavior here can duplicate modern feature logic; when both exist, check which path is live before changing either.
 - Edits deep in this file are hard to test in isolation; verify via `npm run build` and a manual click-path.
+- Import-time DOM lookups (game canvas, joystick `#stick`/`#knob`) fall back to detached elements and `resize()` bails without a 2D context, so the module can be imported in a DOM environment where those elements are missing. It still requires `window`/`document` to exist — pure-Node import is not supported.
+- Bootstrap wraps `reset`, `startWave`, `step`, `gameOver`, and `draw` on the game object; renaming or restructuring those methods breaks the modern wiring silently.

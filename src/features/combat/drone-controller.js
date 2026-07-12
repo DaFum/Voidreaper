@@ -9,6 +9,11 @@ export function createDroneController({ budget = 4 } = {}) {
       return drone;
     },
     update(context, dt) {
+      // Summons can be removed externally (e.g. sacrifice cost splices run.summons);
+      // drop those drones here so both lists stay in sync.
+      for (let i = drones.length - 1; i >= 0; i--) {
+        if (!context.run.summons.includes(drones[i])) drones.splice(i, 1);
+      }
       for (const drone of drones) {
         drone.angle += dt * 0.9;
         drone.x = context.player.x + Math.cos(drone.angle) * 72;
@@ -16,10 +21,14 @@ export function createDroneController({ budget = 4 } = {}) {
         drone.target = context.findTarget({ from: drone, priority: "wounded" });
       }
     },
-    destroy(id) {
+    destroy(context, id) {
       const index = drones.findIndex(drone => drone.id === id);
-      if (index >= 0) return drones.splice(index, 1)[0];
-      return null;
+      if (index < 0) return null;
+      const [drone] = drones.splice(index, 1);
+      const summons = context?.run?.summons;
+      const summonIndex = summons ? summons.indexOf(drone) : -1;
+      if (summonIndex >= 0) summons.splice(summonIndex, 1);
+      return drone;
     },
     setBudget(value) { budget = Math.max(0, value); },
     get drones() { return drones; }

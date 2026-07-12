@@ -20,11 +20,17 @@ export function createWorkshopService({ affixRoller, eventBus } = {}) {
       if(repairAction){const repaired=payload.repairService.apply(action,target.nodeId??target.formerNodeId,{inCombat:false});if(repaired===false)return false;session.used+=preview.points;eventBus?.emit("workshop-action",{action,targetId:target.instanceId??target.id});return true;}
       session.used += preview.points;
       if (action === "swap") Object.assign(target, payload.replacement ?? {});
-      if (action === "reroll") target.affixes = affixRoller?.roll?.({ definition: payload.definition ?? target, rarity: target.rarity ?? "rare", itemPower: target.itemPower ?? 100, sector: payload.sector ?? 0, corruption: target.corruption ?? target.corruptionLevel ?? 0, rng: payload.rng }) ?? target.affixes ?? [];
+      if (action === "reroll") {
+        const affixKey = affix => affix?.affixId ?? affix?.id;
+        const locked = (target.affixes ?? []).find(affix => affixKey(affix) === target.lockedAffixId) ?? null;
+        const rolled = affixRoller?.roll?.({ definition: payload.definition ?? target, rarity: target.rarity ?? "rare", itemPower: target.itemPower ?? 100, sector: payload.sector ?? 0, corruption: target.corruptionLevel ?? target.corruption ?? 0, rng: payload.rng }) ?? target.affixes ?? [];
+        // Cap at the rolled count so a preserved lock can't grow the affix total on every reroll.
+        target.affixes = locked ? [locked, ...rolled.filter(affix => affixKey(affix) !== target.lockedAffixId)].slice(0, Math.max(rolled.length, 1)) : rolled;
+      }
       if (action === "lock") target.lockedAffixId = payload.affixId;
-      if (action === "socket") target.sockets = [...(target.sockets ?? []), null];
-      if (action === "stabilize") { target.corruption = Math.max(0, (target.corruption ?? 0) - 10); target.itemPower = Math.floor((target.itemPower ?? 100) * .95); }
-      if (action === "corrupt") { target.corruption = (target.corruption ?? 0) + 12; target.itemPower = Math.ceil((target.itemPower ?? 100) * 1.15); }
+      if (action === "socket") target.sockets = [...(target.sockets ?? []), { chipId: null }];
+      if (action === "stabilize") { target.corruptionLevel = Math.max(0, (target.corruptionLevel ?? target.corruption ?? 0) - 10); target.itemPower = Math.floor((target.itemPower ?? 100) * .95); }
+      if (action === "corrupt") { target.corruptionLevel = (target.corruptionLevel ?? target.corruption ?? 0) + 12; target.itemPower = Math.ceil((target.itemPower ?? 100) * 1.15); }
       if (action === "overclock") Object.assign(target, { outputMultiplier: 1.15, loadMultiplier: 1.12, heatOffset: 10, faultMultiplier: 1.25 });
       eventBus?.emit("workshop-action", { action, targetId: target.instanceId ?? target.id });
       return true;
