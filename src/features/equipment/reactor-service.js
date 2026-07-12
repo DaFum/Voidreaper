@@ -1,3 +1,5 @@
+import { changeRunCorruption } from "../corruption/run-corruption.js";
+
 export function createReactorService({ eventBus } = {}) {
   return {
     capacity(definition, context = {}) {
@@ -10,7 +12,9 @@ export function createReactorService({ eventBus } = {}) {
     canExtract(definition, meta) { return definition.extractable !== false || Boolean(meta?.unlocks?.["extract-abyssal-heart"]); },
     enterSector(definition, context) {
       if (definition.id === "pulse-reactor") eventBus?.emit("energy-pulse", { amount: 45, context });
-      if (definition.id === "abyssal-heart") eventBus?.emit("corruption-changed", { amount: 5, sourceId: definition.id, context });
+      // Route through the corruption system so state actually changes and the
+      // real corruption-changed event (with previous/value) reaches listeners.
+      if (definition.id === "abyssal-heart" && context?.run) changeRunCorruption(context.run, 5, definition.id);
     }
   };
 }

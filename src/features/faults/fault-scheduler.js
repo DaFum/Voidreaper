@@ -36,7 +36,7 @@ export function createFaultScheduler({ rng, profiles, faults, eventBus }) {
       state.pressure = calculateFaultPressure({ ...inputs, cooldown: now - state.lastAt });
       if (!Number.isFinite(state.nextAt)) schedule(now, state.pressure);
       if (now < state.nextAt) return null;
-      const candidates = components.filter(component => component.faultProfileId && component.disabledUntil <= now);
+      const candidates = components.filter(component => component.faultProfileId && (component.disabledUntil ?? 0) <= now);
       const component = candidates.length ? rng.pick(candidates) : { id: "system", faultProfileId: "standard" };
       const profile = profileMap.get(component.faultProfileId) ?? profileMap.get("standard");
       const tier = tierFor(state.pressure);
