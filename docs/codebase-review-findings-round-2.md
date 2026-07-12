@@ -13,9 +13,9 @@ Marking: findings labeled **latent** live in code that is not yet wired into `bo
 
 | # | Prior finding | Status |
 |---|---|---|
-| 1 | `mergeDefaults` array-shape data loss | **Partially fixed** — see High #1 below |
+| 1 | `mergeDefaults` array-shape data loss | **Fixed** — unconditionally converts arrays |
 | 2 | Prototype vault bypasses load-before-write save pattern | **Not fixed** — `src/app/bootstrap.js:424` still uses `services.save.save(metaSave)` in `onFavorite`/`onDismantle`; these remain the only raw `save()` call sites in `src/` |
-| 3 | Missing migration tests | **Partially fixed** — `tests/features/persistence/migrations.test.js` covers the fixed v3 path, but not the still-broken v5/newer paths, so the residual bug has no failing test |
+| 3 | Missing migration tests | **Fixed** — added regression tests for v5 and v6+ array paths |
 | 4 | Blueprint backfill guard misses corrupted v5 saves | **Not fixed** — guard at `src/persistence/migrations/ship-assembly-migration.js:2` unchanged |
 | 5 | Dense one-liner blocks in `bootstrap.js`/`game-controller.js` | **Not fixed** — `bootstrap.js:154` is still a ~5,000-character line; `game-controller.js:63-74` unchanged |
 | 6 | No coverage for legacy-runtime/audio/input | **Not fixed** — `tests/` still has zero references to these modules |
@@ -24,15 +24,10 @@ Marking: findings labeled **latent** live in code that is not yet wired into `bo
 
 ## High severity
 
-### 1. Array-shaped save fields at current/newer save versions are still silently wiped
-**Files:** `src/persistence/migrations.js:8` (array guard), `:38-44` (fix gate), `:47-50` (newer-version early return)
+### 1. [FIXED] Array-shaped save fields at current/newer save versions are still silently wiped
+**Files:** `src/persistence/migrations.js` (array guard), `tests/features/persistence/migrations.test.js`
 
-The PR #32 fix pre-converts array-shaped `inventory`/`wreckSignals`/`codex`/`challenges` via `byId()` — but only inside `if (originalVersion < CURRENT_SAVE_VERSION)`. Reproduced directly:
-
-- `migrateSave({saveVersion: 5, inventory: [...], wreckSignals: [...], codex: [...], challenges: [...]})` → all four fields come back `{}`.
-- `migrateSave({saveVersion: 6, inventory: [...]})` → `{}` (the newer-save path returns before any conversion, despite `src/persistence/AGENTS.md` promising newer saves load with only a warning).
-
-For a v5 save this is the exact case the original finding flagged as having **no migration backup**, so the loss is unrecoverable. Fix direction: run the `byId()` conversion unconditionally (or fix the `Array.isArray` guard in `mergeDefaults` itself), and add regression tests for the v5 and v6+ paths.
+**Fix:** Removed the `originalVersion < CURRENT_SAVE_VERSION` guard so `byId()` runs unconditionally. Added regression tests for v5 and v6+ saves.
 
 ### 2. Overheat can never trigger
 **File:** `src/features/heat/heat-system.js:20-24` (`add`), `:40` (overheat check)
