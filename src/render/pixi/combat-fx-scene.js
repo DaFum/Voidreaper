@@ -26,7 +26,7 @@ export function isSpark(particle) {
 /** Length/rotation of a spark streak — matches the legacy 0.035s velocity tail. */
 export function sparkTransform(particle) {
   return {
-    length: Math.hypot(particle.vx, particle.vy) * 0.035,
+    length: Math.sqrt((particle.vx)*(particle.vx) + (particle.vy)*(particle.vy)) * 0.035,
     rotation: Math.atan2(particle.vy, particle.vx)
   };
 }
