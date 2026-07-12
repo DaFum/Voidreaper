@@ -55,7 +55,8 @@ describe('sortHitCandidates', () => {
             { distanceAlongRay: 5, zone: { priority: 1 } },
         ];
         const originalCandidates = [...candidates];
-        sortHitCandidates(candidates);
+        const sorted = sortHitCandidates(candidates);
+        assert.notStrictEqual(sorted, candidates);
         assert.deepEqual(candidates, originalCandidates);
     });
 

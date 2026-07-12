@@ -64,4 +64,18 @@ test("buildModuleActivityState", async (t) => {
     assert.equal(falsyResult.firing, false);
     assert.equal(falsyResult.faulting, false);
   });
+
+  await t.test("handles null telemetry gracefully by falling back to defaults", () => {
+    const result = buildModuleActivityState(null);
+    assert.deepEqual(result, {
+      charge: 0,
+      cooldown: 0,
+      firing: false,
+      heat: 0,
+      energyFlow: 0,
+      faulting: false,
+      activeUnits: 0
+    });
+    assert.ok(Object.isFrozen(result), "Expected result to be frozen");
+  });
 });

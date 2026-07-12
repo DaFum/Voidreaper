@@ -24,11 +24,11 @@ describe('resolveDamageState', () => {
         assert.equal(resolveDamageState(node2), 'core-disrupted');
     });
 
-    it('returns "armor-broken" when armorIntegrity is <= 0 and core is > 45%', () => {
+    it('returns "armor-broken" when armorIntegrity is <= 0 and core is >= 45%', () => {
         const node = { damageState: 'intact', coreIntegrity: 100, maxCoreIntegrity: 100, armorIntegrity: 0 };
         assert.equal(resolveDamageState(node), 'armor-broken');
 
-        const node2 = { damageState: 'intact', coreIntegrity: 50, maxCoreIntegrity: 100, armorIntegrity: -5 };
+        const node2 = { damageState: 'intact', coreIntegrity: 45, maxCoreIntegrity: 100, armorIntegrity: -5 };
         assert.equal(resolveDamageState(node2), 'armor-broken');
     });
 

@@ -8,6 +8,12 @@ test("returns BLOCKED if occupied is true", () => {
   assert.equal(matchBlueprintNode(target, moduleProfile, { occupied: true }), BLUEPRINT_MATCH.BLOCKED);
 });
 
+test("returns INCOMPATIBLE instead of throwing when target or moduleProfile is missing", () => {
+  assert.equal(matchBlueprintNode(null, {}), BLUEPRINT_MATCH.INCOMPATIBLE);
+  assert.equal(matchBlueprintNode({}, null), BLUEPRINT_MATCH.INCOMPATIBLE);
+  assert.equal(matchBlueprintNode(undefined, undefined), BLUEPRINT_MATCH.INCOMPATIBLE);
+});
+
 test("returns EXACT if preferredModuleDefinitionId matches moduleProfile.definitionId", () => {
   const target = { preferredModuleDefinitionId: "module-a" };
   const moduleProfile = { definitionId: "module-a" };
@@ -62,14 +68,20 @@ test("returns INCOMPATIBLE if sizeClass mismatches", () => {
   assert.equal(matchBlueprintNode(target, moduleProfile), BLUEPRINT_MATCH.INCOMPATIBLE);
 });
 
-test("returns STRUCTURAL if fields are missing and sizeClass is undefined on both", () => {
+test("returns INCOMPATIBLE if fields are missing and sizeClass is undefined on both", () => {
   const target = {};
   const moduleProfile = {};
-  assert.equal(matchBlueprintNode(target, moduleProfile), BLUEPRINT_MATCH.STRUCTURAL);
+  assert.equal(matchBlueprintNode(target, moduleProfile), BLUEPRINT_MATCH.INCOMPATIBLE);
 });
 
 test("returns INCOMPATIBLE if target sizeClass is undefined but moduleProfile has one", () => {
   const target = {};
   const moduleProfile = { sizeClass: "small" };
   assert.equal(matchBlueprintNode(target, moduleProfile), BLUEPRINT_MATCH.INCOMPATIBLE);
+});
+
+test("returns COMPATIBLE on role match even when sizeClass mismatches (role/tag compatibility outranks structural fit)", () => {
+  const target = { allowedRoles: ["role-a"], sizeClass: "small" };
+  const moduleProfile = { visualProfileId: "role-a", sizeClass: "large" };
+  assert.equal(matchBlueprintNode(target, moduleProfile), BLUEPRINT_MATCH.COMPATIBLE);
 });
