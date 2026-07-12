@@ -171,13 +171,21 @@ Latent because `createWeaponController` is not yet wired into bootstrap, but the
 
 **M19. [FIXED] OVERDRIVE event restore erases fire-rate upgrades taken during the event** — `src/legacy/legacy-runtime.js:574,579`. `triggerEvent` saves `p.fireRate` and `endEvent` restores it; picking "Overclock" (`fireRate *= 0.85`) during the 8-second frenzy is silently reverted while still consuming one of the max-8 stack.
 
-**M20. Stale validated blueprint can be imported after the textarea is edited** — `src/ui/ship-assembly/blueprint-import-dialog.js:9`. `result` is set on PRÜFEN and the import button stays enabled with no `input` listener to invalidate it: paste code A, validate, replace with code B, import → blueprint A is imported.
+**M20. [FIXED] Stale validated blueprint can be imported after the textarea is edited** — `src/ui/ship-assembly/blueprint-import-dialog.js:9`. `result` is set on PRÜFEN and the import button stays enabled with no `input` listener to invalidate it: paste code A, validate, replace with code B, import → blueprint A is imported.
 
-**M21. Key rebinding stores raw typed text, not a `KeyboardEvent.code`** — `src/ui/screens/settings-screen.js:6` + `bootstrap.js:428`. Typing `f` into the Dodge field deletes the Space binding and registers `"f"`, which never matches `event.code` (`"KeyF"`). Dodge stops working immediately and the broken binding is persisted. Needs a keydown-capture UI or code-format validation.
+**Fix:** An `input` listener on the textarea clears the cached result, disables the import button, and empties the report; the import handler additionally refuses to run without a `valid` result.
 
-**M22. Import-time DOM queries with no null guards** — `src/legacy/legacy-runtime.js:120-121, 219`. `cv`/`cx`/`Input.el` are resolved at module import; any consumer importing this module without the game DOM (tests, future screen split) throws at import time.
+**M21. [FIXED] Key rebinding stores raw typed text, not a `KeyboardEvent.code`** — `src/ui/screens/settings-screen.js:6` + `bootstrap.js:428`. Typing `f` into the Dodge field deletes the Space binding and registers `"f"`, which never matches `event.code` (`"KeyF"`). Dodge stops working immediately and the broken binding is persisted. Needs a keydown-capture UI or code-format validation.
 
-**M23. Assembly canvas pan-drag can get stuck on touch** — `src/ui/ship-assembly/assembly-canvas-controller.js:1`. No `pointercancel` handler and no `pointerId` filtering: a browser-cancelled touch drag leaves `pointer` set, so subsequent moves pan the camera with no button held; a second finger causes pan jumps.
+**Fix:** Binding inputs are readonly and capture the physical key from the `keydown` itself (`event.code`, Tab exempted for keyboard navigation), so only real codes like `KeyF` are stored and persisted.
+
+**M22. [FIXED] Import-time DOM queries with no null guards** — `src/legacy/legacy-runtime.js:120-121, 219`. `cv`/`cx`/`Input.el` are resolved at module import; any consumer importing this module without the game DOM (tests, future screen split) throws at import time.
+
+**Fix:** `cv` and `Input.el`/`knob` fall back to detached elements when the game DOM is absent, and `resize()` bails when no 2D context exists — importing the module headless no longer throws.
+
+**M23. [FIXED] Assembly canvas pan-drag can get stuck on touch** — `src/ui/ship-assembly/assembly-canvas-controller.js:1`. No `pointercancel` handler and no `pointerId` filtering: a browser-cancelled touch drag leaves `pointer` set, so subsequent moves pan the camera with no button held; a second finger causes pan jumps.
+
+**Fix:** Pan tracking is keyed to the initiating `pointerId` (moves and releases from other pointers are ignored, a second pointerdown doesn't hijack the drag), and `pointercancel`/`lostpointercapture` release the drag like `pointerup`.
 
 ### Content / validator blind spots
 

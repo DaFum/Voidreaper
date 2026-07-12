@@ -117,10 +117,13 @@ import { escapeHtml } from "../ui/escape-html.js";
     };
 
     /* ---------- canvas ---------- */
-    const cv = document.getElementById("game");
+    // Fall back to detached elements so importing this module without the game
+    // DOM (tests, headless) doesn't throw at import time.
+    const cv = document.getElementById("game") ?? document.createElement("canvas");
     const cx = cv.getContext("2d");
     let W = 0, H = 0, DPR = 1;
     function resize() {
+      if (!cx) return;
       DPR = clamp(window.devicePixelRatio || 1, 1, 2.5);
       W = window.innerWidth; H = window.innerHeight;
       cv.width = (W * DPR) | 0; cv.height = (H * DPR) | 0;
@@ -216,7 +219,7 @@ import { escapeHtml } from "../ui/escape-html.js";
     /* ---------- input ---------- */
     const Input = {
       keys: new Set(), stickActive: false, stickId: -1, sx: 0, sy: 0, dx: 0, dy: 0,
-      el: document.getElementById("stick"), knob: document.getElementById("knob"),
+      el: document.getElementById("stick") ?? document.createElement("div"), knob: document.getElementById("knob") ?? document.createElement("div"),
       init() {
         window.addEventListener("keydown", e => {
           if (e.target && (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(e.target.tagName) || e.target.isContentEditable)) return;

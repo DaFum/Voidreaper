@@ -70,6 +70,22 @@ describe("assembly canvas controller", () => {
     canvas.dispatchEvent(new WheelEvent("wheel", { deltaY: -120, cancelable: true }));
     expect(controller.camera.zoom).toBeCloseTo(1.08);
   });
+
+  test("pan tracks a single pointer and releases on pointercancel", () => {
+    const canvas = makeCanvas();
+    const controller = createAssemblyCanvasController({ canvas });
+    canvas.dispatchEvent(new PointerEvent("pointerdown", { pointerId: 1, clientX: 0, clientY: 0 }));
+    canvas.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 10, clientY: 0 }));
+    expect(controller.camera.offset.x).toBeCloseTo(10);
+    // a second finger must not hijack the drag or cause pan jumps
+    canvas.dispatchEvent(new PointerEvent("pointerdown", { pointerId: 2, clientX: 100, clientY: 100 }));
+    canvas.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 130, clientY: 100 }));
+    expect(controller.camera.offset.x).toBeCloseTo(10);
+    // a browser-cancelled touch drag ends the pan instead of leaving it stuck
+    canvas.dispatchEvent(new PointerEvent("pointercancel", { pointerId: 1 }));
+    canvas.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 50, clientY: 50 }));
+    expect(controller.camera.offset).toEqual({ x: 10, y: 0 });
+  });
 });
 
 describe("assembly inspector panel", () => {
@@ -347,6 +363,25 @@ describe("blueprint import dialog", () => {
     expect(importButton.disabled).toBe(false);
     importButton.click();
     expect(onImport).toHaveBeenCalledWith(decoded);
+  });
+
+  test("editing the code after validation invalidates the stale result", () => {
+    const container = root();
+    const decoded = { blueprintVersion: 3, shipFrameId: "frame-a", nodes: [], connections: [], visualVariants: [] };
+    const onImport = vi.fn();
+    createBlueprintImportDialog(container, { validate: () => ({ valid: true, issues: [], blueprint: decoded }), onImport });
+    const textarea = container.querySelector("textarea");
+    textarea.value = encodeBlueprint(decoded);
+    container.querySelector('[data-action="inspect"]').click();
+    const importButton = container.querySelector('[data-action="import"]');
+    expect(importButton.disabled).toBe(false);
+
+    textarea.value = "etwas anderes";
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    expect(importButton.disabled).toBe(true);
+    expect(container.querySelector('[data-role="report"]').textContent).toBe("");
+    importButton.click();
+    expect(onImport).not.toHaveBeenCalled();
   });
 
   test("keeps invalid results non-importable", () => {
