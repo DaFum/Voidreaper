@@ -25,6 +25,7 @@ Marking: findings labeled **latent** live in code that is not yet wired into `bo
 ## High severity
 
 ### 1. [FIXED] Array-shaped save fields at current/newer save versions are still silently wiped
+
 **Files:** `src/persistence/migrations.js` (array guard), `tests/features/persistence/migrations.test.js`
 
 **Fix:** Removed the `originalVersion < CURRENT_SAVE_VERSION` guard so `byId()` runs unconditionally. Added regression tests for v5 and v6+ saves.
@@ -75,6 +76,7 @@ The legacy `Input.init` keydown pauses on Escape/KeyP whenever `Game.state === "
 **Failure scenario:** Player has the Reaper evolution plus orbitals/zones; an orbital crit triggers the reaper AoE mid-loop, and the outer loop continues over enemies from the reaper query — arbitrary double-hits or missed hits on every crit. Fix: use a dedicated buffer (or a local array) for the reaper query.
 
 ### 7. [FIXED] Module-scope singleton combat controllers leak state across runs (latent)
+
 **Files:** `src/features/combat/drone-controller.js`, `mine-controller.js`, `nanite-controller.js`, instantiated at import time by `src/content/weapons/drone-core.js:4`, `mine-layer.js:4`, `nanite-swarm.js:4`
 
 **Fix:** Controllers are now created per equip in each adapter's `createState()` (called with a fresh per-run context by `weapon-controller.equip`) and stored on the weapon state instead of at module scope, so drone budget, mine list, and nanite infections reset with every run. The drone controller additionally keeps `run.summons` in sync in both directions: `destroy(context, id)` also splices the drone out of `run.summons`, and `update()` drops drones that were removed externally (e.g. by the sacrifice cost in `active-module-system.js`). Regression tests in `tests/features/combat-controller-run-isolation.test.js`.

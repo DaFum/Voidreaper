@@ -87,6 +87,36 @@ test("a stranded pending save survives when the recovery write fails", async () 
     assert.equal(storage.data.has(PENDING_KEY), true);
 });
 
+test("a corrupt main save falls back to the stranded pending save, not defaults", async () => {
+    const warnings = [];
+    const pendingSave = { ...createDefaultSave(), currencies: { voidShards: 11 } };
+    const storage = createMemoryLocalStorage({
+        [SAVE_KEY]: "{ definitely not json",
+        [PENDING_KEY]: JSON.stringify(pendingSave)
+    });
+    const store = createSaveStore(storage, { onWarning: message => warnings.push(message) });
+    const loaded = await store.load();
+
+    assert.equal(loaded.currencies.voidShards, 11);
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0], /beschädigt/);
+    // The corrupt copy is backed up, the recovered save becomes the main key,
+    // and the pending key is cleaned up after the successful write.
+    assert.ok([...storage.data.keys()].some(key => key.startsWith(`${SAVE_KEY}-corrupt-`)));
+    assert.equal(JSON.parse(storage.data.get(SAVE_KEY)).currencies.voidShards, 11);
+    assert.equal(storage.data.has(PENDING_KEY), false);
+});
+
+test("a corrupt main save without a pending copy still starts a default profile", async () => {
+    const warnings = [];
+    const storage = createMemoryLocalStorage({ [SAVE_KEY]: "{ definitely not json" });
+    const store = createSaveStore(storage, { onWarning: message => warnings.push(message) });
+    const loaded = await store.load();
+
+    assert.equal(loaded.currencies.voidShards, createDefaultSave().currencies.voidShards);
+    assert.match(warnings[0], /Standardprofil/);
+});
+
 test("a failed write during legacy migration still returns the migrated save", async () => {
     const legacySave = { ...createDefaultSave(), currencies: { voidShards: 9 } };
     const storage = createMemoryLocalStorage({ "voidreaper-eternal": JSON.stringify(legacySave) });

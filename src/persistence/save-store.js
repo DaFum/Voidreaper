@@ -87,33 +87,46 @@ export function createSaveStore(storage = globalThis.storage ?? globalThis.local
     key: SAVE_KEY,
     async load() {
       const pending = await readPending();
+      let mainError = null;
       try {
         const current = await readRaw(SAVE_KEY);
         if (current) {
+          const migrated = migrateSave(current);
           if (pending) await discardPending();
-          return migrateSave(current);
+          return migrated;
         }
-        if (pending) {
+      } catch (error) {
+        mainError = error;
+      }
+      // A corrupt main key must not skip pending/legacy recovery: back it up,
+      // warn, and fall through to the remaining sources.
+      if (mainError) {
+        const corruptKey = `${SAVE_KEY}-corrupt-${Date.now()}`;
+        const raw = await adapter.get(SAVE_KEY).catch(() => null);
+        if (raw) await adapter.set(corruptKey, raw).catch(() => {});
+        const message = pending
+          ? "Speicherstand beschädigt – Sicherung angelegt und letzte Sicherungskopie wiederhergestellt."
+          : "Speicherstand beschädigt – Sicherung angelegt und Standardprofil gestartet.";
+        onWarning?.(message, mainError);
+      }
+      if (pending) {
+        try {
           const migrated = migrateSave(pending);
           // Keep the pending copy until the recovery write lands — if the write
           // fails (quota, private mode) it stays the only persisted save.
           try { await write(migrated); await discardPending(); } catch { /* retried on next load */ }
           return migrated;
-        }
+        } catch { await discardPending().catch(() => {}); }
+      }
+      try {
         const legacy = await readRaw(LEGACY_KEY);
         if (legacy) {
           const migrated = migrateSave(legacy);
           await write(migrated).catch(() => {});
           return migrated;
         }
-        return createDefaultSave();
-      } catch (error) {
-        const corruptKey = `${SAVE_KEY}-corrupt-${Date.now()}`;
-        const raw = await adapter.get(SAVE_KEY).catch(() => null);
-        if (raw) await adapter.set(corruptKey, raw).catch(() => {});
-        onWarning?.("Speicherstand beschädigt – Sicherung angelegt und Standardprofil gestartet.", error);
-        return createDefaultSave();
-      }
+      } catch { /* unreadable legacy save — fall through to defaults */ }
+      return createDefaultSave();
     },
     async save(data) {
       return enqueue(() => persist(migrateSave(data)));

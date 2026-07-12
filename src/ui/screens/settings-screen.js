@@ -6,5 +6,22 @@ export function renderSettingsScreen(root, settings, onChange) {
   root.onchange = event => { const setting = event.target.dataset.setting; if (setting) settings[setting] = event.target.type === "checkbox" ? event.target.checked : Number(event.target.value); document.documentElement.style.setProperty("--ui-scale", settings.uiScale); document.documentElement.dataset.reducedMotion = String(settings.reducedMotion); document.documentElement.dataset.colorPatterns = String(settings.colorPatterns); onChange(settings); };
   // Bindings are captured from the keydown itself (event.code), never from typed
   // text — a typed "f" is not the code "KeyF" and would silently break the action.
-  root.onkeydown = event => { const binding = event.target.dataset?.binding; if (!binding || event.code === "Tab") return; event.preventDefault(); event.target.value = event.code; for (const [code, action] of Object.entries(settings.bindings)) if (action === binding) delete settings.bindings[code]; settings.bindings[event.code] = binding; onChange(settings); };
+  // If the pressed key already belongs to another action, the two actions swap
+  // codes so nothing is silently left unbound.
+  root.onkeydown = event => {
+    const binding = event.target.dataset?.binding;
+    if (!binding || event.code === "Tab") return;
+    event.preventDefault();
+    const previousCode = Object.entries(settings.bindings).find(([, action]) => action === binding)?.[0] ?? null;
+    const displacedAction = settings.bindings[event.code] !== binding ? settings.bindings[event.code] : null;
+    for (const [code, action] of Object.entries(settings.bindings)) if (action === binding || code === event.code) delete settings.bindings[code];
+    settings.bindings[event.code] = binding;
+    event.target.value = event.code;
+    if (displacedAction) {
+      if (previousCode && previousCode !== event.code) settings.bindings[previousCode] = displacedAction;
+      const displacedInput = root.querySelector(`[data-binding="${displacedAction}"]`);
+      if (displacedInput) displacedInput.value = previousCode ?? "";
+    }
+    onChange(settings);
+  };
 }

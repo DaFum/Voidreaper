@@ -412,6 +412,19 @@ describe("settings screen", () => {
     expect(onChange).toHaveBeenCalledWith(settings);
   });
 
+  test("rebinding to a key owned by another action swaps the two bindings", () => {
+    const container = root();
+    const settings = makeSettings();
+    renderSettingsScreen(container, settings, () => {});
+    const dodge = container.querySelector('[data-binding="dodge"]');
+    dodge.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyE", key: "e", bubbles: true, cancelable: true }));
+    expect(settings.bindings.KeyE).toBe("dodge");
+    // active-2 is not silently unbound — it takes over dodge's freed code.
+    expect(settings.bindings.Space).toBe("active-2");
+    expect(container.querySelector('[data-binding="active-2"]').value).toBe("Space");
+    expect(dodge.value).toBe("KeyE");
+  });
+
   test("Tab keeps keyboard navigation instead of being captured as a binding", () => {
     const container = root();
     const settings = makeSettings();
