@@ -1,8 +1,9 @@
+const loadId = Math.random().toString(36).substring(2, 6);
 let counter = 0;
 
 export function createRuntimeId(prefix = "runtime") {
   counter += 1;
-  return `${prefix}-${Date.now().toString(36)}-${counter.toString(36)}`;
+  return `${prefix}-${Date.now().toString(36)}-${loadId}-${counter.toString(36)}`;
 }
 
 export function createIdService(runId = "run", restoredCounter = 0) {

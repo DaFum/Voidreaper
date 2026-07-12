@@ -9,7 +9,9 @@ export function createEventBus() {
       return () => bucket.delete(listener);
     },
     emit(eventName, payload) {
-      for (const listener of listeners.get(eventName) ?? []) {
+      const currentListeners = listeners.get(eventName);
+      if (!currentListeners) return;
+      for (const listener of [...currentListeners]) {
         try {
           listener(payload);
         } catch (error) {
