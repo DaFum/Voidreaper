@@ -35,11 +35,8 @@ test("createHitZone result is frozen", () => {
 
   assert.ok(Object.isFrozen(hitZone), "The returned hit zone should be frozen");
 
-  // Try to modify it, should throw in strict mode, which we can test by seeing if the value stays
-  try {
+  assert.throws(() => {
     hitZone.enabled = false;
-  } catch (e) {
-    // strict mode throws TypeError on freeze assignment
-  }
+  }, TypeError);
   assert.equal(hitZone.enabled, true);
 });

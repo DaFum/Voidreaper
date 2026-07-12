@@ -4,7 +4,7 @@ import { createMineController } from "../../features/combat/mine-controller.js";
 const mines = createMineController();
 const adapter = {
   createState: () => ({ cooldown: 0 }),
-  update(context, state, dt) { mines.update(context, dt); state.cooldown -= dt; if (state.cooldown <= 0 && Math.sqrt((context.player.vx)*(context.player.vx) + (context.player.vy)*(context.player.vy)) > 5) { mines.place(context, { damage: 22 }); state.cooldown = 1.1; } },
+  update(context, state, dt) { mines.update(context, dt); state.cooldown -= dt; if (state.cooldown <= 0 && (context.player.vx)*(context.player.vx) + (context.player.vy)*(context.player.vy) > 25) { mines.place(context, { damage: 22 }); state.cooldown = 1.1; } },
   fire: () => false, onEquip: () => {}, onUnequip: () => {}, getTelemetry: () => ({ activeMines: mines.mines.length })
 };
 

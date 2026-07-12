@@ -54,6 +54,21 @@ test("explainPlacement", async (t) => {
     assert.deepEqual(reasons, ["Exponierte Außenposition"]);
   });
 
+  await t.test("does not identify reasons at exact threshold boundaries", () => {
+    const boundaryMetrics = {
+      fireLane: 0.7,
+      protection: 0.35,
+      energyPath: 0.75,
+      balance: 0.7,
+      newPorts: 1
+    };
+    const boundaryDelta = {
+      rotationalInertia: 0.08
+    };
+    const reasons = explainPlacement(boundaryMetrics, boundaryDelta);
+    assert.deepEqual(reasons, []);
+  });
+
   await t.test("limits output to 4 reasons maximum", () => {
     const maxMetrics = {
       fireLane: 0.8,

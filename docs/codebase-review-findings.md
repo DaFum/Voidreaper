@@ -21,7 +21,7 @@ migrateSave({ saveVersion: 3, inventory: [{id:'item-1',qty:2}], wreckSignals:[{i
 ```
 This also fires for `saveVersion: 5` (current) with array-shaped fields — it is not gated behind the legacy-migration branch at all.
 
-**Failure scenario:** Any legacy save, hand-edited/imported save, or a future/older client emitting array-shaped `inventory`/`wreckSignals`/`codex`/`challenges` silently loses all prototype-vault items, wreck signals, codex entries, and challenge progress on load, with no warning to the player. (A pre-mutation backup is stored in `migrationBackups`, so the data isn't unrecoverable from disk, but the normal load/save flow presents empty collections.)
+**Failure scenario:** Any legacy save, hand-edited/imported save, or a future/older client emitting array-shaped `inventory`/`wreckSignals`/`codex`/`challenges` silently loses all prototype-vault items, wreck signals, codex entries, and challenge progress on load, with no warning to the player. For a save below `CURRENT_SAVE_VERSION`, a pre-mutation backup is stored in `migrationBackups` (`migrations.js` only writes it inside `if (originalVersion < CURRENT_SAVE_VERSION)`), so the data isn't unrecoverable from disk there. But for a save already at the current version (`saveVersion: 5`) with array-shaped fields — the case this finding says triggers the same bug — that guard never fires, so no backup exists and the loss is unrecoverable through the normal load/save flow.
 
 **Why it matters:** `src/persistence/AGENTS.md` and CLAUDE.md both state `migrateSave` must support both legacy and modern inputs — this currently breaks that guarantee for these four fields.
 
@@ -58,7 +58,7 @@ The one-time blueprint-backfill guard is `fromVersion < 5 && !Object.keys(save.s
 This is a maintainability/code-quality issue rather than a functional bug: these blocks are effectively unreviewable line-by-line, any future edit is high-risk for silent mistakes (per CLAUDE.md's own warning that "contracts here are structural, not typed" and changes can break screens with no compile error), and diffs against them will be hard to read. Since `src/app/` is explicitly called out in CLAUDE.md as the highest-risk wiring layer, the density compounds that risk. Recommend reformatting (not behavior changes) as a follow-up, at least for the DEV-only debug block, which is safe to touch since it never ships to production builds.
 
 ### 6. No automated coverage found for `legacy-runtime.js`, `audio-system.js`, `input-controller.js`, `touch-stick.js`, or `action-bindings.js`
-Spot-checked `tests/` for references to these modules and found none. This matches CLAAUDE.md's characterization of `legacy-runtime.js` as hard to test in isolation, but the input/audio modules are smaller and more testable — worth considering targeted unit tests, particularly for `action-bindings.js` given it's a shared contract consumed by both `bootstrap.js` and the legacy runtime's `events.on("action", ...)` handler.
+Spot-checked `tests/` for references to these modules and found none. This matches CLAUDE.md's characterization of `legacy-runtime.js` as hard to test in isolation, but the input/audio modules are smaller and more testable — worth considering targeted unit tests, particularly for `action-bindings.js` given it's a shared contract consumed by both `bootstrap.js` and the legacy runtime's `events.on("action", ...)` handler.
 
 ---
 
