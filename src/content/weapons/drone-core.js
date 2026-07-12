@@ -12,5 +12,5 @@ const adapter = {
 export default createWeaponDefinition({
   id: "drone-core", name: "DRONE CORE", energyCost: 42, heat: 2,
   tags: [{ id: "Weapon", value: 1 }, { id: "Drone", value: 3 }, { id: "Summon", value: 2 }, { id: "Energy", value: 2 }],
-  effects: ["summon-unit", "spawn-projectile"], faultProfileId: "weapon-drone", unlockSource: "challenge"
+  effects: [{ id: "summon-unit" }, { id: "spawn-projectile" }], faultProfileId: "weapon-drone", unlockSource: "challenge"
 }, adapter);

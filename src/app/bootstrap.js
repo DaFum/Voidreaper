@@ -325,7 +325,7 @@ export async function bootstrap() {
   };
   const showCampaignMap = () => {
     if (!previewRun) {
-      previewRun = createRunState({ seed: Date.now(), mode: "campaign" });
+      previewRun = createRunState({ seed: Date.now(), mode: "campaign", campaignPathId: metaSave.selectedCampaignPath });
       previewRun.heat = createHeatState();
       previewRun.corruption = createCorruptionState();
       previewRun.resources.scrap = 80;
