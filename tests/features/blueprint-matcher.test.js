@@ -8,6 +8,12 @@ test("returns BLOCKED if occupied is true", () => {
   assert.equal(matchBlueprintNode(target, moduleProfile, { occupied: true }), BLUEPRINT_MATCH.BLOCKED);
 });
 
+test("returns INCOMPATIBLE instead of throwing when target or moduleProfile is missing", () => {
+  assert.equal(matchBlueprintNode(null, {}), BLUEPRINT_MATCH.INCOMPATIBLE);
+  assert.equal(matchBlueprintNode({}, null), BLUEPRINT_MATCH.INCOMPATIBLE);
+  assert.equal(matchBlueprintNode(undefined, undefined), BLUEPRINT_MATCH.INCOMPATIBLE);
+});
+
 test("returns EXACT if preferredModuleDefinitionId matches moduleProfile.definitionId", () => {
   const target = { preferredModuleDefinitionId: "module-a" };
   const moduleProfile = { definitionId: "module-a" };

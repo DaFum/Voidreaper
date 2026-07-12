@@ -203,7 +203,7 @@ export async function bootstrap() {
       console.warn("[render] PixiJS environment stage unavailable — canvas backdrop remains active", error);
     }
   })();
-  legacyRuntime.configurePlayerDamageRouter((_player,damage)=>{const geometry=services.assemblyGeometry?.getSnapshot(),target=geometry?.nodes.filter(node=>!node.isRoot).sort((a,b)=>((b.worldPosition.x)*(b.worldPosition.x) + (b.worldPosition.y)*(b.worldPosition.y))-((a.worldPosition.x)*(a.worldPosition.x) + (a.worldPosition.y)*(a.worldPosition.y)))[0];return target&&services.moduleDamage?services.moduleDamage.applyDamage(target.nodeId,damage,"legacy-contact").remainingDamage:damage;});
+  legacyRuntime.configurePlayerDamageRouter((_player,damage)=>{const geometry=services.assemblyGeometry?.getSnapshot(),target=(geometry?.nodes??[]).filter(node=>!node.isRoot).sort((a,b)=>((b.worldPosition.x)*(b.worldPosition.x) + (b.worldPosition.y)*(b.worldPosition.y))-((a.worldPosition.x)*(a.worldPosition.x) + (a.worldPosition.y)*(a.worldPosition.y)))[0];return target&&services.moduleDamage?services.moduleDamage.applyDamage(target.nodeId,damage,"legacy-contact").remainingDamage:damage;});
   const hangarRoot = document.querySelector("#hangar");
   const startMenu = attachStartMenuToggle(document.querySelector("#start"), { openButton: document.querySelector("#menuopenbtn"), closeButton: document.querySelector("#menuclosebtn") });
   // The game-over screen's "Hangar" button routes through the legacy UI.menu(), which only
