@@ -34,10 +34,9 @@ export function createHeatSystem({ eventBus, modules } = {}) {
         state.lastThreshold = threshold;
         eventBus?.emit("heat-threshold", { threshold, value: state.value, previous });
       }
-      const projectedSeconds = coolingRate > 0 ? (100 - state.value) / coolingRate : 0;
-      if (!state.warningIssued && state.value >= 85 && projectedSeconds <= 1.2) {
+      if (!state.warningIssued && state.value >= 85 && state.coolingDelay > 0) {
         state.warningIssued = true;
-        eventBus?.emit("heat-warning", { seconds: Math.max(0, projectedSeconds) });
+        eventBus?.emit("heat-warning", { seconds: 1.0 });
       }
       if (state.crossedOverheat) {
         this.overheat(state);

@@ -219,7 +219,7 @@ import { escapeHtml } from "../ui/escape-html.js";
       el: document.getElementById("stick"), knob: document.getElementById("knob"),
       init() {
         window.addEventListener("keydown", e => {
-          if (e.target && (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || e.target.isContentEditable)) return;
+          if (e.target && (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(e.target.tagName) || e.target.isContentEditable)) return;
           this.keys.add(e.code);
           if ((e.code === "KeyP" || e.code === "Escape") && Game.state === "run") Game.pause();
           else if ((e.code === "KeyP" || e.code === "Escape") && Game.state === "pause") Game.resume();
@@ -707,9 +707,9 @@ import { escapeHtml } from "../ui/escape-html.js";
         if (isCrit && this.player.evoReaper) {
           const R = 70;
           this.burst(e.x, e.y, 10, "#ffd60a", 220);
-          const reaperTargets = [];
-          this.hash.query(e.x, e.y, R, reaperTargets);
-          for (const o of reaperTargets) if (o !== e && dist2(e.x, e.y, o.x, o.y) < R * R) {
+          this.reaperBuf = this.reaperBuf || [];
+          this.hash.query(e.x, e.y, R, this.reaperBuf);
+          for (const o of this.reaperBuf) if (o !== e && dist2(e.x, e.y, o.x, o.y) < R * R) {
             o.hp -= dmg * 0.4; o.hitT = 0.08;
             if (o.hp <= 0) this.killEnemy(o);
           }
