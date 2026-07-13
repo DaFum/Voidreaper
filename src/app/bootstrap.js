@@ -542,10 +542,48 @@ export async function bootstrap() {
       const inspector = document.createElement("div");
       const consequence = selected ? workbench.previewConsequence() : { allowed: false, warnings: [] };
       let deltas = [], title;
-      if (selected) { const definition = equipmentDefinition(selected.definitionId); title = definition?.name ?? selected.definitionId; deltas = [["PANZERUNG", `${Math.round(selected.armorIntegrity ?? 0)} / ${Math.round(selected.maxArmorIntegrity ?? 0)}`], ["KERN", `${Math.round(selected.coreIntegrity ?? 0)}`], ["MASSE", selected.mass ?? "—"], ["ZUSTAND", selected.damageState === "intact" ? "INTAKT" : selected.damageState ?? "—"]]; }
-      else if (selectedItem) { const definition = equipmentDefinition(selectedItem.definitionId); title = definition?.name ?? selectedItem.definitionId; const assembly = definition?.assembly ?? {}; deltas = [["GRÖSSE", assembly.sizeClass ?? "—"], ["ENERGIE", assembly.energyClass ?? "—"], ["LAST", assembly.loadDemand ?? "—"], ["MONTAGE", (assembly.mountTypes ?? []).join(" / ") || "—"]]; }
-      else if (selectedPort) { title = `${selectedPort.sizeClass}-PORT`; deltas = [["KLASSE", selectedPort.sizeClass], ["ENERGIE", selectedPort.energyClass ?? "—"], ["TRAGLAST", selectedPort.loadCapacity ?? "—"], ["TYP", selectedPort.mountType ?? "—"]]; }
-      renderAssemblyInspector(inspector, { node: selected, port: selectedPort, item: selectedItem, title, deltas, warnings: consequence.warnings, actions: { rotate: Boolean(selected) && consequence.allowed, moveBranch: Boolean(selected), dismantle: Boolean(selected) && consequence.allowed } });
+      if (selected) {
+        const definition = equipmentDefinition(selected.definitionId);
+        title = definition?.name ?? selected.definitionId;
+        deltas = [
+          ["PANZERUNG", `${Math.round(selected.armorIntegrity ?? 0)} / ${Math.round(selected.maxArmorIntegrity ?? 0)}`],
+          ["KERN", `${Math.round(selected.coreIntegrity ?? 0)}`],
+          ["MASSE", selected.mass ?? "—"],
+          ["ZUSTAND", selected.damageState === "intact" ? "INTAKT" : selected.damageState ?? "—"],
+        ];
+      } else if (selectedItem) {
+        const definition = equipmentDefinition(selectedItem.definitionId);
+        title = definition?.name ?? selectedItem.definitionId;
+        const assembly = definition?.assembly ?? {};
+        deltas = [
+          ["GRÖSSE", assembly.sizeClass ?? "—"],
+          ["ENERGIE", assembly.energyClass ?? "—"],
+          ["LAST", assembly.loadDemand ?? "—"],
+          ["MONTAGE", (assembly.mountTypes ?? []).join(" / ") || "—"],
+        ];
+      } else if (selectedPort) {
+        title = `${selectedPort.sizeClass}-PORT`;
+        deltas = [
+          ["KLASSE", selectedPort.sizeClass],
+          ["ENERGIE", selectedPort.energyClass ?? "—"],
+          ["TRAGLAST", selectedPort.loadCapacity ?? "—"],
+          ["TYP", selectedPort.mountType ?? "—"],
+        ];
+      }
+
+      renderAssemblyInspector(inspector, {
+        node: selected,
+        port: selectedPort,
+        item: selectedItem,
+        title,
+        deltas,
+        warnings: consequence.warnings,
+        actions: {
+          rotate: Boolean(selected) && consequence.allowed,
+          moveBranch: Boolean(selected),
+          dismantle: Boolean(selected) && consequence.allowed,
+        },
+      });
       screen.setInspector(inspector);
     };
     const draw = clock => {
