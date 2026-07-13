@@ -8,7 +8,7 @@ const STATIC_TUTORIAL_TARGETS = {
   resumebtn: "pause-resume",
   dodgebtn: "hud-dodge",
   "combat-actions": "hud-active-modules",
-  levelopts: "levelup-options"
+  cards: "levelup-options"
 };
 
 const TARGET_NOT_VISIBLE_MESSAGE = "Ziel ist nicht sichtbar. Öffne den zugehörigen Bereich.";
@@ -83,6 +83,7 @@ export function createTutorialOverlay({ root, resolveTarget, onAction = () => {}
       removeEventListener("scroll", refresh, true);
       observer.disconnect();
       if (refreshFrame != null) cancelAnimationFrame(refreshFrame);
+      root.onclick = null;
       root.replaceChildren();
     }
   };

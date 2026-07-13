@@ -5,12 +5,12 @@ import { renderTutorialLibrary } from "../../src/ui/screens/tutorial-library-scr
 
 describe("tutorial overlay", () => {
   test("maps every combat tutorial target to the real HUD containers", () => {
-    document.body.innerHTML = `<canvas id="game"></canvas><div id="resource-meters"></div><button id="pausebtn"></button><button id="resumebtn"></button><button id="dodgebtn"></button><div id="combat-actions"></div><div id="levelopts"></div>`;
+    document.body.innerHTML = `<canvas id="game"></canvas><div id="resource-meters"></div><button id="pausebtn"></button><button id="resumebtn"></button><button id="dodgebtn"></button><div id="combat-actions"></div><div id="cards"></div>`;
     applyTutorialTargets(document);
     expect(document.querySelector("#game").dataset.tutorialId).toBe("game-canvas");
     expect(document.querySelector("#combat-actions").dataset.tutorialId).toBe("hud-active-modules");
     expect(document.querySelector("#resumebtn").dataset.tutorialId).toBe("pause-resume");
-    expect(document.querySelector("#levelopts").dataset.tutorialId).toBe("levelup-options");
+    expect(document.querySelector("#cards").dataset.tutorialId).toBe("levelup-options");
   });
 
   test("positions inside mobile viewport and exposes controls", () => {
@@ -23,6 +23,7 @@ describe("tutorial overlay", () => {
     expect(root.querySelector('[role="dialog"]')).not.toBeNull();
     root.querySelector('[data-action="next"]').click(); expect(onAction).toHaveBeenCalledWith("next");
     overlay.destroy();
+    expect(root.onclick).toBeNull();
   });
 
   test("paused guidance offers a real resume action", () => {

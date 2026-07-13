@@ -1,4 +1,3 @@
-Original prompt: Teste im Browser und optimiere alle Klickwege und Features.
 
 - Branch `feature_fix` was clean at the start of this browser-QA pass.
 - User explicitly approved changing or resetting the local game state during testing.
@@ -34,7 +33,6 @@ Original prompt: Teste im Browser und optimiere alle Klickwege und Features.
 
 ## Interactive tutorial implementation (2026-07-13)
 
-- Original prompt: "Setze alle 5 Phasen ohne weitere Rückfragen um."
 - Implemented a declarative tutorial coordinator with persisted pause, resume, skip, replay, completion, migration, and event-driven action steps.
 - Added six staggered German tutorial chapters covering 44 capabilities in 50 detailed steps.
 - Replaced the legacy onboarding coupling; Bastion now unlocks through regular research.

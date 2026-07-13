@@ -9,11 +9,16 @@
 - [docs/superpowers/specs/voidreaper-master-spezifikation.md](docs/superpowers/specs/voidreaper-master-spezifikation.md)
 - [docs/superpowers/plans/2026-07-10-adaptive-ship-assembly-master.md](docs/superpowers/plans/2026-07-10-adaptive-ship-assembly-master.md)
 - [docs/manual-validation/adaptive-ship-assembly.md](docs/manual-validation/adaptive-ship-assembly.md)
+- [docs/superpowers/plans/2026-07-13-interactive-tutorial-master.md](docs/superpowers/plans/2026-07-13-interactive-tutorial-master.md)
+- [docs/superpowers/specs/2026-07-13-interactive-tutorial-design.md](docs/superpowers/specs/2026-07-13-interactive-tutorial-design.md)
+- [docs/manual-validation/interactive-tutorial.md](docs/manual-validation/interactive-tutorial.md)
 
 ## Validation
-- `npm run build` runs both validators and then the Vite production build.
+- `npm run build` runs the content, ship-assembly, and tutorial validators before the Vite production build.
 - Use `npm run validate-content` for content and registry changes.
 - Use `npm run validate:assembly` for ship-assembly and blueprint changes.
+- Use `npm run validate:tutorial` for tutorial chapters, events, focus targets, and capability coverage.
+- Use `npm run test:frontend` for UI component and screen regressions.
 
 ## Gotchas
 - The ship-assembly pipeline is not isolated: content, geometry, rendering, UI, persistence, and validators all cross-check each other.

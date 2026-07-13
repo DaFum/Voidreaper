@@ -14,6 +14,7 @@
 ## Gotchas
 
 - `scripts/validate-ship-assembly-content.mjs` imports feature and render code, so a rendering registry change can break validation even when no script file changed.
+- `scripts/validate-tutorial-content.mjs` imports the declarative tutorial catalog and checks chapter, step, event, target, and capability contracts.
 - Validators are part of the release gate; do not widen or soften checks unless the content schema genuinely changed.
 - Keep script output stable enough that the failure reason is obvious when a count or ID mismatch occurs.
 
@@ -28,4 +29,5 @@
 
 - `npm run validate-content`
 - `npm run validate:assembly`
+- `npm run validate:tutorial`
 - `npm run build`
