@@ -4,9 +4,11 @@ export function findMaximumConstructionCandidate({ state, geometry, ports, defin
     .filter(port => !port.occupiedByNodeId)
     .sort((a, b) => (a.branchDepth ?? 0) - (b.branchDepth ?? 0) || a.portId.localeCompare(b.portId));
 
-  const orderedDefinitions = [...definitions].sort(
-    (a, b) => (b.assembly?.childPorts?.length ?? 0) - (a.assembly?.childPorts?.length ?? 0) || a.id.localeCompare(b.id)
-  );
+  const orderedDefinitions = [...definitions]
+    .filter(d => d.assembly)
+    .sort(
+      (a, b) => (b.assembly?.childPorts?.length ?? 0) - (a.assembly?.childPorts?.length ?? 0) || a.id.localeCompare(b.id)
+    );
 
   for (const definition of orderedDefinitions) {
     for (const port of orderedPorts) {
