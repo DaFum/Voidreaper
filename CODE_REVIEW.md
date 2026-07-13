@@ -11,9 +11,9 @@ central `escapeHtml`, and thumbnail data URLs are constrained by `safeImageDataU
 `javascript:` URIs). `save-store.js` is carefully hardened against corruption, quota, and private-mode
 failures with layered recovery (main → pending → legacy → default).
 
-This review found **2 High** (both now ✅ **fixed** — see resolution notes), **9 Medium**, and a longer tail
-of **Low** issues, plus **1 open design question**. Every finding below was read and confirmed against the
-actual code paths (line references verified). The dominant themes:
+This review found **2 High** and **9 Medium** (all now ✅ **fixed** — see resolution notes), and a longer
+tail of **Low** issues, plus **1 open design question**. Every finding below was read and confirmed against
+the actual code paths (line references verified). The dominant themes:
 
 1. **Two silent data-loss / render-loss bugs** driven by ID and profile-resolution edge cases (H1, H2).
 2. **The save-load path is all-or-nothing**: several unguarded dereferences in migrations turn
