@@ -231,13 +231,13 @@ Latent because `createWeaponController` is not yet wired into bootstrap, but the
 
 ### UI / input / audio
 
-- **`src/ui/components/synergy-list.js:3-5`** — `entry.name`/`item.id`/`item.minimum` interpolated into `innerHTML` without `escapeHtml`; the only hole in an otherwise consistent escaping convention (data is static content today, so not exploitable, but one `<` in a content entry injects markup into the pause-screen inspector).
-- **`src/audio/audio-system.js`** — the entire modern audio system is dead code (all live audio is legacy `AudioSys`), with latent bugs if wired: `setVolume()` before `unlock()` is lost, and `unlock()` never `resume()`s a suspended context.
-- **`input-controller.js:17-20`** — no window blur/visibility reset for `held`; a key held while focus leaves the window (without hiding the tab) keeps `axis()` reporting movement. Legacy `Input.keys` has the same gap.
-- **`touch-stick.js:35`** — `pointerup` resets on any pointer and a second `pointerdown` hijacks the origin. Latent: bootstrap never passes `stickElement`, so the modern stick is dead code and `stick.state` in `axis()` is always `{0,0}` — the live stick is the legacy one (which does check `pointerId`).
-- **`codex-screen.js:8`, `prototype-vault-screen.js:8-11`** — filter inputs lose focus on every filter change (full `innerHTML` re-render, no focus restoration like `hangar-screen.js` does for tabs).
-- **`legacy-runtime.js:30`** — `REDUCED` is snapshotted at import; the in-game "Reduced Motion" setting (and even OS-level changes mid-session) never reach legacy screen shake/glitch effects.
-- **`bootstrap.js:280-306` (possible)** — leaving the workbench via a hangar tab skips `workbench.close()`; the session/state machine stays open. No user-visible symptom confirmed.
+- [FIXED] **`src/ui/components/synergy-list.js:3-5`** — `entry.name`/`item.id`/`item.minimum` interpolated into `innerHTML` without `escapeHtml`; the only hole in an otherwise consistent escaping convention (data is static content today, so not exploitable, but one `<` in a content entry injects markup into the pause-screen inspector).
+- [FIXED] **`src/audio/audio-system.js`** — the entire modern audio system is dead code (all live audio is legacy `AudioSys`), with latent bugs if wired: `setVolume()` before `unlock()` is lost, and `unlock()` never `resume()`s a suspended context.
+- [FIXED] **`input-controller.js:17-20`** — no window blur/visibility reset for `held`; a key held while focus leaves the window (without hiding the tab) keeps `axis()` reporting movement. Legacy `Input.keys` has the same gap.
+- [FIXED] **`touch-stick.js:35`** — `pointerup` resets on any pointer and a second `pointerdown` hijacks the origin. Latent: bootstrap never passes `stickElement`, so the modern stick is dead code and `stick.state` in `axis()` is always `{0,0}` — the live stick is the legacy one (which does check `pointerId`).
+- [FIXED] **`codex-screen.js:8`, `prototype-vault-screen.js:8-11`** — filter inputs lose focus on every filter change (full `innerHTML` re-render, no focus restoration like `hangar-screen.js` does for tabs).
+- [FIXED] **`legacy-runtime.js:30`** — `REDUCED` is snapshotted at import; the in-game "Reduced Motion" setting (and even OS-level changes mid-session) never reach legacy screen shake/glitch effects.
+- [FIXED] **`bootstrap.js:280-306` (possible)** — leaving the workbench via a hangar tab skips `workbench.close()`; the session/state machine stays open. No user-visible symptom confirmed.
 - **Unwired screens (informational)** — `run-summary-screen.js`, `sector-summary-screen.js`, `abyss-transition-screen.js`, `extraction-screen.js`, `difficulty-selector.js`, `item-comparison.js`, `assembly-touch-controls.js`, and `renderBuildHistory` are referenced only by tests; their contracts are unverified against any live producer.
 
 ### Render / content

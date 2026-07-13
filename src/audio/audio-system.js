@@ -14,18 +14,25 @@ const SOUND_CONFIG = {
 export function createAudioSystem({ volume = 0.5 } = {}) {
   let context = null;
   let master = null;
+  let currentVolume = volume;
   return {
     unlock() {
-      if (context) return;
+      if (context) {
+        if (context.state === "suspended") context.resume();
+        return;
+      }
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (!AudioContext) return;
       context = new AudioContext();
       master = context.createGain();
-      master.gain.value = volume;
+      master.gain.value = currentVolume;
       master.connect(context.destination);
     },
     resume() { context?.resume(); },
-    setVolume(value) { if (master) master.gain.value = value; },
+    setVolume(value) {
+      currentVolume = value;
+      if (master) master.gain.value = value;
+    },
     play(eventName) {
       if (!context || !master || !SOUND_CONFIG[eventName]) return;
       const [frequency, duration, type, gain, slide] = SOUND_CONFIG[eventName];

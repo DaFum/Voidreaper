@@ -224,7 +224,7 @@ export async function bootstrap() {
     const moduleProfileFor = item => { const definition = item && equipmentDefinition(item.definitionId); return definition ? { ...definition.assembly, definitionId: definition.id, tags: definition.tags } : null; };
     const evaluatePort = (port, profile) => profile && services.compatibility ? services.compatibility.evaluate({ state: model.assembly, moduleProfile: profile, port, geometrySnapshot: model.geometry }) : null;
     let unsubscribeGeometry = null;
-    const cleanup = () => { if (frameHandle) cancelAnimationFrame(frameHandle); frameHandle = null; resizeObserver?.disconnect(); cameraController?.destroy(); screen?.destroy?.(); unsubscribeGeometry?.(); unsubscribeGeometry = null; };
+    const cleanup = () => { if (frameHandle) cancelAnimationFrame(frameHandle); frameHandle = null; resizeObserver?.disconnect(); cameraController?.destroy(); screen?.destroy?.(); unsubscribeGeometry?.(); unsubscribeGeometry = null; workbench.close(); };
     const render = () => {
       model = workbench.model();
       geometryById = new Map(model.geometry.nodes.map(node => [node.nodeId, node]));
