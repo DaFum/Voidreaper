@@ -4,9 +4,9 @@ const act=(id,title,body,target,event,matches,hint)=>({id,kind:"action",title,bo
 const optionalAct=(id,title,body,target,event,matches,hint)=>({ ...act(id,title,body,target,event,matches,hint), optional:true });
 
 const foundations=[
-  explain("welcome","TRAININGSSIGNAL","Hier lernst du Steuerung, Kampf und Ressourcen ohne Risiko.","game-canvas"),
+  explain("welcome","TRAININGSSIGNAL","Hier lernst du Steuerung, Kampf und Ressourcen ohne Risiko: Im Training wird dein Schiff nicht zerstört und nichts zählt für deinen Fortschritt.","game-canvas"),
   act("move","BEWEGUNG","Bewege das Schiff. Positionierung hält dich am Leben.","game-canvas",E.MOVEMENT_USED,p=>p?.magnitude>.25,"WASD oder Touch-Stick"),
-  act("fire","ZIELEN UND FEUERN","Halte den Feuerkanal auf ein Ziel.","game-canvas",E.SHOT_FIRED,null,"Maus oder primäre Feuersteuerung"),
+  explain("fire","AUTOMATISCHES FEUER","Deine Waffen erfassen Ziele in Reichweite automatisch. Halte Abstand und lass den Feuerkanal arbeiten.","game-canvas"),
   act("dodge","AUSWEICHEN","Weiche durch eine Gefahrenzone aus.","hud-dodge",E.DODGE_USED),
   explain("active","AKTIVMODULE","Q und E aktivieren ausgerüstete Module, sobald ihre Kosten gedeckt sind.","hud-active-modules"),
   explain("resources","DEIN SCHIFF","Hull und Schild halten dich im Run. Energie, Hitze und Korruption begrenzen deine Leistung.","hud-resources"),

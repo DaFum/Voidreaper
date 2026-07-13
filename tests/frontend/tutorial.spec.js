@@ -13,6 +13,14 @@ describe("tutorial overlay", () => {
     expect(document.querySelector("#cards").dataset.tutorialId).toBe("levelup-options");
   });
 
+  test("full-bleed targets pin the card to the corner instead of centering it", () => {
+    const viewport = { width: 800, height: 872 };
+    const position = placeTutorialCard({ top: 0, bottom: 872, left: 0, right: 800, width: 800, height: 872 }, { width: 360, height: 240 }, viewport);
+    expect(position.side).toBe("corner");
+    expect(position.left).toBe(800 - 360 - 8);
+    expect(position.top).toBe(872 - 240 - 8);
+  });
+
   test("positions inside mobile viewport and exposes controls", () => {
     const position = placeTutorialCard({ top: 700, bottom: 744, left: 340, right: 384, width: 44, height: 44 }, { width: 320, height: 180 }, { width: 390, height: 844 });
     expect(position.side).toBe("top"); expect(position.left).toBeGreaterThanOrEqual(8);
