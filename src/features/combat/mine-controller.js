@@ -3,7 +3,7 @@ export function createMineController({ maximum = 16 } = {}) {
   // Mines live in both `mines` and the shared `run.zones`; any removal from the
   // local list must also drop the object from run.zones or it lingers as a live
   // zone for the rest of the run (cf. drone-controller re-syncing run.summons).
-  const removeZone = (run, mine) => { const zones = run?.zones; if (!zones || !mine) return; const index = zones.indexOf(mine); if (index >= 0) zones.splice(index, 1); };
+  const removeZone = (run, mine) => { const zones = run?.zones; if (!zones || typeof zones.indexOf !== "function" || !mine) return; const index = zones.indexOf(mine); if (index >= 0) zones.splice(index, 1); };
   return {
     place(context, payload = {}) {
       if (mines.length >= maximum) removeZone(context.run, mines.shift());

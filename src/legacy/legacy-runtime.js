@@ -316,8 +316,8 @@ import { escapeHtml } from "../ui/escape-html.js";
       id: definition.id,
       ico: definition.icon,
       nm: definition.name,
-      req: definition.requirements.filter(requirement => requirement.type === "upgrade").map(requirement => ({ id: requirement.id, minimum: requirement.minimum ?? 1 })),
-      ds: definition.description ?? definition.effects.join(" · "),
+      req: (definition.requirements ?? []).filter(requirement => requirement.type === "upgrade").map(requirement => ({ id: requirement.id, minimum: requirement.minimum ?? 1 })),
+      ds: definition.description ?? definition.effects?.join(" · ") ?? "",
       apply: player => evolutionEffectRunner?.(definition.effects[0], player)
     }));
 

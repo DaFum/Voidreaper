@@ -7,4 +7,4 @@ export function overlapsAny(candidate, occupied, margin = 4) { return occupied.s
 // placement<->geometry import cycle; keep them in sync with module-geometry-builders.
 const MODULE_SIZE = Object.freeze({ S: 13, M: 18, L: 25, XL: 34 });
 const EXTENT_FACTOR = 1.45 / 2 + 0.55;
-export function boundsFromCenter(center, size, ownerId) { const half = (MODULE_SIZE[size] ?? MODULE_SIZE.M) * EXTENT_FACTOR; return { ownerId, minX:center.x-half,minY:center.y-half,maxX:center.x+half,maxY:center.y+half }; }
+export function boundsFromCenter(center = { x: 0, y: 0 }, size, ownerId) { const half = (MODULE_SIZE[size] ?? MODULE_SIZE.M) * EXTENT_FACTOR; return { ownerId, minX:center.x-half,minY:center.y-half,maxX:center.x+half,maxY:center.y+half }; }
