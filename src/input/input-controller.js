@@ -19,15 +19,21 @@ export function createInputController({ eventBus, bindings = {}, stickElement, s
     const action = resolvedBindings[event.code];
     if (action) held.delete(action);
   };
+  const onBlur = () => {
+    held.clear();
+    stick.reset();
+  };
 
   return {
     start() {
       window.addEventListener("keydown", onKeyDown);
       window.addEventListener("keyup", onKeyUp);
+      window.addEventListener("blur", onBlur);
     },
     stop() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
       held.clear();
       stick.reset();
     },

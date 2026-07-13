@@ -27,7 +27,7 @@ import { escapeHtml } from "../ui/escape-html.js";
     const lerp = (a, b, t) => a + (b - a) * t;
     const dist2 = (ax, ay, bx, by) => { const dx = ax - bx, dy = ay - by; return dx * dx + dy * dy; };
     const fmtTime = s => `${String((s / 60) | 0).padStart(2, "0")}:${String((s | 0) % 60).padStart(2, "0")}`;
-    const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const isReducedMotion = () => document.documentElement.dataset.reducedMotion === "true" || matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     function mulberry32(seed) {
       return function () {
@@ -229,6 +229,7 @@ import { escapeHtml } from "../ui/escape-html.js";
           if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(e.code)) e.preventDefault();
         });
         window.addEventListener("keyup", e => this.keys.delete(e.code));
+        window.addEventListener("blur", () => this.keys.clear());
         cv.addEventListener("pointerdown", e => this.onDown(e), { passive: false });
         window.addEventListener("pointermove", e => this.onMove(e), { passive: false });
         window.addEventListener("pointerup", e => this.onUp(e));
@@ -966,7 +967,7 @@ import { escapeHtml } from "../ui/escape-html.js";
         t.x = x; t.y = y; t.vy = -46; t.txt = txt; t.color = color;
         t.life = t.maxLife = heavy ? 1.3 : 0.9; t.size = size || 12; t.heavy = !!heavy;
       },
-      shake(m) { if (!REDUCED) this.cam.shake = Math.max(this.cam.shake, m); },
+      shake(m) { if (!isReducedMotion()) this.cam.shake = Math.max(this.cam.shake, m); },
       glitch() {
         document.body.classList.add("glitching", "hitfx");
         setTimeout(() => document.body.classList.remove("glitching", "hitfx"), 220);
@@ -1431,7 +1432,7 @@ import { escapeHtml } from "../ui/escape-html.js";
           arena: this.arena,
           time: t,
           seed: this.seed,
-          reducedMotion: REDUCED,
+          reducedMotion: isReducedMotion(),
           lowDetail: this.bloomOn === false, // frame-cost gate drops the parallax backdrop with the bloom pass
           floorAlpha: envHandled ? 0.82 : 1 // let the GPU nebula/starfield glow through the arena floor
         });
@@ -1695,7 +1696,7 @@ import { escapeHtml } from "../ui/escape-html.js";
           frozen,
           target: this.player,
           shade: color => this.shade(color),
-          reducedMotion: REDUCED
+          reducedMotion: isReducedMotion()
         });
       },
 

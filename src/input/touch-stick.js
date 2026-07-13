@@ -23,6 +23,7 @@ export function createTouchStick(element, knob, radius = 56) {
   }
 
   element?.addEventListener("pointerdown", event => {
+    if (state.pointerId !== null) return;
     state.pointerId = event.pointerId;
     state.originX = event.clientX;
     state.originY = event.clientY;
@@ -32,8 +33,8 @@ export function createTouchStick(element, knob, radius = 56) {
   element?.addEventListener("pointermove", event => {
     if (event.pointerId === state.pointerId) update(event.clientX, event.clientY);
   });
-  element?.addEventListener("pointerup", reset);
-  element?.addEventListener("pointercancel", reset);
+  element?.addEventListener("pointerup", event => { if (event.pointerId === state.pointerId) reset(); });
+  element?.addEventListener("pointercancel", event => { if (event.pointerId === state.pointerId) reset(); });
 
   return { state, reset };
 }
