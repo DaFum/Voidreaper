@@ -108,9 +108,11 @@ export function createGameController(services) {
       return true;
     },
     inspectorModel(game) {
-      const tags = run?.build.tags ?? new Map();
+      const tags = run?.build.tags ?? { totals: new Map(), provenance: new Map() };
       const context = {
-        tags,
+        // evolution requirements read context.tags as a Map of totals, while
+        // collect() returns { totals, provenance } — pass the totals Map here
+        tags: tags.totals ?? tags,
         upgrades: game.upgradeCounts,
         corruption: run?.corruption.value ?? 0,
         loadRatio: run?.player.energy?.ratio ?? 0,

@@ -4,11 +4,13 @@ import { migrateShipAssemblySave } from "./migrations/ship-assembly-migration.js
 
 const clone = value => JSON.parse(JSON.stringify(value));
 
+const isPlainObject = value => value !== null && typeof value === "object" && !Array.isArray(value);
+
 function mergeDefaults(defaults, value) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return clone(defaults);
+  if (!isPlainObject(value)) return clone(defaults);
   const merged = clone(defaults);
   for (const key of Object.keys(value)) {
-    if (merged[key] !== undefined && merged[key] !== null && typeof merged[key] === "object" && value[key] !== null && typeof value[key] === "object" && !Array.isArray(merged[key]) && !Array.isArray(value[key])) {
+    if (isPlainObject(merged[key]) && isPlainObject(value[key])) {
       merged[key] = mergeDefaults(merged[key], value[key]);
     } else if (value[key] !== undefined) {
       merged[key] = clone(value[key]);
@@ -56,7 +58,7 @@ export function migrateSave(input) {
     delete backup.checkpoint;
     if (backup.shipBlueprints) {
       for (const bp of Object.values(backup.shipBlueprints)) {
-        delete bp.thumbnailDataUrl;
+        if (bp) delete bp.thumbnailDataUrl;
       }
     }
     save.migrationBackups[`v${originalVersion}-${Date.now()}`] = backup;

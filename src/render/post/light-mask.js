@@ -22,6 +22,8 @@ export function createLightMask() {
         const light = lights[index];
         const x = (light.x + offsetX) * MASK_SCALE;
         const y = (light.y + offsetY) * MASK_SCALE;
+        // NaN coordinates would pass every cull comparison and crash createRadialGradient
+        if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
         const radius = Math.max(2, (light.radius || 0) * MASK_SCALE);
         if (x + radius < 0 || y + radius < 0 || x - radius > width || y - radius > height) continue;
         const intensity = Math.min(1, light.intensity ?? 1);

@@ -9,6 +9,7 @@ export const merchantPrice = (item, regionIndex = 0, tier = 1) => item.basePrice
 
 export function createMerchantService({ modules = [], weapons = [], reactors = [], currencyService, eventBus } = {}) {
   const cache = new Map();
+  const rerollCounts = new Map();
   function roll(seed, regionIndex = 0, tier = 1) {
     const key = `${seed}:${regionIndex}:${tier}`;
     if (cache.has(key)) return cache.get(key);
@@ -45,7 +46,9 @@ export function createMerchantService({ modules = [], weapons = [], reactors = [
     },
     sell(run, item) { run.inventory = run.inventory.filter(entry => entry !== item); currencyService.award(run, "sale", Math.max(1, Math.floor(merchantPrice(item) / 4))); },
     reserve(offer) { offer.reserved = true; return offer; },
-    reroll(run, seed, regionIndex, tier) { if (!currencyService.spend(run, { scrap: 5 })) return null; return roll(typeof seed === "number" ? seed + 0x9e3779b9 : `${seed}:rerolled`, regionIndex, tier); },
+    // each paid reroll must produce a fresh offer set, so the derived seed
+    // carries a per-node reroll counter instead of a fixed offset
+    reroll(run, seed, regionIndex, tier) { if (!currencyService.spend(run, { scrap: 5 })) return null; const key = `${seed}:${regionIndex}:${tier}`; const count = (rerollCounts.get(key) ?? 0) + 1; rerollCounts.set(key, count); return roll(typeof seed === "number" ? seed + 0x9e3779b9 * count : `${seed}:rerolled:${count}`, regionIndex, tier); },
     reveal
   };
 }

@@ -1,4 +1,4 @@
-const loadId = Math.random().toString(36).substring(2, 6);
+const loadId = Math.floor(Math.random() * 1679616).toString(36).padStart(4, "0");
 let counter = 0;
 
 export function createRuntimeId(prefix = "runtime") {

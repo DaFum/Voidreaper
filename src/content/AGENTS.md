@@ -19,7 +19,7 @@
 - ID changes are migration-sensitive even for "meta" content because old saves, blueprint imports, and codex history can reference those IDs.
 - Some shape fields are consumed indirectly through assembly resolvers and effect systems; missing defaults may fail only at runtime, not at import.
 - Weapon adapter modules must not hold per-run state at module scope (drone/mine/nanite controllers once leaked across runs this way). Create controllers inside `createState()` and store them on the weapon state so each equip gets a fresh instance.
-- New module effect ids must also be added to `src/content/effects/module-effect-manifest.js` or `npm run validate-content` fails — the validator deliberately does not trust the module catalog for its own allowlist.
+- New module effect ids must also be added to `src/content/effects/module-effect-manifest.js` or `npm run validate-content` fails — the validator deliberately does not trust the module catalog for its own allowlist. Ship/reactor effect ids without a runtime handler live in `src/content/effects/latent-effect-manifest.js` (shared by the validator and the effect registry's `declareLatent`); remove an id from there when its real handler is registered.
 - Item *instances* carry `corruptionLevel` (set by item-factory); the `corruption` field on content definitions is a separate, definition-level value. Do not mix the two.
 
 ## Validation
