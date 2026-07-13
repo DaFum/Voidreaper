@@ -7,10 +7,15 @@ const clone = value => JSON.parse(JSON.stringify(value));
 
 const isPlainObject = value => value !== null && typeof value === "object" && !Array.isArray(value);
 
+// Keys that must never be copied from (possibly hand-edited or imported) save
+// JSON, or a crafted value would pollute Object.prototype during the merge.
+const UNSAFE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
 function mergeDefaults(defaults, value) {
   if (!isPlainObject(value)) return clone(defaults);
   const merged = clone(defaults);
   for (const key of Object.keys(value)) {
+    if (UNSAFE_KEYS.has(key)) continue;
     if (isPlainObject(merged[key]) && isPlainObject(value[key])) {
       merged[key] = mergeDefaults(merged[key], value[key]);
     } else if (value[key] !== undefined) {
@@ -20,7 +25,25 @@ function mergeDefaults(defaults, value) {
   return merged;
 }
 
-const byId = value => Array.isArray(value) ? Object.fromEntries(value.map((entry, index) => [entry.instanceId ?? entry.id ?? String(index), entry])) : (value ?? {});
+// Tolerate null/sparse elements (a single bad entry must not throw and abort
+// the whole migration into a default-profile reset) and preserve entries that
+// collide on id by suffixing the index instead of silently dropping them.
+const byId = value => {
+  if (!Array.isArray(value)) return value ?? {};
+  // Build via Object.fromEntries so a persisted id of "__proto__" (or other
+  // prototype key) becomes an own enumerable property instead of triggering the
+  // prototype setter and silently dropping the entry.
+  const seen = new Set();
+  const entries = [];
+  value.forEach((entry, index) => {
+    if (entry == null || typeof entry !== "object") return;
+    let key = entry.instanceId ?? entry.id ?? String(index);
+    if (seen.has(key)) key = `${key}-${index}`;
+    seen.add(key);
+    entries.push([key, entry]);
+  });
+  return Object.fromEntries(entries);
+};
 
 export function migrateLegacySave(legacy = {}) {
   const save = createDefaultSave();

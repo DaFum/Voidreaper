@@ -13,6 +13,8 @@ export function createIdService(runId = "run", restoredCounter = 0) {
       runCounter += 1;
       return `${runId}-${prefix}-${runCounter.toString(36)}`;
     },
-    snapshot() { return runCounter; }
+    snapshot() { return runCounter; },
+    restore(value) { const next = Math.max(0, Math.floor(Number(value) || 0)); if (next > runCounter) runCounter = next; },
+    get prefix() { return runId; }
   };
 }
