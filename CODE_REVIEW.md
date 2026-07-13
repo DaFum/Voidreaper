@@ -11,9 +11,9 @@ central `escapeHtml`, and thumbnail data URLs are constrained by `safeImageDataU
 `javascript:` URIs). `save-store.js` is carefully hardened against corruption, quota, and private-mode
 failures with layered recovery (main → pending → legacy → default).
 
-This review found **2 High**, **9 Medium**, and a longer tail of **Low** issues, plus **1 open design
-question**. Every finding below was read and confirmed against the actual code paths (line references
-verified). The dominant themes:
+This review found **2 High** (both now ✅ **fixed** — see resolution notes), **9 Medium**, and a longer tail
+of **Low** issues, plus **1 open design question**. Every finding below was read and confirmed against the
+actual code paths (line references verified). The dominant themes:
 
 1. **Two silent data-loss / render-loss bugs** driven by ID and profile-resolution edge cases (H1, H2).
 2. **The save-load path is all-or-nothing**: several unguarded dereferences in migrations turn
@@ -25,8 +25,16 @@ verified). The dominant themes:
 
 ## High
 
-### H1 — Blueprint ID counter is never persisted, so saved blueprints are silently overwritten across sessions
+### H1 — Blueprint ID counter is never persisted, so saved blueprints are silently overwritten across sessions — ✅ FIXED
 **`src/app/bootstrap.js:173`** (with `src/features/ship-assembly/blueprints/blueprint-service.js` `hydrate`, `src/core/ids.js:9`)
+
+> **Resolution:** `createIdService` gained `restore(value)` and a `prefix` getter (`src/core/ids.js`). The
+> blueprint service now writes `save.blueprintIdCounter = idFactory.snapshot()` on every persist and, on
+> `hydrate`, restores the counter to `max(persisted, derived-from-existing-ids)` — the id-scan fallback lets
+> pre-fix saves self-heal on first load. `blueprintIdCounter` was added to the save schema default
+> (`save-schema.js`) and defaulted in the ship-assembly migration so it survives load/export. Verified: after
+> a simulated reload the next minted id no longer collides with an existing one (see `scratchpad/verify.mjs`).
+
 
 `createIdService("meta-blueprints")` is constructed with no `restoredCounter`, and `blueprints.hydrate()`
 only reloads cached blueprints — it never restores the counter via `idFactory.snapshot()`. So the counter
@@ -42,8 +50,17 @@ Blueprints get neither the snapshot nor the restore.
 **Fix:** persist `blueprintIds.snapshot()` in the save and pass it back as `restoredCounter` on hydrate
 (mirror the checkpoint pattern), or mint blueprint IDs with a collision-resistant scheme (`createRuntimeId`).
 
-### H2 — One unknown/removed module `definitionId` permanently blanks the entire ship for the run
+### H2 — One unknown/removed module `definitionId` permanently blanks the entire ship for the run — ✅ FIXED
 **`src/features/ship-assembly/geometry/assembly-geometry-service.js:16` (`profileFor`) + `:26` (`guardedRebuild`)**
+
+> **Resolution:** added a non-throwing `getAssemblyProfile(id)` to the equipment registry
+> (`equipment-registry.js`, returns `null` for unknown ids) and switched `profileFor` to use it, so the
+> existing `?? profileRegistry.getModuleProfile(...) ?? { rendererId, sizeClass }` fallback chain now actually
+> runs. A stale node degrades to a placeholder profile (`buildModuleGeometry` already tolerates a minimal
+> profile via `??` defaults) instead of throwing and poisoning `cache.revision`. `requireAssemblyProfile` is
+> unchanged for callers that intentionally want the strict throw. Verified: `getAssemblyProfile(unknown)`
+> returns `null` without throwing and the fallback placeholder is produced (see `scratchpad/verify.mjs`).
+
 
 `profileFor` is written with a graceful-fallback chain:
 `equipmentRegistry?.requireAssemblyProfile(node.definitionId) ?? profileRegistry?.getModuleProfile(...) ?? {...}`.

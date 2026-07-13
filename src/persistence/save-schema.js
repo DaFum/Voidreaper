@@ -35,6 +35,7 @@ export function createDefaultSave() {
     blueprints: meta.blueprints,
     shipBlueprints: meta.shipBlueprints,
     activeBlueprintId: meta.activeBlueprintId,
+    blueprintIdCounter: meta.blueprintIdCounter ?? 0,
     blueprintLibraryVersion: meta.blueprintLibraryVersion,
     assemblyVisualPreferences: meta.assemblyVisualPreferences,
     wreckSignals: meta.wreckSignals,
