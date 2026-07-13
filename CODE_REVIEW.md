@@ -157,8 +157,15 @@ end-of-run/reward sequences. The sibling `boss-controller.js:4` does this correc
 
 **Fix:** add a `defeated` flag to the architect state and gate the emit on it.
 
-### M5 — Fault scheduler fires a scheduled fault even after pressure returns to zero
+### M5 — Fault scheduler fires a scheduled fault even after pressure returns to zero — ✅ FIXED
 **`src/features/faults/fault-scheduler.js:35-38`**
+
+> **Resolution:** `update()` now re-checks pressure every tick: when `state.pressure <= 0` it resets
+> `nextAt` to `Infinity`, clears `nextTier`, and returns `null` — cancelling a fault that was scheduled
+> during an earlier overload. This also removes the path where `tierFor(0)` returned `"none"` and the tier
+> lookup silently fell back to `profile.light`. Verified: after briefly overloading then returning to a fully
+> stable state, no fault fires and the pending schedule is cleared (see `scratchpad/m5.mjs`).
+
 
 Once a fault is scheduled (`nextAt` finite), the scheduler reschedules only when `nextAt` is `Infinity`,
 so `schedule()`'s own `pressure <= 0 → Infinity` guard is bypassed. If the player briefly overloads then

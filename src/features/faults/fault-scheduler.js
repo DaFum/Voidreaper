@@ -34,6 +34,10 @@ export function createFaultScheduler({ rng, profiles, faults, eventBus }) {
     state,
     update(now, inputs, components = []) {
       state.pressure = calculateFaultPressure({ ...inputs, cooldown: now - state.lastAt });
+      // Returning to a stable state must cancel a fault that was scheduled while
+      // overloaded; otherwise it still fires at pressure 0, where tierFor() is
+      // "none" and the tier lookup silently falls back to profile.light.
+      if (state.pressure <= 0) { state.nextAt = Infinity; state.nextTier = "none"; return null; }
       if (!Number.isFinite(state.nextAt)) schedule(now, state.pressure);
       if (now < state.nextAt) return null;
       const candidates = components.filter(component => component.faultProfileId && (component.disabledUntil ?? 0) <= now);
