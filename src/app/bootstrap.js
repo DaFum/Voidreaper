@@ -558,10 +558,39 @@ export async function bootstrap() {
       ctx.translate(width / 2, height / 2);
       ctx.scale(camera.zoom, camera.zoom);
       ctx.translate(camera.offset.x, camera.offset.y);
-      services.assemblyRenderer.renderPlayerShip(ctx, { geometrySnapshot: model.geometry, position: { x: 0, y: 0 }, time: clock, buildAnimations: services.buildAnimations?.snapshot?.() ?? [], lodOptions: { userSetting: getAssemblyLod() } });
+      services.assemblyRenderer.renderPlayerShip(ctx, {
+        geometrySnapshot: model.geometry,
+        position: { x: 0, y: 0 },
+        time: clock,
+        buildAnimations: services.buildAnimations?.snapshot?.() ?? [],
+        lodOptions: { userSetting: getAssemblyLod() }
+      });
       const selectedGeometry = geometryById.get(workbench.session?.selectedNodeId);
-      if (selectedGeometry) { ctx.save(); ctx.strokeStyle = "#ffc857"; ctx.lineWidth = 1.5 / camera.zoom; ctx.setLineDash([6, 5]); ctx.lineDashOffset = -clock * 14; ctx.beginPath(); ctx.arc(selectedGeometry.worldPosition.x, selectedGeometry.worldPosition.y, (selectedGeometry.geometry?.size ?? 14) + 9, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
-      renderViewModeOverlay(ctx, getViewModeOverlay(workbench.session?.viewMode ?? "normal", { assembly: model.assembly, geometry: model.geometry, flightProfile: services.flightProfile?.getProfile() }));
+      if (selectedGeometry) {
+        ctx.save();
+        ctx.strokeStyle = "#ffc857";
+        ctx.lineWidth = 1.5 / camera.zoom;
+        ctx.setLineDash([6, 5]);
+        ctx.lineDashOffset = -clock * 14;
+        ctx.beginPath();
+        ctx.arc(
+          selectedGeometry.worldPosition.x,
+          selectedGeometry.worldPosition.y,
+          (selectedGeometry.geometry?.size ?? 14) + 9,
+          0,
+          Math.PI * 2
+        );
+        ctx.stroke();
+        ctx.restore();
+      }
+      renderViewModeOverlay(
+        ctx,
+        getViewModeOverlay(workbench.session?.viewMode ?? "normal", {
+          assembly: model.assembly,
+          geometry: model.geometry,
+          flightProfile: services.flightProfile?.getProfile()
+        })
+      );
       ctx.restore();
       screen.portsLayer.style.transform = `scale(${camera.zoom}) translate(${camera.offset.x}px, ${camera.offset.y}px)`;
     };
