@@ -141,8 +141,14 @@ The mine controller is missing the equivalent cleanup.
 
 **Fix:** remove the mine from `run.zones` in both the capacity-shift and detonate paths (splice by identity).
 
-### M4 — Architect defeat event re-fires on every hit after health reaches 0
+### M4 — Architect defeat event re-fires on every hit after health reaches 0 — ✅ FIXED
 **`src/features/encounters/architect-controller.js:10`**
+
+> **Resolution:** the state now carries a `defeated` flag (initialized in `start`), and `damage()` gates the
+> `eternal-architect-defeated` emit on `!state.health && !state.defeated`, setting the flag on first defeat —
+> matching the sibling `boss-controller`. Verified: the event fires exactly once even under repeated
+> post-death hits/DoT ticks (see `scratchpad/m4.mjs`).
+
 
 `damage()` emits `"eternal-architect-defeated"` whenever `!state.health`, with no one-shot guard. Any
 subsequent hit or DoT tick after health hits 0 re-fires the final-boss defeat event, risking duplicate
