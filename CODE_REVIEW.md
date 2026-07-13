@@ -208,8 +208,19 @@ the `minimum` field is silently dead, a real divergence between data and behavio
 
 **Fix:** honor `requirement.minimum` in the gate (or remove the field from content to end the divergence).
 
-### M8 — Every module-damage event defeats the static-layer bake cache during live combat
+### M8 — Every module-damage event defeats the static-layer bake cache during live combat — ✅ FIXED
 **`src/features/ship-assembly/geometry/assembly-geometry-service.js:19` (damage fast-path) + `src/render/ship-assembly/static-layer-cache.js`**
+
+> **Resolution:** the geometry cache now carries a `structuralKey` — a fresh object minted only on a full
+> structural rebuild and carried unchanged through damage-only updates (`geometry-cache.js`,
+> `assembly-geometry-service.js` `snapshotFromCache` + rebuild). `getShipStaticLayers` keys its `WeakMap` on
+> `snapshot.structuralKey ?? snapshot` instead of raw snapshot identity, so the per-hit snapshots (which mint
+> a new frozen object each damage event) reuse the baked base+armor canvases. Confirmed safe because the
+> static layers render only structural geometry — module damage is drawn in the dynamic pass. Keying on an
+> object (not the numeric revision) avoids cross-assembly collisions. Verified: a damage-only snapshot with a
+> new identity but the same `structuralKey` reuses the exact baked canvas, while a new key re-bakes (see
+> `scratchpad/m8.mjs`).
+
 
 On a damage-only change the fast path still does `lastCompleteSnapshot = snapshotFromCache()`, minting a
 **new frozen snapshot object identity**. `getShipStaticLayers` keys its baked base+armor offscreen canvases
