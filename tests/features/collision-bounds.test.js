@@ -2,77 +2,42 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { boundsFromCenter } from "../../src/features/ship-assembly/placement/collision-bounds.js";
 
+// Preview bounds mirror the real module AABB from module-geometry-builders:
+// extent = length/2 + radius = size * (1.45/2 + 0.55). Half-extents:
+// S:13, M:18, L:25, XL:34 -> * 1.275.
+const FACTOR = 1.45 / 2 + 0.55;
+const halfFor = size => ({ S: 13, M: 18, L: 25, XL: 34 }[size] ?? 18) * FACTOR;
+
+function assertBounds(result, { x, y }, ownerId, half) {
+  assert.equal(result.ownerId, ownerId);
+  for (const [field, expected] of [
+    ["minX", x - half], ["minY", y - half], ["maxX", x + half], ["maxY", y + half]
+  ]) {
+    assert.ok(Math.abs(result[field] - expected) < 1e-6, `${field}: ${result[field]} ≈ ${expected}`);
+  }
+}
+
 test("boundsFromCenter calculates bounds for size S", () => {
-  const result = boundsFromCenter({ x: 100, y: 100 }, "S", "player-1");
-  assert.deepEqual(result, {
-    ownerId: "player-1",
-    minX: 88,
-    minY: 88,
-    maxX: 112,
-    maxY: 112,
-  });
+  assertBounds(boundsFromCenter({ x: 100, y: 100 }, "S", "player-1"), { x: 100, y: 100 }, "player-1", halfFor("S"));
 });
 
 test("boundsFromCenter calculates bounds for size M", () => {
-  const result = boundsFromCenter({ x: 100, y: 100 }, "M", "player-1");
-  assert.deepEqual(result, {
-    ownerId: "player-1",
-    minX: 82,
-    minY: 82,
-    maxX: 118,
-    maxY: 118,
-  });
+  assertBounds(boundsFromCenter({ x: 100, y: 100 }, "M", "player-1"), { x: 100, y: 100 }, "player-1", halfFor("M"));
 });
 
 test("boundsFromCenter calculates bounds for size L", () => {
-  const result = boundsFromCenter({ x: 100, y: 100 }, "L", "player-1");
-  assert.deepEqual(result, {
-    ownerId: "player-1",
-    minX: 74,
-    minY: 74,
-    maxX: 126,
-    maxY: 126,
-  });
+  assertBounds(boundsFromCenter({ x: 100, y: 100 }, "L", "player-1"), { x: 100, y: 100 }, "player-1", halfFor("L"));
 });
 
 test("boundsFromCenter calculates bounds for size XL", () => {
-  const result = boundsFromCenter({ x: 100, y: 100 }, "XL", "player-1");
-  assert.deepEqual(result, {
-    ownerId: "player-1",
-    minX: 64,
-    minY: 64,
-    maxX: 136,
-    maxY: 136,
-  });
+  assertBounds(boundsFromCenter({ x: 100, y: 100 }, "XL", "player-1"), { x: 100, y: 100 }, "player-1", halfFor("XL"));
 });
 
-test("boundsFromCenter uses fallback half size (18) for invalid or missing size", () => {
-  const resultMissing = boundsFromCenter({ x: 100, y: 100 }, undefined, "player-1");
-  assert.deepEqual(resultMissing, {
-    ownerId: "player-1",
-    minX: 82,
-    minY: 82,
-    maxX: 118,
-    maxY: 118,
-  });
-
-  const resultInvalid = boundsFromCenter({ x: 100, y: 100 }, "INVALID_SIZE", "player-1");
-  assert.deepEqual(resultInvalid, {
-    ownerId: "player-1",
-    minX: 82,
-    minY: 82,
-    maxX: 118,
-    maxY: 118,
-  });
+test("boundsFromCenter uses fallback half size (M) for invalid or missing size", () => {
+  assertBounds(boundsFromCenter({ x: 100, y: 100 }, undefined, "player-1"), { x: 100, y: 100 }, "player-1", halfFor("M"));
+  assertBounds(boundsFromCenter({ x: 100, y: 100 }, "INVALID_SIZE", "player-1"), { x: 100, y: 100 }, "player-1", halfFor("M"));
 });
 
 test("boundsFromCenter handles negative coordinates correctly", () => {
-  const result = boundsFromCenter({ x: -50, y: -50 }, "M", "player-1");
-  assert.deepEqual(result, {
-    ownerId: "player-1",
-    minX: -68,
-    minY: -68,
-    maxX: -32,
-    maxY: -32,
-  });
+  assertBounds(boundsFromCenter({ x: -50, y: -50 }, "M", "player-1"), { x: -50, y: -50 }, "player-1", halfFor("M"));
 });

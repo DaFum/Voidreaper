@@ -231,8 +231,17 @@ hit — negating the cache the layer was built to provide.
 **Fix:** preserve snapshot identity across damage-only updates, or key the static-layer cache on
 `structuralRevision` rather than object identity.
 
-### M9 — Placement preview footprint is 25–35% smaller than real geometry, so validated mounts overlap
+### M9 — Placement preview footprint is 25–35% smaller than real geometry, so validated mounts overlap — ✅ FIXED
 **`src/features/ship-assembly/placement/collision-bounds.js:5` vs `src/features/ship-assembly/geometry/module-geometry-builders.js:298`**
+
+> **Resolution:** `boundsFromCenter` now derives the half-extent from the same formula as real geometry —
+> `size * (1.45/2 + 0.55)` over the `{S:13,M:18,L:25,XL:34}` size table — instead of the undersized
+> `{S:12,M:18,L:26,XL:36}`. Preview/overlap bounds now match the mounted module AABB, so the compatibility
+> check rejects placements that would visibly clip. The size table is duplicated (not imported) to avoid a
+> placement↔geometry import cycle, with a sync comment. Verified: two medium modules 40px apart are now
+> correctly flagged as overlapping (see `scratchpad/m9.mjs`). The existing `collision-bounds.test.js`, which
+> had pinned the old undersized values, was updated to assert the geometry-aligned bounds.
+
 
 `boundsFromCenter` uses half-extents S12/M18/L26/XL36, but real node bounds use
 `extent = length/2 + radius ≈ size*1.275` (M≈23, L≈32, XL≈43). `compatibilityService.evaluate` checks
