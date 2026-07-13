@@ -421,7 +421,36 @@ export async function bootstrap() {
   // weight region-typical enemies (content catalog) into the legacy wave roster;
   // game.visualRegionId is kept current by game-controller.syncLegacy
   legacyRuntime.configureRegionRoster(() => REGION_BY_ID.get(game.visualRegionId)?.enemies ?? []);
-  legacyRuntime.configureShipRenderer((context,player,legacyGame)=>{const geometry=services.assemblyGeometry?.getSnapshot();if(!geometry?.coreGeometry)return false;const rendered=services.assemblyRenderer.renderPlayerShip(context,{geometrySnapshot:geometry,position:player,rotation:player.angle+Math.PI/2,time:legacyGame.time,buildAnimations:services.buildAnimations?.snapshot?.()??[],movement:{x:player.vx,y:player.vy,dodging:player.iframes>0},lodOptions:{userSetting:getAssemblyLod()}});if(rendered&&player.shield>0){context.strokeStyle="#4f6df5";context.shadowColor="#4f6df5";context.shadowBlur=14;context.lineWidth=1.5;context.beginPath();context.arc(player.x,player.y,player.r+8+Math.sin(legacyGame.time*4)*2,0,Math.PI*2);context.stroke();context.shadowBlur=0;}return rendered;});
+  legacyRuntime.configureShipRenderer((context, player, legacyGame) => {
+    const geometry = services.assemblyGeometry?.getSnapshot();
+    if (!geometry?.coreGeometry) return false;
+    const rendered = services.assemblyRenderer.renderPlayerShip(context, {
+      geometrySnapshot: geometry,
+      position: player,
+      rotation: player.angle + Math.PI / 2,
+      time: legacyGame.time,
+      buildAnimations: services.buildAnimations?.snapshot?.() ?? [],
+      movement: { x: player.vx, y: player.vy, dodging: player.iframes > 0 },
+      lodOptions: { userSetting: getAssemblyLod() }
+    });
+    if (rendered && player.shield > 0) {
+      context.strokeStyle = "#4f6df5";
+      context.shadowColor = "#4f6df5";
+      context.shadowBlur = 14;
+      context.lineWidth = 1.5;
+      context.beginPath();
+      context.arc(
+        player.x,
+        player.y,
+        player.r + 8 + Math.sin(legacyGame.time * 4) * 2,
+        0,
+        Math.PI * 2
+      );
+      context.stroke();
+      context.shadowBlur = 0;
+    }
+    return rendered;
+  });
   // GPU environment stage (PixiJS) below the #game canvas. Loaded lazily and
   // fire-and-forget: until it is ready (or if WebGL is unavailable) the legacy
   // runtime keeps drawing its canvas backdrop.
@@ -558,9 +587,31 @@ export async function bootstrap() {
       ctx.translate(width / 2, height / 2);
       ctx.scale(camera.zoom, camera.zoom);
       ctx.translate(camera.offset.x, camera.offset.y);
-      services.assemblyRenderer.renderPlayerShip(ctx, { geometrySnapshot: model.geometry, position: { x: 0, y: 0 }, time: clock, buildAnimations: services.buildAnimations?.snapshot?.() ?? [], lodOptions: { userSetting: getAssemblyLod() } });
+      services.assemblyRenderer.renderPlayerShip(ctx, {
+        geometrySnapshot: model.geometry,
+        position: { x: 0, y: 0 },
+        time: clock,
+        buildAnimations: services.buildAnimations?.snapshot?.() ?? [],
+        lodOptions: { userSetting: getAssemblyLod() }
+      });
       const selectedGeometry = geometryById.get(workbench.session?.selectedNodeId);
-      if (selectedGeometry) { ctx.save(); ctx.strokeStyle = "#ffc857"; ctx.lineWidth = 1.5 / camera.zoom; ctx.setLineDash([6, 5]); ctx.lineDashOffset = -clock * 14; ctx.beginPath(); ctx.arc(selectedGeometry.worldPosition.x, selectedGeometry.worldPosition.y, (selectedGeometry.geometry?.size ?? 14) + 9, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
+      if (selectedGeometry) {
+        ctx.save();
+        ctx.strokeStyle = "#ffc857";
+        ctx.lineWidth = 1.5 / camera.zoom;
+        ctx.setLineDash([6, 5]);
+        ctx.lineDashOffset = -clock * 14;
+        ctx.beginPath();
+        ctx.arc(
+          selectedGeometry.worldPosition.x,
+          selectedGeometry.worldPosition.y,
+          (selectedGeometry.geometry?.size ?? 14) + 9,
+          0,
+          Math.PI * 2
+        );
+        ctx.stroke();
+        ctx.restore();
+      }
       renderViewModeOverlay(ctx, getViewModeOverlay(workbench.session?.viewMode ?? "normal", { assembly: model.assembly, geometry: model.geometry, flightProfile: services.flightProfile?.getProfile() }));
       ctx.restore();
       screen.portsLayer.style.transform = `scale(${camera.zoom}) translate(${camera.offset.x}px, ${camera.offset.y}px)`;
