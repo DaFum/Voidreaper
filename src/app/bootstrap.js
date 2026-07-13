@@ -165,6 +165,7 @@ export async function bootstrap() {
   services.equipment = createEquipmentRegistry();
   for (const definition of [...SHIPS, ...WEAPONS, ...REACTORS, ...MODULES]) services.equipment.register(definition);
   services.loadouts = createLoadoutService({ registry: services.equipment, tagEngine: services.tags, unlocks: services.unlocks });
+  services.primaryLoadout = () => resolvePrimaryLoadout(metaSave);
   const blueprintIds=createIdService("meta-blueprints"),thumbnailService=createBlueprintThumbnailService({assemblyRenderer:services.assemblyRenderer,geometryService:{getSnapshot:()=>services.assemblyGeometry?.getSnapshot()}});services.blueprints=createBlueprintService({saveStore:services.save,idFactory:blueprintIds,thumbnailService});services.blueprints.hydrate(initialSave);
   console.info(`[content] ${SHIPS.length} ships · ${WEAPONS.length} weapons · ${REACTORS.length} reactors · ${MODULES.length} modules`);
 
