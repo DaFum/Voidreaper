@@ -421,7 +421,32 @@ export async function bootstrap() {
   // weight region-typical enemies (content catalog) into the legacy wave roster;
   // game.visualRegionId is kept current by game-controller.syncLegacy
   legacyRuntime.configureRegionRoster(() => REGION_BY_ID.get(game.visualRegionId)?.enemies ?? []);
-  legacyRuntime.configureShipRenderer((context,player,legacyGame)=>{const geometry=services.assemblyGeometry?.getSnapshot();if(!geometry?.coreGeometry)return false;const rendered=services.assemblyRenderer.renderPlayerShip(context,{geometrySnapshot:geometry,position:player,rotation:player.angle+Math.PI/2,time:legacyGame.time,buildAnimations:services.buildAnimations?.snapshot?.()??[],movement:{x:player.vx,y:player.vy,dodging:player.iframes>0},lodOptions:{userSetting:getAssemblyLod()}});if(rendered&&player.shield>0){context.strokeStyle="#4f6df5";context.shadowColor="#4f6df5";context.shadowBlur=14;context.lineWidth=1.5;context.beginPath();context.arc(player.x,player.y,player.r+8+Math.sin(legacyGame.time*4)*2,0,Math.PI*2);context.stroke();context.shadowBlur=0;}return rendered;});
+  legacyRuntime.configureShipRenderer((context, player, legacyGame) => {
+    const geometry = services.assemblyGeometry?.getSnapshot();
+    if (!geometry?.coreGeometry) return false;
+
+    const rendered = services.assemblyRenderer.renderPlayerShip(context, {
+      geometrySnapshot: geometry,
+      position: player,
+      rotation: player.angle + Math.PI / 2,
+      time: legacyGame.time,
+      buildAnimations: services.buildAnimations?.snapshot?.() ?? [],
+      movement: { x: player.vx, y: player.vy, dodging: player.iframes > 0 },
+      lodOptions: { userSetting: getAssemblyLod() },
+    });
+
+    if (rendered && player.shield > 0) {
+      context.strokeStyle = "#4f6df5";
+      context.shadowColor = "#4f6df5";
+      context.shadowBlur = 14;
+      context.lineWidth = 1.5;
+      context.beginPath();
+      context.arc(player.x, player.y, player.r + 8 + Math.sin(legacyGame.time * 4) * 2, 0, Math.PI * 2);
+      context.stroke();
+      context.shadowBlur = 0;
+    }
+    return rendered;
+  });
   // GPU environment stage (PixiJS) below the #game canvas. Loaded lazily and
   // fire-and-forget: until it is ready (or if WebGL is unavailable) the legacy
   // runtime keeps drawing its canvas backdrop.
@@ -464,7 +489,20 @@ export async function bootstrap() {
       console.warn("[render] PixiJS environment stage unavailable — canvas backdrop remains active", error);
     }
   })();
-  legacyRuntime.configurePlayerDamageRouter((_player,damage)=>{if(game.mode==="tutorial")return 0;const geometry=services.assemblyGeometry?.getSnapshot(),target=(geometry?.nodes??[]).filter(node=>!node.isRoot).sort((a,b)=>((b.worldPosition.x)*(b.worldPosition.x) + (b.worldPosition.y)*(b.worldPosition.y))-((a.worldPosition.x)*(a.worldPosition.x) + (a.worldPosition.y)*(a.worldPosition.y)))[0];return target&&services.moduleDamage?services.moduleDamage.applyDamage(target.nodeId,damage,"legacy-contact").remainingDamage:damage;});
+  legacyRuntime.configurePlayerDamageRouter((_player, damage) => {
+    if (game.mode === "tutorial") return 0;
+    const geometry = services.assemblyGeometry?.getSnapshot();
+    const target = (geometry?.nodes ?? [])
+      .filter(node => !node.isRoot)
+      .sort((a, b) =>
+        (b.worldPosition.x * b.worldPosition.x + b.worldPosition.y * b.worldPosition.y) -
+        (a.worldPosition.x * a.worldPosition.x + a.worldPosition.y * a.worldPosition.y)
+      )[0];
+
+    return target && services.moduleDamage
+      ? services.moduleDamage.applyDamage(target.nodeId, damage, "legacy-contact").remainingDamage
+      : damage;
+  });
   const hangarRoot = document.querySelector("#hangar");
   const tutorialHost = document.createElement("div"); tutorialHost.className = "tutorial-overlay"; tutorialHost.hidden = true; document.body.append(tutorialHost);
   let exitFoundationsRun = () => {};
