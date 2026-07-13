@@ -10,11 +10,10 @@ export function collectTags(sources) {
       provenance.set(tag.id, entries);
     }
   }
-  totals.provenance = provenance;
-  return totals;
+  return { totals, provenance };
 }
 
-const requirementValue = (tags, requirement) => tags.get(requirement.id) ?? 0;
+const requirementValue = (tags, requirement) => tags.totals.get(requirement.id) ?? 0;
 
 export function resolveSynergies(tags, definitions, context = {}) {
   const active = [];
@@ -23,7 +22,7 @@ export function resolveSynergies(tags, definitions, context = {}) {
   for (const definition of definitions) {
     const requirements = definition.requirements ?? [];
     const missing = requirements.filter(requirement => requirementValue(tags, requirement) < (requirement.minimum ?? 1));
-    const forbiddenBy = (definition.blockedBy ?? []).filter(tagId => (tags.get(tagId) ?? 0) > 0);
+    const forbiddenBy = (definition.blockedBy ?? []).filter(tagId => (tags.totals.get(tagId) ?? 0) > 0);
     const contextBlocked = definition.minimumCorruption !== undefined && (context.corruption ?? 0) < definition.minimumCorruption
       || definition.minimumLoad !== undefined && (context.loadRatio ?? 0) < definition.minimumLoad;
     if (forbiddenBy.length || contextBlocked) {
@@ -42,13 +41,13 @@ export function createTagEngine(definitions, synergyDefinitions) {
   return {
     collect(sources) {
       const tags = collectTags(sources);
-      for (const id of tags.keys()) if (!knownTags.has(id)) console.warn(`Unknown tag: ${id}`);
+      for (const id of tags.totals.keys()) if (!knownTags.has(id)) console.warn(`Unknown tag: ${id}`);
       return tags;
     },
     resolve(tags, context) { return resolveSynergies(tags, synergyDefinitions, context); },
     delta(beforeSources, afterSources) {
-      const before = collectTags(beforeSources);
-      const after = collectTags(afterSources);
+      const before = collectTags(beforeSources).totals;
+      const after = collectTags(afterSources).totals;
       const ids = new Set([...before.keys(), ...after.keys()]);
       return [...ids].map(id => ({ id, before: before.get(id) ?? 0, after: after.get(id) ?? 0 }))
         .filter(entry => entry.before !== entry.after);

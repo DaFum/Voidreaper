@@ -45,7 +45,7 @@ export function createMerchantService({ modules = [], weapons = [], reactors = [
     },
     sell(run, item) { run.inventory = run.inventory.filter(entry => entry !== item); currencyService.award(run, "sale", Math.max(1, Math.floor(merchantPrice(item) / 4))); },
     reserve(offer) { offer.reserved = true; return offer; },
-    reroll(seed, regionIndex, tier) { return roll(seed + 1, regionIndex, tier); },
+    reroll(run, seed, regionIndex, tier) { if (!currencyService.spend(run, { scrap: 5 })) return null; return roll(typeof seed === "number" ? seed + 0x9e3779b9 : `${seed}:rerolled`, regionIndex, tier); },
     reveal
   };
 }

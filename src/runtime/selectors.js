@@ -17,7 +17,7 @@ export const selectEnergyRatio = run => run.player.resources.maxEnergy > 0
   ? run.player.resources.energy / run.player.resources.maxEnergy
   : 0;
 export const selectLoadoutSources = run => run.player.loadout?.sources ?? [];
-export const selectActiveTags = run => [...run.build.tags.entries()].filter(([, value]) => value > 0);
+export const selectActiveTags = run => [...(run.build.tags.totals?.entries() ?? run.build.tags.entries())].filter(([, value]) => value > 0);
 
 export function selectRiskSummary(run) {
   return {

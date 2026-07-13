@@ -13,7 +13,7 @@ export function createAssemblyService({ state, eventBus, idFactory, runInventory
   }
   const getSnapshot = () => createAssemblySnapshot(state);
   const requireNode = nodeId => { const node = state.nodesById[nodeId]; if (!node) throw new Error(`Unknown assembly node: ${nodeId}`); return node; };
-  const publish = (eventName, payload, { structural = true, visual = true } = {}) => { if (structural) state.structuralRevision += 1; if (visual) state.visualRevision += 1; assertAssemblyInvariants(state); if (eventName !== ASSEMBLY_EVENTS.CHANGED) eventBus?.emit(eventName, payload); eventBus?.emit(ASSEMBLY_EVENTS.CHANGED, getSnapshot()); };
+  const publish = (eventName, payload, { structural = true, visual = true } = {}) => { if (structural) state.structuralRevision += 1; if (visual) state.visualRevision += 1; assertAssemblyInvariants(state); if (eventName !== ASSEMBLY_EVENTS.CHANGED) { eventBus?.emit(eventName, payload); eventBus?.emit(ASSEMBLY_EVENTS.CHANGED, getSnapshot()); } else { eventBus?.emit(ASSEMBLY_EVENTS.CHANGED, { ...getSnapshot(), ...payload }); } };
   const publishDamageChange = nodeId => publish(ASSEMBLY_EVENTS.DAMAGE_CHANGED, { nodeId }, { structural: false, visual: true });
   const transaction=operation=>{const previous=structuredClone(state);try{return operation();}catch(error){for(const key of Object.keys(state))delete state[key];Object.assign(state,previous);throw error;}};
   const rebaseBranchDepth=(nodeId,branchDepth)=>{const node=requireNode(nodeId);for(const portId of node.childPortIds??[]){const port=state.portsById[portId];if(!port)continue;state.portsById[portId]={...port,branchDepth};if(port.occupiedByNodeId)rebaseBranchDepth(port.occupiedByNodeId,branchDepth+1);}};

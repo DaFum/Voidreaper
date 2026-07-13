@@ -349,7 +349,7 @@ export async function bootstrap() {
           offers,
           resources: previewRun.resources,
           onBuy: offer => attemptMerchantPurchase({ merchant, run: previewRun, offer, finish, onRejected: () => legacyRuntime.ui.toast("Nicht genügend Ressourcen.") }),
-          onReroll: () => showMerchant(merchant.reroll(node.seed, node.regionIndex)),
+          onReroll: () => { const offers = merchant.reroll(previewRun, node.seed, node.regionIndex); if (offers) showMerchant(offers); },
           onLeave: finish
         });
         showMerchant(merchant.roll(node.seed, node.regionIndex));

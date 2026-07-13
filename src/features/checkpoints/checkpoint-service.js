@@ -63,7 +63,7 @@ export function hydrateCheckpointRun(snapshot, services) {
   run.pendingAssemblyItems ??= [];
   run.pools = asMap(run.pools);
   run.eventState = asMap(run.eventState);
-  run.build.tags = asMap(run.build.tags);
+  if (run.build.tags?.totals) { run.build.tags.totals = asMap(run.build.tags.totals); if (run.build.tags.provenance) run.build.tags.provenance = asMap(run.build.tags.provenance); } else run.build.tags = asMap(run.build.tags);
   run.player.tags = asMap(run.player.tags);
   run.player.stats = asMap(run.player.stats);
   run.player.statusEffects = asMap(run.player.statusEffects);
