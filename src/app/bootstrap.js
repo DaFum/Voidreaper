@@ -146,6 +146,10 @@ import {
   rotationForPortDirection,
 } from "../features/ship-assembly/geometry/port-world-transform.js";
 
+const prefersReducedMotion = () =>
+  globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ??
+  false;
+
 export async function bootstrap() {
   document.documentElement.dataset.app = "voidreaper-modular";
   const events = createEventBus();
@@ -290,6 +294,14 @@ export async function bootstrap() {
     `[content] ${SHIPS.length} ships · ${WEAPONS.length} weapons · ` +
       `${REACTORS.length} reactors · ${MODULES.length} modules`,
   );
+  const blueprintValidationContext = () => ({
+    knownDefinitionIds: new Set(
+      services.equipment.values().map((item) => item.id),
+    ),
+    knownShipFrameIds: new Set(
+      SHIP_FRAME_ASSEMBLY_PROFILES.map((item) => item.id),
+    ),
+  });
 
   const controller = createGameController(services);
   if (import.meta.env.DEV) {
@@ -298,6 +310,18 @@ export async function bootstrap() {
         Object.values(
           services.currentAssembly?.getSnapshot().nodesById ?? {},
         ).find((node) => node.moduleInstanceId),
+      grantRunItem = (run, definitionId) => {
+        const item = {
+          instanceId: run.ids.create("debug-item"),
+          definitionId,
+          ownership: "temporary",
+          rarity: "debug",
+          affixes: [],
+          sockets: [],
+        };
+        run.inventory.push(item);
+        return item;
+      },
       buildMaximum = () => {
         const run = controller.run;
         if (!run) return { built: false, reason: "run-required" };
@@ -337,15 +361,7 @@ export async function bootstrap() {
             };
           }
           const { port, definition } = candidate;
-          const item = {
-            instanceId: run.ids.create("debug-item"),
-            definitionId: definition.id,
-            ownership: "temporary",
-            rarity: "debug",
-            affixes: [],
-            sockets: [],
-          };
-          run.inventory.push(item);
+          const item = grantRunItem(run, definition.id);
           services.currentAssembly.mountModule({
             moduleInstanceId: item.instanceId,
             definitionId: definition.id,
@@ -446,14 +462,7 @@ export async function bootstrap() {
           if (!blueprint) return { instruction: "Save a blueprint first." };
           return validateBlueprint(
             decodeBlueprint(encodeBlueprint(blueprint)),
-            {
-              knownDefinitionIds: new Set(
-                services.equipment.values().map((item) => item.id),
-              ),
-              knownShipFrameIds: new Set(
-                SHIP_FRAME_ASSEMBLY_PROFILES.map((item) => item.id),
-              ),
-            },
+            blueprintValidationContext(),
           );
         },
       };
@@ -485,14 +494,7 @@ export async function bootstrap() {
           return blueprint ? encodeBlueprint(blueprint) : null;
         },
         importCode: (code) =>
-          validateBlueprint(decodeBlueprint(code), {
-            knownDefinitionIds: new Set(
-              services.equipment.values().map((item) => item.id),
-            ),
-            knownShipFrameIds: new Set(
-              SHIP_FRAME_ASSEMBLY_PROFILES.map((item) => item.id),
-            ),
-          }),
+          validateBlueprint(decodeBlueprint(code), blueprintValidationContext()),
       };
     services.assemblyDebug = createAssemblyDebugService({
       inventory: {
@@ -500,15 +502,7 @@ export async function bootstrap() {
           const run = controller.run,
             definition = services.equipment.require(definitionId);
           if (!run) return null;
-          const item = {
-            instanceId: run.ids.create("debug-item"),
-            definitionId: definition.id,
-            ownership: "temporary",
-            rarity: "debug",
-            affixes: [],
-            sockets: [],
-          };
-          run.inventory.push(item);
+          const item = grantRunItem(run, definition.id);
           services.events.emit("run-item-acquired", { item, source: "debug" });
           return item;
         },
@@ -607,6 +601,23 @@ export async function bootstrap() {
     quickMountHost?.remove();
     quickMountHost = null;
   };
+  const runQuickMountAction = (verb, rawAction = verb) => {
+    if (verb === "previous") services.quickMount.previous();
+    else if (verb === "next") services.quickMount.next();
+    else if (verb === "confirm" || verb === "defer") {
+      const result =
+        verb === "confirm"
+          ? services.quickMount.confirm()
+          : services.quickMount.defer();
+      events.emit(TUTORIAL_EVENTS.QUICK_MOUNT_ACTION, {
+        action: rawAction,
+        success: Boolean(result?.[verb === "confirm" ? "mounted" : "deferred"]),
+      });
+      closeQuickMount();
+      return;
+    }
+    renderQuickMount();
+  };
   events.on("run-item-acquired", ({ item, source, run: owningRun }) => {
     if (owningRun && owningRun !== controller.run) return;
     const definition = services.equipment.require(item.definitionId),
@@ -641,32 +652,10 @@ export async function bootstrap() {
     quickMountHost = document.createElement("div");
     document.body.append(quickMountHost);
     quickMountHost.__overlay = createQuickMountOverlay(quickMountHost, {
-      onAction: (action) => {
-        if (action === "previous") services.quickMount.previous();
-        if (action === "next") services.quickMount.next();
-        if (action === "confirm") {
-          const result = services.quickMount.confirm();
-          events.emit(TUTORIAL_EVENTS.QUICK_MOUNT_ACTION, {
-            action,
-            success: Boolean(result?.mounted),
-          });
-          closeQuickMount();
-          return;
-        }
-        if (action === "defer") {
-          const result = services.quickMount.defer();
-          events.emit(TUTORIAL_EVENTS.QUICK_MOUNT_ACTION, {
-            action,
-            success: Boolean(result?.deferred),
-          });
-          closeQuickMount();
-          return;
-        }
-        renderQuickMount();
-      },
+      onAction: runQuickMountAction,
     });
     renderQuickMount();
-    if (!globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+    if (!prefersReducedMotion()) {
       quickMountLast = performance.now();
       quickMountFrame = requestAnimationFrame(animateQuickMount);
     }
@@ -739,9 +728,7 @@ export async function bootstrap() {
       gameCanvas.parentNode.insertBefore(stageCanvas, gameCanvas);
       const environmentStage = await createEnvironmentStage({
         canvas: stageCanvas,
-        reducedMotion:
-          globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ??
-          false,
+        reducedMotion: prefersReducedMotion(),
       });
       document.body.classList.add("gpu-environment");
       legacyRuntime.configureEnvironmentRenderer((frame) =>
@@ -886,6 +873,11 @@ export async function bootstrap() {
       resizeObserver = null,
       model = null,
       geometryById = new Map();
+    const cameraActions = {
+      "zoom-in": () => cameraController.zoomBy(0.15),
+      "zoom-out": () => cameraController.zoomBy(-0.15),
+      "reset-view": () => cameraController.resetView(),
+    };
     workbench.open({ source: "sector-map" });
     const equipmentDefinition = (definitionId) => {
       try {
@@ -1124,24 +1116,8 @@ export async function bootstrap() {
           showCampaignMap();
           return;
         }
-        if (action === "zoom-in") {
-          cameraController.zoomBy(0.15);
-          events.emit(TUTORIAL_EVENTS.WORKBENCH_ACTION, {
-            action,
-            success: true,
-          });
-          return;
-        }
-        if (action === "zoom-out") {
-          cameraController.zoomBy(-0.15);
-          events.emit(TUTORIAL_EVENTS.WORKBENCH_ACTION, {
-            action,
-            success: true,
-          });
-          return;
-        }
-        if (action === "reset-view") {
-          cameraController.resetView();
+        if (cameraActions[action]) {
+          cameraActions[action]();
           events.emit(TUTORIAL_EVENTS.WORKBENCH_ACTION, {
             action,
             success: true,
@@ -1235,9 +1211,7 @@ export async function bootstrap() {
     render();
     let lastFrame = performance.now(),
       clock = controller.run?.time ?? 0;
-    const reducedMotion =
-      globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ??
-      false;
+    const reducedMotion = prefersReducedMotion();
     const frame = (now) => {
       if (!screen.canvas.isConnected || !workbench.session) {
         cleanup();
@@ -1569,14 +1543,7 @@ export async function bootstrap() {
               content.append(host);
               createBlueprintImportDialog(host, {
                 validate: (blueprint) =>
-                  validateBlueprint(blueprint, {
-                    knownDefinitionIds: new Set(
-                      services.equipment.values().map((item) => item.id),
-                    ),
-                    knownShipFrameIds: new Set(
-                      SHIP_FRAME_ASSEMBLY_PROFILES.map((item) => item.id),
-                    ),
-                  }),
+                  validateBlueprint(blueprint, blueprintValidationContext()),
                 onImport: async (blueprint) => {
                   await services.blueprints.importBlueprint(blueprint);
                   await refreshBlueprints();
@@ -1881,31 +1848,15 @@ export async function bootstrap() {
     inspector.update(controller.inspectorModel(legacyGame));
   };
 
+  const QUICK_MOUNT_VERB_BY_ACTION = {
+    [ASSEMBLY_ACTIONS.PREVIOUS_SUGGESTION]: "previous",
+    [ASSEMBLY_ACTIONS.NEXT_SUGGESTION]: "next",
+    [ASSEMBLY_ACTIONS.CONFIRM]: "confirm",
+    [ASSEMBLY_ACTIONS.DEFER]: "defer",
+  };
   events.on("action", ({ action }) => {
     if (services.quickMount?.session) {
-      if (action === ASSEMBLY_ACTIONS.PREVIOUS_SUGGESTION)
-        services.quickMount.previous();
-      if (action === ASSEMBLY_ACTIONS.NEXT_SUGGESTION)
-        services.quickMount.next();
-      if (action === ASSEMBLY_ACTIONS.CONFIRM) {
-        const result = services.quickMount.confirm();
-        events.emit(TUTORIAL_EVENTS.QUICK_MOUNT_ACTION, {
-          action,
-          success: Boolean(result?.mounted),
-        });
-        closeQuickMount();
-        return;
-      }
-      if (action === ASSEMBLY_ACTIONS.DEFER) {
-        const result = services.quickMount.defer();
-        events.emit(TUTORIAL_EVENTS.QUICK_MOUNT_ACTION, {
-          action,
-          success: Boolean(result?.deferred),
-        });
-        closeQuickMount();
-        return;
-      }
-      renderQuickMount();
+      runQuickMountAction(QUICK_MOUNT_VERB_BY_ACTION[action], action);
       return;
     }
     if (action === "dodge" && game.state === "run")
