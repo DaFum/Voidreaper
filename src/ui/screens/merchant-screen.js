@@ -7,7 +7,7 @@ export function canAffordOffer(resources, offer) {
 
 export function renderMerchantScreen(root, { offers, resources, onBuy, onReroll, onLeave }) {
   if (!root) return;
-  root.innerHTML = `<section class="service-screen"><header>VOID BROKER <b>${resources.scrap} SCRAP · ${resources.flux} FLUX</b></header><div class="item-catalog"></div><div class="service-screen__actions"><button class="btn small" data-reroll>⟲ Angebote neu würfeln</button><button class="btn small" data-leave>ZURÜCK ZUR KARTE</button></div></section>`;
+  root.innerHTML = `<section class="service-screen"><header>VOID BROKER <b>${resources.scrap} SCRAP · ${resources.flux} FLUX</b></header><div class="item-catalog" data-tutorial-id="merchant-offers"></div><div class="service-screen__actions"><button class="btn small" data-reroll>⟲ Angebote neu würfeln</button><button class="btn small" data-leave>ZURÜCK ZUR KARTE</button></div></section>`;
   const catalog = root.querySelector(".item-catalog");
   for (const offer of offers) {
     const button = document.createElement("button");

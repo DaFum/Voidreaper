@@ -7,6 +7,7 @@ import "./styles/map.css";
 import "./styles/codex.css";
 import "./styles/ship-assembly.css";
 import "./styles/ship-assembly-mobile.css";
+import "./styles/tutorial.css";
 import { bootstrap } from "./app/bootstrap.js";
 
 bootstrap();

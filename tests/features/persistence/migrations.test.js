@@ -65,3 +65,20 @@ test("migrateSave keeps existing object-based inputs unmodified", () => {
   assert.deepEqual(output.codex, { 'codex-2': { id: 'codex-2' } });
   assert.deepEqual(output.challenges, { 'chal-2': { id: 'chal-2' } });
 });
+
+test("migrateSave converts version-5 onboarding without changing unlocks", () => {
+  const unlocks = { vesper: true, railgun: true, "standard-core": true, bastion: false };
+  const output = migrateSave({ saveVersion: 5, unlocks, onboarding: { skipped: false, completed: { 1: true, 3: true } } });
+  assert.equal(output.saveVersion, 6);
+  assert.deepEqual(output.unlocks, unlocks);
+  assert.equal(output.tutorial.autoOffer, false);
+  assert.deepEqual(output.tutorial.seenSteps, { "legacy-run-1": true, "legacy-run-3": true });
+  assert.equal("onboarding" in output, false);
+});
+
+test("migrateSave keeps new tutorial chapters incomplete after a legacy skip", () => {
+  const output = migrateSave({ saveVersion: 5, onboarding: { skipped: true, completed: { 1: true, 2: true, 3: true, 4: true, 5: true } } });
+  assert.equal(output.tutorial.autoOffer, false);
+  assert.deepEqual(output.tutorial.completedChapters, {});
+  assert.deepEqual(output.tutorial.skippedChapters, {});
+});

@@ -1,16 +1,20 @@
 import { ACTIONS, ASSEMBLY_ACTIONS, DEFAULT_BINDINGS, QUICK_MOUNT_BINDINGS } from "./action-bindings.js";
 import { createTouchStick } from "./touch-stick.js";
+import { TUTORIAL_EVENTS } from "../features/tutorial/tutorial-events.js";
 
 export function createInputController({ eventBus, bindings = {}, stickElement, stickKnob, isQuickMount = () => false } = {}) {
   const resolvedBindings = { ...DEFAULT_BINDINGS, ...bindings };
   const held = new Set();
-  const stick = createTouchStick(stickElement, stickKnob);
+  const stick = createTouchStick(stickElement, stickKnob, 56, movement => {
+    if (movement.magnitude > .25) eventBus?.emit(TUTORIAL_EVENTS.MOVEMENT_USED, movement);
+  });
 
   const onKeyDown = event => {
     if (event.target && (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(event.target.tagName) || event.target.isContentEditable)) return;
     if(isQuickMount()){const assemblyAction=QUICK_MOUNT_BINDINGS[event.code];if(assemblyAction){if(!event.repeat)eventBus?.emit("action",{action:assemblyAction,source:"keyboard"});event.preventDefault();event.stopImmediatePropagation();return;}}
     const action = resolvedBindings[event.code];
     if (!action) return;
+    if (!event.repeat && action.startsWith("move-")) eventBus?.emit(TUTORIAL_EVENTS.MOVEMENT_USED, { source: "keyboard", action, magnitude: 1 });
     if (!event.repeat && (Object.values(ACTIONS).includes(action)||Object.values(ASSEMBLY_ACTIONS).includes(action))) eventBus?.emit("action", { action, source: "keyboard" });
     held.add(action);
     event.preventDefault();

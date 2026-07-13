@@ -1,16 +1,17 @@
-export function attemptMerchantPurchase({ merchant, run, offer, finish, onRejected = () => {} }) {
+export function attemptMerchantPurchase({ merchant, run, offer, finish, onRejected = () => {}, onApplied = () => {} }) {
   const bought = merchant.buy(run, offer);
   if (!bought) {
     onRejected(offer);
     return false;
   }
-  finish();
+  onApplied(offer); finish();
   return true;
 }
 
-export function attemptWorkshopAction({ workshop, session, action, target, payload, finish, onContinue = () => {} }) {
+export function attemptWorkshopAction({ workshop, session, action, target, payload, finish, onContinue = () => {}, onApplied = () => {} }) {
   const applied = workshop.apply(session, action, target, payload);
   if (!applied) return false;
+  onApplied({ action, target });
   if (session.used >= session.actionPoints) finish();
   else onContinue();
   return true;

@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "vite",
     "test": "node --test",
-    "build": "npm run validate-content && npm run validate:assembly && vite build",
+    "build": "npm run validate-content && npm run validate:assembly && npm run validate:tutorial && vite build",
     "preview": "vite preview",
     "validate-content": "node scripts/validate-content.mjs",
     "validate:assembly": "node scripts/validate-ship-assembly-content.mjs",
+    "validate:tutorial": "node scripts/validate-tutorial-content.mjs",
     "test:frontend": "vitest run"
   },
   "devDependencies": {

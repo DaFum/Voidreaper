@@ -23,3 +23,6 @@
 - [../AGENTS.md](../AGENTS.md) for repo-wide conventions.
 - [superpowers/plans/2026-07-10-voidreaper-master-plan.md](superpowers/plans/2026-07-10-voidreaper-master-plan.md)
 - [superpowers/plans/2026-07-10-adaptive-ship-assembly-master.md](superpowers/plans/2026-07-10-adaptive-ship-assembly-master.md)
+- [superpowers/plans/2026-07-13-interactive-tutorial-master.md](superpowers/plans/2026-07-13-interactive-tutorial-master.md)
+- [superpowers/specs/2026-07-13-interactive-tutorial-design.md](superpowers/specs/2026-07-13-interactive-tutorial-design.md)
+- [manual-validation/interactive-tutorial.md](manual-validation/interactive-tutorial.md)
