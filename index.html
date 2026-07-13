@@ -99,16 +99,16 @@
     </div>
   </div>
 
-  <div class="screen hidden" id="pausescr">
-    <h1 data-t="STASIS">STA<span>SIS</span></h1>
+  <div class="screen hidden" id="pausescr" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+    <h1 id="pause-title" data-t="STASIS">STA<span>SIS</span></h1>
     <div class="statsgrid" id="pausestats"></div>
     <div id="build-inspector" class="build-inspector" aria-label="Build inspector"></div>
     <button class="btn" id="resumebtn">Resume</button>
     <button class="btn danger" id="quitbtn">Abandon Run</button>
   </div>
 
-  <div class="screen hidden" id="over">
-    <h1 data-t="REAPED">REA<span>PED</span></h1>
+  <div class="screen hidden" id="over" role="dialog" aria-modal="true" aria-labelledby="over-title">
+    <h1 id="over-title" data-t="REAPED">REA<span>PED</span></h1>
     <div class="score-final" id="finalscore">0</div>
     <div class="sub" id="finalstats"></div>
     <div class="shards" id="finalshards"></div>
