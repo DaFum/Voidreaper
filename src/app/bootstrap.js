@@ -87,7 +87,7 @@ import { createBlueprintThumbnailService } from "../features/ship-assembly/bluep
 import { encodeBlueprint, decodeBlueprint } from "../features/ship-assembly/blueprints/blueprint-codec.js";
 import { validateBlueprint } from "../features/ship-assembly/blueprints/blueprint-validator.js";
 import { createAssemblyDebugService } from "../features/ship-assembly/debug/assembly-debug-service.js";
-import { createAssemblyDebugScenarios } from "../features/ship-assembly/debug/assembly-debug-scenarios.js";
+import { createAssemblyDebugScenarios, findMaximumConstructionCandidate } from "../features/ship-assembly/debug/assembly-debug-scenarios.js";
 import { createAssemblyErrorBoundary } from "../features/ship-assembly/model/assembly-error-boundary.js";
 import { createAssemblyWorkbenchScreen } from "../ui/ship-assembly/assembly-workbench-screen.js";
 import { createAssemblyCanvasController } from "../ui/ship-assembly/assembly-canvas-controller.js";
@@ -173,7 +173,243 @@ export async function bootstrap() {
   console.info(`[content] ${SHIPS.length} ships · ${WEAPONS.length} weapons · ${REACTORS.length} reactors · ${MODULES.length} modules`);
 
   const controller = createGameController(services);
-  if(import.meta.env.DEV){const flags=new Map(),firstModule=()=>Object.values(services.currentAssembly?.getSnapshot().nodesById??{}).find(node=>node.moduleInstanceId),buildMaximum=()=>{const run=controller.run;if(!run)return{built:false,reason:"run-required"};const rank={S:1,M:2,L:3,XL:4},definitions=services.equipment.values().filter(definition=>definition.slot!=="ship"),blocked=new Set();let attempts=0;while(Object.keys(services.currentAssembly.getSnapshot().nodesById).length<19&&attempts++<80){const snapshot=services.currentAssembly.getSnapshot(),port=Object.values(snapshot.portsById).filter(item=>!item.occupiedByNodeId&&!blocked.has(item.portId)&&(item.branchDepth??0)<4).sort((a,b)=>(a.branchDepth??0)-(b.branchDepth??0))[0];if(!port)break;const definition=definitions.filter(item=>rank[item.assembly.sizeClass]<=rank[port.sizeClass]&&item.assembly.mountTypes.includes(port.mountType)&&item.assembly.loadDemand<=port.loadCapacity&&(port.acceptedEnergyClasses??[port.energyClass,"standard"]).includes(item.assembly.energyClass)).sort((a,b)=>(b.assembly.childPorts?.length??0)-(a.assembly.childPorts?.length??0))[0];if(!definition){blocked.add(port.portId);continue;}const item={instanceId:run.ids.create("debug-item"),definitionId:definition.id,ownership:"temporary",rarity:"debug",affixes:[],sockets:[]};run.inventory.push(item);services.currentAssembly.mountModule({moduleInstanceId:item.instanceId,definitionId:definition.id,parentPort:port,assemblyProfile:definition.assembly,transform:{position:port.localPosition??{x:(port.direction?.x??0)*34,y:(port.direction?.y??0)*34},rotation:Math.atan2(port.direction?.y??0,port.direction?.x??1)}});services.assemblyGeometry.rebuildNow();}const snapshot=services.currentAssembly.getSnapshot();return{built:true,nodes:Object.keys(snapshot.nodesById).length,segments:Object.keys(snapshot.nodesById).length-1};},scenarioActions={visualGallery:()=>({cores:getCoreGeometryIds(),modules:MODULE_VISUAL_PROFILES.map(profile=>profile.rendererId),damageStates:["intact","armor-broken","core-disrupted"]}),buildMaximum,buildAsymmetric:()=>({maximum:buildMaximum(),flight:services.flightProfile?.rebuildNow()}),damageSingle:()=>{const node=firstModule();return node?services.moduleDamage.applyDamage(node.nodeId,20,"debug"):null;},bridgeSurvival:()=>{const maximum=buildMaximum();if(!maximum.built)return maximum;const snapshot=services.currentAssembly.getSnapshot(),parent=Object.values(snapshot.nodesById).find(node=>node.nodeId!==snapshot.rootNodeId&&Object.values(snapshot.nodesById).some(child=>child.parentNodeId===node.nodeId));if(!parent)return{survived:false,reason:"no-parent"};const child=Object.values(snapshot.nodesById).find(node=>node.parentNodeId===parent.nodeId);services.currentAssembly.addSecondaryConnection({sourceNodeId:child.nodeId,targetNodeId:snapshot.rootNodeId,profile:{structuralStrength:8,energyThroughput:"standard",visualConnectorType:"debug-bridge"}});services.moduleDamage.applyDamage(parent.nodeId,9999,"debug");return{survived:Boolean(services.currentAssembly.getSnapshot().nodesById[child.nodeId]),childNodeId:child.nodeId};},branchCollapse:()=>{const snapshot=services.currentAssembly?.getSnapshot(),parent=Object.values(snapshot?.nodesById??{}).find(node=>node.nodeId!==snapshot.rootNodeId&&Object.values(snapshot.nodesById).some(child=>child.parentNodeId===node.nodeId))??firstModule();return parent?services.moduleDamage.applyDamage(parent.nodeId,9999,"debug"):null;},repairRemount:()=>({detached:services.currentAssembly?.getSnapshot().detachedItems??[],resources:controller.run?.resources}),setLod:lod=>{metaSave.assemblyVisualPreferences.lod=lod;return lod;},blueprintRoundtrip:()=>{const blueprint=services.blueprints.list()[0];if(!blueprint)return{instruction:"Save a blueprint first."};return validateBlueprint(decodeBlueprint(encodeBlueprint(blueprint)),{knownDefinitionIds:new Set(services.equipment.values().map(item=>item.id)),knownShipFrameIds:new Set(SHIP_FRAME_ASSEMBLY_PROFILES.map(item=>item.id))});}};const scenarioRunner=createAssemblyDebugScenarios(scenarioActions),damage={forceState(nodeId,state){const node=services.currentAssembly.requireNode(nodeId);node.damageState=state;if(state==="armor-broken")node.armorIntegrity=0;if(state==="core-disrupted")node.coreIntegrity=node.maxCoreIntegrity*.3;services.currentAssembly.publishDamageChange(nodeId);return node;}},debugFlags={set:(key,value)=>flags.set(key,value),snapshot:()=>Object.fromEntries(flags)},settings={setTemporary:(key,value)=>{flags.set(key,value);return value;}},blueprints={exportCurrent:()=>{const blueprint=services.blueprints.list()[0];return blueprint?encodeBlueprint(blueprint):null;},importCode:code=>validateBlueprint(decodeBlueprint(code),{knownDefinitionIds:new Set(services.equipment.values().map(item=>item.id)),knownShipFrameIds:new Set(SHIP_FRAME_ASSEMBLY_PROFILES.map(item=>item.id))})};services.assemblyDebug=createAssemblyDebugService({inventory:{grantDebugItem:definitionId=>{const run=controller.run,definition=services.equipment.require(definitionId);if(!run)return null;const item={instanceId:run.ids.create("debug-item"),definitionId:definition.id,ownership:"temporary",rarity:"debug",affixes:[],sockets:[]};run.inventory.push(item);services.events.emit("run-item-acquired",{item,source:"debug"});return item;}},damage,assembly:()=>services.currentAssembly,defaultBridge:{structuralStrength:8,energyThroughput:"standard",visualConnectorType:"debug-bridge"},debugFlags,settings,scenarios:scenarioRunner,blueprints});globalThis.__VOIDREAPER_DEBUG__={...(globalThis.__VOIDREAPER_DEBUG__??{}),assembly:{...services.assemblyDebug,getGeometry:()=>services.assemblyGeometry?.getSnapshot()??null,getHitZones:()=>services.hitZones?.all()??[],getFlightProfile:()=>services.flightProfile?.getProfile()??null,getPending:()=>services.pendingMounts?.values()??[],getQuickMount:()=>services.quickMount?.session??null,getWorkbench:()=>services.assemblyWorkbench?.model()??null,scenarios:scenarioRunner}};}
+  if (import.meta.env.DEV) {
+    const flags = new Map(),
+      firstModule = () =>
+        Object.values(
+          services.currentAssembly?.getSnapshot().nodesById ?? {},
+        ).find((node) => node.moduleInstanceId),
+      buildMaximum = () => {
+        const run = controller.run;
+        if (!run) return { built: false, reason: "run-required" };
+        const definitions = services.equipment
+          .values()
+          .filter((definition) => definition.slot !== "ship");
+        let attempts = 0;
+        while (
+          Object.keys(services.currentAssembly.getSnapshot().nodesById).length <
+            19 &&
+          attempts++ < 80
+        ) {
+          services.assemblyGeometry.rebuildNow();
+          const snapshot = services.currentAssembly.getSnapshot();
+          const candidate = findMaximumConstructionCandidate({
+            state: snapshot,
+            geometry: services.assemblyGeometry.getSnapshot(),
+            ports: Object.values(snapshot.portsById),
+            definitions,
+            evaluate: input => services.compatibility.evaluate(input),
+          });
+          if (!candidate) {
+            const nodes = Object.keys(snapshot.nodesById).length;
+            return { built: false, reason: "no-compatible-candidate", nodes, segments: nodes - 1 };
+          }
+          const { port, definition } = candidate;
+          const item = {
+            instanceId: run.ids.create("debug-item"),
+            definitionId: definition.id,
+            ownership: "temporary",
+            rarity: "debug",
+            affixes: [],
+            sockets: [],
+          };
+          run.inventory.push(item);
+          services.currentAssembly.mountModule({
+            moduleInstanceId: item.instanceId,
+            definitionId: definition.id,
+            parentPort: port,
+            assemblyProfile: definition.assembly,
+            transform: {
+              position: port.localPosition ?? {
+                x: (port.direction?.x ?? 0) * 34,
+                y: (port.direction?.y ?? 0) * 34,
+              },
+              rotation: Math.atan2(
+                port.direction?.y ?? 0,
+                port.direction?.x ?? 1,
+              ),
+            },
+          });
+          services.assemblyGeometry.rebuildNow();
+        }
+        const snapshot = services.currentAssembly.getSnapshot();
+        const nodes = Object.keys(snapshot.nodesById).length;
+        return {
+          built: nodes === 19,
+          reason: nodes === 19 ? undefined : "attempt-limit",
+          nodes,
+          segments: nodes - 1,
+        };
+      },
+      scenarioActions = {
+        visualGallery: () => ({
+          cores: getCoreGeometryIds(),
+          modules: MODULE_VISUAL_PROFILES.map((profile) => profile.rendererId),
+          damageStates: ["intact", "armor-broken", "core-disrupted"],
+        }),
+        buildMaximum,
+        buildAsymmetric: () => ({
+          maximum: buildMaximum(),
+          flight: services.flightProfile?.rebuildNow(),
+        }),
+        damageSingle: () => {
+          const node = firstModule();
+          return node
+            ? services.moduleDamage.applyDamage(node.nodeId, 20, "debug")
+            : null;
+        },
+        bridgeSurvival: () => {
+          const maximum = buildMaximum();
+          if (!maximum.built) return maximum;
+          const snapshot = services.currentAssembly.getSnapshot(),
+            parent = Object.values(snapshot.nodesById).find(
+              (node) =>
+                node.nodeId !== snapshot.rootNodeId &&
+                Object.values(snapshot.nodesById).some(
+                  (child) => child.parentNodeId === node.nodeId,
+                ),
+            );
+          if (!parent) return { survived: false, reason: "no-parent" };
+          const child = Object.values(snapshot.nodesById).find(
+            (node) => node.parentNodeId === parent.nodeId,
+          );
+          services.currentAssembly.addSecondaryConnection({
+            sourceNodeId: child.nodeId,
+            targetNodeId: snapshot.rootNodeId,
+            profile: {
+              structuralStrength: 8,
+              energyThroughput: "standard",
+              visualConnectorType: "debug-bridge",
+            },
+          });
+          services.moduleDamage.applyDamage(parent.nodeId, 9999, "debug");
+          return {
+            survived: Boolean(
+              services.currentAssembly.getSnapshot().nodesById[child.nodeId],
+            ),
+            childNodeId: child.nodeId,
+          };
+        },
+        branchCollapse: () => {
+          const snapshot = services.currentAssembly?.getSnapshot(),
+            parent =
+              Object.values(snapshot?.nodesById ?? {}).find(
+                (node) =>
+                  node.nodeId !== snapshot.rootNodeId &&
+                  Object.values(snapshot.nodesById).some(
+                    (child) => child.parentNodeId === node.nodeId,
+                  ),
+              ) ?? firstModule();
+          return parent
+            ? services.moduleDamage.applyDamage(parent.nodeId, 9999, "debug")
+            : null;
+        },
+        repairRemount: () => ({
+          detached: services.currentAssembly?.getSnapshot().detachedItems ?? [],
+          resources: controller.run?.resources,
+        }),
+        setLod: (lod) => {
+          metaSave.assemblyVisualPreferences.lod = lod;
+          return lod;
+        },
+        blueprintRoundtrip: () => {
+          const blueprint = services.blueprints.list()[0];
+          if (!blueprint) return { instruction: "Save a blueprint first." };
+          return validateBlueprint(
+            decodeBlueprint(encodeBlueprint(blueprint)),
+            {
+              knownDefinitionIds: new Set(
+                services.equipment.values().map((item) => item.id),
+              ),
+              knownShipFrameIds: new Set(
+                SHIP_FRAME_ASSEMBLY_PROFILES.map((item) => item.id),
+              ),
+            },
+          );
+        },
+      };
+    const scenarioRunner = createAssemblyDebugScenarios(scenarioActions),
+      damage = {
+        forceState(nodeId, state) {
+          const node = services.currentAssembly.requireNode(nodeId);
+          node.damageState = state;
+          if (state === "armor-broken") node.armorIntegrity = 0;
+          if (state === "core-disrupted")
+            node.coreIntegrity = node.maxCoreIntegrity * 0.3;
+          services.currentAssembly.publishDamageChange(nodeId);
+          return node;
+        },
+      },
+      debugFlags = {
+        set: (key, value) => flags.set(key, value),
+        snapshot: () => Object.fromEntries(flags),
+      },
+      settings = {
+        setTemporary: (key, value) => {
+          flags.set(key, value);
+          return value;
+        },
+      },
+      blueprints = {
+        exportCurrent: () => {
+          const blueprint = services.blueprints.list()[0];
+          return blueprint ? encodeBlueprint(blueprint) : null;
+        },
+        importCode: (code) =>
+          validateBlueprint(decodeBlueprint(code), {
+            knownDefinitionIds: new Set(
+              services.equipment.values().map((item) => item.id),
+            ),
+            knownShipFrameIds: new Set(
+              SHIP_FRAME_ASSEMBLY_PROFILES.map((item) => item.id),
+            ),
+          }),
+      };
+    services.assemblyDebug = createAssemblyDebugService({
+      inventory: {
+        grantDebugItem: (definitionId) => {
+          const run = controller.run,
+            definition = services.equipment.require(definitionId);
+          if (!run) return null;
+          const item = {
+            instanceId: run.ids.create("debug-item"),
+            definitionId: definition.id,
+            ownership: "temporary",
+            rarity: "debug",
+            affixes: [],
+            sockets: [],
+          };
+          run.inventory.push(item);
+          services.events.emit("run-item-acquired", { item, source: "debug" });
+          return item;
+        },
+      },
+      damage,
+      assembly: () => services.currentAssembly,
+      defaultBridge: {
+        structuralStrength: 8,
+        energyThroughput: "standard",
+        visualConnectorType: "debug-bridge",
+      },
+      debugFlags,
+      settings,
+      scenarios: scenarioRunner,
+      blueprints,
+    });
+    globalThis.__VOIDREAPER_DEBUG__ = {
+      ...(globalThis.__VOIDREAPER_DEBUG__ ?? {}),
+      assembly: {
+        ...services.assemblyDebug,
+        getGeometry: () => services.assemblyGeometry?.getSnapshot() ?? null,
+        getHitZones: () => services.hitZones?.all() ?? [],
+        getFlightProfile: () => services.flightProfile?.getProfile() ?? null,
+        getPending: () => services.pendingMounts?.values() ?? [],
+        getQuickMount: () => services.quickMount?.session ?? null,
+        getWorkbench: () => services.assemblyWorkbench?.model() ?? null,
+        scenarios: scenarioRunner,
+      },
+    };
+  }
   const input = createInputController({ eventBus: events, bindings: metaSave.settings.bindings, stickElement: document.querySelector("#stick"), stickKnob: document.querySelector("#knob"), isQuickMount: () => Boolean(services.quickMount?.session) });
   let quickMountHost=null;const renderQuickMount=()=>{const session=services.quickMount?.session;if(!session||!quickMountHost)return;const suggestion=session.suggestions[session.selectedIndex],definition=services.equipment.require(session.pendingMount.definitionId),overlay=quickMountHost.__overlay;overlay.render({name:definition.name??definition.id,reasons:suggestion.reasons,deltas:[["POSITION",`${session.selectedIndex+1}/${session.suggestions.length}`],["MASSE",suggestion.flightDelta.totalMass?.toFixed?.(1)??"—"],["BALANCE",suggestion.metrics.balance?.toFixed?.(2)??"—"],["ENERGIE",suggestion.metrics.energyPath?.toFixed?.(2)??"—"],["SCHUTZ",suggestion.metrics.protection?.toFixed?.(2)??"—"],["RISIKO",suggestion.metrics.collisionRisk?"HOCH":"NIEDRIG"]],details:[...(definition.tags??[]).map(tag=>typeof tag==="string"?tag:tag.id),`Blueprint ${suggestion.blueprintMatch??"frei"}`]});drawQuickMountPreview();};const drawQuickMountPreview=()=>{const session=services.quickMount?.session;if(!session||!quickMountHost)return;renderPlacementPreview(quickMountHost.__overlay.canvas.getContext("2d"),{snapshot:services.assemblyGeometry.getSnapshot(),suggestion:session.suggestions[session.selectedIndex],assemblyRenderer:services.assemblyRenderer,time:quickMountClock});};let quickMountFrame=null,quickMountClock=0,quickMountLast=0;const animateQuickMount=now=>{if(!quickMountHost){quickMountFrame=null;return;}quickMountClock+=Math.min(.1,(now-quickMountLast)/1000);quickMountLast=now;drawQuickMountPreview();quickMountFrame=requestAnimationFrame(animateQuickMount);};const closeQuickMount=()=>{if(quickMountFrame)cancelAnimationFrame(quickMountFrame);quickMountFrame=null;quickMountHost?.remove();quickMountHost=null;};events.on("run-item-acquired",({item,source,run:owningRun})=>{if(owningRun&&owningRun!==controller.run)return;const definition=services.equipment.require(item.definitionId),pending=services.pendingMounts.queue({itemInstance:item,profile:definition.assembly,source,acquiredAt:(owningRun??controller.run)?.time??0});if(pending.requiresWorkbench){item.stored=true;legacyRuntime.ui.toast("Großmodul für die Werkbank eingelagert.");return;}const opened=openReplacingQuickMount({active:Boolean(quickMountHost||quickMountFrame),close:closeQuickMount,open:()=>controller.openPendingMount(pending,{moduleProfile:{...definition.assembly,definitionId:definition.id,tags:definition.tags},blueprint:services.blueprints.getActiveId()?services.blueprints.require(services.blueprints.getActiveId()):null,settings:{pauseOnMount:metaSave.settings.pauseOnMount??true}})});if(!opened.opened)return;quickMountHost=document.createElement("div");document.body.append(quickMountHost);quickMountHost.__overlay=createQuickMountOverlay(quickMountHost,{onAction:action=>{if(action==="previous")services.quickMount.previous();if(action==="next")services.quickMount.next();if(action==="confirm"){const result=services.quickMount.confirm();events.emit(TUTORIAL_EVENTS.QUICK_MOUNT_ACTION,{action,success:Boolean(result?.mounted)});closeQuickMount();return;}if(action==="defer"){const result=services.quickMount.defer();events.emit(TUTORIAL_EVENTS.QUICK_MOUNT_ACTION,{action,success:Boolean(result?.deferred)});closeQuickMount();return;}renderQuickMount();}});renderQuickMount();if(!globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches){quickMountLast=performance.now();quickMountFrame=requestAnimationFrame(animateQuickMount);}});
   input.start();
