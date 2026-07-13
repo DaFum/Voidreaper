@@ -7,7 +7,10 @@ import { TAG_DEFINITIONS } from "../content/tags/tag-definitions.js";
 import { SYNERGY_DEFINITIONS } from "../content/tags/synergy-definitions.js";
 import { createEffectRegistry } from "../features/effects/effect-registry.js";
 import { registerCoreEffects } from "../content/effects/core-effects.js";
-import { REACTOR_EFFECT_IDS, SHIP_EFFECT_IDS } from "../content/effects/latent-effect-manifest.js";
+import {
+  REACTOR_EFFECT_IDS,
+  SHIP_EFFECT_IDS,
+} from "../content/effects/latent-effect-manifest.js";
 import { createTriggerEngine } from "../features/triggers/trigger-engine.js";
 import { createEnergySystem } from "../features/energy/energy-system.js";
 import { createHeatSystem } from "../features/heat/heat-system.js";
@@ -22,7 +25,11 @@ import { updateResourceMeters } from "../ui/components/resource-meters.js";
 import { uiConfirm, uiPrompt } from "../ui/components/modal-dialog.js";
 import { createGameController } from "./game-controller.js";
 import { createEquipmentRegistry } from "../features/equipment/equipment-registry.js";
-import { createLoadoutItem, createLoadoutService, resolvePrimaryLoadout } from "../features/equipment/loadout-service.js";
+import {
+  createLoadoutItem,
+  createLoadoutService,
+  resolvePrimaryLoadout,
+} from "../features/equipment/loadout-service.js";
 import { createUnlockService } from "../features/research/unlock-service.js";
 import { SHIPS } from "../content/ships/index.js";
 import { WEAPONS } from "../content/weapons/index.js";
@@ -51,7 +58,10 @@ import { createResearchService } from "../features/research/research-service.js"
 import { renderResearchScreen } from "../ui/screens/research-screen.js";
 import { createCodexService } from "../features/codex/codex-service.js";
 import { renderCodexScreen } from "../ui/screens/codex-screen.js";
-import { CHALLENGES, createMasteryChallenges } from "../content/challenges/challenges.js";
+import {
+  CHALLENGES,
+  createMasteryChallenges,
+} from "../content/challenges/challenges.js";
 import { renderChallengesScreen } from "../ui/screens/challenges-screen.js";
 import { createPrototypeVault } from "../features/inventory/prototype-vault.js";
 import { renderPrototypeVault } from "../ui/screens/prototype-vault-screen.js";
@@ -62,10 +72,18 @@ import { createBuildSimulator } from "../features/simulator/build-simulator.js";
 import { renderSimulatorScreen } from "../ui/screens/simulator-screen.js";
 import { renderStatistics } from "../ui/screens/statistics-screen.js";
 import { renderSettingsScreen } from "../ui/screens/settings-screen.js";
-import { createTutorialService, shouldAutoOfferFoundations, shouldExitFoundationsRun, tutorialAvailableSystems } from "../features/tutorial/tutorial-service.js";
+import {
+  createTutorialService,
+  shouldAutoOfferFoundations,
+  shouldExitFoundationsRun,
+  tutorialAvailableSystems,
+} from "../features/tutorial/tutorial-service.js";
 import { TUTORIAL_EVENTS } from "../features/tutorial/tutorial-events.js";
 import { TUTORIAL_CHAPTERS } from "../content/tutorial/tutorial-chapters.js";
-import { applyTutorialTargets, createTutorialOverlay } from "../ui/components/tutorial-overlay.js";
+import {
+  applyTutorialTargets,
+  createTutorialOverlay,
+} from "../ui/components/tutorial-overlay.js";
 import { renderTutorialLibrary } from "../ui/screens/tutorial-library-screen.js";
 import { createWreckSignalService } from "../features/salvage/wreck-signal-service.js";
 import { createSalvageMissionService } from "../features/salvage/salvage-mission-service.js";
@@ -84,14 +102,25 @@ import { ASSEMBLY_ACTIONS } from "../input/action-bindings.js";
 import { createIdService } from "../core/ids.js";
 import { createBlueprintService } from "../features/ship-assembly/blueprints/blueprint-service.js";
 import { createBlueprintThumbnailService } from "../features/ship-assembly/blueprints/blueprint-thumbnail-service.js";
-import { encodeBlueprint, decodeBlueprint } from "../features/ship-assembly/blueprints/blueprint-codec.js";
+import {
+  encodeBlueprint,
+  decodeBlueprint,
+} from "../features/ship-assembly/blueprints/blueprint-codec.js";
 import { validateBlueprint } from "../features/ship-assembly/blueprints/blueprint-validator.js";
 import { createAssemblyDebugService } from "../features/ship-assembly/debug/assembly-debug-service.js";
-import { createAssemblyDebugScenarios, findMaximumConstructionCandidate, summarizeMaximumConstructionBlockers } from "../features/ship-assembly/debug/assembly-debug-scenarios.js";
+import {
+  createAssemblyDebugScenarios,
+  findMaximumConstructionCandidate,
+  summarizeMaximumConstructionBlockers,
+} from "../features/ship-assembly/debug/assembly-debug-scenarios.js";
 import { createAssemblyErrorBoundary } from "../features/ship-assembly/model/assembly-error-boundary.js";
 import { createAssemblyWorkbenchScreen } from "../ui/ship-assembly/assembly-workbench-screen.js";
 import { createAssemblyCanvasController } from "../ui/ship-assembly/assembly-canvas-controller.js";
-import { getViewModeOverlay, renderAssemblyToolbar, renderViewModeOverlay } from "../ui/ship-assembly/assembly-view-modes.js";
+import {
+  getViewModeOverlay,
+  renderAssemblyToolbar,
+  renderViewModeOverlay,
+} from "../ui/ship-assembly/assembly-view-modes.js";
 import { portAccessibilityLabel } from "../ui/ship-assembly/port-overlay.js";
 import { renderAssemblyInspector } from "../ui/ship-assembly/assembly-inspector-panel.js";
 import { renderBlueprintLibrary } from "../ui/ship-assembly/blueprint-library-screen.js";
@@ -99,10 +128,23 @@ import { renderBlueprintDetail } from "../ui/ship-assembly/blueprint-detail-scre
 import { createBlueprintImportDialog } from "../ui/ship-assembly/blueprint-import-dialog.js";
 import { createQuickMountOverlay } from "../ui/ship-assembly/quick-mount-overlay.js";
 import { renderPlacementPreview } from "../ui/ship-assembly/placement-preview-overlay.js";
-import { adoptCombatRunState, attemptMerchantPurchase, attemptWorkshopAction, canUseWorkbenchPort, openReplacingQuickMount, prepareCheckpointResume, resetCampaignResume, subscribeWorkbenchGeometry, syncLegacyVoidShards } from "./click-path-flows.js";
+import {
+  adoptCombatRunState,
+  attemptMerchantPurchase,
+  attemptWorkshopAction,
+  canUseWorkbenchPort,
+  openReplacingQuickMount,
+  prepareCheckpointResume,
+  resetCampaignResume,
+  subscribeWorkbenchGeometry,
+  syncLegacyVoidShards,
+} from "./click-path-flows.js";
 import { renderLoadoutScreen } from "../ui/screens/loadout-screen.js";
 import { REGION_BY_ID } from "../content/sectors/regions.js";
-import { resolvePortWorldTransform, rotationForPortDirection } from "../features/ship-assembly/geometry/port-world-transform.js";
+import {
+  resolvePortWorldTransform,
+  rotationForPortDirection,
+} from "../features/ship-assembly/geometry/port-world-transform.js";
 
 export async function bootstrap() {
   document.documentElement.dataset.app = "voidreaper-modular";
@@ -111,26 +153,49 @@ export async function bootstrap() {
   // module effect ids stay OUT of the latent set: active-module execution
   // dispatches them via effects.execute, so a missing module handler must warn
   effects.declareLatent([...SHIP_EFFECT_IDS, ...REACTOR_EFFECT_IDS]);
-  effects.register("evolution-prism-lance", (_effect, { player }) => { player.evoPrism = true; player.pierce += 99; player.bulletSpeed *= 1.5; });
-  effects.register("evolution-singularity", (_effect, { player }) => { player.evoSing = true; player.novaCd = Math.max(2, player.novaCd * 0.8); });
-  effects.register("evolution-blood-halo", (_effect, { player }) => { player.evoHalo = true; player.orbitals += 2; });
-  effects.register("evolution-reaper-protocol", (_effect, { player }) => { player.evoReaper = true; player.crit += 0.15; });
-  effects.register("evolution-ion-tempest", (_effect, { player }) => { player.evoTempest = true; });
+  effects.register("evolution-prism-lance", (_effect, { player }) => {
+    player.evoPrism = true;
+    player.pierce += 99;
+    player.bulletSpeed *= 1.5;
+  });
+  effects.register("evolution-singularity", (_effect, { player }) => {
+    player.evoSing = true;
+    player.novaCd = Math.max(2, player.novaCd * 0.8);
+  });
+  effects.register("evolution-blood-halo", (_effect, { player }) => {
+    player.evoHalo = true;
+    player.orbitals += 2;
+  });
+  effects.register("evolution-reaper-protocol", (_effect, { player }) => {
+    player.evoReaper = true;
+    player.crit += 0.15;
+  });
+  effects.register("evolution-ion-tempest", (_effect, { player }) => {
+    player.evoTempest = true;
+  });
   const services = {
     events,
     effects,
-    stats: createStatEngine(STAT_DEFINITIONS, context => context.sources ?? []),
+    stats: createStatEngine(
+      STAT_DEFINITIONS,
+      (context) => context.sources ?? [],
+    ),
     tags: createTagEngine(TAG_DEFINITIONS, SYNERGY_DEFINITIONS),
     energy: createEnergySystem({ eventBus: events }),
     heat: createHeatSystem({ eventBus: events }),
     corruption: createCorruptionSystem({ eventBus: events }),
-    dodge: createDodgeSystem({ eventBus: events })
+    dodge: createDodgeSystem({ eventBus: events }),
   };
-  services.evolutions = createEvolutionSystem(LEGACY_EVOLUTIONS, { eventBus: events });
-  services.triggers = createTriggerEngine({ eventBus: events, effects });
-  services.save = createSaveStore(globalThis.storage ?? globalThis.localStorage, {
-    onWarning: message => legacyRuntime.ui.toast(message)
+  services.evolutions = createEvolutionSystem(LEGACY_EVOLUTIONS, {
+    eventBus: events,
   });
+  services.triggers = createTriggerEngine({ eventBus: events, effects });
+  services.save = createSaveStore(
+    globalThis.storage ?? globalThis.localStorage,
+    {
+      onWarning: (message) => legacyRuntime.ui.toast(message),
+    },
+  );
   services.sectors = createSectorController({ eventBus: events });
   services.currency = createRunCurrencyService(events);
   services.daily = createDailyRunService({ saveStore: services.save });
@@ -141,9 +206,17 @@ export async function bootstrap() {
   // writes these on change, so without this a saved reducedMotion/colorPatterns
   // preference would not apply until the user visits the settings screen.
   if (metaSave.settings) {
-    document.documentElement.dataset.reducedMotion = String(metaSave.settings.reducedMotion ?? false);
-    document.documentElement.dataset.colorPatterns = String(metaSave.settings.colorPatterns ?? false);
-    if (metaSave.settings.uiScale != null) document.documentElement.style.setProperty("--ui-scale", metaSave.settings.uiScale);
+    document.documentElement.dataset.reducedMotion = String(
+      metaSave.settings.reducedMotion ?? false,
+    );
+    document.documentElement.dataset.colorPatterns = String(
+      metaSave.settings.colorPatterns ?? false,
+    );
+    if (metaSave.settings.uiScale != null)
+      document.documentElement.style.setProperty(
+        "--ui-scale",
+        metaSave.settings.uiScale,
+      );
   }
   let currentCheckpoint = initialSave.checkpoint;
   const writeCurrentCheckpoint = async (run, nodeId) => {
@@ -151,27 +224,72 @@ export async function bootstrap() {
     return currentCheckpoint;
   };
   services.research = createResearchService(services.save, RESEARCH_TREE);
-  services.codex = createCodexService({ ships: SHIPS, weapons: WEAPONS, reactors: REACTORS, modules: MODULES, forbidden: WEAPONS.filter(weapon => weapon.id === "anomaly-engine") });
+  services.codex = createCodexService({
+    ships: SHIPS,
+    weapons: WEAPONS,
+    reactors: REACTORS,
+    modules: MODULES,
+    forbidden: WEAPONS.filter((weapon) => weapon.id === "anomaly-engine"),
+  });
   services.campaignPaths = createCampaignPathService(CAMPAIGN_PATHS);
   services.simulator = createBuildSimulator();
-  services.tutorial = createTutorialService({ saveStore: services.save, eventBus: events, chapters: TUTORIAL_CHAPTERS, onPersistenceError: () => legacyRuntime.ui.toast("Tutorialfortschritt konnte nicht gespeichert werden.") });
+  services.tutorial = createTutorialService({
+    saveStore: services.save,
+    eventBus: events,
+    chapters: TUTORIAL_CHAPTERS,
+    onPersistenceError: () =>
+      legacyRuntime.ui.toast(
+        "Tutorialfortschritt konnte nicht gespeichert werden.",
+      ),
+  });
   services.tutorial.hydrate(initialSave.tutorial);
   services.wreckSignals = createWreckSignalService();
   services.salvageMissions = createSalvageMissionService(services.save);
-  services.affixes = createAffixRoller([OFFENSIVE_AFFIXES, DEFENSIVE_AFFIXES, UTILITY_AFFIXES, CORRUPTED_AFFIXES]);
+  services.affixes = createAffixRoller([
+    OFFENSIVE_AFFIXES,
+    DEFENSIVE_AFFIXES,
+    UTILITY_AFFIXES,
+    CORRUPTED_AFFIXES,
+  ]);
   services.assemblyProfiles = createAssemblyProfileRegistry();
-  for (const profile of SHIP_FRAME_ASSEMBLY_PROFILES) services.assemblyProfiles.registerShipFrame(profile);
+  for (const profile of SHIP_FRAME_ASSEMBLY_PROFILES)
+    services.assemblyProfiles.registerShipFrame(profile);
   services.assemblyRenderer = createAssemblyRenderer();
-  services.assemblyErrors=createAssemblyErrorBoundary();
-  console.info(`[assembly] ${services.assemblyProfiles.getCounts().shipFrames} ship profiles`);
+  services.assemblyErrors = createAssemblyErrorBoundary();
+  console.info(
+    `[assembly] ${services.assemblyProfiles.getCounts().shipFrames} ship profiles`,
+  );
   services.unlocks = createUnlockService(initialSave.unlocks);
   services.equipment = createEquipmentRegistry();
-  for (const definition of [...SHIPS, ...WEAPONS, ...REACTORS, ...MODULES]) services.equipment.register(definition);
-  services.campaignRewards = createCampaignRewardService({ equipment: services.equipment, eventBus: events });
-  services.loadouts = createLoadoutService({ registry: services.equipment, tagEngine: services.tags, unlocks: services.unlocks });
+  for (const definition of [...SHIPS, ...WEAPONS, ...REACTORS, ...MODULES])
+    services.equipment.register(definition);
+  services.campaignRewards = createCampaignRewardService({
+    equipment: services.equipment,
+    eventBus: events,
+  });
+  services.loadouts = createLoadoutService({
+    registry: services.equipment,
+    tagEngine: services.tags,
+    unlocks: services.unlocks,
+  });
   services.primaryLoadout = () => resolvePrimaryLoadout(metaSave);
-  const blueprintIds=createIdService("meta-blueprints"),thumbnailService=createBlueprintThumbnailService({assemblyRenderer:services.assemblyRenderer,geometryService:{getSnapshot:()=>services.assemblyGeometry?.getSnapshot()}});services.blueprints=createBlueprintService({saveStore:services.save,idFactory:blueprintIds,thumbnailService});services.blueprints.hydrate(initialSave);
-  console.info(`[content] ${SHIPS.length} ships · ${WEAPONS.length} weapons · ${REACTORS.length} reactors · ${MODULES.length} modules`);
+  const blueprintIds = createIdService("meta-blueprints"),
+    thumbnailService = createBlueprintThumbnailService({
+      assemblyRenderer: services.assemblyRenderer,
+      geometryService: {
+        getSnapshot: () => services.assemblyGeometry?.getSnapshot(),
+      },
+    });
+  services.blueprints = createBlueprintService({
+    saveStore: services.save,
+    idFactory: blueprintIds,
+    thumbnailService,
+  });
+  services.blueprints.hydrate(initialSave);
+  console.info(
+    `[content] ${SHIPS.length} ships · ${WEAPONS.length} weapons · ` +
+      `${REACTORS.length} reactors · ${MODULES.length} modules`,
+  );
 
   const controller = createGameController(services);
   if (import.meta.env.DEV) {
@@ -199,12 +317,24 @@ export async function bootstrap() {
             geometry: services.assemblyGeometry.getSnapshot(),
             ports: Object.values(snapshot.portsById),
             definitions,
-            evaluate: input => services.compatibility.evaluate(input),
+            evaluate: (input) => services.compatibility.evaluate(input),
           });
           if (!candidate) {
             const nodes = Object.keys(snapshot.nodesById).length;
-            const blockers = summarizeMaximumConstructionBlockers({ state: snapshot, geometry: services.assemblyGeometry.getSnapshot(), ports: Object.values(snapshot.portsById), definitions, evaluate: input => services.compatibility.evaluate(input) });
-            return { built: false, reason: "no-compatible-candidate", blockers, nodes, segments: nodes - 1 };
+            const blockers = summarizeMaximumConstructionBlockers({
+              state: snapshot,
+              geometry: services.assemblyGeometry.getSnapshot(),
+              ports: Object.values(snapshot.portsById),
+              definitions,
+              evaluate: (input) => services.compatibility.evaluate(input),
+            });
+            return {
+              built: false,
+              reason: "no-compatible-candidate",
+              blockers,
+              nodes,
+              segments: nodes - 1,
+            };
           }
           const { port, definition } = candidate;
           const item = {
@@ -409,19 +539,190 @@ export async function bootstrap() {
       },
     };
   }
-  const input = createInputController({ eventBus: events, bindings: metaSave.settings.bindings, stickElement: document.querySelector("#stick"), stickKnob: document.querySelector("#knob"), isQuickMount: () => Boolean(services.quickMount?.session) });
-  let quickMountHost=null;const renderQuickMount=()=>{const session=services.quickMount?.session;if(!session||!quickMountHost)return;const suggestion=session.suggestions[session.selectedIndex],definition=services.equipment.require(session.pendingMount.definitionId),overlay=quickMountHost.__overlay;overlay.render({name:definition.name??definition.id,reasons:suggestion.reasons,deltas:[["POSITION",`${session.selectedIndex+1}/${session.suggestions.length}`],["MASSE",suggestion.flightDelta.totalMass?.toFixed?.(1)??"—"],["BALANCE",suggestion.metrics.balance?.toFixed?.(2)??"—"],["ENERGIE",suggestion.metrics.energyPath?.toFixed?.(2)??"—"],["SCHUTZ",suggestion.metrics.protection?.toFixed?.(2)??"—"],["RISIKO",suggestion.metrics.collisionRisk?"HOCH":"NIEDRIG"]],details:[...(definition.tags??[]).map(tag=>typeof tag==="string"?tag:tag.id),`Blueprint ${suggestion.blueprintMatch??"frei"}`]});drawQuickMountPreview();};const drawQuickMountPreview=()=>{const session=services.quickMount?.session;if(!session||!quickMountHost)return;renderPlacementPreview(quickMountHost.__overlay.canvas.getContext("2d"),{snapshot:services.assemblyGeometry.getSnapshot(),suggestion:session.suggestions[session.selectedIndex],assemblyRenderer:services.assemblyRenderer,time:quickMountClock});};let quickMountFrame=null,quickMountClock=0,quickMountLast=0;const animateQuickMount=now=>{if(!quickMountHost){quickMountFrame=null;return;}quickMountClock+=Math.min(.1,(now-quickMountLast)/1000);quickMountLast=now;drawQuickMountPreview();quickMountFrame=requestAnimationFrame(animateQuickMount);};const closeQuickMount=()=>{if(quickMountFrame)cancelAnimationFrame(quickMountFrame);quickMountFrame=null;quickMountHost?.remove();quickMountHost=null;};events.on("run-item-acquired",({item,source,run:owningRun})=>{if(owningRun&&owningRun!==controller.run)return;const definition=services.equipment.require(item.definitionId),pending=services.pendingMounts.queue({itemInstance:item,profile:definition.assembly,source,acquiredAt:(owningRun??controller.run)?.time??0});if(pending.requiresWorkbench){item.stored=true;legacyRuntime.ui.toast("Großmodul für die Werkbank eingelagert.");return;}const opened=openReplacingQuickMount({active:Boolean(quickMountHost||quickMountFrame),close:closeQuickMount,open:()=>controller.openPendingMount(pending,{moduleProfile:{...definition.assembly,definitionId:definition.id,tags:definition.tags},blueprint:services.blueprints.getActiveId()?services.blueprints.require(services.blueprints.getActiveId()):null,settings:{pauseOnMount:metaSave.settings.pauseOnMount??true}})});if(!opened.opened)return;quickMountHost=document.createElement("div");document.body.append(quickMountHost);quickMountHost.__overlay=createQuickMountOverlay(quickMountHost,{onAction:action=>{if(action==="previous")services.quickMount.previous();if(action==="next")services.quickMount.next();if(action==="confirm"){const result=services.quickMount.confirm();events.emit(TUTORIAL_EVENTS.QUICK_MOUNT_ACTION,{action,success:Boolean(result?.mounted)});closeQuickMount();return;}if(action==="defer"){const result=services.quickMount.defer();events.emit(TUTORIAL_EVENTS.QUICK_MOUNT_ACTION,{action,success:Boolean(result?.deferred)});closeQuickMount();return;}renderQuickMount();}});renderQuickMount();if(!globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches){quickMountLast=performance.now();quickMountFrame=requestAnimationFrame(animateQuickMount);}});
+  const input = createInputController({
+    eventBus: events,
+    bindings: metaSave.settings.bindings,
+    stickElement: document.querySelector("#stick"),
+    stickKnob: document.querySelector("#knob"),
+    isQuickMount: () => Boolean(services.quickMount?.session),
+  });
+  let quickMountHost = null;
+  const renderQuickMount = () => {
+    const session = services.quickMount?.session;
+    if (!session || !quickMountHost) return;
+    const suggestion = session.suggestions[session.selectedIndex],
+      definition = services.equipment.require(
+        session.pendingMount.definitionId,
+      ),
+      overlay = quickMountHost.__overlay;
+    overlay.render({
+      name: definition.name ?? definition.id,
+      reasons: suggestion.reasons,
+      deltas: [
+        [
+          "POSITION",
+          `${session.selectedIndex + 1}/${session.suggestions.length}`,
+        ],
+        ["MASSE", suggestion.flightDelta.totalMass?.toFixed?.(1) ?? "—"],
+        ["BALANCE", suggestion.metrics.balance?.toFixed?.(2) ?? "—"],
+        ["ENERGIE", suggestion.metrics.energyPath?.toFixed?.(2) ?? "—"],
+        ["SCHUTZ", suggestion.metrics.protection?.toFixed?.(2) ?? "—"],
+        ["RISIKO", suggestion.metrics.collisionRisk ? "HOCH" : "NIEDRIG"],
+      ],
+      details: [
+        ...(definition.tags ?? []).map((tag) =>
+          typeof tag === "string" ? tag : tag.id,
+        ),
+        `Blueprint ${suggestion.blueprintMatch ?? "frei"}`,
+      ],
+    });
+    drawQuickMountPreview();
+  };
+  const drawQuickMountPreview = () => {
+    const session = services.quickMount?.session;
+    if (!session || !quickMountHost) return;
+    renderPlacementPreview(quickMountHost.__overlay.canvas.getContext("2d"), {
+      snapshot: services.assemblyGeometry.getSnapshot(),
+      suggestion: session.suggestions[session.selectedIndex],
+      assemblyRenderer: services.assemblyRenderer,
+      time: quickMountClock,
+    });
+  };
+  let quickMountFrame = null,
+    quickMountClock = 0,
+    quickMountLast = 0;
+  const animateQuickMount = (now) => {
+    if (!quickMountHost) {
+      quickMountFrame = null;
+      return;
+    }
+    quickMountClock += Math.min(0.1, (now - quickMountLast) / 1000);
+    quickMountLast = now;
+    drawQuickMountPreview();
+    quickMountFrame = requestAnimationFrame(animateQuickMount);
+  };
+  const closeQuickMount = () => {
+    if (quickMountFrame) cancelAnimationFrame(quickMountFrame);
+    quickMountFrame = null;
+    quickMountHost?.remove();
+    quickMountHost = null;
+  };
+  events.on("run-item-acquired", ({ item, source, run: owningRun }) => {
+    if (owningRun && owningRun !== controller.run) return;
+    const definition = services.equipment.require(item.definitionId),
+      pending = services.pendingMounts.queue({
+        itemInstance: item,
+        profile: definition.assembly,
+        source,
+        acquiredAt: (owningRun ?? controller.run)?.time ?? 0,
+      });
+    if (pending.requiresWorkbench) {
+      item.stored = true;
+      legacyRuntime.ui.toast("Großmodul für die Werkbank eingelagert.");
+      return;
+    }
+    const opened = openReplacingQuickMount({
+      active: Boolean(quickMountHost || quickMountFrame),
+      close: closeQuickMount,
+      open: () =>
+        controller.openPendingMount(pending, {
+          moduleProfile: {
+            ...definition.assembly,
+            definitionId: definition.id,
+            tags: definition.tags,
+          },
+          blueprint: services.blueprints.getActiveId()
+            ? services.blueprints.require(services.blueprints.getActiveId())
+            : null,
+          settings: { pauseOnMount: metaSave.settings.pauseOnMount ?? true },
+        }),
+    });
+    if (!opened.opened) return;
+    quickMountHost = document.createElement("div");
+    document.body.append(quickMountHost);
+    quickMountHost.__overlay = createQuickMountOverlay(quickMountHost, {
+      onAction: (action) => {
+        if (action === "previous") services.quickMount.previous();
+        if (action === "next") services.quickMount.next();
+        if (action === "confirm") {
+          const result = services.quickMount.confirm();
+          events.emit(TUTORIAL_EVENTS.QUICK_MOUNT_ACTION, {
+            action,
+            success: Boolean(result?.mounted),
+          });
+          closeQuickMount();
+          return;
+        }
+        if (action === "defer") {
+          const result = services.quickMount.defer();
+          events.emit(TUTORIAL_EVENTS.QUICK_MOUNT_ACTION, {
+            action,
+            success: Boolean(result?.deferred),
+          });
+          closeQuickMount();
+          return;
+        }
+        renderQuickMount();
+      },
+    });
+    renderQuickMount();
+    if (!globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      quickMountLast = performance.now();
+      quickMountFrame = requestAnimationFrame(animateQuickMount);
+    }
+  });
   input.start();
-  const inspector = createBuildInspector(document.querySelector("#build-inspector"), services);
+  const inspector = createBuildInspector(
+    document.querySelector("#build-inspector"),
+    services,
+  );
   const game = legacyRuntime.game;
   const ui = legacyRuntime.ui;
-  legacyRuntime.configureEvolutionEffects((effectId, player) => effects.execute({ id: effectId }, { player, run: controller.run }));
-  legacyRuntime.configureShotFiredReporter(({shots})=>events.emit(TUTORIAL_EVENTS.SHOT_FIRED,{source:"legacy",shots}));
-  const getAssemblyLod = () => metaSave.assemblyVisualPreferences?.lod === "auto" ? "ultra" : metaSave.assemblyVisualPreferences?.lod;
+  legacyRuntime.configureEvolutionEffects((effectId, player) =>
+    effects.execute({ id: effectId }, { player, run: controller.run }),
+  );
+  legacyRuntime.configureShotFiredReporter(({ shots }) =>
+    events.emit(TUTORIAL_EVENTS.SHOT_FIRED, { source: "legacy", shots }),
+  );
+  const getAssemblyLod = () =>
+    metaSave.assemblyVisualPreferences?.lod === "auto"
+      ? "ultra"
+      : metaSave.assemblyVisualPreferences?.lod;
   // weight region-typical enemies (content catalog) into the legacy wave roster;
   // game.visualRegionId is kept current by game-controller.syncLegacy
-  legacyRuntime.configureRegionRoster(() => REGION_BY_ID.get(game.visualRegionId)?.enemies ?? []);
-  legacyRuntime.configureShipRenderer((context,player,legacyGame)=>{const geometry=services.assemblyGeometry?.getSnapshot();if(!geometry?.coreGeometry)return false;const rendered=services.assemblyRenderer.renderPlayerShip(context,{geometrySnapshot:geometry,position:player,rotation:player.angle+Math.PI/2,time:legacyGame.time,buildAnimations:services.buildAnimations?.snapshot?.()??[],movement:{x:player.vx,y:player.vy,dodging:player.iframes>0},lodOptions:{userSetting:getAssemblyLod()}});if(rendered&&player.shield>0){context.strokeStyle="#4f6df5";context.shadowColor="#4f6df5";context.shadowBlur=14;context.lineWidth=1.5;context.beginPath();context.arc(player.x,player.y,player.r+8+Math.sin(legacyGame.time*4)*2,0,Math.PI*2);context.stroke();context.shadowBlur=0;}return rendered;});
+  legacyRuntime.configureRegionRoster(
+    () => REGION_BY_ID.get(game.visualRegionId)?.enemies ?? [],
+  );
+  legacyRuntime.configureShipRenderer((context, player, legacyGame) => {
+    const geometry = services.assemblyGeometry?.getSnapshot();
+    if (!geometry?.coreGeometry) return false;
+    const rendered = services.assemblyRenderer.renderPlayerShip(context, {
+      geometrySnapshot: geometry,
+      position: player,
+      rotation: player.angle + Math.PI / 2,
+      time: legacyGame.time,
+      buildAnimations: services.buildAnimations?.snapshot?.() ?? [],
+      movement: { x: player.vx, y: player.vy, dodging: player.iframes > 0 },
+      lodOptions: { userSetting: getAssemblyLod() },
+    });
+    if (rendered && player.shield > 0) {
+      context.strokeStyle = "#4f6df5";
+      context.shadowColor = "#4f6df5";
+      context.shadowBlur = 14;
+      context.lineWidth = 1.5;
+      context.beginPath();
+      context.arc(
+        player.x,
+        player.y,
+        player.r + 8 + Math.sin(legacyGame.time * 4) * 2,
+        0,
+        Math.PI * 2,
+      );
+      context.stroke();
+      context.shadowBlur = 0;
+    }
+    return rendered;
+  });
   // GPU environment stage (PixiJS) below the #game canvas. Loaded lazily and
   // fire-and-forget: until it is ready (or if WebGL is unavailable) the legacy
   // runtime keeps drawing its canvas backdrop.
@@ -430,45 +731,96 @@ export async function bootstrap() {
     try {
       const gameCanvas = document.getElementById("game");
       if (!gameCanvas?.parentNode) return;
-      const { createEnvironmentStage } = await import("../render/pixi/environment-stage.js");
+      const { createEnvironmentStage } =
+        await import("../render/pixi/environment-stage.js");
       stageCanvas = document.createElement("canvas");
       stageCanvas.id = "environment";
       stageCanvas.setAttribute("aria-hidden", "true");
       gameCanvas.parentNode.insertBefore(stageCanvas, gameCanvas);
       const environmentStage = await createEnvironmentStage({
         canvas: stageCanvas,
-        reducedMotion: globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
+        reducedMotion:
+          globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ??
+          false,
       });
       document.body.classList.add("gpu-environment");
-      legacyRuntime.configureEnvironmentRenderer(frame => environmentStage.render(frame));
+      legacyRuntime.configureEnvironmentRenderer((frame) =>
+        environmentStage.render(frame),
+      );
       console.info("[render] PixiJS environment stage active");
       // combat FX overlay (particles, shockwaves, bloom) above #game — optional
       // on top of the environment stage, with its own fallback to the 2D path
       let fxCanvas = null;
       try {
-        const { createCombatFxStage } = await import("../render/pixi/combat-fx-stage.js");
+        const { createCombatFxStage } =
+          await import("../render/pixi/combat-fx-stage.js");
         fxCanvas = document.createElement("canvas");
         fxCanvas.id = "combat-fx";
         fxCanvas.setAttribute("aria-hidden", "true");
         gameCanvas.after(fxCanvas);
-        const combatFxStage = await createCombatFxStage({ canvas: fxCanvas, gameCanvas });
+        const combatFxStage = await createCombatFxStage({
+          canvas: fxCanvas,
+          gameCanvas,
+        });
         legacyRuntime.configureCombatFxRenderer(combatFxStage);
         console.info("[render] PixiJS combat FX stage active");
       } catch (fxError) {
         fxCanvas?.remove();
-        console.warn("[render] PixiJS combat FX stage unavailable — 2D particles/bloom remain active", fxError);
+        console.warn(
+          "[render] PixiJS combat FX stage unavailable — 2D particles/bloom remain active",
+          fxError,
+        );
       }
     } catch (error) {
       stageCanvas?.remove();
       document.body.classList.remove("gpu-environment");
-      console.warn("[render] PixiJS environment stage unavailable — canvas backdrop remains active", error);
+      console.warn(
+        "[render] PixiJS environment stage unavailable — canvas backdrop remains active",
+        error,
+      );
     }
   })();
-  legacyRuntime.configurePlayerDamageRouter((_player,damage)=>{if(game.mode==="tutorial")return 0;const geometry=services.assemblyGeometry?.getSnapshot(),target=(geometry?.nodes??[]).filter(node=>!node.isRoot).sort((a,b)=>((b.worldPosition.x)*(b.worldPosition.x) + (b.worldPosition.y)*(b.worldPosition.y))-((a.worldPosition.x)*(a.worldPosition.x) + (a.worldPosition.y)*(a.worldPosition.y)))[0];return target&&services.moduleDamage?services.moduleDamage.applyDamage(target.nodeId,damage,"legacy-contact").remainingDamage:damage;});
+  legacyRuntime.configurePlayerDamageRouter((_player, damage) => {
+    if (game.mode === "tutorial") return 0;
+    const geometry = services.assemblyGeometry?.getSnapshot(),
+      target = (geometry?.nodes ?? [])
+        .filter((node) => !node.isRoot)
+        .sort(
+          (a, b) =>
+            b.worldPosition.x * b.worldPosition.x +
+            b.worldPosition.y * b.worldPosition.y -
+            (a.worldPosition.x * a.worldPosition.x +
+              a.worldPosition.y * a.worldPosition.y),
+        )[0];
+    return target && services.moduleDamage
+      ? services.moduleDamage.applyDamage(
+          target.nodeId,
+          damage,
+          "legacy-contact",
+        ).remainingDamage
+      : damage;
+  });
   const hangarRoot = document.querySelector("#hangar");
-  const tutorialHost = document.createElement("div"); tutorialHost.className = "tutorial-overlay"; tutorialHost.hidden = true; document.body.append(tutorialHost);
+  const tutorialHost = document.createElement("div");
+  tutorialHost.className = "tutorial-overlay";
+  tutorialHost.hidden = true;
+  document.body.append(tutorialHost);
   let exitFoundationsRun = () => {};
-  const tutorialOverlay = createTutorialOverlay({ root: tutorialHost, resolveTarget: id => document.querySelector(`[data-tutorial-id="${id}"]`), onAction: async action => { const before=services.tutorial.snapshot();if(action==="next")await services.tutorial.advanceExplanation();if(action==="back")await services.tutorial.back();if(action==="pause")await services.tutorial.pause();if(action==="resume")await services.tutorial.resume();if(action==="skip")await services.tutorial.skipChapter();if(action==="stop")await services.tutorial.stop();if(shouldExitFoundationsRun(before,services.tutorial.snapshot()))exitFoundationsRun(); } });
+  const tutorialOverlay = createTutorialOverlay({
+    root: tutorialHost,
+    resolveTarget: (id) => document.querySelector(`[data-tutorial-id="${id}"]`),
+    onAction: async (action) => {
+      const before = services.tutorial.snapshot();
+      if (action === "next") await services.tutorial.advanceExplanation();
+      if (action === "back") await services.tutorial.back();
+      if (action === "pause") await services.tutorial.pause();
+      if (action === "resume") await services.tutorial.resume();
+      if (action === "skip") await services.tutorial.skipChapter();
+      if (action === "stop") await services.tutorial.stop();
+      if (shouldExitFoundationsRun(before, services.tutorial.snapshot()))
+        exitFoundationsRun();
+    },
+  });
   // During the foundations training, hold back level-up dialogs until the tutorial's evolution
   // step asks for one — otherwise auto-fire kills open them mid-step and swallow overlay clicks.
   legacyRuntime.configureLevelUpGate(() => {
@@ -478,79 +830,247 @@ export async function bootstrap() {
     return active.stepId === "evolution" || active.stepId === "complete";
   });
   events.on(TUTORIAL_EVENTS.CHAPTER_COMPLETED, ({ chapterId }) => {
-    const title = TUTORIAL_CHAPTERS.find(chapter => chapter.id === chapterId)?.title ?? chapterId;
+    const title =
+      TUTORIAL_CHAPTERS.find((chapter) => chapter.id === chapterId)?.title ??
+      chapterId;
     legacyRuntime.ui.toast(`TRAINING ABGESCHLOSSEN · ${title}`);
   });
   // Keep the tutorial library card states (BEREIT/AKTIV/ABGESCHLOSSEN) in sync while it is on
   // screen: without this, completing a chapter only shows after the user switches hangar tabs.
   let refreshTutorialLibrary = () => {};
-  let lastTutorialChapterId = services.tutorial.snapshot().active?.chapterId ?? null;
-  services.tutorial.subscribe(model => {
+  let lastTutorialChapterId =
+    services.tutorial.snapshot().active?.chapterId ?? null;
+  services.tutorial.subscribe((model) => {
     tutorialOverlay.render(model);
     const chapterId = model.active?.chapterId ?? null;
-    if (chapterId !== lastTutorialChapterId) { lastTutorialChapterId = chapterId; refreshTutorialLibrary(); }
+    if (chapterId !== lastTutorialChapterId) {
+      lastTutorialChapterId = chapterId;
+      refreshTutorialLibrary();
+    }
   });
   tutorialOverlay.render(services.tutorial.snapshot());
-  const startMenu = attachStartMenuToggle(document.querySelector("#start"), { openButton: document.querySelector("#menuopenbtn"), closeButton: document.querySelector("#menuclosebtn") });
-  exitFoundationsRun = () => { if(game.mode!=="tutorial")return;game.quit();startMenu.open();hangar.render(); };
-  refreshTutorialLibrary = () => { if (hangarRoot.querySelector(".tutorial-library")) hangar.render(); };
+  const startMenu = attachStartMenuToggle(document.querySelector("#start"), {
+    openButton: document.querySelector("#menuopenbtn"),
+    closeButton: document.querySelector("#menuclosebtn"),
+  });
+  exitFoundationsRun = () => {
+    if (game.mode !== "tutorial") return;
+    game.quit();
+    startMenu.open();
+    hangar.render();
+  };
+  refreshTutorialLibrary = () => {
+    if (hangarRoot.querySelector(".tutorial-library")) hangar.render();
+  };
   // The game-over screen's "Hangar" button routes through the legacy UI.menu(), which only
   // shows #start — jump straight to the menu view so the button keeps landing in the hangar.
-  document.querySelector("#menubtn")?.addEventListener("click", () => startMenu.open());
+  document
+    .querySelector("#menubtn")
+    ?.addEventListener("click", () => startMenu.open());
   let previewRun;
   let mapScreen;
   let activeCampaignNodeId = null;
   let originalStartWave;
   const showAssemblyWorkbench = () => {
-    if (!services.assemblyWorkbench || !services.currentAssembly) return legacyRuntime.ui.toast("Werkbank ist nach dem ersten Kampfeinsatz verfügbar.");
+    if (!services.assemblyWorkbench || !services.currentAssembly)
+      return legacyRuntime.ui.toast(
+        "Werkbank ist nach dem ersten Kampfeinsatz verfügbar.",
+      );
     const stage = hangarRoot.querySelector(".hangar-content");
     stage.dataset.tutorialId = "workbench-stage";
     const workbench = services.assemblyWorkbench;
     let movingBranch = false;
-    let screen, cameraController, frameHandle = null, resizeObserver = null, model = null, geometryById = new Map();
+    let screen,
+      cameraController,
+      frameHandle = null,
+      resizeObserver = null,
+      model = null,
+      geometryById = new Map();
     workbench.open({ source: "sector-map" });
-    const equipmentDefinition = definitionId => { try { return services.equipment.require(definitionId); } catch { return null; } };
-    const moduleProfileFor = item => { const definition = item && equipmentDefinition(item.definitionId); return definition ? { ...definition.assembly, definitionId: definition.id, tags: definition.tags } : null; };
-    const evaluatePort = (port, profile) => profile && services.compatibility ? services.compatibility.evaluate({ state: model.assembly, moduleProfile: profile, port, geometrySnapshot: model.geometry }) : null;
+    const equipmentDefinition = (definitionId) => {
+      try {
+        return services.equipment.require(definitionId);
+      } catch {
+        return null;
+      }
+    };
+    const moduleProfileFor = (item) => {
+      const definition = item && equipmentDefinition(item.definitionId);
+      return definition
+        ? {
+            ...definition.assembly,
+            definitionId: definition.id,
+            tags: definition.tags,
+          }
+        : null;
+    };
+    const evaluatePort = (port, profile) =>
+      profile && services.compatibility
+        ? services.compatibility.evaluate({
+            state: model.assembly,
+            moduleProfile: profile,
+            port,
+            geometrySnapshot: model.geometry,
+          })
+        : null;
     let unsubscribeGeometry = null;
-    const cleanup = () => { if (frameHandle) cancelAnimationFrame(frameHandle); frameHandle = null; resizeObserver?.disconnect(); cameraController?.destroy(); screen?.destroy?.(); unsubscribeGeometry?.(); unsubscribeGeometry = null; workbench.close(); };
+    const cleanup = () => {
+      if (frameHandle) cancelAnimationFrame(frameHandle);
+      frameHandle = null;
+      resizeObserver?.disconnect();
+      cameraController?.destroy();
+      screen?.destroy?.();
+      unsubscribeGeometry?.();
+      unsubscribeGeometry = null;
+      workbench.close();
+    };
     const render = () => {
       model = workbench.model();
-      geometryById = new Map(model.geometry.nodes.map(node => [node.nodeId, node]));
-      const looseInventory = model.inventory.filter(item => !Object.values(model.assembly.nodesById).some(node => node.moduleInstanceId === item.instanceId));
-      const selectedItem = looseInventory.find(item => item.instanceId === model.session.selectedItemId) ?? null;
-      const placementProfile = movingBranch ? null : moduleProfileFor(selectedItem);
+      geometryById = new Map(
+        model.geometry.nodes.map((node) => [node.nodeId, node]),
+      );
+      const looseInventory = model.inventory.filter(
+        (item) =>
+          !Object.values(model.assembly.nodesById).some(
+            (node) => node.moduleInstanceId === item.instanceId,
+          ),
+      );
+      const selectedItem =
+        looseInventory.find(
+          (item) => item.instanceId === model.session.selectedItemId,
+        ) ?? null;
+      const placementProfile = movingBranch
+        ? null
+        : moduleProfileFor(selectedItem);
       let validPortCount = 0;
-      const ports = Object.values(model.assembly.portsById).map(port => {
+      const ports = Object.values(model.assembly.portsById).map((port) => {
         const worldTransform = resolvePortWorldTransform(port, model.geometry);
-        const compatibility = port.occupiedByNodeId ? null : evaluatePort(port, placementProfile);
-        let state = "free", reasonText = "";
-        if (compatibility) { state = compatibility.compatible ? "valid" : "invalid"; reasonText = compatibility.compatible ? "" : compatibility.reasonLabels.join(", "); }
-        else if (movingBranch && !port.occupiedByNodeId) state = "valid";
+        const compatibility = port.occupiedByNodeId
+          ? null
+          : evaluatePort(port, placementProfile);
+        let state = "free",
+          reasonText = "";
+        if (compatibility) {
+          state = compatibility.compatible ? "valid" : "invalid";
+          reasonText = compatibility.compatible
+            ? ""
+            : compatibility.reasonLabels.join(", ");
+        } else if (movingBranch && !port.occupiedByNodeId) state = "valid";
         if (state === "valid") validPortCount++;
-        return { ...port, direction: worldTransform.direction, state, reasonText, position: worldTransform.position, label: portAccessibilityLabel(port, compatibility ?? undefined) };
+        return {
+          ...port,
+          direction: worldTransform.direction,
+          state,
+          reasonText,
+          position: worldTransform.position,
+          label: portAccessibilityLabel(port, compatibility ?? undefined),
+        };
       });
-      screen.renderInventory(looseInventory.map(item => { const definition = equipmentDefinition(item.definitionId); return { ...item, label: definition?.name ?? item.definitionId, sizeClass: definition?.assembly?.sizeClass }; }), model.session.selectedItemId);
-      screen.renderPorts(ports, { selectedPortId: model.session.selectedPortId, selectedNodeId: model.session.selectedNodeId });
-      renderAssemblyToolbar(stage.querySelector('[data-role="modes"]'), model.session.viewMode, mode => { workbench.setViewMode(mode); render(); });
+      screen.renderInventory(
+        looseInventory.map((item) => {
+          const definition = equipmentDefinition(item.definitionId);
+          return {
+            ...item,
+            label: definition?.name ?? item.definitionId,
+            sizeClass: definition?.assembly?.sizeClass,
+          };
+        }),
+        model.session.selectedItemId,
+      );
+      screen.renderPorts(ports, {
+        selectedPortId: model.session.selectedPortId,
+        selectedNodeId: model.session.selectedNodeId,
+      });
+      renderAssemblyToolbar(
+        stage.querySelector('[data-role="modes"]'),
+        model.session.viewMode,
+        (mode) => {
+          workbench.setViewMode(mode);
+          render();
+        },
+      );
       const selected = model.assembly.nodesById[model.session.selectedNodeId];
-      const selectedPort = model.assembly.portsById[model.session.selectedPortId];
-      if (movingBranch) screen.setHint("Freien Zielport wählen, um den Ast zu versetzen.");
-      else if (selectedItem) screen.setHint(validPortCount ? `${validPortCount} kompatible Ports leuchten gold — Port anklicken zum Montieren.` : "Kein freier Port passt zu diesem Modul.");
-      else if (selected) screen.setHint("Aktionen im Inspektor: Drehen, Ast versetzen, Demontieren.");
-      else screen.setHint("Modul im Inventar wählen oder verbautes Modul anklicken. Ziehen verschiebt die Ansicht, Mausrad zoomt.");
+      const selectedPort =
+        model.assembly.portsById[model.session.selectedPortId];
+      if (movingBranch)
+        screen.setHint("Freien Zielport wählen, um den Ast zu versetzen.");
+      else if (selectedItem)
+        screen.setHint(
+          validPortCount
+            ? `${validPortCount} kompatible Ports leuchten gold — Port anklicken zum Montieren.`
+            : "Kein freier Port passt zu diesem Modul.",
+        );
+      else if (selected)
+        screen.setHint(
+          "Aktionen im Inspektor: Drehen, Ast versetzen, Demontieren.",
+        );
+      else
+        screen.setHint(
+          "Modul im Inventar wählen oder verbautes Modul anklicken. Ziehen verschiebt die Ansicht, Mausrad zoomt.",
+        );
       const inspector = document.createElement("div");
-      const consequence = selected ? workbench.previewConsequence() : { allowed: false, warnings: [] };
-      let deltas = [], title;
-      if (selected) { const definition = equipmentDefinition(selected.definitionId); title = definition?.name ?? selected.definitionId; deltas = [["PANZERUNG", `${Math.round(selected.armorIntegrity ?? 0)} / ${Math.round(selected.maxArmorIntegrity ?? 0)}`], ["KERN", `${Math.round(selected.coreIntegrity ?? 0)}`], ["MASSE", selected.mass ?? "—"], ["ZUSTAND", selected.damageState === "intact" ? "INTAKT" : selected.damageState ?? "—"]]; }
-      else if (selectedItem) { const definition = equipmentDefinition(selectedItem.definitionId); title = definition?.name ?? selectedItem.definitionId; const assembly = definition?.assembly ?? {}; deltas = [["GRÖSSE", assembly.sizeClass ?? "—"], ["ENERGIE", assembly.energyClass ?? "—"], ["LAST", assembly.loadDemand ?? "—"], ["MONTAGE", (assembly.mountTypes ?? []).join(" / ") || "—"]]; }
-      else if (selectedPort) { title = `${selectedPort.sizeClass}-PORT`; deltas = [["KLASSE", selectedPort.sizeClass], ["ENERGIE", selectedPort.energyClass ?? "—"], ["TRAGLAST", selectedPort.loadCapacity ?? "—"], ["TYP", selectedPort.mountType ?? "—"]]; }
-      renderAssemblyInspector(inspector, { node: selected, port: selectedPort, item: selectedItem, title, deltas, warnings: consequence.warnings, actions: { rotate: Boolean(selected) && consequence.allowed, moveBranch: Boolean(selected), dismantle: Boolean(selected) && consequence.allowed } });
+      const consequence = selected
+        ? workbench.previewConsequence()
+        : { allowed: false, warnings: [] };
+      let deltas = [],
+        title;
+      if (selected) {
+        const definition = equipmentDefinition(selected.definitionId);
+        title = definition?.name ?? selected.definitionId;
+        deltas = [
+          [
+            "PANZERUNG",
+            `${Math.round(selected.armorIntegrity ?? 0)} / ${Math.round(selected.maxArmorIntegrity ?? 0)}`,
+          ],
+          ["KERN", `${Math.round(selected.coreIntegrity ?? 0)}`],
+          ["MASSE", selected.mass ?? "—"],
+          [
+            "ZUSTAND",
+            selected.damageState === "intact"
+              ? "INTAKT"
+              : (selected.damageState ?? "—"),
+          ],
+        ];
+      } else if (selectedItem) {
+        const definition = equipmentDefinition(selectedItem.definitionId);
+        title = definition?.name ?? selectedItem.definitionId;
+        const assembly = definition?.assembly ?? {};
+        deltas = [
+          ["GRÖSSE", assembly.sizeClass ?? "—"],
+          ["ENERGIE", assembly.energyClass ?? "—"],
+          ["LAST", assembly.loadDemand ?? "—"],
+          ["MONTAGE", (assembly.mountTypes ?? []).join(" / ") || "—"],
+        ];
+      } else if (selectedPort) {
+        title = `${selectedPort.sizeClass}-PORT`;
+        deltas = [
+          ["KLASSE", selectedPort.sizeClass],
+          ["ENERGIE", selectedPort.energyClass ?? "—"],
+          ["TRAGLAST", selectedPort.loadCapacity ?? "—"],
+          ["TYP", selectedPort.mountType ?? "—"],
+        ];
+      }
+      renderAssemblyInspector(inspector, {
+        node: selected,
+        port: selectedPort,
+        item: selectedItem,
+        title,
+        deltas,
+        warnings: consequence.warnings,
+        actions: {
+          rotate: Boolean(selected) && consequence.allowed,
+          moveBranch: Boolean(selected),
+          dismantle: Boolean(selected) && consequence.allowed,
+        },
+      });
       screen.setInspector(inspector);
     };
-    const draw = clock => {
-      const canvas = screen.canvas, dpr = Math.min(2, globalThis.devicePixelRatio ?? 1);
-      const width = canvas.width / dpr, height = canvas.height / dpr, camera = cameraController.camera;
+    const draw = (clock) => {
+      const canvas = screen.canvas,
+        dpr = Math.min(2, globalThis.devicePixelRatio ?? 1);
+      const width = canvas.width / dpr,
+        height = canvas.height / dpr,
+        camera = cameraController.camera;
       const ctx = canvas.getContext("2d");
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, width, height);
@@ -558,53 +1078,174 @@ export async function bootstrap() {
       ctx.translate(width / 2, height / 2);
       ctx.scale(camera.zoom, camera.zoom);
       ctx.translate(camera.offset.x, camera.offset.y);
-      services.assemblyRenderer.renderPlayerShip(ctx, { geometrySnapshot: model.geometry, position: { x: 0, y: 0 }, time: clock, buildAnimations: services.buildAnimations?.snapshot?.() ?? [], lodOptions: { userSetting: getAssemblyLod() } });
-      const selectedGeometry = geometryById.get(workbench.session?.selectedNodeId);
-      if (selectedGeometry) { ctx.save(); ctx.strokeStyle = "#ffc857"; ctx.lineWidth = 1.5 / camera.zoom; ctx.setLineDash([6, 5]); ctx.lineDashOffset = -clock * 14; ctx.beginPath(); ctx.arc(selectedGeometry.worldPosition.x, selectedGeometry.worldPosition.y, (selectedGeometry.geometry?.size ?? 14) + 9, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
-      renderViewModeOverlay(ctx, getViewModeOverlay(workbench.session?.viewMode ?? "normal", { assembly: model.assembly, geometry: model.geometry, flightProfile: services.flightProfile?.getProfile() }));
+      services.assemblyRenderer.renderPlayerShip(ctx, {
+        geometrySnapshot: model.geometry,
+        position: { x: 0, y: 0 },
+        time: clock,
+        buildAnimations: services.buildAnimations?.snapshot?.() ?? [],
+        lodOptions: { userSetting: getAssemblyLod() },
+      });
+      const selectedGeometry = geometryById.get(
+        workbench.session?.selectedNodeId,
+      );
+      if (selectedGeometry) {
+        ctx.save();
+        ctx.strokeStyle = "#ffc857";
+        ctx.lineWidth = 1.5 / camera.zoom;
+        ctx.setLineDash([6, 5]);
+        ctx.lineDashOffset = -clock * 14;
+        ctx.beginPath();
+        ctx.arc(
+          selectedGeometry.worldPosition.x,
+          selectedGeometry.worldPosition.y,
+          (selectedGeometry.geometry?.size ?? 14) + 9,
+          0,
+          Math.PI * 2,
+        );
+        ctx.stroke();
+        ctx.restore();
+      }
+      renderViewModeOverlay(
+        ctx,
+        getViewModeOverlay(workbench.session?.viewMode ?? "normal", {
+          assembly: model.assembly,
+          geometry: model.geometry,
+          flightProfile: services.flightProfile?.getProfile(),
+        }),
+      );
       ctx.restore();
       screen.portsLayer.style.transform = `scale(${camera.zoom}) translate(${camera.offset.x}px, ${camera.offset.y}px)`;
     };
-    screen = createAssemblyWorkbenchScreen(stage, { onAction: (action, data) => {
-      if (action === "close") { cleanup(); workbench.close(); showCampaignMap(); return; }
-      if (action === "zoom-in") { cameraController.zoomBy(.15); events.emit(TUTORIAL_EVENTS.WORKBENCH_ACTION, { action, success: true }); return; }
-      if (action === "zoom-out") { cameraController.zoomBy(-.15); events.emit(TUTORIAL_EVENTS.WORKBENCH_ACTION, { action, success: true }); return; }
-      if (action === "reset-view") { cameraController.resetView(); events.emit(TUTORIAL_EVENTS.WORKBENCH_ACTION, { action, success: true }); return; }
-      if (action === "select-item") { movingBranch = false; workbench.selectItem(workbench.session.selectedItemId === data.id ? null : data.id); }
-      if (action === "select-node") { movingBranch = false; workbench.selectNode(data.id); }
-      if (action === "select-port") {
-        const port = services.currentAssembly.getSnapshot().portsById[data.id];
-        if (canUseWorkbenchPort(port)) {
-          workbench.selectPort(data.id);
-          const transform = { position: port.localPosition ?? { x: (port.direction?.x ?? 0) * 34, y: (port.direction?.y ?? 0) * 34 }, rotation: rotationForPortDirection(port.direction) };
-          if (movingBranch && workbench.session.selectedNodeId) { workbench.move(transform, { branch: true }); movingBranch = false; }
-          else if (workbench.session.selectedItemId) {
-            const profile = moduleProfileFor(model.inventory.find(item => item.instanceId === workbench.session.selectedItemId));
-            const compatibility = evaluatePort(port, profile);
-            if (compatibility && !compatibility.compatible) { legacyRuntime.ui.toast(`Nicht montierbar: ${compatibility.reasonLabels.join(", ")}`); render(); return; }
-            const nodeId = workbench.mount(transform);
-            if (nodeId) workbench.selectNode(nodeId);
+    screen = createAssemblyWorkbenchScreen(stage, {
+      onAction: (action, data) => {
+        if (action === "close") {
+          cleanup();
+          workbench.close();
+          showCampaignMap();
+          return;
+        }
+        if (action === "zoom-in") {
+          cameraController.zoomBy(0.15);
+          events.emit(TUTORIAL_EVENTS.WORKBENCH_ACTION, {
+            action,
+            success: true,
+          });
+          return;
+        }
+        if (action === "zoom-out") {
+          cameraController.zoomBy(-0.15);
+          events.emit(TUTORIAL_EVENTS.WORKBENCH_ACTION, {
+            action,
+            success: true,
+          });
+          return;
+        }
+        if (action === "reset-view") {
+          cameraController.resetView();
+          events.emit(TUTORIAL_EVENTS.WORKBENCH_ACTION, {
+            action,
+            success: true,
+          });
+          return;
+        }
+        if (action === "select-item") {
+          movingBranch = false;
+          workbench.selectItem(
+            workbench.session.selectedItemId === data.id ? null : data.id,
+          );
+        }
+        if (action === "select-node") {
+          movingBranch = false;
+          workbench.selectNode(data.id);
+        }
+        if (action === "select-port") {
+          const port =
+            services.currentAssembly.getSnapshot().portsById[data.id];
+          if (canUseWorkbenchPort(port)) {
+            workbench.selectPort(data.id);
+            const transform = {
+              position: port.localPosition ?? {
+                x: (port.direction?.x ?? 0) * 34,
+                y: (port.direction?.y ?? 0) * 34,
+              },
+              rotation: rotationForPortDirection(port.direction),
+            };
+            if (movingBranch && workbench.session.selectedNodeId) {
+              workbench.move(transform, { branch: true });
+              movingBranch = false;
+            } else if (workbench.session.selectedItemId) {
+              const profile = moduleProfileFor(
+                model.inventory.find(
+                  (item) =>
+                    item.instanceId === workbench.session.selectedItemId,
+                ),
+              );
+              const compatibility = evaluatePort(port, profile);
+              if (compatibility && !compatibility.compatible) {
+                legacyRuntime.ui.toast(
+                  `Nicht montierbar: ${compatibility.reasonLabels.join(", ")}`,
+                );
+                render();
+                return;
+              }
+              const nodeId = workbench.mount(transform);
+              if (nodeId) workbench.selectNode(nodeId);
+            }
           }
         }
+        if (action === "rotate" && workbench.session.selectedNodeId)
+          workbench.rotate(
+            (services.currentAssembly.requireNode(
+              workbench.session.selectedNodeId,
+            ).localRotation ?? 0) +
+              Math.PI / 8,
+          );
+        if (action === "move-branch") {
+          movingBranch = true;
+          legacyRuntime.ui.toast(
+            "Freien Zielport wählen, um den Ast zu versetzen.",
+          );
+        }
+        if (action === "dismantle" && workbench.session.selectedNodeId)
+          workbench.dismantle(false);
+        render();
+      },
+    });
+    cameraController = createAssemblyCanvasController({
+      canvas: screen.canvas,
+    });
+    const fitCanvas = () => {
+      const dpr = Math.min(2, globalThis.devicePixelRatio ?? 1),
+        { clientWidth, clientHeight } = screen.canvas;
+      if (clientWidth && clientHeight) {
+        screen.canvas.width = Math.round(clientWidth * dpr);
+        screen.canvas.height = Math.round(clientHeight * dpr);
       }
-      if (action === "rotate" && workbench.session.selectedNodeId) workbench.rotate((services.currentAssembly.requireNode(workbench.session.selectedNodeId).localRotation ?? 0) + Math.PI / 8);
-      if (action === "move-branch") { movingBranch = true; legacyRuntime.ui.toast("Freien Zielport wählen, um den Ast zu versetzen."); }
-      if (action === "dismantle" && workbench.session.selectedNodeId) workbench.dismantle(false);
-      render();
-    } });
-    cameraController = createAssemblyCanvasController({ canvas: screen.canvas });
-    const fitCanvas = () => { const dpr = Math.min(2, globalThis.devicePixelRatio ?? 1), { clientWidth, clientHeight } = screen.canvas; if (clientWidth && clientHeight) { screen.canvas.width = Math.round(clientWidth * dpr); screen.canvas.height = Math.round(clientHeight * dpr); } };
-    resizeObserver = globalThis.ResizeObserver ? new ResizeObserver(fitCanvas) : null;
+    };
+    resizeObserver = globalThis.ResizeObserver
+      ? new ResizeObserver(fitCanvas)
+      : null;
     resizeObserver?.observe(screen.canvas);
     fitCanvas();
-    unsubscribeGeometry = subscribeWorkbenchGeometry({ events: services.events, isActive: () => Boolean(workbench.session && screen.canvas.isConnected), render });
+    unsubscribeGeometry = subscribeWorkbenchGeometry({
+      events: services.events,
+      isActive: () => Boolean(workbench.session && screen.canvas.isConnected),
+      render,
+    });
     render();
-    let lastFrame = performance.now(), clock = controller.run?.time ?? 0;
-    const reducedMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-    const frame = now => {
-      if (!screen.canvas.isConnected || !workbench.session) { cleanup(); return; }
-      const dt = Math.min(.1, (now - lastFrame) / 1000);
-      lastFrame = now; if (!reducedMotion) clock += dt;
+    let lastFrame = performance.now(),
+      clock = controller.run?.time ?? 0;
+    const reducedMotion =
+      globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ??
+      false;
+    const frame = (now) => {
+      if (!screen.canvas.isConnected || !workbench.session) {
+        cleanup();
+        return;
+      }
+      const dt = Math.min(0.1, (now - lastFrame) / 1000);
+      lastFrame = now;
+      if (!reducedMotion) clock += dt;
       services.buildAnimations?.update(dt);
       draw(clock);
       frameHandle = requestAnimationFrame(frame);
@@ -613,7 +1254,11 @@ export async function bootstrap() {
   };
   const showCampaignMap = () => {
     if (!previewRun) {
-      previewRun = createRunState({ seed: Date.now(), mode: "campaign", campaignPathId: metaSave.selectedCampaignPath });
+      previewRun = createRunState({
+        seed: Date.now(),
+        mode: "campaign",
+        campaignPathId: metaSave.selectedCampaignPath,
+      });
       previewRun.heat = createHeatState();
       previewRun.corruption = createCorruptionState();
       previewRun.resources.scrap = 80;
@@ -622,41 +1267,143 @@ export async function bootstrap() {
       services.sectors.start(previewRun);
     }
     const stage = hangarRoot.querySelector(".hangar-content");
-    mapScreen = createSectorMapScreen(stage, { onWorkbench: showAssemblyWorkbench, onSelect: node => events.emit(TUTORIAL_EVENTS.SECTOR_SELECTED,{nodeId:node.id}), onConfirm: node => {
-      if (!services.sectors.enter(previewRun, node.id)) return;
-      events.emit(TUTORIAL_EVENTS.SECTOR_ENTERED,{nodeId:node.id});
-      const finish = async () => { services.sectors.complete(previewRun, node.id); await writeCurrentCheckpoint(previewRun, node.id).catch(() => {}); showCampaignMap(); };
-      if (["combat", "elite", "salvage", "mid-boss", "boss", "extraction"].includes(node.type)) {
-        activeCampaignNodeId = node.id;
-        // Resume only a standing campaign run: a leftover tutorial run or a dead player must
-        // never be revived here, or the node drops straight onto a stale game-over screen.
-        if (game.mode === "standard" && game.player && game.wave > 0 && game.player.hp > 0) { game.state = "run"; ui.show("hud"); originalStartWave(game.wave + 1); }
-        else game.start("standard");
-        return;
-      }
-      if (node.type === "merchant") {
-        const merchant = createMerchantService({ modules: MODULES, weapons: WEAPONS, reactors: REACTORS, currencyService: services.currency, eventBus: events });
-        const showMerchant = offers => renderMerchantScreen(stage, {
-          offers,
-          resources: previewRun.resources,
-          onBuy: offer => attemptMerchantPurchase({ merchant, run: previewRun, offer, finish, onRejected: () => legacyRuntime.ui.toast("Nicht genügend Ressourcen."), onApplied:()=>events.emit(TUTORIAL_EVENTS.MERCHANT_PURCHASED,{success:true,offerId:offer.id}) }),
-          onReroll: () => { const offers = merchant.reroll(previewRun, node.seed, node.regionIndex); if (offers) showMerchant(offers); else legacyRuntime.ui.toast("Nicht genügend Ressourcen."); },
-          onLeave: finish
-        });
-        showMerchant(merchant.roll(node.seed, node.regionIndex));
-        return;
-      }
-      if (node.type === "workshop") {
-        const workshop = createWorkshopService({ affixRoller: services.affixes, eventBus: events }); const session = workshop.open(node.regionIndex); const target = previewRun.inventory[0] ?? { ...REACTORS[0], rarity: "rare", itemPower: 100, affixes: [] };
-        const showWorkshop = () => renderWorkshopScreen(stage, { service: workshop, session, target, onAction: (action, item) => attemptWorkshopAction({ workshop, session, action, target: item, payload: { rng: previewRun.rng, sector: node.regionIndex, repairService: services.repairs }, finish, onContinue: showWorkshop, onApplied:()=>events.emit(TUTORIAL_EVENTS.WORKSHOP_APPLIED,{success:true,action}) }), onLeave: finish });
-        showWorkshop(); return;
-      }
-      if (node.type === "anomaly") {
-        const anomaly = createAnomalyService(events); const signal = anomaly.select(node.seed, previewRun.anomalies?.map(entry => entry.eventId));
-        renderAnomalyScreen(stage, { event: signal, onChoose: choiceId => { anomaly.resolve(previewRun, signal, choiceId); events.emit(TUTORIAL_EVENTS.ANOMALY_RESOLVED,{choiceId}); finish(); } }); return;
-      }
-      finish();
-    } });
+    mapScreen = createSectorMapScreen(stage, {
+      onWorkbench: showAssemblyWorkbench,
+      onSelect: (node) =>
+        events.emit(TUTORIAL_EVENTS.SECTOR_SELECTED, { nodeId: node.id }),
+      onConfirm: (node) => {
+        if (!services.sectors.enter(previewRun, node.id)) return;
+        events.emit(TUTORIAL_EVENTS.SECTOR_ENTERED, { nodeId: node.id });
+        const finish = async () => {
+          services.sectors.complete(previewRun, node.id);
+          await writeCurrentCheckpoint(previewRun, node.id).catch(() => {});
+          showCampaignMap();
+        };
+        if (
+          [
+            "combat",
+            "elite",
+            "salvage",
+            "mid-boss",
+            "boss",
+            "extraction",
+          ].includes(node.type)
+        ) {
+          activeCampaignNodeId = node.id;
+          // Resume only a standing campaign run: a leftover tutorial run or a dead player must
+          // never be revived here, or the node drops straight onto a stale game-over screen.
+          if (
+            game.mode === "standard" &&
+            game.player &&
+            game.wave > 0 &&
+            game.player.hp > 0
+          ) {
+            game.state = "run";
+            ui.show("hud");
+            originalStartWave(game.wave + 1);
+          } else game.start("standard");
+          return;
+        }
+        if (node.type === "merchant") {
+          const merchant = createMerchantService({
+            modules: MODULES,
+            weapons: WEAPONS,
+            reactors: REACTORS,
+            currencyService: services.currency,
+            eventBus: events,
+          });
+          const showMerchant = (offers) =>
+            renderMerchantScreen(stage, {
+              offers,
+              resources: previewRun.resources,
+              onBuy: (offer) =>
+                attemptMerchantPurchase({
+                  merchant,
+                  run: previewRun,
+                  offer,
+                  finish,
+                  onRejected: () =>
+                    legacyRuntime.ui.toast("Nicht genügend Ressourcen."),
+                  onApplied: () =>
+                    events.emit(TUTORIAL_EVENTS.MERCHANT_PURCHASED, {
+                      success: true,
+                      offerId: offer.id,
+                    }),
+                }),
+              onReroll: () => {
+                const offers = merchant.reroll(
+                  previewRun,
+                  node.seed,
+                  node.regionIndex,
+                );
+                if (offers) showMerchant(offers);
+                else legacyRuntime.ui.toast("Nicht genügend Ressourcen.");
+              },
+              onLeave: finish,
+            });
+          showMerchant(merchant.roll(node.seed, node.regionIndex));
+          return;
+        }
+        if (node.type === "workshop") {
+          const workshop = createWorkshopService({
+            affixRoller: services.affixes,
+            eventBus: events,
+          });
+          const session = workshop.open(node.regionIndex);
+          const target = previewRun.inventory[0] ?? {
+            ...REACTORS[0],
+            rarity: "rare",
+            itemPower: 100,
+            affixes: [],
+          };
+          const showWorkshop = () =>
+            renderWorkshopScreen(stage, {
+              service: workshop,
+              session,
+              target,
+              onAction: (action, item) =>
+                attemptWorkshopAction({
+                  workshop,
+                  session,
+                  action,
+                  target: item,
+                  payload: {
+                    rng: previewRun.rng,
+                    sector: node.regionIndex,
+                    repairService: services.repairs,
+                  },
+                  finish,
+                  onContinue: showWorkshop,
+                  onApplied: () =>
+                    events.emit(TUTORIAL_EVENTS.WORKSHOP_APPLIED, {
+                      success: true,
+                      action,
+                    }),
+                }),
+              onLeave: finish,
+            });
+          showWorkshop();
+          return;
+        }
+        if (node.type === "anomaly") {
+          const anomaly = createAnomalyService(events);
+          const signal = anomaly.select(
+            node.seed,
+            previewRun.anomalies?.map((entry) => entry.eventId),
+          );
+          renderAnomalyScreen(stage, {
+            event: signal,
+            onChoose: (choiceId) => {
+              anomaly.resolve(previewRun, signal, choiceId);
+              events.emit(TUTORIAL_EVENTS.ANOMALY_RESOLVED, { choiceId });
+              finish();
+            },
+          });
+          return;
+        }
+        finish();
+      },
+    });
     mapScreen.render(services.sectors.model(previewRun));
   };
   const hangar = createHangarScreen(hangarRoot, {
@@ -666,87 +1413,355 @@ export async function bootstrap() {
     modules: MODULES,
     currencies: () => metaSave.currencies,
     checkpoint: () => currentCheckpoint,
-    isUnlocked: definition => services.unlocks.isUnlocked(definition),
-    onStart: () => { previewRun = resetCampaignResume(services); activeCampaignNodeId = null; showCampaignMap(); },
-    onResume: checkpoint => { const hydrated = services.checkpoints.hydrate(checkpoint, services); if (!hydrated) return; previewRun = hydrated.run; prepareCheckpointResume({ services, controller, game, run: previewRun }); events.emit(TUTORIAL_EVENTS.CHECKPOINT_RESUMED,{nodeId:checkpoint.nodeId}); showCampaignMap(); },
+    isUnlocked: (definition) => services.unlocks.isUnlocked(definition),
+    onStart: () => {
+      previewRun = resetCampaignResume(services);
+      activeCampaignNodeId = null;
+      showCampaignMap();
+    },
+    onResume: (checkpoint) => {
+      const hydrated = services.checkpoints.hydrate(checkpoint, services);
+      if (!hydrated) return;
+      previewRun = hydrated.run;
+      prepareCheckpointResume({ services, controller, game, run: previewRun });
+      events.emit(TUTORIAL_EVENTS.CHECKPOINT_RESUMED, {
+        nodeId: checkpoint.nodeId,
+      });
+      showCampaignMap();
+    },
     renderTab: (tab, content) => {
-      const targetByTab={"Loadout":"loadout-screen","Prototypen":"prototype-vault","Herausforderungen":"challenge-list","Kampagnen":"campaign-path-list","Bergung":"salvage-signals","Statistiken":"statistics-summary","Einstellungen":"settings-controls"};if(targetByTab[tab])content.dataset.tutorialId=targetByTab[tab];
+      const targetByTab = {
+        Loadout: "loadout-screen",
+        Prototypen: "prototype-vault",
+        Herausforderungen: "challenge-list",
+        Kampagnen: "campaign-path-list",
+        Bergung: "salvage-signals",
+        Statistiken: "statistics-summary",
+        Einstellungen: "settings-controls",
+      };
+      if (targetByTab[tab]) content.dataset.tutorialId = targetByTab[tab];
       events.emit(TUTORIAL_EVENTS.HANGAR_TAB_OPENED, { tab });
       if (tab === "Tutorials") {
-        const canResearch = RESEARCH_TREE.some(node => services.research.canPurchase(metaSave, node));
-        const availableSystems = tutorialAvailableSystems(metaSave, { checkpoint: currentCheckpoint, canResearch, campaignMapDiscovered: Boolean(previewRun) });
-        renderTutorialLibrary(content, { chapters: services.tutorial.available({ availableSystems }), onStart: async (id, mode) => { await services.tutorial.start(id, { mode }); if(id==="foundations")game.start("tutorial"); }, onResume: () => services.tutorial.resume() });
+        const canResearch = RESEARCH_TREE.some((node) =>
+          services.research.canPurchase(metaSave, node),
+        );
+        const availableSystems = tutorialAvailableSystems(metaSave, {
+          checkpoint: currentCheckpoint,
+          canResearch,
+          campaignMapDiscovered: Boolean(previewRun),
+        });
+        renderTutorialLibrary(content, {
+          chapters: services.tutorial.available({ availableSystems }),
+          onStart: async (id, mode) => {
+            await services.tutorial.start(id, { mode });
+            if (id === "foundations") game.start("tutorial");
+          },
+          onResume: () => services.tutorial.resume(),
+        });
       }
       if (tab === "Loadout") {
         const loadout = resolvePrimaryLoadout(metaSave);
-        const choicesBySlot = services.equipment.values()
-          .filter(definition => services.unlocks.isUnlocked(definition))
+        const choicesBySlot = services.equipment
+          .values()
+          .filter((definition) => services.unlocks.isUnlocked(definition))
           .reduce((groups, definition) => {
             (groups[definition.slot] ??= []).push(definition);
             return groups;
           }, {});
-        const persistLoadout = async mutate => {
+        const persistLoadout = async (mutate) => {
           const next = structuredClone(resolvePrimaryLoadout(metaSave));
           if (mutate(next) === false) return;
-          await services.save.update(save => { save.loadouts.primary = next; });
+          await services.save.update((save) => {
+            save.loadouts.primary = next;
+          });
           metaSave = await services.save.load();
           hangar.render();
         };
-        renderLoadoutScreen(content, services.loadouts.inspect(loadout), loadout, {
-          blueprints: services.blueprints.list(),
-          activeBlueprintId: services.blueprints.getActiveId(),
-          choicesBySlot,
-          onEquip: (slot, index, definitionId) => persistLoadout(next => {
-            try { services.loadouts.equip(next, slot, index, createLoadoutItem(slot, index, definitionId)); return true; }
-            catch (error) { legacyRuntime.ui.toast(error.message); return false; }
-          }),
-          onUnequip: (slot, index) => persistLoadout(next => services.loadouts.unequip(next, slot, index)),
-          onBlueprintChange: async id => {
-            if (id) await services.blueprints.setActive(id);
-            else await services.save.update(save => { save.activeBlueprintId = null; });
+        renderLoadoutScreen(
+          content,
+          services.loadouts.inspect(loadout),
+          loadout,
+          {
+            blueprints: services.blueprints.list(),
+            activeBlueprintId: services.blueprints.getActiveId(),
+            choicesBySlot,
+            onEquip: (slot, index, definitionId) =>
+              persistLoadout((next) => {
+                try {
+                  services.loadouts.equip(
+                    next,
+                    slot,
+                    index,
+                    createLoadoutItem(slot, index, definitionId),
+                  );
+                  return true;
+                } catch (error) {
+                  legacyRuntime.ui.toast(error.message);
+                  return false;
+                }
+              }),
+            onUnequip: (slot, index) =>
+              persistLoadout((next) =>
+                services.loadouts.unequip(next, slot, index),
+              ),
+            onBlueprintChange: async (id) => {
+              if (id) await services.blueprints.setActive(id);
+              else
+                await services.save.update((save) => {
+                  save.activeBlueprintId = null;
+                });
+              metaSave = await services.save.load();
+              services.blueprints.hydrate(metaSave);
+              hangar.render();
+            },
+          },
+        );
+      }
+      if (tab === "Forschung") {
+        content.dataset.tutorialId = "research-grid";
+        renderResearchScreen(content, RESEARCH_TREE, {
+          purchased: metaSave.research,
+          canPurchase: (node) => services.research.canPurchase(metaSave, node),
+          onPurchase: async (id) => {
+            await services.research.purchase(id);
             metaSave = await services.save.load();
-            services.blueprints.hydrate(metaSave);
+            services.unlocks.hydrate(metaSave.unlocks);
+            events.emit(TUTORIAL_EVENTS.RESEARCH_PURCHASED, { id });
+            syncLegacyVoidShards({
+              persistence: legacyRuntime.persistence,
+              root: document,
+              currencies: metaSave.currencies,
+            });
             hangar.render();
-          }
+          },
         });
       }
-      if (tab === "Forschung") { content.dataset.tutorialId="research-grid"; renderResearchScreen(content, RESEARCH_TREE, { purchased: metaSave.research, canPurchase: node => services.research.canPurchase(metaSave, node), onPurchase: async id => { await services.research.purchase(id); metaSave = await services.save.load(); services.unlocks.hydrate(metaSave.unlocks); events.emit(TUTORIAL_EVENTS.RESEARCH_PURCHASED,{id}); syncLegacyVoidShards({ persistence: legacyRuntime.persistence, root: document, currencies: metaSave.currencies }); hangar.render(); } }); }
       if (tab === "Baupläne") {
         content.dataset.tutorialId = "blueprint-library";
-        const refreshBlueprints = async () => { metaSave = await services.save.load(); services.blueprints.hydrate(metaSave); };
-        const showLibrary = () => renderBlueprintLibrary(content, {
-          blueprints: services.blueprints.list(),
-          onOpen: showDetail,
-          onFavorite: async (id, favorite) => { await services.save.update(save => { save.shipBlueprints[id].favorite = favorite; }); await refreshBlueprints(); showLibrary(); },
-          onCreate: async () => { if (!services.currentAssembly) return legacyRuntime.ui.toast("Starte zuerst einen Run."); await services.blueprints.saveFromAssembly({ name: `${services.currentAssembly.getSnapshot().shipFrameId} Konstruktion`, assemblySnapshot: services.currentAssembly.getSnapshot(), geometrySnapshot: services.assemblyGeometry.getSnapshot() }); await refreshBlueprints(); showLibrary(); },
-          onImport: () => { const host = document.createElement("div"); content.append(host); createBlueprintImportDialog(host, { validate: blueprint => validateBlueprint(blueprint, { knownDefinitionIds: new Set(services.equipment.values().map(item => item.id)), knownShipFrameIds: new Set(SHIP_FRAME_ASSEMBLY_PROFILES.map(item => item.id)) }), onImport: async blueprint => { await services.blueprints.importBlueprint(blueprint); await refreshBlueprints(); showLibrary(); } }).open(); }
-        });
-        const showDetail = id => renderBlueprintDetail(content, {
-          blueprint: services.blueprints.require(id),
-          active: services.blueprints.getActiveId() === id,
-          onAction: async action => {
-            if (action === "back") return showLibrary();
-            if (action === "activate") await services.blueprints.setActive(id);
-            if (action === "rename") { const name = await uiPrompt("Neuer Name", services.blueprints.require(id).name, { title: "BAUPLAN UMBENENNEN" }); if (name === null) return; await services.blueprints.rename(id, name); }
-            if (action === "duplicate") { const copy = await services.blueprints.duplicate(id); events.emit(TUTORIAL_EVENTS.BLUEPRINT_ACTION, { action, success: true }); await refreshBlueprints(); return showDetail(copy.blueprintId); }
-            if (action === "variant") { if (!services.currentAssembly) return legacyRuntime.ui.toast("Varianten benötigen eine aktive Konstruktion."); const name = await uiPrompt("Name der Variante", "Variante", { title: "VARIANTE ANLEGEN" }); if (name === null) return; await services.blueprints.createVariant(id, name, services.currentAssembly.getSnapshot()); }
-            if (action === "export") { const code = encodeBlueprint(services.blueprints.require(id)); if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(code); legacyRuntime.ui.toast("Bauplan-Code kopiert."); } else await uiPrompt("Bauplan-Code kopieren", code, { title: "BAUPLAN EXPORTIEREN", confirmLabel: "SCHLIESSEN" }); events.emit(TUTORIAL_EVENTS.BLUEPRINT_ACTION, { action, success: true }); return; }
-            if (action === "delete") { if (!await uiConfirm(`Bauplan ${services.blueprints.require(id).name} löschen?`, { title: "BAUPLAN LÖSCHEN", confirmLabel: "LÖSCHEN" })) return; await services.blueprints.delete(id); events.emit(TUTORIAL_EVENTS.BLUEPRINT_ACTION, { action, success: true }); await refreshBlueprints(); return showLibrary(); }
-            events.emit(TUTORIAL_EVENTS.BLUEPRINT_ACTION, { action, success: true });
-            await refreshBlueprints(); showDetail(id);
-          }
-        });
+        const refreshBlueprints = async () => {
+          metaSave = await services.save.load();
+          services.blueprints.hydrate(metaSave);
+        };
+        const showLibrary = () =>
+          renderBlueprintLibrary(content, {
+            blueprints: services.blueprints.list(),
+            onOpen: showDetail,
+            onFavorite: async (id, favorite) => {
+              await services.save.update((save) => {
+                save.shipBlueprints[id].favorite = favorite;
+              });
+              await refreshBlueprints();
+              showLibrary();
+            },
+            onCreate: async () => {
+              if (!services.currentAssembly)
+                return legacyRuntime.ui.toast("Starte zuerst einen Run.");
+              await services.blueprints.saveFromAssembly({
+                name: `${services.currentAssembly.getSnapshot().shipFrameId} Konstruktion`,
+                assemblySnapshot: services.currentAssembly.getSnapshot(),
+                geometrySnapshot: services.assemblyGeometry.getSnapshot(),
+              });
+              await refreshBlueprints();
+              showLibrary();
+            },
+            onImport: () => {
+              const host = document.createElement("div");
+              content.append(host);
+              createBlueprintImportDialog(host, {
+                validate: (blueprint) =>
+                  validateBlueprint(blueprint, {
+                    knownDefinitionIds: new Set(
+                      services.equipment.values().map((item) => item.id),
+                    ),
+                    knownShipFrameIds: new Set(
+                      SHIP_FRAME_ASSEMBLY_PROFILES.map((item) => item.id),
+                    ),
+                  }),
+                onImport: async (blueprint) => {
+                  await services.blueprints.importBlueprint(blueprint);
+                  await refreshBlueprints();
+                  showLibrary();
+                },
+              }).open();
+            },
+          });
+        const showDetail = (id) =>
+          renderBlueprintDetail(content, {
+            blueprint: services.blueprints.require(id),
+            active: services.blueprints.getActiveId() === id,
+            onAction: async (action) => {
+              if (action === "back") return showLibrary();
+              if (action === "activate")
+                await services.blueprints.setActive(id);
+              if (action === "rename") {
+                const name = await uiPrompt(
+                  "Neuer Name",
+                  services.blueprints.require(id).name,
+                  { title: "BAUPLAN UMBENENNEN" },
+                );
+                if (name === null) return;
+                await services.blueprints.rename(id, name);
+              }
+              if (action === "duplicate") {
+                const copy = await services.blueprints.duplicate(id);
+                events.emit(TUTORIAL_EVENTS.BLUEPRINT_ACTION, {
+                  action,
+                  success: true,
+                });
+                await refreshBlueprints();
+                return showDetail(copy.blueprintId);
+              }
+              if (action === "variant") {
+                if (!services.currentAssembly)
+                  return legacyRuntime.ui.toast(
+                    "Varianten benötigen eine aktive Konstruktion.",
+                  );
+                const name = await uiPrompt("Name der Variante", "Variante", {
+                  title: "VARIANTE ANLEGEN",
+                });
+                if (name === null) return;
+                await services.blueprints.createVariant(
+                  id,
+                  name,
+                  services.currentAssembly.getSnapshot(),
+                );
+              }
+              if (action === "export") {
+                const code = encodeBlueprint(services.blueprints.require(id));
+                if (navigator.clipboard?.writeText) {
+                  await navigator.clipboard.writeText(code);
+                  legacyRuntime.ui.toast("Bauplan-Code kopiert.");
+                } else
+                  await uiPrompt("Bauplan-Code kopieren", code, {
+                    title: "BAUPLAN EXPORTIEREN",
+                    confirmLabel: "SCHLIESSEN",
+                  });
+                events.emit(TUTORIAL_EVENTS.BLUEPRINT_ACTION, {
+                  action,
+                  success: true,
+                });
+                return;
+              }
+              if (action === "delete") {
+                if (
+                  !(await uiConfirm(
+                    `Bauplan ${services.blueprints.require(id).name} löschen?`,
+                    { title: "BAUPLAN LÖSCHEN", confirmLabel: "LÖSCHEN" },
+                  ))
+                )
+                  return;
+                await services.blueprints.delete(id);
+                events.emit(TUTORIAL_EVENTS.BLUEPRINT_ACTION, {
+                  action,
+                  success: true,
+                });
+                await refreshBlueprints();
+                return showLibrary();
+              }
+              events.emit(TUTORIAL_EVENTS.BLUEPRINT_ACTION, {
+                action,
+                success: true,
+              });
+              await refreshBlueprints();
+              showDetail(id);
+            },
+          });
         showLibrary();
       }
-      if (tab === "Codex") { content.dataset.tutorialId="codex-filters"; const show = filters => {renderCodexScreen(content, { entries: services.codex.filter(metaSave, filters), filters, onFilter: next=>{events.emit(TUTORIAL_EVENTS.CODEX_FILTERED,next);show(next);} });}; show({}); }
-      if (tab === "Herausforderungen") renderChallengesScreen(content, [...CHALLENGES, ...createMasteryChallenges(SHIPS, WEAPONS)], metaSave.challenges);
-      if (tab === "Prototypen") { const vault = createPrototypeVault(metaSave); const show = filters => renderPrototypeVault(content, { items: vault.filter(filters), filters, capacity: vault.capacity, overflowCount: Object.keys(metaSave.overflow).length, onFilter: show, onFavorite: async id => { vault.favorite(id, !metaSave.inventory[id].favorite); await services.save.save(metaSave); hangar.render(); }, onDismantle: async id => { vault.dismantle(id); await services.save.save(metaSave); hangar.render(); } }); show({}); }
-      if (tab === "Kampagnen") renderCampaignSelect(content, services.campaignPaths.available(metaSave), async id => { await services.save.update(save => { services.campaignPaths.select(save, id); }); metaSave = await services.save.load(); hangar.show("Run starten"); });
-      if (tab === "Simulator") { content.dataset.tutorialId="simulator-start"; const render = (config = {}, summary) => renderSimulatorScreen(content, { config, summary, onStart: nextConfig => { const simRun = services.simulator.create(nextConfig),result=services.simulator.simulate(simRun);events.emit(TUTORIAL_EVENTS.SIMULATION_COMPLETED,result);render(nextConfig,result); } }); render(); }
-      if (tab === "Statistiken") renderStatistics(content, metaSave.statistics, metaSave.records);
-      if (tab === "Einstellungen") {content.dataset.tutorialId="settings-controls";renderSettingsScreen(content, metaSave.settings, async settings => { for (const [code, action] of Object.entries(settings.bindings)) input.rebind(action, code); await services.save.update(save => { save.settings = structuredClone(settings); });events.emit(TUTORIAL_EVENTS.SETTING_CHANGED,{settings}); });}
-      if (tab === "Bergung") { const signal = services.wreckSignals.visible(metaSave.wreckSignals)[0]; if (!signal) content.innerHTML = `<div class="hangar-placeholder"><strong>KEIN AKTIVES WRACK-SIGNAL</strong><span>Legendäre verlorene Prototypen erscheinen nach dem nächsten Run.</span></div>`; else { const mission = services.salvageMissions.create(signal); renderSalvageMission(content, mission, () => game.start("standard")); } }
-    }
+      if (tab === "Codex") {
+        content.dataset.tutorialId = "codex-filters";
+        const show = (filters) => {
+          renderCodexScreen(content, {
+            entries: services.codex.filter(metaSave, filters),
+            filters,
+            onFilter: (next) => {
+              events.emit(TUTORIAL_EVENTS.CODEX_FILTERED, next);
+              show(next);
+            },
+          });
+        };
+        show({});
+      }
+      if (tab === "Herausforderungen")
+        renderChallengesScreen(
+          content,
+          [...CHALLENGES, ...createMasteryChallenges(SHIPS, WEAPONS)],
+          metaSave.challenges,
+        );
+      if (tab === "Prototypen") {
+        const vault = createPrototypeVault(metaSave);
+        const show = (filters) =>
+          renderPrototypeVault(content, {
+            items: vault.filter(filters),
+            filters,
+            capacity: vault.capacity,
+            overflowCount: Object.keys(metaSave.overflow).length,
+            onFilter: show,
+            onFavorite: async (id) => {
+              vault.favorite(id, !metaSave.inventory[id].favorite);
+              await services.save.save(metaSave);
+              hangar.render();
+            },
+            onDismantle: async (id) => {
+              vault.dismantle(id);
+              await services.save.save(metaSave);
+              hangar.render();
+            },
+          });
+        show({});
+      }
+      if (tab === "Kampagnen")
+        renderCampaignSelect(
+          content,
+          services.campaignPaths.available(metaSave),
+          async (id) => {
+            await services.save.update((save) => {
+              services.campaignPaths.select(save, id);
+            });
+            metaSave = await services.save.load();
+            hangar.show("Run starten");
+          },
+        );
+      if (tab === "Simulator") {
+        content.dataset.tutorialId = "simulator-start";
+        const render = (config = {}, summary) =>
+          renderSimulatorScreen(content, {
+            config,
+            summary,
+            onStart: (nextConfig) => {
+              const simRun = services.simulator.create(nextConfig),
+                result = services.simulator.simulate(simRun);
+              events.emit(TUTORIAL_EVENTS.SIMULATION_COMPLETED, result);
+              render(nextConfig, result);
+            },
+          });
+        render();
+      }
+      if (tab === "Statistiken")
+        renderStatistics(content, metaSave.statistics, metaSave.records);
+      if (tab === "Einstellungen") {
+        content.dataset.tutorialId = "settings-controls";
+        renderSettingsScreen(content, metaSave.settings, async (settings) => {
+          for (const [code, action] of Object.entries(settings.bindings))
+            input.rebind(action, code);
+          await services.save.update((save) => {
+            save.settings = structuredClone(settings);
+          });
+          events.emit(TUTORIAL_EVENTS.SETTING_CHANGED, { settings });
+        });
+      }
+      if (tab === "Bergung") {
+        const signal = services.wreckSignals.visible(metaSave.wreckSignals)[0];
+        if (!signal) {
+          content.innerHTML =
+            `<div class="hangar-placeholder"><strong>KEIN AKTIVES WRACK-SIGNAL</strong>` +
+            `<span>Legendäre verlorene Prototypen erscheinen nach dem nächsten Run.</span></div>`;
+        } else {
+          const mission = services.salvageMissions.create(signal);
+          renderSalvageMission(content, mission, () => game.start("standard"));
+        }
+      }
+    },
   });
   ui.renderHangar = () => hangar.render();
 
@@ -754,10 +1769,11 @@ export async function bootstrap() {
   // combat nodes the legacy game.player keeps its damaged hull — heal it too,
   // or the paid repair never reaches the next fight.
   events.on("merchant-service-applied", ({ serviceId }) => {
-    if (serviceId === "repair" && game.player) game.player.hp = game.player.maxHp;
+    if (serviceId === "repair" && game.player)
+      game.player.hp = game.player.maxHp;
   });
   const originalReset = game.reset.bind(game);
-  game.reset = mode => {
+  game.reset = (mode) => {
     originalReset(mode);
     controller.attachLegacy(game);
   };
@@ -774,13 +1790,17 @@ export async function bootstrap() {
     hangar.render();
   };
   originalStartWave = game.startWave.bind(game);
-  game.startWave = wave => {
+  game.startWave = (wave) => {
     if (activeCampaignNodeId && wave > 1) {
-      const completedNode = flattenSectorMap(previewRun.campaign.map).find(node => node.id === activeCampaignNodeId);
+      const completedNode = flattenSectorMap(previewRun.campaign.map).find(
+        (node) => node.id === activeCampaignNodeId,
+      );
       services.campaignRewards.apply(controller.run, completedNode);
       adoptCombatRunState(previewRun, controller.run);
       services.sectors.complete(previewRun, activeCampaignNodeId);
-      void writeCurrentCheckpoint(previewRun, activeCampaignNodeId).catch(() => {});
+      void writeCurrentCheckpoint(previewRun, activeCampaignNodeId).catch(
+        () => {},
+      );
       activeCampaignNodeId = null;
       game.state = "sector-map";
       ui.show("start");
@@ -794,16 +1814,36 @@ export async function bootstrap() {
   // loop can run up to 5 catch-up steps per frame), otherwise the cumulative
   // counter permanently mutes triggers after 100 effects.
   const originalStep = game.step.bind(game);
-  game.step = dt => {
-    const kills=game.kills,xp=game.player?.xp??0;
+  game.step = (dt) => {
+    const kills = game.kills,
+      xp = game.player?.xp ?? 0;
     services.triggers?.beginStep?.();
     originalStep(dt);
-    if(game.kills>kills)events.emit(TUTORIAL_EVENTS.ENEMY_DEFEATED,{kills:game.kills});
-    if((game.player?.xp??0)>xp)events.emit(TUTORIAL_EVENTS.REWARD_COLLECTED,{source:"pickup"});
+    if (game.kills > kills)
+      events.emit(TUTORIAL_EVENTS.ENEMY_DEFEATED, { kills: game.kills });
+    if ((game.player?.xp ?? 0) > xp)
+      events.emit(TUTORIAL_EVENTS.REWARD_COLLECTED, { source: "pickup" });
   };
-  const originalPause=game.pause.bind(game);game.pause=()=>{originalPause();if(game.state==="pause")events.emit(TUTORIAL_EVENTS.PAUSE_OPENED,{})};
-  const originalResume=game.resume.bind(game);game.resume=()=>{const wasPaused=game.state==="pause";originalResume();if(wasPaused&&game.state==="run")events.emit(TUTORIAL_EVENTS.RUN_RESUMED,{})};
-  const originalChoice=game.applyChoice.bind(game);game.applyChoice=choice=>{originalChoice(choice);events.emit(TUTORIAL_EVENTS.EVOLUTION_SELECTED,{evolution:Boolean(choice.evo),id:choice.evo?.id??choice.up?.id})};
+  const originalPause = game.pause.bind(game);
+  game.pause = () => {
+    originalPause();
+    if (game.state === "pause") events.emit(TUTORIAL_EVENTS.PAUSE_OPENED, {});
+  };
+  const originalResume = game.resume.bind(game);
+  game.resume = () => {
+    const wasPaused = game.state === "pause";
+    originalResume();
+    if (wasPaused && game.state === "run")
+      events.emit(TUTORIAL_EVENTS.RUN_RESUMED, {});
+  };
+  const originalChoice = game.applyChoice.bind(game);
+  game.applyChoice = (choice) => {
+    originalChoice(choice);
+    events.emit(TUTORIAL_EVENTS.EVOLUTION_SELECTED, {
+      evolution: Boolean(choice.evo),
+      id: choice.evo?.id ?? choice.up?.id,
+    });
+  };
   const originalDraw = game.draw.bind(game);
   game.draw = () => {
     if (game.state === "run") controller.syncLegacy(game, game.STEP);
@@ -815,30 +1855,101 @@ export async function bootstrap() {
     const run = controller.run;
     if (!run) return;
     updateResourceMeters(document.querySelector("#resource-meters"), {
-      energy: { value: run.player.resources.energy, maximum: run.player.resources.maxEnergy },
+      energy: {
+        value: run.player.resources.energy,
+        maximum: run.player.resources.maxEnergy,
+      },
       heat: run.heat.value,
       corruption: run.corruption.value,
-      load: run.player.energy
-      , scrap: run.resources.scrap, flux: run.resources.flux
+      load: run.player.energy,
+      scrap: run.resources.scrap,
+      flux: run.resources.flux,
     });
-    document.querySelector('[data-resource="load"]')?.setAttribute("data-tutorial-id","hud-load");document.querySelector('[data-resource="heat"]')?.setAttribute("data-tutorial-id","hud-heat");document.querySelector('[data-resource="corruption"]')?.setAttribute("data-tutorial-id","hud-corruption");
+    document
+      .querySelector('[data-resource="load"]')
+      ?.setAttribute("data-tutorial-id", "hud-load");
+    document
+      .querySelector('[data-resource="heat"]')
+      ?.setAttribute("data-tutorial-id", "hud-heat");
+    document
+      .querySelector('[data-resource="corruption"]')
+      ?.setAttribute("data-tutorial-id", "hud-corruption");
   };
   const originalPauseStats = ui.pauseStats.bind(ui);
-  ui.pauseStats = legacyGame => {
+  ui.pauseStats = (legacyGame) => {
     originalPauseStats(legacyGame);
     inspector.update(controller.inspectorModel(legacyGame));
   };
 
   events.on("action", ({ action }) => {
-    if(services.quickMount?.session){if(action===ASSEMBLY_ACTIONS.PREVIOUS_SUGGESTION)services.quickMount.previous();if(action===ASSEMBLY_ACTIONS.NEXT_SUGGESTION)services.quickMount.next();if(action===ASSEMBLY_ACTIONS.CONFIRM){const result=services.quickMount.confirm();events.emit(TUTORIAL_EVENTS.QUICK_MOUNT_ACTION,{action,success:Boolean(result?.mounted)});closeQuickMount();return;}if(action===ASSEMBLY_ACTIONS.DEFER){const result=services.quickMount.defer();events.emit(TUTORIAL_EVENTS.QUICK_MOUNT_ACTION,{action,success:Boolean(result?.deferred)});closeQuickMount();return;}renderQuickMount();return;}
-    if (action === "dodge" && game.state === "run") controller.useDodge(game, input.axis());
+    if (services.quickMount?.session) {
+      if (action === ASSEMBLY_ACTIONS.PREVIOUS_SUGGESTION)
+        services.quickMount.previous();
+      if (action === ASSEMBLY_ACTIONS.NEXT_SUGGESTION)
+        services.quickMount.next();
+      if (action === ASSEMBLY_ACTIONS.CONFIRM) {
+        const result = services.quickMount.confirm();
+        events.emit(TUTORIAL_EVENTS.QUICK_MOUNT_ACTION, {
+          action,
+          success: Boolean(result?.mounted),
+        });
+        closeQuickMount();
+        return;
+      }
+      if (action === ASSEMBLY_ACTIONS.DEFER) {
+        const result = services.quickMount.defer();
+        events.emit(TUTORIAL_EVENTS.QUICK_MOUNT_ACTION, {
+          action,
+          success: Boolean(result?.deferred),
+        });
+        closeQuickMount();
+        return;
+      }
+      renderQuickMount();
+      return;
+    }
+    if (action === "dodge" && game.state === "run")
+      controller.useDodge(game, input.axis());
   });
   applyTutorialTargets(document);
   tutorialOverlay.refresh();
-  globalThis.render_game_to_text=()=>JSON.stringify({coordinates:"origin top-left; x right; y down",mode:game.state,training:game.mode==="tutorial",tutorial:services.tutorial.snapshot().active?{chapterId:services.tutorial.snapshot().active.chapterId,stepId:services.tutorial.snapshot().active.stepId}:null,player:game.player?{x:game.player.x,y:game.player.y,vx:game.player.vx,vy:game.player.vy,hull:game.player.hp,shield:game.player.shield,xp:game.player.xp}:null,enemies:(game.enemies??[]).slice(0,20).map(e=>({type:e.type,x:e.x,y:e.y,hp:e.hp})),score:game.score,kills:game.kills});
-  globalThis.advanceTime=ms=>{const steps=Math.max(1,Math.round(ms/(1000/60)));for(let i=0;i<steps;i++)if(game.state==="run")game.step(1/60);game.draw();};
+  globalThis.render_game_to_text = () =>
+    JSON.stringify({
+      coordinates: "origin top-left; x right; y down",
+      mode: game.state,
+      training: game.mode === "tutorial",
+      tutorial: services.tutorial.snapshot().active
+        ? {
+            chapterId: services.tutorial.snapshot().active.chapterId,
+            stepId: services.tutorial.snapshot().active.stepId,
+          }
+        : null,
+      player: game.player
+        ? {
+            x: game.player.x,
+            y: game.player.y,
+            vx: game.player.vx,
+            vy: game.player.vy,
+            hull: game.player.hp,
+            shield: game.player.shield,
+            xp: game.player.xp,
+          }
+        : null,
+      enemies: (game.enemies ?? [])
+        .slice(0, 20)
+        .map((e) => ({ type: e.type, x: e.x, y: e.y, hp: e.hp })),
+      score: game.score,
+      kills: game.kills,
+    });
+  globalThis.advanceTime = (ms) => {
+    const steps = Math.max(1, Math.round(ms / (1000 / 60)));
+    for (let i = 0; i < steps; i++) if (game.state === "run") game.step(1 / 60);
+    game.draw();
+  };
   for (const button of document.querySelectorAll("[data-action]")) {
-    button.addEventListener("click", () => input.trigger(button.dataset.action));
+    button.addEventListener("click", () =>
+      input.trigger(button.dataset.action),
+    );
   }
 
   const legacySave = legacyRuntime.persistence;
@@ -851,20 +1962,27 @@ export async function bootstrap() {
       meta: save.legacy.meta,
       ach: save.legacy.achievements,
       totalKills: save.profile.totalKills,
-      totalRuns: save.profile.totalRuns
+      totalRuns: save.profile.totalRuns,
     };
   };
-  legacySave.save = () => game.mode==="tutorial" ? Promise.resolve() : services.save.update(save => {
-    save.legacy.best = legacySave.data.best;
-    save.legacy.dailyBest = legacySave.data.dailyBest;
-    save.legacy.meta = legacySave.data.meta;
-    save.legacy.achievements = legacySave.data.ach;
-    save.currencies.voidShards = legacySave.data.shards;
-    save.profile.totalKills = legacySave.data.totalKills;
-    save.profile.totalRuns = legacySave.data.totalRuns;
-  });
+  legacySave.save = () =>
+    game.mode === "tutorial"
+      ? Promise.resolve()
+      : services.save.update((save) => {
+          save.legacy.best = legacySave.data.best;
+          save.legacy.dailyBest = legacySave.data.dailyBest;
+          save.legacy.meta = legacySave.data.meta;
+          save.legacy.achievements = legacySave.data.ach;
+          save.currencies.voidShards = legacySave.data.shards;
+          save.profile.totalKills = legacySave.data.totalKills;
+          save.profile.totalRuns = legacySave.data.totalRuns;
+        });
 
   await legacyRuntime.start();
-  if (shouldAutoOfferFoundations(initialSave.tutorial)) void services.tutorial.start("foundations").then(() => game.start("tutorial"));
-  else if (initialSave.tutorial.active?.chapterId === "foundations") game.start("tutorial");
+  if (shouldAutoOfferFoundations(initialSave.tutorial))
+    void services.tutorial
+      .start("foundations")
+      .then(() => game.start("tutorial"));
+  else if (initialSave.tutorial.active?.chapterId === "foundations")
+    game.start("tutorial");
 }
