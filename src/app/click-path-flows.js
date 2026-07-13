@@ -59,6 +59,8 @@ export function adoptCombatRunState(previewRun, combatRun) {
   previewRun.assembly = combatRun.assembly;
   previewRun.inventory = combatRun.inventory;
   previewRun.pendingAssemblyItems = combatRun.pendingAssemblyItems ?? [];
+  previewRun.resources = combatRun.resources;
+  previewRun.rewardedNodeIds = combatRun.rewardedNodeIds ?? [];
   previewRun.heat = combatRun.heat ?? previewRun.heat;
   previewRun.corruption = combatRun.corruption ?? previewRun.corruption;
   previewRun.activeBlueprintId = combatRun.activeBlueprintId ?? previewRun.activeBlueprintId ?? null;

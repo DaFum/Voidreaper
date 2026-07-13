@@ -31,6 +31,8 @@ import { MODULES } from "../content/modules/index.js";
 import { createHangarScreen } from "../ui/screens/hangar-screen.js";
 import { attachStartMenuToggle } from "../ui/screens/start-menu-toggle.js";
 import { createSectorController } from "../features/sectors/sector-controller.js";
+import { createCampaignRewardService } from "../features/sectors/campaign-reward-service.js";
+import { flattenSectorMap } from "../features/sectors/sector-map-generator.js";
 import { createRunCurrencyService } from "../features/economy/run-currency-service.js";
 import { createDailyRunService } from "../features/sectors/daily-run-service.js";
 import { createSectorMapScreen } from "../ui/screens/sector-map-screen.js";
@@ -164,6 +166,7 @@ export async function bootstrap() {
   services.unlocks = createUnlockService(initialSave.unlocks);
   services.equipment = createEquipmentRegistry();
   for (const definition of [...SHIPS, ...WEAPONS, ...REACTORS, ...MODULES]) services.equipment.register(definition);
+  services.campaignRewards = createCampaignRewardService({ equipment: services.equipment, eventBus: events });
   services.loadouts = createLoadoutService({ registry: services.equipment, tagEngine: services.tags, unlocks: services.unlocks });
   services.primaryLoadout = () => resolvePrimaryLoadout(metaSave);
   const blueprintIds=createIdService("meta-blueprints"),thumbnailService=createBlueprintThumbnailService({assemblyRenderer:services.assemblyRenderer,geometryService:{getSnapshot:()=>services.assemblyGeometry?.getSnapshot()}});services.blueprints=createBlueprintService({saveStore:services.save,idFactory:blueprintIds,thumbnailService});services.blueprints.hydrate(initialSave);
@@ -539,6 +542,8 @@ export async function bootstrap() {
   originalStartWave = game.startWave.bind(game);
   game.startWave = wave => {
     if (activeCampaignNodeId && wave > 1) {
+      const completedNode = flattenSectorMap(previewRun.campaign.map).find(node => node.id === activeCampaignNodeId);
+      services.campaignRewards.apply(controller.run, completedNode);
       adoptCombatRunState(previewRun, controller.run);
       services.sectors.complete(previewRun, activeCampaignNodeId);
       void writeCurrentCheckpoint(previewRun, activeCampaignNodeId).catch(() => {});

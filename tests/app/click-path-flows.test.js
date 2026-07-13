@@ -136,6 +136,8 @@ test("combat run build state is adopted into the preview run before checkpointin
   combatRun.inventory = [{ instanceId: "item-1", definitionId: "railgun" }];
   combatRun.pendingAssemblyItems = [{ pendingMountId: "pending-1" }];
   combatRun.activeBlueprintId = "blueprint-1";
+  combatRun.resources = { scrap: 23, flux: 4 };
+  combatRun.rewardedNodeIds = ["combat-1"];
 
   const adopted = adoptCombatRunState(previewRun, combatRun);
 
@@ -144,6 +146,8 @@ test("combat run build state is adopted into the preview run before checkpointin
   assert.equal(previewRun.inventory, combatRun.inventory);
   assert.deepEqual(previewRun.pendingAssemblyItems, [{ pendingMountId: "pending-1" }]);
   assert.equal(previewRun.activeBlueprintId, "blueprint-1");
+  assert.equal(previewRun.resources, combatRun.resources);
+  assert.deepEqual(previewRun.rewardedNodeIds, ["combat-1"]);
 });
 
 test("adopting is a no-op when the combat run is the preview run (checkpoint resume)", () => {
