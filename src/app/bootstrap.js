@@ -225,15 +225,36 @@ export async function bootstrap() {
       console.warn("[render] PixiJS environment stage unavailable — canvas backdrop remains active", error);
     }
   })();
-  legacyRuntime.configurePlayerDamageRouter((_player,damage)=>{const geometry=services.assemblyGeometry?.getSnapshot(),target=(geometry?.nodes??[]).filter(node=>!node.isRoot).sort((a,b)=>((b.worldPosition.x)*(b.worldPosition.x) + (b.worldPosition.y)*(b.worldPosition.y))-((a.worldPosition.x)*(a.worldPosition.x) + (a.worldPosition.y)*(a.worldPosition.y)))[0];return target&&services.moduleDamage?services.moduleDamage.applyDamage(target.nodeId,damage,"legacy-contact").remainingDamage:damage;});
+  legacyRuntime.configurePlayerDamageRouter((_player,damage)=>{if(game.mode==="tutorial")return 0;const geometry=services.assemblyGeometry?.getSnapshot(),target=(geometry?.nodes??[]).filter(node=>!node.isRoot).sort((a,b)=>((b.worldPosition.x)*(b.worldPosition.x) + (b.worldPosition.y)*(b.worldPosition.y))-((a.worldPosition.x)*(a.worldPosition.x) + (a.worldPosition.y)*(a.worldPosition.y)))[0];return target&&services.moduleDamage?services.moduleDamage.applyDamage(target.nodeId,damage,"legacy-contact").remainingDamage:damage;});
   const hangarRoot = document.querySelector("#hangar");
   const tutorialHost = document.createElement("div"); tutorialHost.className = "tutorial-overlay"; tutorialHost.hidden = true; document.body.append(tutorialHost);
   let exitFoundationsRun = () => {};
   const tutorialOverlay = createTutorialOverlay({ root: tutorialHost, resolveTarget: id => document.querySelector(`[data-tutorial-id="${id}"]`), onAction: async action => { const before=services.tutorial.snapshot();if(action==="next")await services.tutorial.advanceExplanation();if(action==="back")await services.tutorial.back();if(action==="pause")await services.tutorial.pause();if(action==="resume")await services.tutorial.resume();if(action==="skip")await services.tutorial.skipChapter();if(action==="stop")await services.tutorial.stop();if(shouldExitFoundationsRun(before,services.tutorial.snapshot()))exitFoundationsRun(); } });
-  services.tutorial.subscribe(model => tutorialOverlay.render(model));
+  // During the foundations training, hold back level-up dialogs until the tutorial's evolution
+  // step asks for one — otherwise auto-fire kills open them mid-step and swallow overlay clicks.
+  legacyRuntime.configureLevelUpGate(() => {
+    if (game.mode !== "tutorial") return true;
+    const active = services.tutorial.snapshot().active;
+    if (!active || active.chapterId !== "foundations") return true;
+    return active.stepId === "evolution" || active.stepId === "complete";
+  });
+  events.on(TUTORIAL_EVENTS.CHAPTER_COMPLETED, ({ chapterId }) => {
+    const title = TUTORIAL_CHAPTERS.find(chapter => chapter.id === chapterId)?.title ?? chapterId;
+    legacyRuntime.ui.toast(`TRAINING ABGESCHLOSSEN · ${title}`);
+  });
+  // Keep the tutorial library card states (BEREIT/AKTIV/ABGESCHLOSSEN) in sync while it is on
+  // screen: without this, completing a chapter only shows after the user switches hangar tabs.
+  let refreshTutorialLibrary = () => {};
+  let lastTutorialChapterId = services.tutorial.snapshot().active?.chapterId ?? null;
+  services.tutorial.subscribe(model => {
+    tutorialOverlay.render(model);
+    const chapterId = model.active?.chapterId ?? null;
+    if (chapterId !== lastTutorialChapterId) { lastTutorialChapterId = chapterId; refreshTutorialLibrary(); }
+  });
   tutorialOverlay.render(services.tutorial.snapshot());
   const startMenu = attachStartMenuToggle(document.querySelector("#start"), { openButton: document.querySelector("#menuopenbtn"), closeButton: document.querySelector("#menuclosebtn") });
   exitFoundationsRun = () => { if(game.mode!=="tutorial")return;game.quit();startMenu.open();hangar.render(); };
+  refreshTutorialLibrary = () => { if (hangarRoot.querySelector(".tutorial-library")) hangar.render(); };
   // The game-over screen's "Hangar" button routes through the legacy UI.menu(), which only
   // shows #start — jump straight to the menu view so the button keeps landing in the hangar.
   document.querySelector("#menubtn")?.addEventListener("click", () => startMenu.open());
@@ -369,7 +390,9 @@ export async function bootstrap() {
       const finish = async () => { services.sectors.complete(previewRun, node.id); await writeCurrentCheckpoint(previewRun, node.id).catch(() => {}); showCampaignMap(); };
       if (["combat", "elite", "salvage", "mid-boss", "boss", "extraction"].includes(node.type)) {
         activeCampaignNodeId = node.id;
-        if (game.player && game.wave > 0) { game.state = "run"; ui.show("hud"); originalStartWave(game.wave + 1); }
+        // Resume only a standing campaign run: a leftover tutorial run or a dead player must
+        // never be revived here, or the node drops straight onto a stale game-over screen.
+        if (game.mode === "standard" && game.player && game.wave > 0 && game.player.hp > 0) { game.state = "run"; ui.show("hud"); originalStartWave(game.wave + 1); }
         else game.start("standard");
         return;
       }

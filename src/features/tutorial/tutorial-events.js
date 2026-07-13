@@ -6,7 +6,8 @@ export const TUTORIAL_EVENTS = Object.freeze({
   WORKSHOP_APPLIED: "tutorial:workshop-applied", CHECKPOINT_RESUMED: "tutorial:checkpoint-resumed", ANOMALY_RESOLVED: "tutorial:anomaly-resolved",
   QUICK_MOUNT_ACTION: "tutorial:quick-mount-action", WORKBENCH_ACTION: "tutorial:workbench-action", BLUEPRINT_ACTION: "tutorial:blueprint-action",
   RESEARCH_PURCHASED: "tutorial:research-purchased", CODEX_FILTERED: "tutorial:codex-filtered", SIMULATION_COMPLETED: "tutorial:simulation-completed",
-  EXTRACTION_COMPLETED: "extraction-completed", RUN_SUMMARY_OPENED: "tutorial:run-summary-opened"
+  EXTRACTION_COMPLETED: "extraction-completed", RUN_SUMMARY_OPENED: "tutorial:run-summary-opened",
+  CHAPTER_COMPLETED: "tutorial:chapter-completed"
 });
 const KNOWN = new Set(Object.values(TUTORIAL_EVENTS));
 export const isTutorialEvent = value => KNOWN.has(value);

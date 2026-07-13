@@ -1,3 +1,5 @@
+import { TUTORIAL_EVENTS } from "./tutorial-events.js";
+
 const clone = value => structuredClone(value);
 
 export function tutorialAvailableSystems(metaSave = {}, { checkpoint = null, canResearch = false, campaignMapDiscovered = false } = {}) {
@@ -27,12 +29,15 @@ export function createTutorialService({ saveStore, eventBus, chapters, onPersist
     return stepId ? { mode: "guided", paused: false, ...active, stepId } : null;
   };
   const notify = () => { const snap = api.snapshot(); for (const listener of listeners) listener(snap); };
-  const persist = mutator => {
-    queue = queue.then(async () => { try { const saved = await saveStore.update(save => { mutator(save.tutorial); state = clone(save.tutorial); }); state = clone(saved.tutorial); notify(); } catch (error) { onPersistenceError(error); notify(); } });
+  const persist = (mutator, afterCommit) => {
+    queue = queue.then(async () => { try { const saved = await saveStore.update(save => { mutator(save.tutorial); state = clone(save.tutorial); }); state = clone(saved.tutorial); afterCommit?.(); notify(); } catch (error) { onPersistenceError(error); notify(); } });
     return queue;
   };
   const current = () => { const chapter = chapterFor(state?.active?.chapterId); return { chapter, step: chapter?.steps.find(step => step.id === state?.active?.stepId) ?? null }; };
-  const advance = expected => persist(tutorial => { const chapter = chapterFor(tutorial.active?.chapterId), step = chapter?.steps.find(item => item.id === tutorial.active?.stepId); if (!chapter || !step || expected && (expected.chapterId !== chapter.id || expected.stepId !== step.id)) return; const index = chapter.steps.indexOf(step); tutorial.seenSteps[`${chapter.id}:${step.id}`] = true; if (index === chapter.steps.length - 1) { tutorial.completedChapters[chapter.id] = true; tutorial.active = null; } else tutorial.active = { ...tutorial.active, stepId: chapter.steps[index + 1].id }; });
+  const advance = expected => { let completedChapterId = null; return persist(tutorial => { const chapter = chapterFor(tutorial.active?.chapterId), step = chapter?.steps.find(item => item.id === tutorial.active?.stepId); if (!chapter || !step || expected && (expected.chapterId !== chapter.id || expected.stepId !== step.id)) return; const index = chapter.steps.indexOf(step); tutorial.seenSteps[`${chapter.id}:${step.id}`] = true; if (index === chapter.steps.length - 1) { tutorial.completedChapters[chapter.id] = true; tutorial.active = null; completedChapterId = chapter.id; } else tutorial.active = { ...tutorial.active, stepId: chapter.steps[index + 1].id }; },
+    // Announce completion only once the save has actually committed — persist() swallows write
+    // failures in its catch, so emitting from a trailing .then() would fire on a failed save too.
+    () => { if (completedChapterId) eventBus.emit(TUTORIAL_EVENTS.CHAPTER_COMPLETED, { chapterId: completedChapterId }); }); };
   for (const eventName of new Set(chapters.flatMap(chapter => chapter.steps.map(step => step.event).filter(Boolean)))) offs.push(eventBus.on(eventName, payload => { const { chapter, step } = current(); if (!state?.active?.paused && step?.kind === "action" && step.event === eventName && (!step.matches || step.matches(payload))) void advance({ chapterId: chapter.id, stepId: step.id }); }));
   const api = {
     hydrate(tutorial) { state = clone(tutorial); state.active = normalizedActive(state.active); notify(); return this.snapshot(); },

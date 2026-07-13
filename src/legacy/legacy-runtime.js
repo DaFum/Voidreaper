@@ -311,6 +311,7 @@ import { escapeHtml } from "../ui/escape-html.js";
     let externalCombatFxRenderer = null;
     let externalRegionRosterProvider = null;
     let externalShotFiredReporter = null;
+    let externalLevelUpGate = null;
     const EVOLUTIONS = LEGACY_EVOLUTIONS.map(definition => ({
       id: definition.id,
       ico: definition.icon,
@@ -463,7 +464,7 @@ import { escapeHtml } from "../ui/escape-html.js";
         [this.bullets, this.ebullets, this.parts, this.gems, this.texts, this.pickups, this.zones, this.spawnsQ, this.shocks].forEach(p => p.releaseAll());
         this.wave = 1; this.spawnBudget = 0; this.spawnTimer = 0;
         this.score = 0; this.kills = 0; this.time = 0; this.boss = null; this.bossKills = 0;
-        this.upgradeCounts = {}; this.banished = new Set(); this.evolutions = 0;
+        this.upgradeCounts = {}; this.banished = new Set(); this.evolutions = 0; this.deferredLevelUps = 0;
         this.cam.x = 0; this.cam.y = 0; this.cam.shake = 0;
         this.hitStop = 0; this.freezeT = 0; this.corruption = 0;
         this.combo = 0; this.comboT = 0; this.maxCombo = 0; this.streakIdx = 0; this.shardsRun = 0;
@@ -863,6 +864,7 @@ import { escapeHtml } from "../ui/escape-html.js";
       },
 
       levelUp() {
+        if (externalLevelUpGate && !externalLevelUpGate(this)) { this.deferredLevelUps = (this.deferredLevelUps || 0) + 1; return; }
         AudioSys.levelup();
         this.burst(this.player.x, this.player.y, 40, "#06ffa5", 320);
         this.state = "levelup";
@@ -1002,6 +1004,7 @@ import { escapeHtml } from "../ui/escape-html.js";
       /* ---------- simulation ---------- */
       step(dt) {
         if (this.hitStop > 0) { this.hitStop -= dt; return; }
+        if ((this.deferredLevelUps || 0) > 0 && (!externalLevelUpGate || externalLevelUpGate(this))) { this.deferredLevelUps--; this.levelUp(); return; }
         const p = this.player;
         this.time += dt;
         this.freezeT = Math.max(0, this.freezeT - dt);
@@ -1948,6 +1951,9 @@ import { escapeHtml } from "../ui/escape-html.js";
       },
       configureShotFiredReporter(reporter) {
         externalShotFiredReporter = reporter;
+      },
+      configureLevelUpGate(gate) {
+        externalLevelUpGate = gate;
       },
       start() {
         Input.init();

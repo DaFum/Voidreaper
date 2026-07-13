@@ -53,6 +53,57 @@ test("duplicate events cannot advance a later tutorial step", async () => {
   service.destroy();
 });
 
+test("finishing the last step announces the chapter completion exactly once", async () => {
+  const { service, eventBus } = fixture();
+  const completed = [];
+  eventBus.on(TUTORIAL_EVENTS.CHAPTER_COMPLETED, payload => completed.push(payload.chapterId));
+  await service.start("foundations");
+  await service.advanceExplanation();
+  eventBus.emit(TUTORIAL_EVENTS.MOVEMENT_USED, { magnitude: .7 });
+  await service.whenIdle();
+  assert.deepEqual(completed, []);
+  eventBus.emit(TUTORIAL_EVENTS.DODGE_USED, {});
+  await service.whenIdle();
+  assert.deepEqual(completed, ["foundations"]);
+  assert.equal(service.snapshot().active, null);
+  assert.equal(service.snapshot().completedChapters.foundations, true);
+  service.destroy();
+});
+
+test("a failed save does not announce a false completion", async () => {
+  const state = { tutorial: { version: 1, autoOffer: true, active: null, completedChapters: {}, skippedChapters: {}, seenSteps: {} } };
+  let failNext = false;
+  const saveStore = { async update(mutator) { mutator(state); if (failNext) throw new Error("disk full"); return structuredClone(state); } };
+  const eventBus = createEventBus();
+  const errors = [], completed = [];
+  eventBus.on(TUTORIAL_EVENTS.CHAPTER_COMPLETED, payload => completed.push(payload.chapterId));
+  const chapters = [{ id: "foundations", title: "Grundlagen", available: () => true, steps: [
+    { id: "intro", kind: "explanation" },
+    { id: "dodge", kind: "action", event: TUTORIAL_EVENTS.DODGE_USED }
+  ] }];
+  const service = createTutorialService({ saveStore, eventBus, chapters, onPersistenceError: error => errors.push(error) });
+  await service.start("foundations");
+  await service.advanceExplanation();
+  failNext = true;
+  eventBus.emit(TUTORIAL_EVENTS.DODGE_USED, {});
+  await service.whenIdle();
+  assert.equal(errors.length, 1);
+  assert.deepEqual(completed, []);
+  service.destroy();
+});
+
+test("stopping or skipping a chapter does not announce a completion", async () => {
+  const { service, eventBus } = fixture();
+  const completed = [];
+  eventBus.on(TUTORIAL_EVENTS.CHAPTER_COMPLETED, payload => completed.push(payload.chapterId));
+  await service.start("foundations");
+  await service.stop();
+  await service.start("foundations");
+  await service.skipChapter();
+  assert.deepEqual(completed, []);
+  service.destroy();
+});
+
 test("pause, replay, skip and unknown saved steps remain safe", async () => {
   const { service, state } = fixture({ active: { chapterId: "foundations", stepId: "removed", mode: "guided", paused: false } });
   service.hydrate(state.tutorial);
