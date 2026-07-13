@@ -5,6 +5,7 @@ import { SHIP_EFFECT_IDS, REACTOR_EFFECT_IDS } from "../../src/content/effects/l
 import { describeStability } from "../../src/features/equipment/item-stability.js";
 import { createPrototypeVault } from "../../src/features/inventory/prototype-vault.js";
 import { createSalvageMissionService } from "../../src/features/salvage/salvage-mission-service.js";
+import { createMerchantService } from "../../src/features/merchant/merchant-service.js";
 
 // M25 — latent effects are quiet no-ops, unknown ids still warn
 
@@ -39,6 +40,36 @@ test("L14: describeStability derives labels from numeric stability and corruptio
   assert.equal(describeStability({ stability: 100, corruptionLevel: 80 }), "corrupted");
   assert.equal(describeStability({}), "stable");
   assert.equal(describeStability({ stability: "damaged" }), "damaged"); // legacy saved string
+  // corruption outranks a legacy string label and untouched numeric stability
+  assert.equal(describeStability({ stability: "stable", corruptionLevel: 80 }), "corrupted");
+  assert.equal(describeStability({ stability: 100, corruption: 80 }), "corrupted");
+});
+
+// merchant reroll — counter-derived seeds must produce fresh offers per paid click
+
+test("merchant reroll derives a new seed (and offer set) on every paid reroll", () => {
+  const merchant = createMerchantService({
+    modules: Array.from({ length: 12 }, (_, index) => ({ id: `module-${index}`, rarity: "common", itemPower: 10 + index })),
+    weapons: [{ id: "weapon-a", rarity: "common", itemPower: 20 }],
+    reactors: [{ id: "reactor-a", rarity: "common", energyCost: 10 }],
+    currencyService: { spend: () => true }
+  });
+  const run = {};
+  const keyOf = offers => offers.map(offer => offer.offerId).join("|");
+  const base = merchant.roll(7, 0, 1);
+  const first = merchant.reroll(run, 7, 0, 1);
+  const second = merchant.reroll(run, 7, 0, 1);
+  assert.notEqual(keyOf(first), keyOf(base));
+  assert.notEqual(keyOf(second), keyOf(first));
+  // string seeds get a counter-suffixed cache key as well
+  const stringFirst = merchant.reroll(run, "node-3", 0, 1);
+  const stringSecond = merchant.reroll(run, "node-3", 0, 1);
+  assert.notEqual(keyOf(stringSecond), keyOf(stringFirst));
+});
+
+test("merchant reroll is refused (and rolls nothing) without scrap", () => {
+  const merchant = createMerchantService({ modules: [], weapons: [], reactors: [], currencyService: { spend: () => false } });
+  assert.equal(merchant.reroll({}, 7, 0, 1), null);
 });
 
 test("L14: salvage outcomes write numeric stability and the vault filter matches labels", async () => {

@@ -7,7 +7,6 @@ import { TAG_DEFINITIONS } from "../content/tags/tag-definitions.js";
 import { SYNERGY_DEFINITIONS } from "../content/tags/synergy-definitions.js";
 import { createEffectRegistry } from "../features/effects/effect-registry.js";
 import { registerCoreEffects } from "../content/effects/core-effects.js";
-import { MODULE_EFFECT_IDS } from "../content/effects/module-effect-manifest.js";
 import { REACTOR_EFFECT_IDS, SHIP_EFFECT_IDS } from "../content/effects/latent-effect-manifest.js";
 import { createTriggerEngine } from "../features/triggers/trigger-engine.js";
 import { createEnergySystem } from "../features/energy/energy-system.js";
@@ -102,7 +101,9 @@ export async function bootstrap() {
   document.documentElement.dataset.app = "voidreaper-modular";
   const events = createEventBus();
   const effects = registerCoreEffects(createEffectRegistry());
-  effects.declareLatent([...SHIP_EFFECT_IDS, ...REACTOR_EFFECT_IDS, ...MODULE_EFFECT_IDS]);
+  // module effect ids stay OUT of the latent set: active-module execution
+  // dispatches them via effects.execute, so a missing module handler must warn
+  effects.declareLatent([...SHIP_EFFECT_IDS, ...REACTOR_EFFECT_IDS]);
   effects.register("evolution-prism-lance", (_effect, { player }) => { player.evoPrism = true; player.pierce += 99; player.bulletSpeed *= 1.5; });
   effects.register("evolution-singularity", (_effect, { player }) => { player.evoSing = true; player.novaCd = Math.max(2, player.novaCd * 0.8); });
   effects.register("evolution-blood-halo", (_effect, { player }) => { player.evoHalo = true; player.orbitals += 2; });

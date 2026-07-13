@@ -13,6 +13,10 @@ export function createEffectRegistry() {
       for (const id of ids) latent.add(id);
     },
     execute(effect, context) {
+      if (!effect?.id) {
+        console.warn("Attempted to execute an effect without an id");
+        return null;
+      }
       const handler = handlers.get(effect.id);
       if (!handler) {
         if (latent.has(effect.id)) {
