@@ -7,6 +7,6 @@ export function createDailyRunService({ seedVersion = 1, contentVersion = "3.0.0
     // Reseed the run RNG from the normalized daily seed so run.seed matches the
     // randomness actually used — recorded seeds must reproduce the run.
     apply(run, config) { run.seed = config.seed >>> 0; run.rng = createRunRng(config.seed); run.mode = "daily"; run.daily = config; run.permanentBonusesDisabled = true; run.prototypeBonusesDisabled = true; return run; },
-    async record(config, score) { await saveStore?.update(save => { save.legacy.dailyBest[config.date] = { score: Math.max(score, save.legacy.dailyBest[config.date]?.score ?? 0), seedVersion, contentVersion }; }); }
+    async record(config, score) { await saveStore?.update(save => { save.legacy.dailyBest[config.date] = Math.max(score, save.legacy.dailyBest[config.date] ?? 0); }); }
   };
 }

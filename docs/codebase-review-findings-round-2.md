@@ -216,18 +216,18 @@ Latent because `createWeaponController` is not yet wired into bootstrap, but the
 
 ### Features
 
-- **`abyss-controller.js:6`** sets `run.corruption.maximum = Infinity` with no reader anywhere; the real uncapping is the `allowAbyss` flag. Dead/misleading field.
-- **`economy/reward-balancer.js`** — `balanceMetaRewards`/`duplicateFragments` have zero callers; if wired as-is, the `earlyWeaponProgress` key would make `metaCurrencyService.transact` throw `Unknown currency`.
-- **`daily-run-service.js:8`** — uncalled `record()` writes objects into `save.legacy.dailyBest[date]` where the legacy runtime stores plain numbers (`legacy-runtime.js:976-978`) — shape conflict when wired.
-- **`merchant-service.js:34`** — `reroll(seed+1)` always regenerates the identical "rerolled" set (same cache key), can collide with a sibling node's seed, and rerolls are free.
-- **`codex-service.js:7`** — first discovery (evidence 1) maps to `DISCOVERY_LEVELS[floor(1/2)] = "unknown"`, so it stays invisible as "Unbekannte Signatur". Possible off-by-one (`floor` vs `ceil`).
-- **`build-history-service.js:3`** — `id: build-${Date.now()}` collides for same-millisecond captures, silently overwriting an entry.
-- **`flight-profile-service.js`** — the `DAMAGE_CHANGED` subscription is a no-op (damage doesn't bump `structuralRevision`, so `rebuild` early-returns), plus a dead `damageState !== "detached"` filter.
-- **`prototype-vault.js:10`** — `repair` sets `stability = "stable"` (string) while `item-factory.js` initializes `stability: 100` (number) and salvage writes `"damaged"/"corrupted"`; vault `filter` compares strictly across this mixed domain. Also `:6` reads `save.unlocks["vault-100"]`, which nothing grants and the validator whitelist stops at `vault-50`.
-- **`extraction-service.js:8`** — `save.inventory[item.instanceId] ??= item` silently discards updated state when re-extracting an existing id.
-- **`telemetry/run-telemetry.js:6`** — later distinct ≥85-heat episodes with lower maxima than the recorded peak never appear in `heatPeaks`.
-- **`tag-engine.js:13`** — `provenance` is an expando on a Map; checkpoint Map encoding drops it. Currently masked by per-frame recompute.
-- **`assembly-service.js:59`** — `addSecondaryConnection` passes a `{connectionId}` payload that `publish()` discards for `CHANGED` events.
+- [FIXED] **`abyss-controller.js:6`** sets `run.corruption.maximum = Infinity` with no reader anywhere; the real uncapping is the `allowAbyss` flag. Dead/misleading field.
+- [FIXED] **`economy/reward-balancer.js`** — `balanceMetaRewards`/`duplicateFragments` have zero callers; if wired as-is, the `earlyWeaponProgress` key would make `metaCurrencyService.transact` throw `Unknown currency`.
+- [FIXED] **`daily-run-service.js:8`** — uncalled `record()` writes objects into `save.legacy.dailyBest[date]` where the legacy runtime stores plain numbers (`legacy-runtime.js:976-978`) — shape conflict when wired.
+- [FIXED] **`merchant-service.js:34`** — `reroll(seed+1)` always regenerates the identical "rerolled" set (same cache key), can collide with a sibling node's seed, and rerolls are free.
+- [FIXED] **`codex-service.js:7`** — first discovery (evidence 1) maps to `DISCOVERY_LEVELS[floor(1/2)] = "unknown"`, so it stays invisible as "Unbekannte Signatur". Possible off-by-one (`floor` vs `ceil`).
+- [FIXED] **`build-history-service.js:3`** — `id: build-${Date.now()}` collides for same-millisecond captures, silently overwriting an entry.
+- [FIXED] **`flight-profile-service.js`** — the `DAMAGE_CHANGED` subscription is a no-op (damage doesn't bump `structuralRevision`, so `rebuild` early-returns), plus a dead `damageState !== "detached"` filter.
+- [FIXED] **`prototype-vault.js:10`** — `repair` sets `stability = "stable"` (string) while `item-factory.js` initializes `stability: 100` (number) and salvage writes `"damaged"/"corrupted"`; vault `filter` compares strictly across this mixed domain. Also `:6` reads `save.unlocks["vault-100"]`, which nothing grants and the validator whitelist stops at `vault-50`.
+- [FIXED] **`extraction-service.js:8`** — `save.inventory[item.instanceId] ??= item` silently discards updated state when re-extracting an existing id.
+- [FIXED] **`telemetry/run-telemetry.js:6`** — later distinct ≥85-heat episodes with lower maxima than the recorded peak never appear in `heatPeaks`.
+- [FIXED] **`tag-engine.js:13`** — `provenance` is an expando on a Map; checkpoint Map encoding drops it. Currently masked by per-frame recompute.
+- [FIXED] **`assembly-service.js:59`** — `addSecondaryConnection` passes a `{connectionId}` payload that `publish()` discards for `CHANGED` events.
 
 ### UI / input / audio
 

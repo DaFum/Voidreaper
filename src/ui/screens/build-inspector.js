@@ -29,7 +29,7 @@ export function createBuildInspector(container, services) {
         result: services.stats.calculate(definition.id, model.statContext)
       })));
     } else if (activeTab === "Tags") {
-      panel.innerHTML = [...model.tags.entries()].map(([id, value]) => `<article class="tag-entry"><b>${escapeHtml(id)}</b><strong>${escapeHtml(value)}</strong><small>${(model.tags.provenance?.get(id) ?? []).map(source => escapeHtml(source.sourceId)).join(", ")}</small></article>`).join("");
+      panel.innerHTML = [...(model.tags.totals?.entries() ?? model.tags.entries())].map(([id, value]) => `<article class="tag-entry"><b>${escapeHtml(id)}</b><strong>${escapeHtml(value)}</strong><small>${((model.tags.provenance ?? model.tags.totals?.provenance)?.get(id) ?? []).map(source => escapeHtml(source.sourceId)).join(", ")}</small></article>`).join("");
     } else if (activeTab === "Evolutionen") {
       panel.innerHTML = model.evolutions.map(entry => `<article class="evolution-entry" data-ready="${entry.eligible}"><b>${escapeHtml(entry.definition.name)}</b><span>${entry.requirements.filter(requirement => requirement.met).length}/${entry.requirements.length}</span><small>${entry.blockedBy ? `Blockiert durch ${escapeHtml(entry.blockedBy)}` : escapeHtml(entry.definition.kind)}</small></article>`).join("");
     } else if (activeTab === "Risiken") {
