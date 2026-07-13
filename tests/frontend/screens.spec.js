@@ -474,9 +474,9 @@ describe("workshop screen", () => {
     expect(workshopDisabledReason(session, { allowed: false, points: 1 })).toBe("benötigter Reparaturdienst nicht verfügbar");
   });
 
-  test("previews an action and executes it only after confirmation", () => {
-    vi.stubGlobal("confirm", vi.fn(() => true));
+  test("previews an action and executes it only after confirmation", async () => {
     const container = root(), onAction = vi.fn(), onLeave = vi.fn();
+    document.body.append(container);
     const service = { preview: (currentSession, id) => ({ allowed: id === "swap", points: 2, consequence: `Folge ${id}` }) };
     renderWorkshopScreen(container, { service, session, target: { name: "Reaktor" }, onAction, onLeave });
     expect(container.innerHTML).toContain("3 AP");
@@ -489,14 +489,21 @@ describe("workshop screen", () => {
 
     swap.click();
     expect(container.querySelector("[data-preview]").textContent).toBe("2 AP · Folge swap");
+    const modal = document.querySelector("dialog.vr-modal");
+    expect(modal.textContent).toContain("Folge swap");
+    modal.querySelector('[data-action="confirm"]').click();
+    await new Promise(resolve => setTimeout(resolve, 0));
     expect(onAction).toHaveBeenCalledWith("swap", { name: "Reaktor" });
+    expect(document.querySelector("dialog.vr-modal")).toBeNull();
 
-    confirm.mockReturnValue(false);
     swap.click();
+    document.querySelector('dialog.vr-modal [data-action="cancel"]').click();
+    await new Promise(resolve => setTimeout(resolve, 0));
     expect(onAction).toHaveBeenCalledOnce();
+    expect(document.querySelector("dialog.vr-modal")).toBeNull();
 
     container.querySelector("[data-leave]").click();
     expect(onLeave).toHaveBeenCalledOnce();
-    vi.unstubAllGlobals();
+    container.remove();
   });
 });

@@ -1,4 +1,5 @@
 import { escapeHtml } from "../escape-html.js";
+import { uiConfirm } from "../components/modal-dialog.js";
 const ACTION_LABELS = { swap: "Modul wechseln", reroll: "Affix rerollen", lock: "Affix sperren", socket: "Sockel öffnen", stabilize: "Stabilisieren", corrupt: "Korruptieren", overclock: "Reaktor übertakten" };
 
 export function workshopDisabledReason(session, preview) {
@@ -19,9 +20,9 @@ export function renderWorkshopScreen(root, { service, session, target, onAction,
     button.disabled = !preview.allowed;
     const disabledReason = workshopDisabledReason(session, preview);
     if (disabledReason) button.setAttribute("aria-label", `${label} – ${disabledReason}`);
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       root.querySelector("[data-preview]").textContent = `${preview.points} AP · ${preview.consequence}`;
-      if (preview.allowed && confirm(`${preview.consequence}\n\nEndgültig ausführen?`)) onAction(id, target);
+      if (preview.allowed && await uiConfirm(`${preview.consequence}\n\nEndgültig ausführen?`, { title: "COLD FORGE" })) onAction(id, target);
     });
     actions.append(button);
   }
