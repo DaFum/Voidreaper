@@ -161,7 +161,7 @@ export async function createCombatFxStage({ canvas, gameCanvas } = {}) {
       let used = 0;
       for (const particle of parts) {
         const sprite = particleSprite(used++);
-        const alpha = clamp(particle.life / particle.maxLife, 0, 1);
+        const alpha = clamp(particle.life / (particle.maxLife || 1), 0, 1);
         sprite.visible = true;
         sprite.position.set(particle.x, particle.y);
         sprite.tint = parseTint(particle.color);
@@ -184,7 +184,7 @@ export async function createCombatFxStage({ canvas, gameCanvas } = {}) {
       let usedShocks = 0;
       for (const shock of shocks) {
         const sprite = shockSprite(usedShocks++);
-        const fade = 1 - shock.life / shock.maxLife;
+        const fade = 1 - shock.life / (shock.maxLife || 1);
         const radius = shock.maxR * shockEase(fade);
         sprite.visible = radius > 1;
         sprite.position.set(shock.x, shock.y);

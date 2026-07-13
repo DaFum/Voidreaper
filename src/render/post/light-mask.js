@@ -22,7 +22,7 @@ export function createLightMask() {
         const light = lights[index];
         const x = (light.x + offsetX) * MASK_SCALE;
         const y = (light.y + offsetY) * MASK_SCALE;
-        const radius = Math.max(2, light.radius * MASK_SCALE);
+        const radius = Math.max(2, (light.radius || 0) * MASK_SCALE);
         if (x + radius < 0 || y + radius < 0 || x - radius > width || y - radius > height) continue;
         const intensity = Math.min(1, light.intensity ?? 1);
         const gradient = maskCtx.createRadialGradient(x, y, 0, x, y, radius);
