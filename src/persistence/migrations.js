@@ -20,7 +20,20 @@ function mergeDefaults(defaults, value) {
   return merged;
 }
 
-const byId = value => Array.isArray(value) ? Object.fromEntries(value.map((entry, index) => [entry.instanceId ?? entry.id ?? String(index), entry])) : (value ?? {});
+// Tolerate null/sparse elements (a single bad entry must not throw and abort
+// the whole migration into a default-profile reset) and preserve entries that
+// collide on id by suffixing the index instead of silently dropping them.
+const byId = value => {
+  if (!Array.isArray(value)) return value ?? {};
+  const result = {};
+  value.forEach((entry, index) => {
+    if (entry == null || typeof entry !== "object") return;
+    let key = entry.instanceId ?? entry.id ?? String(index);
+    if (Object.prototype.hasOwnProperty.call(result, key)) key = `${key}-${index}`;
+    result[key] = entry;
+  });
+  return result;
+};
 
 export function migrateLegacySave(legacy = {}) {
   const save = createDefaultSave();

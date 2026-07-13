@@ -80,8 +80,18 @@ fallbacks actually run, and skip or placeholder unknown nodes instead of abortin
 
 ## Medium
 
-### M1 — Migration path is all-or-nothing: unguarded dereferences turn minor data drift into total progress loss
+### M1 — Migration path is all-or-nothing: unguarded dereferences turn minor data drift into total progress loss — ✅ FIXED
 **`src/persistence/save-store.js:88-129`, `src/persistence/migrations.js:23,45-48`, `src/persistence/migrations/ship-assembly-migration.js:2`**
+
+> **Resolution:** `byId` (`migrations.js`) now skips `null`/non-object elements instead of throwing on
+> `entry.instanceId`, and preserves id-collision entries by suffixing the index rather than silently
+> dropping them. The blueprint-normalization loop (`ship-assembly-migration.js`) now guards the blueprint
+> value (`blueprint?.nodes ?? []`) so a `null` blueprint no longer throws. Both were the concrete triggers
+> that funneled valid-but-slightly-off saves into the corrupt→default-reset path. Verified with a legacy
+> array-format save containing a null element, duplicate ids, and a null blueprint (see `scratchpad/m1.mjs`).
+> _(Note: making the load path recover partially rather than all-or-nothing remains a larger design change,
+> out of scope for this fix.)_
+
 
 `load()` wraps `migrateSave(current)` in the try that flags the save "corrupt"; on any throw it copies the
 real save to a `-corrupt-*` key and returns `createDefaultSave()` — the player loses everything even though
