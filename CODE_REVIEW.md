@@ -122,8 +122,14 @@ passing an item never in the inventory mints free scrap.
 
 **Fix:** award only when the filter actually removed an element (compare length, or find-then-remove).
 
-### M3 — `mine-controller` leaks "ghost" mines into shared `run.zones`
+### M3 — `mine-controller` leaks "ghost" mines into shared `run.zones` — ✅ FIXED
 **`src/features/combat/mine-controller.js:5,10`**
+
+> **Resolution:** added a `removeZone(run, mine)` helper that splices the mine out of `run.zones` by identity,
+> and called it from both the capacity-shift path in `place()` and the `detonate()` loop. The local `mines`
+> array and the shared `run.zones` now stay in sync (mirroring how `drone-controller` re-syncs `run.summons`).
+> Verified: over-placing past capacity leaves no ghosts and detonation clears `run.zones` (see `scratchpad/m3.mjs`).
+
 
 `place()` pushes each mine into both the local `mines` array and `context.run.zones`, but at capacity
 `mines.shift()` (line 5) and on `detonate()` `mines.splice(0)` (line 10) remove the objects only from the
