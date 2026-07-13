@@ -548,7 +548,7 @@ export async function bootstrap() {
   };
 
   events.on("action", ({ action }) => {
-    if(services.quickMount?.session){if(action===ASSEMBLY_ACTIONS.PREVIOUS_SUGGESTION)services.quickMount.previous();if(action===ASSEMBLY_ACTIONS.NEXT_SUGGESTION)services.quickMount.next();if(action===ASSEMBLY_ACTIONS.CONFIRM){services.quickMount.confirm();closeQuickMount();return;}if(action===ASSEMBLY_ACTIONS.DEFER){services.quickMount.defer();closeQuickMount();return;}renderQuickMount();return;}
+    if(services.quickMount?.session){if(action===ASSEMBLY_ACTIONS.PREVIOUS_SUGGESTION)services.quickMount.previous();if(action===ASSEMBLY_ACTIONS.NEXT_SUGGESTION)services.quickMount.next();if(action===ASSEMBLY_ACTIONS.CONFIRM){const result=services.quickMount.confirm();events.emit(TUTORIAL_EVENTS.QUICK_MOUNT_ACTION,{action,success:Boolean(result?.mounted)});closeQuickMount();return;}if(action===ASSEMBLY_ACTIONS.DEFER){const result=services.quickMount.defer();events.emit(TUTORIAL_EVENTS.QUICK_MOUNT_ACTION,{action,success:Boolean(result?.deferred)});closeQuickMount();return;}renderQuickMount();return;}
     if (action === "dodge" && game.state === "run") controller.useDodge(game, input.axis());
   });
   applyTutorialTargets(document);

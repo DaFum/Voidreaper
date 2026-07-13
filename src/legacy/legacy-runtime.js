@@ -990,7 +990,7 @@ import { escapeHtml } from "../ui/escape-html.js";
         document.body.classList.remove("lowhp");
         const gained = this.bankShards();
         const best = this.mode === "daily" ? (Persist.data.dailyBest[todayKey()] || 0) : Persist.data.best;
-        const isBest = this.score > best;
+        const isBest = this.mode === "tutorial" ? false : this.score > best;
         if (this.mode === "daily") { if (isBest) Persist.data.dailyBest[todayKey()] = this.score; }
         else if (isBest) Persist.data.best = this.score;
         if(this.mode!=="tutorial")Persist.save();
