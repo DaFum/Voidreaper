@@ -73,7 +73,13 @@ export function createStarterLoadout() {
 }
 
 export function resolvePrimaryLoadout(metaSave) {
-  return metaSave?.loadouts?.primary?.slots ? metaSave.loadouts.primary : createStarterLoadout();
+  if (!metaSave?.loadouts?.primary?.slots) return createStarterLoadout();
+  const loadout = metaSave.loadouts.primary;
+  const starter = createStarterLoadout();
+  for (const slot of ["ship", "primary-weapon", "reactor"]) {
+    if (!loadout.slots[slot]?.[0]) loadout.slots[slot] = starter.slots[slot];
+  }
+  return loadout;
 }
 ```
 
@@ -140,7 +146,10 @@ const loadoutChoices = services.equipment.values()
 const persistLoadout = async mutate => {
   const next = structuredClone(resolvePrimaryLoadout(metaSave));
   mutate(next);
-  await services.save.update(save => { save.loadouts.primary = next; });
+  await services.save.update(save => {
+    save.loadouts ??= {};
+    save.loadouts.primary = next;
+  });
   metaSave = await services.save.load();
   hangar.render();
 };
@@ -200,7 +209,7 @@ Expected: FAIL because `resolveRunLoadout` is absent.
 export const resolveRunLoadout = services => services.primaryLoadout?.() ?? createStarterLoadout();
 ```
 
-In `attachLegacy`, set `run.loadout = structuredClone(resolveRunLoadout(services))` for fresh non-tutorial runs. Resolve `shipFrameId` from `run.loadout.slots.ship[0].definitionId`. Add all equipped non-ship items to `run.inventory`, then mount each item through the first compatible root/child port using `services.compatibility.evaluate`; retain unmounted items as loose inventory rather than dropping them.
+In `attachLegacy`, set `run.loadout = structuredClone(resolveRunLoadout(services))` for fresh non-tutorial runs. Resolve `shipFrameId` from `run.loadout.slots.ship[0].definitionId`. Add all equipped non-ship items to `run.inventory`, then mount each item through the first compatible root/child port using `services.compatibility.evaluate`; route unmounted items through the existing pending/workbench flow by queuing them with `pendingMountService.queue` rather than retaining them only as loose inventory.
 
 - [ ] **Step 4: Wire the provider and verify**
 
@@ -447,17 +456,17 @@ Run: `npm run test:frontend`
 
 Expected: exit 0, zero failed Vitest tests.
 
-- [ ] **Step 3: Run validators and production build**
-
-Run: `npm run build`
-
-Expected: content, assembly, and tutorial validators pass; Vite production build exits 0.
-
-- [ ] **Step 4: Check patch hygiene**
+- [ ] **Step 3: Check patch hygiene**
 
 Run: `git diff --check && git status --short`
 
 Expected: no whitespace errors; only intentional files are modified.
+
+- [ ] **Step 4: Run validators and production build**
+
+Run: `npm run build`
+
+Expected: content, assembly, and tutorial validators pass; Vite production build exits 0.
 
 - [ ] **Step 5: Repeat the in-app-browser journey**
 

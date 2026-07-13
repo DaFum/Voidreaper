@@ -79,7 +79,52 @@ export function createGameController(services) {
       services.assemblyGeometry.rebuildNow();
       services.buildAnimations=createBuildAnimationController({reducedMotion:globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches});
       const equipmentService=createEquipmentService({registry:services.equipment,inventory:()=>run.inventory}),coreExposureService=createCoreExposureService(),compatibilityService=createCompatibilityService({profileRegistry:services.assemblyProfiles,coreExposureService}),stateMachine=createStateMachine("run",services.events),pendingMountService=createPendingMountService({runInventory}),commandService=createAssemblyCommandService({assemblyService:services.currentAssembly,compatibilityService,geometryService:services.assemblyGeometry,equipmentService,buildAnimationController:services.buildAnimations,onError:message=>globalThis.__VOIDREAPER_TOAST__?.(message)});
-      if(!resumed){for(const equipped of equippedAssemblyItems(run.loadout)){const definition=services.equipment.require(equipped.definitionId),item={...structuredClone(equipped),instanceId:run.ids.create("item"),ownership:"temporary",rarity:equipped.rarity??"common",itemPower:equipped.itemPower??100,affixes:equipped.affixes??[],sockets:equipped.sockets??[]};run.inventory.push(item);const state=services.currentAssembly.getSnapshot(),geometrySnapshot=services.assemblyGeometry.getSnapshot(),moduleProfile={...definition.assembly,definitionId:definition.id,tags:definition.tags},port=Object.values(state.portsById).find(candidate=>compatibilityService.evaluate({state,moduleProfile,port:candidate,geometrySnapshot}).compatible);if(port){services.currentAssembly.mountModule({moduleInstanceId:item.instanceId,definitionId:definition.id,parentPort:port,assemblyProfile:definition.assembly,transform:{position:port.localPosition,rotation:rotationForPortDirection(port.direction)}});services.assemblyGeometry.rebuildNow();}}}
+      if (!resumed) {
+        for (const equipped of equippedAssemblyItems(run.loadout)) {
+          const definition = services.equipment.require(equipped.definitionId);
+          const item = {
+            ...structuredClone(equipped),
+            instanceId: run.ids.create('item'),
+            ownership: 'temporary',
+            rarity: equipped.rarity ?? 'common',
+            itemPower: equipped.itemPower ?? 100,
+            affixes: equipped.affixes ?? [],
+            sockets: equipped.sockets ?? []
+          };
+          run.inventory.push(item);
+
+          const state = services.currentAssembly.getSnapshot();
+          const geometrySnapshot = services.assemblyGeometry.getSnapshot();
+          const moduleProfile = {
+            ...definition.assembly,
+            definitionId: definition.id,
+            tags: definition.tags
+          };
+
+          const port = Object.values(state.portsById).find(candidate =>
+            compatibilityService.evaluate({
+              state,
+              moduleProfile,
+              port: candidate,
+              geometrySnapshot
+            }).compatible
+          );
+
+          if (port) {
+            services.currentAssembly.mountModule({
+              moduleInstanceId: item.instanceId,
+              definitionId: definition.id,
+              parentPort: port,
+              assemblyProfile: definition.assembly,
+              transform: {
+                position: port.localPosition,
+                rotation: rotationForPortDirection(port.direction)
+              }
+            });
+            services.assemblyGeometry.rebuildNow();
+          }
+        }
+      }
       services.flightProfile?.destroy?.();services.flightProfile=createFlightProfileService({eventBus:services.events,geometryService:services.assemblyGeometry});services.flightProfile.rebuildNow();const suggestionService=createPlacementSuggestionService({compatibilityService,geometryService:services.assemblyGeometry,flightProfileService:services.flightProfile});
       const branchFailureService=createBranchFailureService({assemblyService:services.currentAssembly,geometryService:services.assemblyGeometry});services.moduleDamage=createModuleDamageService({assemblyService:services.currentAssembly,eventBus:services.events,branchFailureService});services.moduleFaults?.destroy?.();services.moduleFaults=createModuleFaultAdapter({assemblyService:services.currentAssembly,equipmentService,eventBus:services.events});services.moduleFaults.refresh();services.hitZones=createHitZoneIndex();const refreshHitZones=geometry=>services.hitZones.rebuild(geometry.revision,buildAssemblyHitZones(geometry,frame));refreshHitZones(services.assemblyGeometry.getSnapshot());services.geometryReadyUnsubscribe?.();services.geometryReadyUnsubscribe=services.events.on("assembly:geometry-ready",refreshHitZones);services.damageRouter=createDamageRouter({moduleDamageService:services.moduleDamage,playerDamageService:{applyHullDamage:amount=>{run.player.hull=Math.max(0,run.player.hull-amount);}}});services.assemblyCollision=createCollisionSystem({hitZoneIndex:services.hitZones,damageRouter:services.damageRouter});services.repairs=createRepairService({assemblyService:services.currentAssembly,resources:run.resources,eventBus:services.events,remountDetached:item=>pendingMountService.queue({itemInstance:item,profile:services.equipment.requireAssemblyProfile(item.definitionId),source:"repair",acquiredAt:run.time})});services.recoil=createRecoilService({flightProfileService:services.flightProfile});services.flightSmoother=createFlightProfileSmoother(services.flightProfile.getProfile());services.flightProfileUnsubscribe?.();services.flightProfileUnsubscribe=services.events.on("assembly:flight-profile-changed",profile=>services.flightSmoother.setTarget(profile));services.cameraFit=createCameraFitService({camera:run.camera,viewport:()=>({width:innerWidth,height:innerHeight})});services.cameraFit.fit(services.assemblyGeometry.getSnapshot().totalBounds);
       services.pendingMounts=pendingMountService;services.assemblyCommands=commandService;services.compatibility=compatibilityService;services.quickMount=createQuickMountController({suggestionService,commandService,pendingMountService,runInventory,assemblyService:services.currentAssembly,stateMachine,timeScaleService:{push:(_id,scale)=>{game.timeScale=scale;},pop:()=>{game.timeScale=1;}}});services.assemblyWorkbench=createConstructionWorkbenchController({commandService,assemblyService:services.currentAssembly,geometryService:services.assemblyGeometry,runInventory,stateMachine});

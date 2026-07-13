@@ -12,7 +12,7 @@ export function migrateAssemblyPortLayout(state, equipment) {
       localPosition = { x: (direction?.x ?? 0) * 72, y: (direction?.y ?? 0) * 72 };
     } else {
       const parent = state.nodesById?.[port.parentNodeId];
-      const template = parent ? equipment.requireAssemblyProfile(parent.definitionId).childPorts?.find(item => item.key === port.key) : null;
+      const template = parent ? equipment.requireAssemblyProfile(parent.definitionId)?.childPorts?.find(item => item.key === port.key) : null;
       if (!template) continue;
       direction = template.direction;
       localPosition = template.localPosition;
