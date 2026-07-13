@@ -8,7 +8,6 @@ import { createSectorMapConnections } from "../../src/ui/components/sector-map-c
 import { createSectorNode, isSectorNodeInteractive } from "../../src/ui/components/sector-node.js";
 import { renderStatBreakdown } from "../../src/ui/components/stat-breakdown.js";
 import { renderSynergyList } from "../../src/ui/components/synergy-list.js";
-import { createTutorialCallout } from "../../src/ui/components/tutorial-callout.js";
 
 const root = () => document.createElement("div");
 
@@ -28,7 +27,6 @@ describe("escape-html", () => {
     expect(safeImageDataUrl(123)).toBeNull();
   });
 });
-
 describe("difficulty selector", () => {
   test("marks the initial value as pressed and moves the pressed state on click", () => {
     const onChange = vi.fn();
@@ -45,7 +43,6 @@ describe("difficulty selector", () => {
     expect(buttons.filter(button => button.getAttribute("aria-pressed") === "true")).toHaveLength(1);
   });
 });
-
 describe("item card", () => {
   test("renders slot, name, tags and energy cost", () => {
     const card = createItemCard({ id: "mod-1", slot: "module", name: "Void Coil", description: "Desc", tags: [{ id: "Void" }, { id: "Heat" }], energyCost: 3 });
@@ -213,18 +210,5 @@ describe("synergy list", () => {
     const container = root();
     renderSynergyList(container, { active: [], near: [], blocked: [] });
     expect(container.innerHTML).toContain("Noch keine bekannte Synergie.");
-  });
-});
-
-describe("tutorial callout", () => {
-  test("renders step text and wires dismiss/skip", () => {
-    const onDismiss = vi.fn(), onSkip = vi.fn();
-    const callout = createTutorialCallout({ run: 2, title: "Titel", message: "Nachricht" }, { onDismiss, onSkip });
-    expect(callout.innerHTML).toContain("RUN 2/5");
-    expect(callout.innerHTML).toContain("Titel");
-    callout.querySelector("[data-dismiss]").click();
-    callout.querySelector("[data-skip]").click();
-    expect(onDismiss).toHaveBeenCalledOnce();
-    expect(onSkip).toHaveBeenCalledOnce();
   });
 });

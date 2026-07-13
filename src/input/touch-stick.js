@@ -1,6 +1,6 @@
 import { clamp } from "../core/math.js";
 
-export function createTouchStick(element, knob, radius = 56) {
+export function createTouchStick(element, knob, radius = 56, onMove = () => {}) {
   const state = { pointerId: null, originX: 0, originY: 0, x: 0, y: 0 };
 
   function update(clientX, clientY) {
@@ -12,6 +12,7 @@ export function createTouchStick(element, knob, radius = 56) {
     const py = dy * scale;
     state.x = clamp(px / radius, -1, 1);
     state.y = clamp(py / radius, -1, 1);
+    onMove({ source: "touch", x: state.x, y: state.y, magnitude: Math.sqrt((state.x)*(state.x) + (state.y)*(state.y)) });
     if (knob) knob.style.transform = `translate(${px}px, ${py}px)`;
   }
 

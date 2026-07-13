@@ -143,6 +143,7 @@ describe("extraction screen", () => {
     renderExtractionScreen(container, { window: { reason: "boss", marked: [1, 2], duration: 10, elapsed: 5 }, onHold, onCancel });
     expect(container.innerHTML).toContain("BOSS");
     expect(container.innerHTML).toContain("2 PROTOTYPEN");
+    expect(container.querySelector('[data-tutorial-id="extraction-options"]')).not.toBeNull();
     expect(container.querySelector(".bar i").style.transform).toBe("scaleX(0.5)");
     container.querySelector("[data-hold]").click();
     container.querySelector("[data-cancel]").click();
@@ -208,6 +209,12 @@ describe("loadout screen", () => {
     select.value = "";
     select.dispatchEvent(new Event("change", { bubbles: true }));
     expect(onBlueprintChange).toHaveBeenCalledWith(null);
+  });
+
+  test("renders tags from the tag engine inspection shape", () => {
+    const container = root();
+    renderLoadoutScreen(container, { ...inspection, tags: { totals: new Map([["Void", 2]]), provenance: new Map() } }, { slots: {} });
+    expect(container.textContent).toContain("Void");
   });
 });
 
@@ -304,6 +311,7 @@ describe("run summary screen", () => {
     expect(container.innerHTML).toContain("SIGNAL STABIL");
     expect(container.innerHTML).toContain("KNOTEN <b>2</b>");
     expect(container.innerHTML).toContain("MASSE <b>124</b>");
+    expect(container.querySelector('[data-tutorial-id="run-summary"]')).not.toBeNull();
 
     container.querySelector("[data-replace]").value = "bp-1";
     container.querySelector('[data-choice="variant"]').click();
@@ -380,6 +388,14 @@ describe("sector summary screen", () => {
 
 describe("settings screen", () => {
   const makeSettings = () => ({ reducedMotion: false, screenShake: true, damageFlashes: true, crt: false, largeTouchControls: false, colorPatterns: false, uiScale: 1, bindings: { Space: "dodge", KeyQ: "active-1", KeyE: "active-2" } });
+
+  test("exposes stable focus targets for every accessibility tutorial step", () => {
+    const container = root();
+    renderSettingsScreen(container, makeSettings(), () => {});
+    for (const id of ["settings-bindings", "settings-reduced-motion", "settings-color-patterns", "touch-controls"]) {
+      expect(container.querySelector(`[data-tutorial-id="${id}"]`), id).not.toBeNull();
+    }
+  });
 
   test("renders toggles from settings and persists checkbox changes", () => {
     const container = root(), onChange = vi.fn();

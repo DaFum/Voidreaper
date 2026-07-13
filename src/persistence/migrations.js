@@ -1,6 +1,7 @@
 import { CURRENT_SAVE_VERSION, createDefaultSave } from "./save-schema.js";
 import { convertLegacyMeta } from "../content/migrations/legacy-meta-conversion.js";
 import { migrateShipAssemblySave } from "./migrations/ship-assembly-migration.js";
+import { migrateTutorialSave } from "./migrations/tutorial-migration.js";
 
 const clone = value => JSON.parse(JSON.stringify(value));
 
@@ -31,7 +32,7 @@ export function migrateLegacySave(legacy = {}) {
   save.legacy.meta = clone(legacy.meta ?? {});
   save.legacy.achievements = [...new Set(legacy.ach ?? legacy.achievements ?? [])];
   save.migrationHistory.push({ from: "voidreaper-eternal", to: CURRENT_SAVE_VERSION, at: new Date().toISOString() });
-  return convertLegacyMeta(migrateShipAssemblySave(save,{fromVersion:0}));
+  return convertLegacyMeta(migrateTutorialSave(migrateShipAssemblySave(save,{fromVersion:0}), { fromVersion: 0, legacyOnboarding: legacy.onboarding }));
 }
 
 export function migrateSave(input) {
@@ -40,6 +41,7 @@ export function migrateSave(input) {
   const originalVersion = input.saveVersion;
 
   const processedInput = { ...input };
+  const legacyOnboarding = processedInput.onboarding;
   for (const key of ["inventory", "wreckSignals", "codex", "challenges"]) {
     if (Array.isArray(processedInput[key])) {
       processedInput[key] = byId(processedInput[key]);
@@ -65,5 +67,5 @@ export function migrateSave(input) {
     save.migrationHistory.push({ from: originalVersion, to: CURRENT_SAVE_VERSION, at: new Date().toISOString() });
   }
   save.saveVersion = CURRENT_SAVE_VERSION;
-  return convertLegacyMeta(migrateShipAssemblySave(save,{fromVersion:originalVersion}));
+  return convertLegacyMeta(migrateTutorialSave(migrateShipAssemblySave(save,{fromVersion:originalVersion}), { fromVersion: originalVersion, legacyOnboarding }));
 }

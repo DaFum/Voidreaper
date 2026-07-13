@@ -12,7 +12,6 @@ import { CHALLENGES } from "../src/content/challenges/challenges.js";
 import { RESEARCH_TREE } from "../src/content/research/research-tree.js";
 import { SYNERGY_DEFINITIONS } from "../src/content/tags/synergy-definitions.js";
 import { TAG_DEFINITIONS } from "../src/content/tags/tag-definitions.js";
-import { ONBOARDING_STEPS } from "../src/content/onboarding/onboarding-steps.js";
 
 
 const fail = message => { throw new Error(`[content] ${message}`); };
@@ -37,12 +36,6 @@ const currencies = new Set(["voidShards","bossCores","anomalyData","challengeSea
 for (const challenge of CHALLENGES) for (const currency of Object.keys(challenge.reward)) if (!currencies.has(currency)) fail(`challenge ${challenge.id}: unknown reward ${currency}`);
 
 const featureUnlocks = new Set(["load-preview","workshop-lock","workshop-overclock","map-scan-1","map-reroll","furnace-path","grave-path","null-path","codex-analyzed","vault-30","vault-50","affix-extraction","salvage-missions","vesper","railgun","regular-evolution","energy","overload","bastion","workshop","heat","active-module","corruption","forbidden-signature","extraction","prototype-vault"]);
-
-for (const step of ONBOARDING_STEPS) {
-  for (const unlock of step.unlocks) {
-    if (!catalogIds.has(unlock) && !featureUnlocks.has(unlock)) fail(`onboarding step ${step.title}: unknown unlock ${unlock}`);
-  }
-}
 
 const researchIds = new Set(RESEARCH_TREE.map(n => n.id));
 for (const node of RESEARCH_TREE) {

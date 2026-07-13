@@ -426,7 +426,9 @@ import { escapeHtml } from "../ui/escape-html.js";
         this.mode = mode;
         const seed = mode === "daily"
           ? hashStr("VR-" + todayKey())
-          : hashStr(`${Date.now()}-${performance.now()}-${crypto.getRandomValues(new Uint32Array(1))[0]}`);
+          : mode === "tutorial"
+            ? hashStr("VR-TUTORIAL")
+            : hashStr(`${Date.now()}-${performance.now()}-${crypto.getRandomValues(new Uint32Array(1))[0]}`);
         this.seed = seed;
         this.rng = mulberry32(seed);
         this.grng = mulberry32(seed ^ 0x9E3779B9);
@@ -472,7 +474,7 @@ import { escapeHtml } from "../ui/escape-html.js";
 
       start(mode) {
         this.reset(mode);
-        Persist.data.totalRuns++; Persist.save();
+        if(mode!=="tutorial"){Persist.data.totalRuns++; Persist.save();}
         this.state = "run";
         UI.show("hud");
         this.startWave(1);
@@ -480,7 +482,7 @@ import { escapeHtml } from "../ui/escape-html.js";
       },
       pause() { if (this.state !== "run") return; this.state = "pause"; UI.pauseStats(this); UI.show("pausescr"); },
       resume() { if (this.state !== "pause") return; this.state = "run"; UI.show("hud"); AudioSys.resume(); },
-      quit() { this.bankShards(); this.state = "menu"; UI.menu(); },
+      quit() { if(this.mode!=="tutorial")this.bankShards(); this.state = "menu"; UI.menu(); },
 
       startWave(n) {
         this.wave = n;
@@ -919,6 +921,7 @@ import { escapeHtml } from "../ui/escape-html.js";
       },
 
       checkAchievements() {
+        if(this.mode==="tutorial")return;
         for (const a of ACHIEVEMENTS) {
           if (Persist.data.ach.includes(a.id)) continue;
           if (a.test(this)) {
@@ -932,6 +935,7 @@ import { escapeHtml } from "../ui/escape-html.js";
       },
 
       bankShards() {
+        if(this.mode==="tutorial")return 0;
         const gain = Math.round(this.shardsRun * (1 + this.metaLv("mshard") * 0.10));
         Persist.data.shards += gain;
         Persist.data.totalKills += this.kills;
@@ -989,7 +993,7 @@ import { escapeHtml } from "../ui/escape-html.js";
         const isBest = this.score > best;
         if (this.mode === "daily") { if (isBest) Persist.data.dailyBest[todayKey()] = this.score; }
         else if (isBest) Persist.data.best = this.score;
-        Persist.save();
+        if(this.mode!=="tutorial")Persist.save();
         UI.gameOver(this, gained, isBest);
       },
 
@@ -1957,8 +1961,9 @@ import { escapeHtml } from "../ui/escape-html.js";
           UI.toast(Game.banishMode ? "TAP A CARD TO BANISH IT" : "BANISH CANCELLED");
         });
         document.addEventListener("visibilitychange", () => { if (document.hidden && Game.state === "run") Game.pause(); });
-        Persist.load().then(() => UI.menu());
+        const ready = Persist.load().then(() => UI.menu());
         requestAnimationFrame(t => Game.loop(t));
+        return ready;
       }
     });
   

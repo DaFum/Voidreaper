@@ -51,12 +51,12 @@ export function createGameController(services) {
     get run() { return run; },
     openPendingMount(pendingMount, context) { return services.quickMount?.open(pendingMount, context) ?? { opened:false, reason:"quick-mount-unavailable" }; },
     attachLegacy(game, options = {}) {
-      const resumed=services.resumeRun??null;delete services.resumeRun;run = resumed??createRunState({ seed: game.seed, mode: game.mode === "daily" ? "daily" : "campaign", campaignPathId: game.selectedCampaignPath ?? "architect" });
+      const resumed=services.resumeRun??null;delete services.resumeRun;const mode=game.mode==="tutorial"?"tutorial":game.mode === "daily" ? "daily" : "campaign";run = resumed??createRunState({ seed: game.seed, mode, campaignPathId: game.selectedCampaignPath ?? "architect" });
       if (!resumed&&run.mode === "daily" && services.daily) services.daily.apply(run, services.daily.config());
       run.services = services;
       run.heat ??= createHeatState();
       run.corruption ??= createCorruptionState(game.corruption ?? 0);
-      if(!resumed)services.sectors?.start(run);
+      if(!resumed&&mode!=="tutorial")services.sectors?.start(run);
       if(!resumed)services.energy.initialize(run.player, { capacity: 100, reserved: 92, regeneration: 12 });
       const shipFrameId = run.assembly?.shipFrameId??"vesper";
       const frame = services.assemblyProfiles.getShipFrame(shipFrameId);

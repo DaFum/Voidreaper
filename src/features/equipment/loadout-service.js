@@ -18,6 +18,10 @@ export function createEmptyLoadout({ secondRelicUnlocked = false } = {}) {
   };
 }
 
+export function resolvePrimaryLoadout(metaSave) {
+  return metaSave?.loadouts?.primary?.slots ? metaSave.loadouts.primary : createEmptyLoadout();
+}
+
 export function createLoadoutService({ registry, tagEngine, unlocks }) {
   function sources(loadout) {
     return Object.values(loadout.slots).flat().filter(Boolean).map(item => ({

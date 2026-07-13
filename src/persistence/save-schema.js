@@ -1,6 +1,6 @@
 import { createMetaState } from "../runtime/create-meta-state.js";
 
-export const CURRENT_SAVE_VERSION = 5;
+export const CURRENT_SAVE_VERSION = 6;
 
 export function createDefaultSave() {
   const meta = createMetaState();
@@ -44,7 +44,7 @@ export function createDefaultSave() {
     records: meta.records,
     campaignPaths: meta.campaignPaths,
     buildHistory: meta.buildHistory,
-    onboarding: meta.onboarding,
+    tutorial: meta.tutorial,
     checkpoint: null,
     settings: {
       reducedMotion: false,

@@ -1,0 +1,5 @@
+import { TUTORIAL_CHAPTERS, validateTutorialChapters } from "../src/content/tutorial/tutorial-chapters.js";
+const required=["movement","aim-fire","dodge","active-modules","hud-resources","pause","enemy","reward","evolution","sector-map","merchant","workshop","checkpoint","loadout","ships","weapons","reactors","modules","energy-load","heat","synergies","quick-mount","workbench","blueprints","research","prototypes","codex","challenges","campaign-paths","salvage","simulator","statistics","overload","faults","corruption","anomalies","bosses","extraction","summaries","bindings","ui-scale","reduced-motion","state-patterns","touch"];
+const report=validateTutorialChapters(TUTORIAL_CHAPTERS),capabilities=new Set(TUTORIAL_CHAPTERS.flatMap(chapter=>chapter.capabilities??[])),missing=required.filter(id=>!capabilities.has(id));
+if(!report.valid||missing.length){console.error([...report.issues,...missing.map(id=>`missing capability: ${id}`)].join("\n"));process.exit(1);}
+console.log(`[tutorial] valid · ${TUTORIAL_CHAPTERS.length} chapters · ${TUTORIAL_CHAPTERS.reduce((sum,chapter)=>sum+chapter.steps.length,0)} steps · ${capabilities.size} capabilities`);
