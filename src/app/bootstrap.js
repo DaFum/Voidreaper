@@ -7,6 +7,8 @@ import { TAG_DEFINITIONS } from "../content/tags/tag-definitions.js";
 import { SYNERGY_DEFINITIONS } from "../content/tags/synergy-definitions.js";
 import { createEffectRegistry } from "../features/effects/effect-registry.js";
 import { registerCoreEffects } from "../content/effects/core-effects.js";
+import { MODULE_EFFECT_IDS } from "../content/effects/module-effect-manifest.js";
+import { REACTOR_EFFECT_IDS, SHIP_EFFECT_IDS } from "../content/effects/latent-effect-manifest.js";
 import { createTriggerEngine } from "../features/triggers/trigger-engine.js";
 import { createEnergySystem } from "../features/energy/energy-system.js";
 import { createHeatSystem } from "../features/heat/heat-system.js";
@@ -94,11 +96,13 @@ import { createQuickMountOverlay } from "../ui/ship-assembly/quick-mount-overlay
 import { renderPlacementPreview } from "../ui/ship-assembly/placement-preview-overlay.js";
 import { adoptCombatRunState, attemptMerchantPurchase, attemptWorkshopAction, canUseWorkbenchPort, openReplacingQuickMount, prepareCheckpointResume, resetCampaignResume, subscribeWorkbenchGeometry, syncLegacyVoidShards } from "./click-path-flows.js";
 import { renderLoadoutScreen } from "../ui/screens/loadout-screen.js";
+import { REGION_BY_ID } from "../content/sectors/regions.js";
 
 export async function bootstrap() {
   document.documentElement.dataset.app = "voidreaper-modular";
   const events = createEventBus();
   const effects = registerCoreEffects(createEffectRegistry());
+  effects.declareLatent([...SHIP_EFFECT_IDS, ...REACTOR_EFFECT_IDS, ...MODULE_EFFECT_IDS]);
   effects.register("evolution-prism-lance", (_effect, { player }) => { player.evoPrism = true; player.pierce += 99; player.bulletSpeed *= 1.5; });
   effects.register("evolution-singularity", (_effect, { player }) => { player.evoSing = true; player.novaCd = Math.max(2, player.novaCd * 0.8); });
   effects.register("evolution-blood-halo", (_effect, { player }) => { player.evoHalo = true; player.orbitals += 2; });
@@ -168,6 +172,9 @@ export async function bootstrap() {
   const ui = legacyRuntime.ui;
   legacyRuntime.configureEvolutionEffects((effectId, player) => effects.execute({ id: effectId }, { player, run: controller.run }));
   const getAssemblyLod = () => metaSave.assemblyVisualPreferences?.lod === "auto" ? "ultra" : metaSave.assemblyVisualPreferences?.lod;
+  // weight region-typical enemies (content catalog) into the legacy wave roster;
+  // game.visualRegionId is kept current by game-controller.syncLegacy
+  legacyRuntime.configureRegionRoster(() => REGION_BY_ID.get(game.visualRegionId)?.enemies ?? []);
   legacyRuntime.configureShipRenderer((context,player,legacyGame)=>{const geometry=services.assemblyGeometry?.getSnapshot();if(!geometry?.coreGeometry)return false;const rendered=services.assemblyRenderer.renderPlayerShip(context,{geometrySnapshot:geometry,position:player,rotation:player.angle+Math.PI/2,time:legacyGame.time,buildAnimations:services.buildAnimations?.snapshot?.()??[],movement:{x:player.vx,y:player.vy,dodging:player.iframes>0},lodOptions:{userSetting:getAssemblyLod()}});if(rendered&&player.shield>0){context.strokeStyle="#4f6df5";context.shadowColor="#4f6df5";context.shadowBlur=14;context.lineWidth=1.5;context.beginPath();context.arc(player.x,player.y,player.r+8+Math.sin(legacyGame.time*4)*2,0,Math.PI*2);context.stroke();context.shadowBlur=0;}return rendered;});
   // GPU environment stage (PixiJS) below the #game canvas. Loaded lazily and
   // fire-and-forget: until it is ready (or if WebGL is unavailable) the legacy

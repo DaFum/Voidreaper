@@ -309,6 +309,7 @@ import { escapeHtml } from "../ui/escape-html.js";
     let externalPlayerDamageRouter = null;
     let externalEnvironmentRenderer = null;
     let externalCombatFxRenderer = null;
+    let externalRegionRosterProvider = null;
     const EVOLUTIONS = LEGACY_EVOLUTIONS.map(definition => ({
       id: definition.id,
       ico: definition.icon,
@@ -551,6 +552,12 @@ import { escapeHtml } from "../ui/escape-html.js";
         if (w >= 6) roster.push("shield", "spitter");
         if (w >= 7) roster.push("warper", "tank");
         if (w >= 8) roster.push("leech", "bomber", "splitter");
+        // region-typical enemies (src/content/sectors/regions.js) are weighted
+        // into the roster via the bootstrap-configured provider; "boss" spawns
+        // through its own path and unknown ids are ignored
+        for (const regionalType of externalRegionRosterProvider?.() ?? []) {
+          if (regionalType !== "boss" && ETYPES[regionalType]) roster.push(regionalType);
+        }
         const type = this.gpick(roster);
         const a = this.grand(0, TAU);
         const d = Math.max(W, H) * 0.62 + this.grand(0, 120);
@@ -1929,6 +1936,9 @@ import { escapeHtml } from "../ui/escape-html.js";
       },
       configurePlayerDamageRouter(router) {
         externalPlayerDamageRouter = router;
+      },
+      configureRegionRoster(provider) {
+        externalRegionRosterProvider = provider;
       },
       start() {
         Input.init();
