@@ -44,7 +44,7 @@ export function createMerchantService({ modules = [], weapons = [], reactors = [
       eventBus?.emit("merchant-purchase", { offerId: offer.offerId });
       return true;
     },
-    sell(run, item) { if (!item || !run?.inventory) return false; const before = run.inventory.length; run.inventory = run.inventory.filter(entry => entry !== item); if (run.inventory.length === before) return false; currencyService.award(run, "sale", Math.max(1, Math.floor(merchantPrice(item) / 4))); return true; },
+    sell(run, item) { if (!item || !Array.isArray(run?.inventory)) return false; const before = run.inventory.length; run.inventory = run.inventory.filter(entry => entry !== item); if (run.inventory.length === before) return false; currencyService.award(run, "sale", Math.max(1, Math.floor(merchantPrice(item) / 4))); return true; },
     reserve(offer) { offer.reserved = true; return offer; },
     // each paid reroll must produce a fresh offer set, so the derived seed
     // carries a per-node reroll counter instead of a fixed offset

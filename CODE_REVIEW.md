@@ -91,6 +91,10 @@ fallbacks actually run, and skip or placeholder unknown nodes instead of abortin
 > array-format save containing a null element, duplicate ids, and a null blueprint (see `scratchpad/m1.mjs`).
 > _(Note: making the load path recover partially rather than all-or-nothing remains a larger design change,
 > out of scope for this fix.)_
+> **PR #52 follow-up:** `byId` builds via `Object.fromEntries` (so a `__proto__`-keyed id can't trigger the
+> prototype setter), `mergeDefaults` now skips the unsafe keys `__proto__`/`constructor`/`prototype` to
+> prevent prototype pollution from crafted/imported save JSON, and the blueprint-node loop skips
+> sparse/non-object entries too.
 
 
 `load()` wraps `migrateSave(current)` in the try that flags the save "corrupt"; on any throw it copies the
@@ -241,6 +245,9 @@ hit — negating the cache the layer was built to provide.
 > placement↔geometry import cycle, with a sync comment. Verified: two medium modules 40px apart are now
 > correctly flagged as overlapping (see `scratchpad/m9.mjs`). The existing `collision-bounds.test.js`, which
 > had pinned the old undersized values, was updated to assert the geometry-aligned bounds.
+> **PR #52 follow-up:** `boundsFromCenter` now also takes the `rendererId`, so the mountable
+> `core-structural-spine` profile (rendered at `size*2.25`, not `1.45`) gets its wider footprint instead of
+> an undersized one; `buildPreviewBounds` passes it through and a spine-overlap regression test was added.
 
 
 `boundsFromCenter` uses half-extents S12/M18/L26/XL36, but real node bounds use

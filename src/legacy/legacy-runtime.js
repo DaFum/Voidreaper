@@ -855,7 +855,7 @@ import { escapeHtml } from "../ui/escape-html.js";
         const opts = [];
         for (const ev of EVOLUTIONS) {
           if (this.upgradeCounts["evo_" + ev.id]) continue;
-          if (ev.req.every(r => (this.upgradeCounts[r.id] || 0) >= r.minimum)) { opts.push({ evo: ev }); break; }
+          if (ev.req.length && ev.req.every(r => (this.upgradeCounts[r.id] || 0) >= r.minimum)) { opts.push({ evo: ev }); break; }
         }
         const avail = UPGRADES.filter(u => (this.upgradeCounts[u.id] || 0) < u.max && !this.banished.has(u.id));
         const src = avail.slice();
