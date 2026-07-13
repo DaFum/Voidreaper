@@ -15,15 +15,26 @@ export function getViewModeOverlay(mode, { assembly, geometry, flightProfile } =
   return {};
 }
 
+export function layoutOverlayLabels(labels, { minimumDistance = 18 } = {}) {
+  const placed = [];
+  for (const label of labels) {
+    const next = { ...label, position: { ...label.position } };
+    while (placed.some(other => Math.hypot(other.position.x - next.position.x, other.position.y - next.position.y) < minimumDistance)) next.position.y += minimumDistance;
+    placed.push(next);
+  }
+  return placed;
+}
+
 export function renderViewModeOverlay(ctx, overlay = {}) {
   ctx.save(); ctx.lineWidth = 2; ctx.strokeStyle = "#48eaff"; ctx.fillStyle = "#dffaff"; ctx.font = "11px monospace";
+  const connectionLabels = [];
   for (const connection of overlay.connections ?? []) {
     const segment = connection.cable ?? connection.spine ?? connection;
     if (!segment.from || !segment.to) continue;
     ctx.beginPath(); ctx.moveTo(segment.from.x, segment.from.y); ctx.lineTo(segment.to.x, segment.to.y); ctx.stroke();
-    if (connection.label) ctx.fillText(connection.label, (segment.from.x + segment.to.x) / 2, (segment.from.y + segment.to.y) / 2);
+    if (connection.label) connectionLabels.push({ text: connection.label, position: { x: (segment.from.x + segment.to.x) / 2, y: (segment.from.y + segment.to.y) / 2 } });
   }
-  for (const label of overlay.labels ?? []) ctx.fillText(label.text, label.position.x + 6, label.position.y - 6);
+  for (const label of layoutOverlayLabels([...connectionLabels, ...(overlay.labels ?? [])])) ctx.fillText(label.text, label.position.x + 6, label.position.y - 6);
   if (overlay.centerOfMass) { const { x, y } = overlay.centerOfMass; ctx.beginPath(); ctx.moveTo(x - 10, y); ctx.lineTo(x + 10, y); ctx.moveTo(x, y - 10); ctx.lineTo(x, y + 10); ctx.stroke(); ctx.fillText("COM", x + 8, y - 8); }
   for (const vector of overlay.thrustVectors ?? []) { const end = { x: vector.position.x + vector.direction.x * 28 * vector.strength, y: vector.position.y + vector.direction.y * 28 * vector.strength }; ctx.beginPath(); ctx.moveTo(vector.position.x, vector.position.y); ctx.lineTo(end.x, end.y); ctx.stroke(); }
   ctx.restore();
