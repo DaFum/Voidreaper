@@ -316,7 +316,7 @@ import { escapeHtml } from "../ui/escape-html.js";
       id: definition.id,
       ico: definition.icon,
       nm: definition.name,
-      req: definition.requirements.filter(requirement => requirement.type === "upgrade").map(requirement => requirement.id),
+      req: definition.requirements.filter(requirement => requirement.type === "upgrade").map(requirement => ({ id: requirement.id, minimum: requirement.minimum ?? 1 })),
       ds: definition.description ?? definition.effects.join(" · "),
       apply: player => evolutionEffectRunner?.(definition.effects[0], player)
     }));
@@ -855,7 +855,7 @@ import { escapeHtml } from "../ui/escape-html.js";
         const opts = [];
         for (const ev of EVOLUTIONS) {
           if (this.upgradeCounts["evo_" + ev.id]) continue;
-          if (ev.req.every(r => (this.upgradeCounts[r] || 0) >= 3)) { opts.push({ evo: ev }); break; }
+          if (ev.req.every(r => (this.upgradeCounts[r.id] || 0) >= r.minimum)) { opts.push({ evo: ev }); break; }
         }
         const avail = UPGRADES.filter(u => (this.upgradeCounts[u.id] || 0) < u.max && !this.banished.has(u.id));
         const src = avail.slice();

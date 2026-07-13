@@ -191,8 +191,14 @@ in an otherwise German UI. (Escaped, so no XSS — purely a UX defect.)
 
 **Fix:** add a `description` field to the evolution content and render that instead of the effect ids.
 
-### M7 — Evolution unlock threshold is hardcoded to 3 and ignores the content's `minimum`
+### M7 — Evolution unlock threshold is hardcoded to 3 and ignores the content's `minimum` — ✅ FIXED
 **`src/legacy/legacy-runtime.js:319,858`**
+
+> **Resolution:** the `req` mapping now preserves each requirement's `minimum` (defaulting to 1), and the
+> `rollOptions` gate checks `(upgradeCounts[r.id] || 0) >= r.minimum` instead of the hardcoded `>= 3`.
+> Evolutions now unlock at the thresholds their content declares (2 picks for the current `minimum: 1` data),
+> and the previously-dead `minimum` field drives behavior. Content validator and tests pass.
+
 
 `req` is built by dropping the `minimum` field (`.map(r => r.id)`), and `rollOptions` gates with
 `ev.req.every(r => (this.upgradeCounts[r] || 0) >= 3)`. Every `LEGACY_EVOLUTIONS` requirement specifies
