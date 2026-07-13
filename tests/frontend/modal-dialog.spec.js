@@ -29,6 +29,15 @@ describe("modal dialog", () => {
     await expect(result).resolves.toBe("Neu");
   });
 
+  test("uiPrompt renders an input even for a nullish default value", async () => {
+    const result = uiPrompt("Neuer Name", null);
+    const field = modal().querySelector('[data-role="input"]');
+    expect(field).not.toBeNull();
+    expect(field.value).toBe("");
+    modal().querySelector('[data-action="cancel"]').click();
+    await result;
+  });
+
   test("uiPrompt returns null on cancel", async () => {
     const result = uiPrompt("Neuer Name", "Alt");
     modal().querySelector('[data-action="cancel"]').click();

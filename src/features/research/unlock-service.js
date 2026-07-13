@@ -4,6 +4,10 @@ export function createUnlockService(flags = {}) {
   const unlocked = new Set(Object.keys(flags).filter(id => flags[id]));
   return {
     unlock(id, source) { if (!UNLOCK_TYPES.includes(source.type)) throw new Error(`Unknown unlock type: ${source.type}`); unlocked.add(id); return { id, source }; },
+    // Re-sync from persisted save flags after another service (onboarding,
+    // research) wrote unlocks directly to the save. Additive on purpose:
+    // in-session unlocks granted via unlock() must survive a hydrate.
+    hydrate(flags = {}) { for (const [id, value] of Object.entries(flags)) if (value) unlocked.add(id); },
     isUnlocked(definition) { return definition.unlockSource === "starter" || unlocked.has(definition.id); },
     hint(definition) {
       if (definition.unlockSource === "secret") return "Unbekannte Signatur. Weitere Analyse erforderlich.";

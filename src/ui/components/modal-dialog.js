@@ -38,5 +38,5 @@ export function uiConfirm(message, { title = "BESTÄTIGUNG", confirmLabel = "AUS
 }
 
 export function uiPrompt(message, defaultValue = "", { title = "EINGABE", confirmLabel = "ÜBERNEHMEN", cancelLabel = "ABBRECHEN" } = {}) {
-  return openModal({ title, message, input: defaultValue, confirmLabel, cancelLabel });
+  return openModal({ title, message, input: defaultValue ?? "", confirmLabel, cancelLabel });
 }
