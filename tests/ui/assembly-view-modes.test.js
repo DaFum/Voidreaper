@@ -1,6 +1,17 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { renderViewModeOverlay } from "../../src/ui/ship-assembly/assembly-view-modes.js";
+import { layoutOverlayLabels, renderViewModeOverlay } from "../../src/ui/ship-assembly/assembly-view-modes.js";
+
+test("diagnostic labels receive deterministic non-overlapping positions", () => {
+  const labels = layoutOverlayLabels([
+    { text: "A", position: { x: 0, y: 0 } },
+    { text: "B", position: { x: 2, y: 2 } }
+  ], { minimumDistance: 12 });
+
+  assert.deepEqual(labels[0].position, { x: 0, y: 0 });
+  assert.ok(Math.hypot(labels[1].position.x, labels[1].position.y) >= 12);
+  assert.deepEqual(layoutOverlayLabels(labels, { minimumDistance: 12 }), labels);
+});
 
 test("connection overlays draw paths and labels", () => {
   const calls = [];

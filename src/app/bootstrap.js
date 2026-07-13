@@ -22,7 +22,7 @@ import { updateResourceMeters } from "../ui/components/resource-meters.js";
 import { uiConfirm, uiPrompt } from "../ui/components/modal-dialog.js";
 import { createGameController } from "./game-controller.js";
 import { createEquipmentRegistry } from "../features/equipment/equipment-registry.js";
-import { createLoadoutService, resolvePrimaryLoadout } from "../features/equipment/loadout-service.js";
+import { createLoadoutItem, createLoadoutService, resolvePrimaryLoadout } from "../features/equipment/loadout-service.js";
 import { createUnlockService } from "../features/research/unlock-service.js";
 import { SHIPS } from "../content/ships/index.js";
 import { WEAPONS } from "../content/weapons/index.js";
@@ -31,6 +31,8 @@ import { MODULES } from "../content/modules/index.js";
 import { createHangarScreen } from "../ui/screens/hangar-screen.js";
 import { attachStartMenuToggle } from "../ui/screens/start-menu-toggle.js";
 import { createSectorController } from "../features/sectors/sector-controller.js";
+import { createCampaignRewardService } from "../features/sectors/campaign-reward-service.js";
+import { flattenSectorMap } from "../features/sectors/sector-map-generator.js";
 import { createRunCurrencyService } from "../features/economy/run-currency-service.js";
 import { createDailyRunService } from "../features/sectors/daily-run-service.js";
 import { createSectorMapScreen } from "../ui/screens/sector-map-screen.js";
@@ -85,7 +87,7 @@ import { createBlueprintThumbnailService } from "../features/ship-assembly/bluep
 import { encodeBlueprint, decodeBlueprint } from "../features/ship-assembly/blueprints/blueprint-codec.js";
 import { validateBlueprint } from "../features/ship-assembly/blueprints/blueprint-validator.js";
 import { createAssemblyDebugService } from "../features/ship-assembly/debug/assembly-debug-service.js";
-import { createAssemblyDebugScenarios } from "../features/ship-assembly/debug/assembly-debug-scenarios.js";
+import { createAssemblyDebugScenarios, findMaximumConstructionCandidate, summarizeMaximumConstructionBlockers } from "../features/ship-assembly/debug/assembly-debug-scenarios.js";
 import { createAssemblyErrorBoundary } from "../features/ship-assembly/model/assembly-error-boundary.js";
 import { createAssemblyWorkbenchScreen } from "../ui/ship-assembly/assembly-workbench-screen.js";
 import { createAssemblyCanvasController } from "../ui/ship-assembly/assembly-canvas-controller.js";
@@ -100,6 +102,7 @@ import { renderPlacementPreview } from "../ui/ship-assembly/placement-preview-ov
 import { adoptCombatRunState, attemptMerchantPurchase, attemptWorkshopAction, canUseWorkbenchPort, openReplacingQuickMount, prepareCheckpointResume, resetCampaignResume, subscribeWorkbenchGeometry, syncLegacyVoidShards } from "./click-path-flows.js";
 import { renderLoadoutScreen } from "../ui/screens/loadout-screen.js";
 import { REGION_BY_ID } from "../content/sectors/regions.js";
+import { resolvePortWorldTransform, rotationForPortDirection } from "../features/ship-assembly/geometry/port-world-transform.js";
 
 export async function bootstrap() {
   document.documentElement.dataset.app = "voidreaper-modular";
@@ -164,12 +167,248 @@ export async function bootstrap() {
   services.unlocks = createUnlockService(initialSave.unlocks);
   services.equipment = createEquipmentRegistry();
   for (const definition of [...SHIPS, ...WEAPONS, ...REACTORS, ...MODULES]) services.equipment.register(definition);
+  services.campaignRewards = createCampaignRewardService({ equipment: services.equipment, eventBus: events });
   services.loadouts = createLoadoutService({ registry: services.equipment, tagEngine: services.tags, unlocks: services.unlocks });
+  services.primaryLoadout = () => resolvePrimaryLoadout(metaSave);
   const blueprintIds=createIdService("meta-blueprints"),thumbnailService=createBlueprintThumbnailService({assemblyRenderer:services.assemblyRenderer,geometryService:{getSnapshot:()=>services.assemblyGeometry?.getSnapshot()}});services.blueprints=createBlueprintService({saveStore:services.save,idFactory:blueprintIds,thumbnailService});services.blueprints.hydrate(initialSave);
   console.info(`[content] ${SHIPS.length} ships · ${WEAPONS.length} weapons · ${REACTORS.length} reactors · ${MODULES.length} modules`);
 
   const controller = createGameController(services);
-  if(import.meta.env.DEV){const flags=new Map(),firstModule=()=>Object.values(services.currentAssembly?.getSnapshot().nodesById??{}).find(node=>node.moduleInstanceId),buildMaximum=()=>{const run=controller.run;if(!run)return{built:false,reason:"run-required"};const rank={S:1,M:2,L:3,XL:4},definitions=services.equipment.values().filter(definition=>definition.slot!=="ship"),blocked=new Set();let attempts=0;while(Object.keys(services.currentAssembly.getSnapshot().nodesById).length<19&&attempts++<80){const snapshot=services.currentAssembly.getSnapshot(),port=Object.values(snapshot.portsById).filter(item=>!item.occupiedByNodeId&&!blocked.has(item.portId)&&(item.branchDepth??0)<4).sort((a,b)=>(a.branchDepth??0)-(b.branchDepth??0))[0];if(!port)break;const definition=definitions.filter(item=>rank[item.assembly.sizeClass]<=rank[port.sizeClass]&&item.assembly.mountTypes.includes(port.mountType)&&item.assembly.loadDemand<=port.loadCapacity&&(port.acceptedEnergyClasses??[port.energyClass,"standard"]).includes(item.assembly.energyClass)).sort((a,b)=>(b.assembly.childPorts?.length??0)-(a.assembly.childPorts?.length??0))[0];if(!definition){blocked.add(port.portId);continue;}const item={instanceId:run.ids.create("debug-item"),definitionId:definition.id,ownership:"temporary",rarity:"debug",affixes:[],sockets:[]};run.inventory.push(item);services.currentAssembly.mountModule({moduleInstanceId:item.instanceId,definitionId:definition.id,parentPort:port,assemblyProfile:definition.assembly,transform:{position:port.localPosition??{x:(port.direction?.x??0)*34,y:(port.direction?.y??0)*34},rotation:Math.atan2(port.direction?.y??0,port.direction?.x??1)}});services.assemblyGeometry.rebuildNow();}const snapshot=services.currentAssembly.getSnapshot();return{built:true,nodes:Object.keys(snapshot.nodesById).length,segments:Object.keys(snapshot.nodesById).length-1};},scenarioActions={visualGallery:()=>({cores:getCoreGeometryIds(),modules:MODULE_VISUAL_PROFILES.map(profile=>profile.rendererId),damageStates:["intact","armor-broken","core-disrupted"]}),buildMaximum,buildAsymmetric:()=>({maximum:buildMaximum(),flight:services.flightProfile?.rebuildNow()}),damageSingle:()=>{const node=firstModule();return node?services.moduleDamage.applyDamage(node.nodeId,20,"debug"):null;},bridgeSurvival:()=>{const maximum=buildMaximum();if(!maximum.built)return maximum;const snapshot=services.currentAssembly.getSnapshot(),parent=Object.values(snapshot.nodesById).find(node=>node.nodeId!==snapshot.rootNodeId&&Object.values(snapshot.nodesById).some(child=>child.parentNodeId===node.nodeId));if(!parent)return{survived:false,reason:"no-parent"};const child=Object.values(snapshot.nodesById).find(node=>node.parentNodeId===parent.nodeId);services.currentAssembly.addSecondaryConnection({sourceNodeId:child.nodeId,targetNodeId:snapshot.rootNodeId,profile:{structuralStrength:8,energyThroughput:"standard",visualConnectorType:"debug-bridge"}});services.moduleDamage.applyDamage(parent.nodeId,9999,"debug");return{survived:Boolean(services.currentAssembly.getSnapshot().nodesById[child.nodeId]),childNodeId:child.nodeId};},branchCollapse:()=>{const snapshot=services.currentAssembly?.getSnapshot(),parent=Object.values(snapshot?.nodesById??{}).find(node=>node.nodeId!==snapshot.rootNodeId&&Object.values(snapshot.nodesById).some(child=>child.parentNodeId===node.nodeId))??firstModule();return parent?services.moduleDamage.applyDamage(parent.nodeId,9999,"debug"):null;},repairRemount:()=>({detached:services.currentAssembly?.getSnapshot().detachedItems??[],resources:controller.run?.resources}),setLod:lod=>{metaSave.assemblyVisualPreferences.lod=lod;return lod;},blueprintRoundtrip:()=>{const blueprint=services.blueprints.list()[0];if(!blueprint)return{instruction:"Save a blueprint first."};return validateBlueprint(decodeBlueprint(encodeBlueprint(blueprint)),{knownDefinitionIds:new Set(services.equipment.values().map(item=>item.id)),knownShipFrameIds:new Set(SHIP_FRAME_ASSEMBLY_PROFILES.map(item=>item.id))});}};const scenarioRunner=createAssemblyDebugScenarios(scenarioActions),damage={forceState(nodeId,state){const node=services.currentAssembly.requireNode(nodeId);node.damageState=state;if(state==="armor-broken")node.armorIntegrity=0;if(state==="core-disrupted")node.coreIntegrity=node.maxCoreIntegrity*.3;services.currentAssembly.publishDamageChange(nodeId);return node;}},debugFlags={set:(key,value)=>flags.set(key,value),snapshot:()=>Object.fromEntries(flags)},settings={setTemporary:(key,value)=>{flags.set(key,value);return value;}},blueprints={exportCurrent:()=>{const blueprint=services.blueprints.list()[0];return blueprint?encodeBlueprint(blueprint):null;},importCode:code=>validateBlueprint(decodeBlueprint(code),{knownDefinitionIds:new Set(services.equipment.values().map(item=>item.id)),knownShipFrameIds:new Set(SHIP_FRAME_ASSEMBLY_PROFILES.map(item=>item.id))})};services.assemblyDebug=createAssemblyDebugService({inventory:{grantDebugItem:definitionId=>{const run=controller.run,definition=services.equipment.require(definitionId);if(!run)return null;const item={instanceId:run.ids.create("debug-item"),definitionId:definition.id,ownership:"temporary",rarity:"debug",affixes:[],sockets:[]};run.inventory.push(item);services.events.emit("run-item-acquired",{item,source:"debug"});return item;}},damage,assembly:()=>services.currentAssembly,defaultBridge:{structuralStrength:8,energyThroughput:"standard",visualConnectorType:"debug-bridge"},debugFlags,settings,scenarios:scenarioRunner,blueprints});globalThis.__VOIDREAPER_DEBUG__={...(globalThis.__VOIDREAPER_DEBUG__??{}),assembly:{...services.assemblyDebug,getGeometry:()=>services.assemblyGeometry?.getSnapshot()??null,getHitZones:()=>services.hitZones?.all()??[],getFlightProfile:()=>services.flightProfile?.getProfile()??null,getPending:()=>services.pendingMounts?.values()??[],getQuickMount:()=>services.quickMount?.session??null,getWorkbench:()=>services.assemblyWorkbench?.model()??null,scenarios:scenarioRunner}};}
+  if (import.meta.env.DEV) {
+    const flags = new Map(),
+      firstModule = () =>
+        Object.values(
+          services.currentAssembly?.getSnapshot().nodesById ?? {},
+        ).find((node) => node.moduleInstanceId),
+      buildMaximum = () => {
+        const run = controller.run;
+        if (!run) return { built: false, reason: "run-required" };
+        const definitions = services.equipment
+          .values()
+          .filter((definition) => definition.slot !== "ship");
+        let attempts = 0;
+        while (
+          Object.keys(services.currentAssembly.getSnapshot().nodesById).length <
+            19 &&
+          attempts++ < 80
+        ) {
+          services.assemblyGeometry.rebuildNow();
+          const snapshot = services.currentAssembly.getSnapshot();
+          const candidate = findMaximumConstructionCandidate({
+            state: snapshot,
+            geometry: services.assemblyGeometry.getSnapshot(),
+            ports: Object.values(snapshot.portsById),
+            definitions,
+            evaluate: input => services.compatibility.evaluate(input),
+          });
+          if (!candidate) {
+            const nodes = Object.keys(snapshot.nodesById).length;
+            const blockers = summarizeMaximumConstructionBlockers({ state: snapshot, geometry: services.assemblyGeometry.getSnapshot(), ports: Object.values(snapshot.portsById), definitions, evaluate: input => services.compatibility.evaluate(input) });
+            return { built: false, reason: "no-compatible-candidate", blockers, nodes, segments: nodes - 1 };
+          }
+          const { port, definition } = candidate;
+          const item = {
+            instanceId: run.ids.create("debug-item"),
+            definitionId: definition.id,
+            ownership: "temporary",
+            rarity: "debug",
+            affixes: [],
+            sockets: [],
+          };
+          run.inventory.push(item);
+          services.currentAssembly.mountModule({
+            moduleInstanceId: item.instanceId,
+            definitionId: definition.id,
+            parentPort: port,
+            assemblyProfile: definition.assembly,
+            transform: {
+              position: port.localPosition ?? {
+                x: (port.direction?.x ?? 0) * 34,
+                y: (port.direction?.y ?? 0) * 34,
+              },
+              rotation: rotationForPortDirection(port.direction),
+            },
+          });
+          services.assemblyGeometry.rebuildNow();
+        }
+        const snapshot = services.currentAssembly.getSnapshot();
+        const nodes = Object.keys(snapshot.nodesById).length;
+        return {
+          built: nodes === 19,
+          reason: nodes === 19 ? undefined : "attempt-limit",
+          nodes,
+          segments: nodes - 1,
+        };
+      },
+      scenarioActions = {
+        visualGallery: () => ({
+          cores: getCoreGeometryIds(),
+          modules: MODULE_VISUAL_PROFILES.map((profile) => profile.rendererId),
+          damageStates: ["intact", "armor-broken", "core-disrupted"],
+        }),
+        buildMaximum,
+        buildAsymmetric: () => ({
+          maximum: buildMaximum(),
+          flight: services.flightProfile?.rebuildNow(),
+        }),
+        damageSingle: () => {
+          const node = firstModule();
+          return node
+            ? services.moduleDamage.applyDamage(node.nodeId, 20, "debug")
+            : null;
+        },
+        bridgeSurvival: () => {
+          const maximum = buildMaximum();
+          if (!maximum.built) return maximum;
+          const snapshot = services.currentAssembly.getSnapshot(),
+            parent = Object.values(snapshot.nodesById).find(
+              (node) =>
+                node.nodeId !== snapshot.rootNodeId &&
+                Object.values(snapshot.nodesById).some(
+                  (child) => child.parentNodeId === node.nodeId,
+                ),
+            );
+          if (!parent) return { survived: false, reason: "no-parent" };
+          const child = Object.values(snapshot.nodesById).find(
+            (node) => node.parentNodeId === parent.nodeId,
+          );
+          services.currentAssembly.addSecondaryConnection({
+            sourceNodeId: child.nodeId,
+            targetNodeId: snapshot.rootNodeId,
+            profile: {
+              structuralStrength: 8,
+              energyThroughput: "standard",
+              visualConnectorType: "debug-bridge",
+            },
+          });
+          services.moduleDamage.applyDamage(parent.nodeId, 9999, "debug");
+          return {
+            survived: Boolean(
+              services.currentAssembly.getSnapshot().nodesById[child.nodeId],
+            ),
+            childNodeId: child.nodeId,
+          };
+        },
+        branchCollapse: () => {
+          const snapshot = services.currentAssembly?.getSnapshot(),
+            parent =
+              Object.values(snapshot?.nodesById ?? {}).find(
+                (node) =>
+                  node.nodeId !== snapshot.rootNodeId &&
+                  Object.values(snapshot.nodesById).some(
+                    (child) => child.parentNodeId === node.nodeId,
+                  ),
+              ) ?? firstModule();
+          return parent
+            ? services.moduleDamage.applyDamage(parent.nodeId, 9999, "debug")
+            : null;
+        },
+        repairRemount: () => ({
+          detached: services.currentAssembly?.getSnapshot().detachedItems ?? [],
+          resources: controller.run?.resources,
+        }),
+        setLod: (lod) => {
+          metaSave.assemblyVisualPreferences.lod = lod;
+          return lod;
+        },
+        blueprintRoundtrip: () => {
+          const blueprint = services.blueprints.list()[0];
+          if (!blueprint) return { instruction: "Save a blueprint first." };
+          return validateBlueprint(
+            decodeBlueprint(encodeBlueprint(blueprint)),
+            {
+              knownDefinitionIds: new Set(
+                services.equipment.values().map((item) => item.id),
+              ),
+              knownShipFrameIds: new Set(
+                SHIP_FRAME_ASSEMBLY_PROFILES.map((item) => item.id),
+              ),
+            },
+          );
+        },
+      };
+    const scenarioRunner = createAssemblyDebugScenarios(scenarioActions),
+      damage = {
+        forceState(nodeId, state) {
+          const node = services.currentAssembly.requireNode(nodeId);
+          node.damageState = state;
+          if (state === "armor-broken") node.armorIntegrity = 0;
+          if (state === "core-disrupted")
+            node.coreIntegrity = node.maxCoreIntegrity * 0.3;
+          services.currentAssembly.publishDamageChange(nodeId);
+          return node;
+        },
+      },
+      debugFlags = {
+        set: (key, value) => flags.set(key, value),
+        snapshot: () => Object.fromEntries(flags),
+      },
+      settings = {
+        setTemporary: (key, value) => {
+          flags.set(key, value);
+          return value;
+        },
+      },
+      blueprints = {
+        exportCurrent: () => {
+          const blueprint = services.blueprints.list()[0];
+          return blueprint ? encodeBlueprint(blueprint) : null;
+        },
+        importCode: (code) =>
+          validateBlueprint(decodeBlueprint(code), {
+            knownDefinitionIds: new Set(
+              services.equipment.values().map((item) => item.id),
+            ),
+            knownShipFrameIds: new Set(
+              SHIP_FRAME_ASSEMBLY_PROFILES.map((item) => item.id),
+            ),
+          }),
+      };
+    services.assemblyDebug = createAssemblyDebugService({
+      inventory: {
+        grantDebugItem: (definitionId) => {
+          const run = controller.run,
+            definition = services.equipment.require(definitionId);
+          if (!run) return null;
+          const item = {
+            instanceId: run.ids.create("debug-item"),
+            definitionId: definition.id,
+            ownership: "temporary",
+            rarity: "debug",
+            affixes: [],
+            sockets: [],
+          };
+          run.inventory.push(item);
+          services.events.emit("run-item-acquired", { item, source: "debug" });
+          return item;
+        },
+      },
+      damage,
+      assembly: () => services.currentAssembly,
+      defaultBridge: {
+        structuralStrength: 8,
+        energyThroughput: "standard",
+        visualConnectorType: "debug-bridge",
+      },
+      debugFlags,
+      settings,
+      scenarios: scenarioRunner,
+      blueprints,
+    });
+    globalThis.__VOIDREAPER_DEBUG__ = {
+      ...(globalThis.__VOIDREAPER_DEBUG__ ?? {}),
+      assembly: {
+        ...services.assemblyDebug,
+        getGeometry: () => services.assemblyGeometry?.getSnapshot() ?? null,
+        getHitZones: () => services.hitZones?.all() ?? [],
+        getFlightProfile: () => services.flightProfile?.getProfile() ?? null,
+        getPending: () => services.pendingMounts?.values() ?? [],
+        getQuickMount: () => services.quickMount?.session ?? null,
+        getWorkbench: () => services.assemblyWorkbench?.model() ?? null,
+        scenarios: scenarioRunner,
+      },
+    };
+  }
   const input = createInputController({ eventBus: events, bindings: metaSave.settings.bindings, stickElement: document.querySelector("#stick"), stickKnob: document.querySelector("#knob"), isQuickMount: () => Boolean(services.quickMount?.session) });
   let quickMountHost=null;const renderQuickMount=()=>{const session=services.quickMount?.session;if(!session||!quickMountHost)return;const suggestion=session.suggestions[session.selectedIndex],definition=services.equipment.require(session.pendingMount.definitionId),overlay=quickMountHost.__overlay;overlay.render({name:definition.name??definition.id,reasons:suggestion.reasons,deltas:[["POSITION",`${session.selectedIndex+1}/${session.suggestions.length}`],["MASSE",suggestion.flightDelta.totalMass?.toFixed?.(1)??"—"],["BALANCE",suggestion.metrics.balance?.toFixed?.(2)??"—"],["ENERGIE",suggestion.metrics.energyPath?.toFixed?.(2)??"—"],["SCHUTZ",suggestion.metrics.protection?.toFixed?.(2)??"—"],["RISIKO",suggestion.metrics.collisionRisk?"HOCH":"NIEDRIG"]],details:[...(definition.tags??[]).map(tag=>typeof tag==="string"?tag:tag.id),`Blueprint ${suggestion.blueprintMatch??"frei"}`]});drawQuickMountPreview();};const drawQuickMountPreview=()=>{const session=services.quickMount?.session;if(!session||!quickMountHost)return;renderPlacementPreview(quickMountHost.__overlay.canvas.getContext("2d"),{snapshot:services.assemblyGeometry.getSnapshot(),suggestion:session.suggestions[session.selectedIndex],assemblyRenderer:services.assemblyRenderer,time:quickMountClock});};let quickMountFrame=null,quickMountClock=0,quickMountLast=0;const animateQuickMount=now=>{if(!quickMountHost){quickMountFrame=null;return;}quickMountClock+=Math.min(.1,(now-quickMountLast)/1000);quickMountLast=now;drawQuickMountPreview();quickMountFrame=requestAnimationFrame(animateQuickMount);};const closeQuickMount=()=>{if(quickMountFrame)cancelAnimationFrame(quickMountFrame);quickMountFrame=null;quickMountHost?.remove();quickMountHost=null;};events.on("run-item-acquired",({item,source,run:owningRun})=>{if(owningRun&&owningRun!==controller.run)return;const definition=services.equipment.require(item.definitionId),pending=services.pendingMounts.queue({itemInstance:item,profile:definition.assembly,source,acquiredAt:(owningRun??controller.run)?.time??0});if(pending.requiresWorkbench){item.stored=true;legacyRuntime.ui.toast("Großmodul für die Werkbank eingelagert.");return;}const opened=openReplacingQuickMount({active:Boolean(quickMountHost||quickMountFrame),close:closeQuickMount,open:()=>controller.openPendingMount(pending,{moduleProfile:{...definition.assembly,definitionId:definition.id,tags:definition.tags},blueprint:services.blueprints.getActiveId()?services.blueprints.require(services.blueprints.getActiveId()):null,settings:{pauseOnMount:metaSave.settings.pauseOnMount??true}})});if(!opened.opened)return;quickMountHost=document.createElement("div");document.body.append(quickMountHost);quickMountHost.__overlay=createQuickMountOverlay(quickMountHost,{onAction:action=>{if(action==="previous")services.quickMount.previous();if(action==="next")services.quickMount.next();if(action==="confirm"){const result=services.quickMount.confirm();events.emit(TUTORIAL_EVENTS.QUICK_MOUNT_ACTION,{action,success:Boolean(result?.mounted)});closeQuickMount();return;}if(action==="defer"){const result=services.quickMount.defer();events.emit(TUTORIAL_EVENTS.QUICK_MOUNT_ACTION,{action,success:Boolean(result?.deferred)});closeQuickMount();return;}renderQuickMount();}});renderQuickMount();if(!globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches){quickMountLast=performance.now();quickMountFrame=requestAnimationFrame(animateQuickMount);}});
   input.start();
@@ -283,14 +522,13 @@ export async function bootstrap() {
       const placementProfile = movingBranch ? null : moduleProfileFor(selectedItem);
       let validPortCount = 0;
       const ports = Object.values(model.assembly.portsById).map(port => {
-        const parent = geometryById.get(port.parentNodeId);
-        const local = port.localPosition ?? { x: (port.direction?.x ?? 0) * 34, y: (port.direction?.y ?? 0) * 34 };
+        const worldTransform = resolvePortWorldTransform(port, model.geometry);
         const compatibility = port.occupiedByNodeId ? null : evaluatePort(port, placementProfile);
         let state = "free", reasonText = "";
         if (compatibility) { state = compatibility.compatible ? "valid" : "invalid"; reasonText = compatibility.compatible ? "" : compatibility.reasonLabels.join(", "); }
         else if (movingBranch && !port.occupiedByNodeId) state = "valid";
         if (state === "valid") validPortCount++;
-        return { ...port, state, reasonText, position: { x: (parent?.worldPosition.x ?? 0) + local.x, y: (parent?.worldPosition.y ?? 0) + local.y }, label: portAccessibilityLabel(port, compatibility ?? undefined) };
+        return { ...port, direction: worldTransform.direction, state, reasonText, position: worldTransform.position, label: portAccessibilityLabel(port, compatibility ?? undefined) };
       });
       screen.renderInventory(looseInventory.map(item => { const definition = equipmentDefinition(item.definitionId); return { ...item, label: definition?.name ?? item.definitionId, sizeClass: definition?.assembly?.sizeClass }; }), model.session.selectedItemId);
       screen.renderPorts(ports, { selectedPortId: model.session.selectedPortId, selectedNodeId: model.session.selectedNodeId });
@@ -338,7 +576,7 @@ export async function bootstrap() {
         const port = services.currentAssembly.getSnapshot().portsById[data.id];
         if (canUseWorkbenchPort(port)) {
           workbench.selectPort(data.id);
-          const transform = { position: port.localPosition ?? { x: (port.direction?.x ?? 0) * 34, y: (port.direction?.y ?? 0) * 34 }, rotation: Math.atan2(port.direction?.y ?? 0, port.direction?.x ?? 1) };
+          const transform = { position: port.localPosition ?? { x: (port.direction?.x ?? 0) * 34, y: (port.direction?.y ?? 0) * 34 }, rotation: rotationForPortDirection(port.direction) };
           if (movingBranch && workbench.session.selectedNodeId) { workbench.move(transform, { branch: true }); movingBranch = false; }
           else if (workbench.session.selectedItemId) {
             const profile = moduleProfileFor(model.inventory.find(item => item.instanceId === workbench.session.selectedItemId));
@@ -441,9 +679,28 @@ export async function bootstrap() {
       }
       if (tab === "Loadout") {
         const loadout = resolvePrimaryLoadout(metaSave);
+        const choicesBySlot = services.equipment.values()
+          .filter(definition => services.unlocks.isUnlocked(definition))
+          .reduce((groups, definition) => {
+            (groups[definition.slot] ??= []).push(definition);
+            return groups;
+          }, {});
+        const persistLoadout = async mutate => {
+          const next = structuredClone(resolvePrimaryLoadout(metaSave));
+          if (mutate(next) === false) return;
+          await services.save.update(save => { save.loadouts.primary = next; });
+          metaSave = await services.save.load();
+          hangar.render();
+        };
         renderLoadoutScreen(content, services.loadouts.inspect(loadout), loadout, {
           blueprints: services.blueprints.list(),
           activeBlueprintId: services.blueprints.getActiveId(),
+          choicesBySlot,
+          onEquip: (slot, index, definitionId) => persistLoadout(next => {
+            try { services.loadouts.equip(next, slot, index, createLoadoutItem(slot, index, definitionId)); return true; }
+            catch (error) { legacyRuntime.ui.toast(error.message); return false; }
+          }),
+          onUnequip: (slot, index) => persistLoadout(next => services.loadouts.unequip(next, slot, index)),
           onBlueprintChange: async id => {
             if (id) await services.blueprints.setActive(id);
             else await services.save.update(save => { save.activeBlueprintId = null; });
@@ -519,6 +776,8 @@ export async function bootstrap() {
   originalStartWave = game.startWave.bind(game);
   game.startWave = wave => {
     if (activeCampaignNodeId && wave > 1) {
+      const completedNode = flattenSectorMap(previewRun.campaign.map).find(node => node.id === activeCampaignNodeId);
+      services.campaignRewards.apply(controller.run, completedNode);
       adoptCombatRunState(previewRun, controller.run);
       services.sectors.complete(previewRun, activeCampaignNodeId);
       void writeCurrentCheckpoint(previewRun, activeCampaignNodeId).catch(() => {});

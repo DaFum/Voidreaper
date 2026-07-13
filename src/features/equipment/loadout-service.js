@@ -18,8 +18,21 @@ export function createEmptyLoadout({ secondRelicUnlocked = false } = {}) {
   };
 }
 
+export const createLoadoutItem = (slot, index, definitionId) => ({
+  instanceId: `loadout-${slot}-${index}-${definitionId}`,
+  definitionId
+});
+
+export function createStarterLoadout() {
+  const loadout = createEmptyLoadout();
+  loadout.slots[EQUIPMENT_SLOT.SHIP][0] = { instanceId: "starter-vesper", definitionId: "vesper" };
+  loadout.slots[EQUIPMENT_SLOT.PRIMARY_WEAPON][0] = { instanceId: "starter-railgun", definitionId: "railgun" };
+  loadout.slots[EQUIPMENT_SLOT.REACTOR][0] = { instanceId: "starter-standard-core", definitionId: "standard-core" };
+  return loadout;
+}
+
 export function resolvePrimaryLoadout(metaSave) {
-  return metaSave?.loadouts?.primary?.slots ? metaSave.loadouts.primary : createEmptyLoadout();
+  return metaSave?.loadouts?.primary?.slots ? metaSave.loadouts.primary : createStarterLoadout();
 }
 
 export function createLoadoutService({ registry, tagEngine, unlocks }) {
