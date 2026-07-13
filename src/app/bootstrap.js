@@ -87,7 +87,7 @@ import { createBlueprintThumbnailService } from "../features/ship-assembly/bluep
 import { encodeBlueprint, decodeBlueprint } from "../features/ship-assembly/blueprints/blueprint-codec.js";
 import { validateBlueprint } from "../features/ship-assembly/blueprints/blueprint-validator.js";
 import { createAssemblyDebugService } from "../features/ship-assembly/debug/assembly-debug-service.js";
-import { createAssemblyDebugScenarios, findMaximumConstructionCandidate } from "../features/ship-assembly/debug/assembly-debug-scenarios.js";
+import { createAssemblyDebugScenarios, findMaximumConstructionCandidate, summarizeMaximumConstructionBlockers } from "../features/ship-assembly/debug/assembly-debug-scenarios.js";
 import { createAssemblyErrorBoundary } from "../features/ship-assembly/model/assembly-error-boundary.js";
 import { createAssemblyWorkbenchScreen } from "../ui/ship-assembly/assembly-workbench-screen.js";
 import { createAssemblyCanvasController } from "../ui/ship-assembly/assembly-canvas-controller.js";
@@ -102,6 +102,7 @@ import { renderPlacementPreview } from "../ui/ship-assembly/placement-preview-ov
 import { adoptCombatRunState, attemptMerchantPurchase, attemptWorkshopAction, canUseWorkbenchPort, openReplacingQuickMount, prepareCheckpointResume, resetCampaignResume, subscribeWorkbenchGeometry, syncLegacyVoidShards } from "./click-path-flows.js";
 import { renderLoadoutScreen } from "../ui/screens/loadout-screen.js";
 import { REGION_BY_ID } from "../content/sectors/regions.js";
+import { resolvePortWorldTransform, rotationForPortDirection } from "../features/ship-assembly/geometry/port-world-transform.js";
 
 export async function bootstrap() {
   document.documentElement.dataset.app = "voidreaper-modular";
@@ -202,7 +203,8 @@ export async function bootstrap() {
           });
           if (!candidate) {
             const nodes = Object.keys(snapshot.nodesById).length;
-            return { built: false, reason: "no-compatible-candidate", nodes, segments: nodes - 1 };
+            const blockers = summarizeMaximumConstructionBlockers({ state: snapshot, geometry: services.assemblyGeometry.getSnapshot(), ports: Object.values(snapshot.portsById), definitions, evaluate: input => services.compatibility.evaluate(input) });
+            return { built: false, reason: "no-compatible-candidate", blockers, nodes, segments: nodes - 1 };
           }
           const { port, definition } = candidate;
           const item = {
@@ -224,10 +226,7 @@ export async function bootstrap() {
                 x: (port.direction?.x ?? 0) * 34,
                 y: (port.direction?.y ?? 0) * 34,
               },
-              rotation: Math.atan2(
-                port.direction?.y ?? 0,
-                port.direction?.x ?? 1,
-              ),
+              rotation: rotationForPortDirection(port.direction),
             },
           });
           services.assemblyGeometry.rebuildNow();
@@ -523,14 +522,13 @@ export async function bootstrap() {
       const placementProfile = movingBranch ? null : moduleProfileFor(selectedItem);
       let validPortCount = 0;
       const ports = Object.values(model.assembly.portsById).map(port => {
-        const parent = geometryById.get(port.parentNodeId);
-        const local = port.localPosition ?? { x: (port.direction?.x ?? 0) * 34, y: (port.direction?.y ?? 0) * 34 };
+        const worldTransform = resolvePortWorldTransform(port, model.geometry);
         const compatibility = port.occupiedByNodeId ? null : evaluatePort(port, placementProfile);
         let state = "free", reasonText = "";
         if (compatibility) { state = compatibility.compatible ? "valid" : "invalid"; reasonText = compatibility.compatible ? "" : compatibility.reasonLabels.join(", "); }
         else if (movingBranch && !port.occupiedByNodeId) state = "valid";
         if (state === "valid") validPortCount++;
-        return { ...port, state, reasonText, position: { x: (parent?.worldPosition.x ?? 0) + local.x, y: (parent?.worldPosition.y ?? 0) + local.y }, label: portAccessibilityLabel(port, compatibility ?? undefined) };
+        return { ...port, direction: worldTransform.direction, state, reasonText, position: worldTransform.position, label: portAccessibilityLabel(port, compatibility ?? undefined) };
       });
       screen.renderInventory(looseInventory.map(item => { const definition = equipmentDefinition(item.definitionId); return { ...item, label: definition?.name ?? item.definitionId, sizeClass: definition?.assembly?.sizeClass }; }), model.session.selectedItemId);
       screen.renderPorts(ports, { selectedPortId: model.session.selectedPortId, selectedNodeId: model.session.selectedNodeId });
@@ -578,7 +576,7 @@ export async function bootstrap() {
         const port = services.currentAssembly.getSnapshot().portsById[data.id];
         if (canUseWorkbenchPort(port)) {
           workbench.selectPort(data.id);
-          const transform = { position: port.localPosition ?? { x: (port.direction?.x ?? 0) * 34, y: (port.direction?.y ?? 0) * 34 }, rotation: Math.atan2(port.direction?.y ?? 0, port.direction?.x ?? 1) };
+          const transform = { position: port.localPosition ?? { x: (port.direction?.x ?? 0) * 34, y: (port.direction?.y ?? 0) * 34 }, rotation: rotationForPortDirection(port.direction) };
           if (movingBranch && workbench.session.selectedNodeId) { workbench.move(transform, { branch: true }); movingBranch = false; }
           else if (workbench.session.selectedItemId) {
             const profile = moduleProfileFor(model.inventory.find(item => item.instanceId === workbench.session.selectedItemId));

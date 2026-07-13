@@ -1,5 +1,6 @@
 import { scorePlacement, explainPlacement } from "./placement-score.js";
 import { blueprintMatchBonus,findBlueprintTarget } from "../blueprints/blueprint-matcher.js";
+import { rotationForPortDirection } from "../geometry/port-world-transform.js";
 export function createPlacementSuggestionService({ compatibilityService, geometryService, flightProfileService }) {
   return {
     suggest({ state, moduleProfile, blueprint }) {
@@ -19,10 +20,9 @@ export function createPlacementSuggestionService({ compatibilityService, geometr
         // lateralImbalance is an absolute coordinate (tens of units); normalize it
         // to the 0-1 range of the other metrics so it doesn't dominate the score.
         const score = scorePlacement({ ...metrics, massAsymmetry: Math.min(1, Math.abs(flightDelta.lateralImbalance ?? 0) / 60) });
-        const candidate = entry.result.candidate;
         const transform = {
-          position: candidate.center ?? { x: (candidate.minX + candidate.maxX) / 2, y: (candidate.minY + candidate.maxY) / 2 },
-          rotation: Math.atan2(entry.port.direction?.y ?? 0, entry.port.direction?.x ?? 1)
+          position: entry.port.localPosition ?? { x: (entry.port.direction?.x ?? 0) * 46, y: (entry.port.direction?.y ?? 0) * 46 },
+          rotation: rotationForPortDirection(entry.port.direction)
         };
         return {
           portId: entry.port.portId,

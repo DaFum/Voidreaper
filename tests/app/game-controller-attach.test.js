@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { equippedAssemblyItems, resolveRunLoadout, shouldSyncLegacyRun } from "../../src/app/game-controller.js";
+import { createRootPortPosition, equippedAssemblyItems, resolveRunLoadout, shouldSyncLegacyRun } from "../../src/app/game-controller.js";
 
 test("normal legacy attachment synchronizes the run", () => {
   assert.equal(shouldSyncLegacyRun(), true);
@@ -23,4 +23,8 @@ test("run loadout falls back to the canonical starter loadout", () => {
 test("run assembly candidates exclude the ship and empty slots", () => {
   const loadout = { slots: { ship: [{ definitionId: "vesper" }], "primary-weapon": [{ definitionId: "railgun" }], passive: [null, { definitionId: "phase-shield" }] } };
   assert.deepEqual(equippedAssemblyItems(loadout).map(item => item.definitionId), ["railgun", "phase-shield"]);
+});
+
+test("root ports clear sibling module geometry", () => {
+  assert.deepEqual(createRootPortPosition({ direction: { x: -1, y: 0.15 } }), { x: -72, y: 10.799999999999999 });
 });

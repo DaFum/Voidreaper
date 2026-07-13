@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { findMaximumConstructionCandidate } from "../../../../src/features/ship-assembly/debug/assembly-debug-scenarios.js";
+import { findMaximumConstructionCandidate, summarizeMaximumConstructionBlockers } from "../../../../src/features/ship-assembly/debug/assembly-debug-scenarios.js";
 
 test("maximum construction skips candidates rejected by compatibility", () => {
   const bad = { id: "bad", assembly: { childPorts: [1, 2] } };
@@ -14,4 +14,24 @@ test("maximum construction skips candidates rejected by compatibility", () => {
   });
 
   assert.equal(candidate.definition.id, "good");
+});
+
+test("maximum construction prioritizes an expandable definition across all ports", () => {
+  const leaf = { id: "leaf", assembly: { childPorts: [] } };
+  const spine = { id: "spine", assembly: { childPorts: [1, 2, 3] } };
+  const candidate = findMaximumConstructionCandidate({
+    state: { nodesById: {} }, geometry: {}, ports: [{ portId: "first", branchDepth: 0 }, { portId: "second", branchDepth: 0 }], definitions: [leaf, spine],
+    evaluate: ({ moduleProfile, port }) => ({ compatible: moduleProfile.definitionId === "leaf" || port.portId === "second" })
+  });
+
+  assert.equal(candidate.port.portId, "second");
+  assert.equal(candidate.definition.id, "spine");
+});
+
+test("maximum construction reports the contracts blocking remaining pairs", () => {
+  const blockers = summarizeMaximumConstructionBlockers({
+    state: {}, geometry: {}, ports: [{ portId: "p" }], definitions: [{ id: "d", assembly: {} }],
+    evaluate: () => ({ compatible: false, reasons: ["overlap", "size"] })
+  });
+  assert.deepEqual(blockers, { overlap: 1, size: 1 });
 });
