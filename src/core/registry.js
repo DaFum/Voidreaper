@@ -1,12 +1,15 @@
-function deepFreeze(obj) {
+function deepFreeze(obj, visited = new WeakSet()) {
   if (obj === null || typeof obj !== "object") return obj;
-  if (Object.isFrozen(obj)) return obj;
+  // Object.isFrozen is shallow, so a pre-frozen object may still hold mutable
+  // children — track visited nodes instead of early-returning on frozen ones.
+  if (visited.has(obj)) return obj;
+  visited.add(obj);
   Object.freeze(obj);
   if (Array.isArray(obj)) {
-    for (const item of obj) deepFreeze(item);
+    for (const item of obj) deepFreeze(item, visited);
   } else {
     for (const key of Object.keys(obj)) {
-      deepFreeze(obj[key]);
+      deepFreeze(obj[key], visited);
     }
   }
   return obj;

@@ -1754,6 +1754,8 @@ import { escapeHtml } from "../ui/escape-html.js";
         this.el("hud").style.display = inGame ? "block" : "none";
         this.el("pausebtn").style.display = inGame ? "block" : "none";
         if (inGame) for (const s of this.screens) this.el(s).classList.add("hidden");
+        // aria-modal only declares semantics; move focus into modal dialogs ourselves
+        if (name === "pausescr" || name === "over") this.el(name).querySelector("button")?.focus();
       },
       menu() {
         this.show("start");

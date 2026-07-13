@@ -10,7 +10,7 @@ function drawGrid(ctx, profile, bounds, time, reducedMotion) {
   const baseAlpha = ctx.globalAlpha;
   const { palette } = profile;
   ctx.strokeStyle = palette.grid;
-  ctx.globalAlpha = .22;
+  ctx.globalAlpha = baseAlpha * .22;
   ctx.lineWidth = 1;
   const startX = Math.floor(bounds.minX / TILE) * TILE;
   const startY = Math.floor(bounds.minY / TILE) * TILE;
@@ -103,7 +103,7 @@ export function renderRegionWorld(ctx,{regionId="shattered-approach",camera={x:0
   const baseAlpha=ctx.globalAlpha;
   const profile=resolveRegionVisualProfile(regionId),width=viewport.width??1280,height=viewport.height??720;
   const bounds={minX:Math.max(-arena,camera.x-width*.72),maxX:Math.min(arena,camera.x+width*.72),minY:Math.max(-arena,camera.y-height*.72),maxY:Math.min(arena,camera.y+height*.72)};
-  const gradient=ctx.createRadialGradient(camera.x,camera.y,0,camera.x,camera.y,Math.max(width,height));gradient.addColorStop(0,profile.palette.floor);gradient.addColorStop(1,"#020307");ctx.globalAlpha=floorAlpha;ctx.fillStyle=gradient;ctx.fillRect(-arena,-arena,arena*2,arena*2);ctx.globalAlpha=baseAlpha;
+  const gradient=ctx.createRadialGradient(camera.x,camera.y,0,camera.x,camera.y,Math.max(width,height));gradient.addColorStop(0,profile.palette.floor);gradient.addColorStop(1,"#020307");ctx.globalAlpha=baseAlpha*floorAlpha;ctx.fillStyle=gradient;ctx.fillRect(-arena,-arena,arena*2,arena*2);ctx.globalAlpha=baseAlpha;
   ctx.save();ctx.beginPath();ctx.rect(-arena,-arena,arena*2,arena*2);ctx.clip();
   if(!lowDetail)renderRegionParallaxBackdrop(ctx,{regionId,camera,viewport:{width,height},time,reducedMotion});
   drawGrid(ctx,profile,bounds,time,reducedMotion);

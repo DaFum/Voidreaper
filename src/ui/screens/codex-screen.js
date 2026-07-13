@@ -1,10 +1,11 @@
 import { CODEX_CATEGORIES, DISCOVERY_LEVELS } from "../../content/codex/codex-categories.js";
 import { escapeHtml } from "../escape-html.js";
+import { buildFocusSelector } from "../focus-restore.js";
 
 export function renderCodexScreen(root, { entries, filters = {}, onFilter = () => {} }) {
   if (!root) return;
   const activeElement = typeof document !== 'undefined' ? document.activeElement : null;
-  const focusedSelector = activeElement && root.contains(activeElement) ? `[data-${Object.keys(activeElement.dataset)[0]}]` : null;
+  const focusedSelector = buildFocusSelector(root, activeElement);
   const selectionStart = activeElement?.selectionStart;
   const selectionEnd = activeElement?.selectionEnd;
   const grid = entries.length ? entries.map(entry => `<article data-level="${escapeHtml(entry.level)}"><span>${escapeHtml(entry.category)} · ${escapeHtml(entry.level)}</span><h3>${escapeHtml(entry.name)}</h3><p>${escapeHtml(entry.description)}</p><small>${entry.tags.map(escapeHtml).join(" · ")}</small></article>`).join("") : `<div class="codex__empty">KEINE PASSENDEN SIGNALE</div>`;

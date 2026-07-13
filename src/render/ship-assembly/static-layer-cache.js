@@ -27,10 +27,12 @@ function bakeLayer(width, height, originX, originY, paint) {
 
 export function getShipStaticLayers(snapshot, lod, painters) {
   if (typeof document === "undefined" || !snapshot) return null;
-  const paletteKey = JSON.stringify(snapshot.shipStyle?.palette || {});
+  // snapshots and their palettes are frozen and replaced wholesale on change,
+  // so a reference check avoids per-frame JSON.stringify allocations
+  const palette = snapshot.shipStyle?.palette;
   if (layersBySnapshot.has(snapshot)) {
     const cached = layersBySnapshot.get(snapshot);
-    if (cached === null || (cached.lod === lod && cached.paletteKey === paletteKey)) return cached;
+    if (cached === null || (cached.lod === lod && cached.palette === palette)) return cached;
   }
   const bounds = unionBounds(snapshot);
   if (!bounds) return null;
@@ -47,7 +49,7 @@ export function getShipStaticLayers(snapshot, lod, painters) {
     layersBySnapshot.set(snapshot, null);
     return null;
   }
-  const entry = { lod, paletteKey, x, y, width, height, base, armor };
+  const entry = { lod, palette, x, y, width, height, base, armor };
   layersBySnapshot.set(snapshot, entry);
   return entry;
 }

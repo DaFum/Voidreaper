@@ -1,8 +1,9 @@
 import { escapeHtml } from "../escape-html.js";
+import { buildFocusSelector } from "../focus-restore.js";
 
 export function renderPrototypeVault(root, { items, capacity, overflowCount = 0, filters = {}, onFavorite = () => {}, onDismantle = () => {}, onFilter = null }) {
   const activeElement = typeof document !== 'undefined' ? document.activeElement : null;
-  const focusedSelector = activeElement && root.contains(activeElement) ? `[data-${Object.keys(activeElement.dataset)[0]}]` : null;
+  const focusedSelector = buildFocusSelector(root, activeElement);
   const selectionStart = activeElement?.selectionStart;
   const selectionEnd = activeElement?.selectionEnd;
   const filterValue = key => escapeHtml(filters[key] ?? "");

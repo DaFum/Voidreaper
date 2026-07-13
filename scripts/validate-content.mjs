@@ -11,6 +11,7 @@ import { CHALLENGES } from "../src/content/challenges/challenges.js";
 import { RESEARCH_TREE } from "../src/content/research/research-tree.js";
 import { SYNERGY_DEFINITIONS } from "../src/content/tags/synergy-definitions.js";
 import { TAG_DEFINITIONS } from "../src/content/tags/tag-definitions.js";
+import { ONBOARDING_STEPS } from "../src/content/onboarding/onboarding-steps.js";
 
 
 const fail = message => { throw new Error(`[content] ${message}`); };
@@ -29,11 +30,10 @@ const validTags = new Set(TAG_DEFINITIONS.map(t => t.id));
 for (const item of [...SHIPS, ...WEAPONS, ...REACTORS, ...MODULES]) {
   const itemEffects = [...(item.effects || []), ...(item.triggers?.flatMap(t => t.effects || []) || [])];
   for (const effect of itemEffects) { if (!effect || typeof effect !== 'object' || !effect.id) fail(`${item.id}: effect is not an object with id: ${effect}`); if (!effects.has(effect.id)) fail(`${item.id}: unknown effect ${effect.id}`); }
-  for (const tag of (item.tags || [])) { if (!validTags.has(tag.id)) fail(`${item.id}: unknown tag ${tag.id}`); }
+  for (const tag of (item.tags || [])) { const tagId = typeof tag === "string" ? tag : tag?.id; if (!validTags.has(tagId)) fail(`${item.id}: unknown tag ${tagId}`); }
 }
 const currencies = new Set(["voidShards","bossCores","anomalyData","challengeSeals","salvageFragments"]);
 for (const challenge of CHALLENGES) for (const currency of Object.keys(challenge.reward)) if (!currencies.has(currency)) fail(`challenge ${challenge.id}: unknown reward ${currency}`);
-import { ONBOARDING_STEPS } from "../src/content/onboarding/onboarding-steps.js";
 
 const featureUnlocks = new Set(["load-preview","workshop-lock","workshop-overclock","map-scan-1","map-reroll","furnace-path","grave-path","null-path","codex-analyzed","vault-30","vault-50","affix-extraction","salvage-missions","vesper","railgun","regular-evolution","energy","overload","bastion","workshop","heat","active-module","corruption","forbidden-signature","extraction","prototype-vault"]);
 

@@ -17,7 +17,7 @@ export function renderShipCore(ctx, geometry, palette, { time = 0, lod = "high",
     if(lod!=="low"){ctx.save();traceChamferedPlate(ctx,{width:width*.48,height:height*.72,chamfer:7});ctx.clip();drawArmorHatch(ctx,{width:width*.55,height:height*.78,color:palette.armor,spacing:9,alpha:.12});ctx.restore();}
     ctx.strokeStyle = palette.armor; for (const path of [...geometry.armorPaths,...geometry.structurePaths]) { ctx.lineWidth = path.width ?? 2; tracePath(ctx, path); ctx.stroke(); }
     for(const path of geometry.detailPaths){ctx.strokeStyle=palette.metal;tracePath(ctx,path);ctx.stroke();}
-    const baseAlpha = ctx.globalAlpha; ctx.globalAlpha = 1; for (const [path, color] of [[geometry.cockpitPath,palette.cockpit],[geometry.reactorPath,palette.energy]]) { ctx.lineWidth = path.width ?? 2; tracePath(ctx, path); ctx.fillStyle = color; ctx.fill(); ctx.strokeStyle = palette.edge; ctx.stroke(); } ctx.globalAlpha = baseAlpha;
+    for (const [path, color] of [[geometry.cockpitPath,palette.cockpit],[geometry.reactorPath,palette.energy]]) { ctx.lineWidth = path.width ?? 2; tracePath(ctx, path); ctx.fillStyle = color; ctx.fill(); ctx.strokeStyle = palette.edge; ctx.stroke(); }
     if(geometry.voidPaths.length)for(const path of geometry.voidPaths){tracePath(ctx,path);ctx.strokeStyle=palette.fault;ctx.stroke();}
     if((lod==="high"||lod==="ultra")&&palette.corrupted)drawCracks(ctx,{radius:Math.min(width,height)*.3,color:palette.fault,seed:detailSeed,count:lod==="ultra"?5:3,alpha:.42});
   }

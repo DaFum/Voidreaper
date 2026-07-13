@@ -125,6 +125,14 @@ export async function bootstrap() {
   services.checkpoints = createCheckpointService(services.save, events);
   const initialSave = await services.save.load();
   let metaSave = initialSave;
+  // Seed document-level settings from the loaded save; the settings screen only
+  // writes these on change, so without this a saved reducedMotion/colorPatterns
+  // preference would not apply until the user visits the settings screen.
+  if (metaSave.settings) {
+    document.documentElement.dataset.reducedMotion = String(metaSave.settings.reducedMotion ?? false);
+    document.documentElement.dataset.colorPatterns = String(metaSave.settings.colorPatterns ?? false);
+    if (metaSave.settings.uiScale != null) document.documentElement.style.setProperty("--ui-scale", metaSave.settings.uiScale);
+  }
   let currentCheckpoint = initialSave.checkpoint;
   const writeCurrentCheckpoint = async (run, nodeId) => {
     currentCheckpoint = await services.checkpoints.writeAfterNode(run, nodeId);
@@ -349,7 +357,7 @@ export async function bootstrap() {
           offers,
           resources: previewRun.resources,
           onBuy: offer => attemptMerchantPurchase({ merchant, run: previewRun, offer, finish, onRejected: () => legacyRuntime.ui.toast("Nicht genügend Ressourcen.") }),
-          onReroll: () => { const offers = merchant.reroll(previewRun, node.seed, node.regionIndex); if (offers) showMerchant(offers); },
+          onReroll: () => { const offers = merchant.reroll(previewRun, node.seed, node.regionIndex); if (offers) showMerchant(offers); else legacyRuntime.ui.toast("Nicht genügend Ressourcen."); },
           onLeave: finish
         });
         showMerchant(merchant.roll(node.seed, node.regionIndex));
