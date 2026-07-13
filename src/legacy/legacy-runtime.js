@@ -310,6 +310,7 @@ import { escapeHtml } from "../ui/escape-html.js";
     let externalEnvironmentRenderer = null;
     let externalCombatFxRenderer = null;
     let externalRegionRosterProvider = null;
+    let externalShotFiredReporter = null;
     const EVOLUTIONS = LEGACY_EVOLUTIONS.map(definition => ({
       id: definition.id,
       ico: definition.icon,
@@ -654,6 +655,7 @@ import { escapeHtml } from "../ui/escape-html.js";
         mf.vx = Math.cos(base) * 60; mf.vy = Math.sin(base) * 60;
         mf.life = mf.maxLife = 0.08; mf.size = 7; mf.color = p.evoPrism ? "#fff6c9" : "#c9fff0"; mf.drag = 0.8;
         p.evoPrism ? AudioSys.laser() : AudioSys.shoot();
+        externalShotFiredReporter?.({ shots: n });
       },
 
       refract(x, y, dmg) {
@@ -1943,6 +1945,9 @@ import { escapeHtml } from "../ui/escape-html.js";
       },
       configureRegionRoster(provider) {
         externalRegionRosterProvider = provider;
+      },
+      configureShotFiredReporter(reporter) {
+        externalShotFiredReporter = reporter;
       },
       start() {
         Input.init();

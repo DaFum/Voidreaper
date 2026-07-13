@@ -177,6 +177,7 @@ export async function bootstrap() {
   const game = legacyRuntime.game;
   const ui = legacyRuntime.ui;
   legacyRuntime.configureEvolutionEffects((effectId, player) => effects.execute({ id: effectId }, { player, run: controller.run }));
+  legacyRuntime.configureShotFiredReporter(({shots})=>events.emit(TUTORIAL_EVENTS.SHOT_FIRED,{source:"legacy",shots}));
   const getAssemblyLod = () => metaSave.assemblyVisualPreferences?.lod === "auto" ? "ultra" : metaSave.assemblyVisualPreferences?.lod;
   // weight region-typical enemies (content catalog) into the legacy wave roster;
   // game.visualRegionId is kept current by game-controller.syncLegacy
@@ -512,10 +513,9 @@ export async function bootstrap() {
   // counter permanently mutes triggers after 100 effects.
   const originalStep = game.step.bind(game);
   game.step = dt => {
-    const bullets=game.bullets?.live?.length??0,kills=game.kills,xp=game.player?.xp??0;
+    const kills=game.kills,xp=game.player?.xp??0;
     services.triggers?.beginStep?.();
     originalStep(dt);
-    if((game.bullets?.live?.length??0)>bullets)events.emit(TUTORIAL_EVENTS.SHOT_FIRED,{source:"legacy"});
     if(game.kills>kills)events.emit(TUTORIAL_EVENTS.ENEMY_DEFEATED,{kills:game.kills});
     if((game.player?.xp??0)>xp)events.emit(TUTORIAL_EVENTS.REWARD_COLLECTED,{source:"pickup"});
   };
