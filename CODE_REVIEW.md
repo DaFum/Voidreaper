@@ -106,8 +106,14 @@ their JSON was intact. Two un-guarded dereferences readily trigger this:
 **Fix:** guard both loops against null/sparse elements; consider making migration resilient per-slice
 (recover the readable parts) rather than resetting the whole profile on any throw.
 
-### M2 — `merchant.sell()` awards credits without verifying the item is in the inventory (credit duplication)
+### M2 — `merchant.sell()` awards credits without verifying the item is in the inventory (credit duplication) — ✅ FIXED
 **`src/features/merchant/merchant-service.js:47`**
+
+> **Resolution:** `sell()` now snapshots `run.inventory.length` before filtering and returns `false` without
+> awarding if the length is unchanged (item was not present), otherwise awards and returns `true`. A repeated
+> call with the same item reference — or any item never in the inventory — no longer mints scrap. No existing
+> callers depend on the return value.
+
 
 `sell(run, item)` filters the item out of `run.inventory`, then **unconditionally** calls
 `currencyService.award(...)`. The filter is a no-op if the item is already gone, but the award still fires.
