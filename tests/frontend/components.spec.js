@@ -50,12 +50,12 @@ describe("item card", () => {
     expect(card.innerHTML).toContain("Void Coil");
     expect(card.innerHTML).toContain("<i>Void</i>");
     expect(card.innerHTML).toContain("3 E");
-    expect(card.disabled).toBe(false);
+    expect(card.tagName).toBe("ARTICLE");
     expect(card.hasAttribute("aria-pressed")).toBe(false);
   });
 
   test("locked cards are disabled and selected cards carry aria-pressed", () => {
-    const card = createItemCard({ id: "x", slot: "s", name: "n" }, { selected: true, locked: true });
+    const card = createItemCard({ id: "x", slot: "s", name: "n" }, { selected: true, locked: true, onSelect: vi.fn() });
     expect(card.disabled).toBe(true);
     expect(card.hasAttribute("aria-pressed")).toBe(true);
   });
