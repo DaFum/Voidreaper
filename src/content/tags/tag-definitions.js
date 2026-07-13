@@ -1,8 +1,8 @@
 const groups = {
-  delivery: ["Projectile", "Beam", "Orbit", "Drone", "Mine", "Aura", "Summon", "Nova"],
+  delivery: ["Projectile", "Beam", "Orbit", "Drone", "Mine", "Summon", "Nova"],
   damage: ["Kinetic", "Plasma", "Arc", "Void", "Bleed", "Burn", "Shock", "Corrosion"],
-  behavior: ["Critical", "Pierce", "Chain", "Explosive", "Homing", "Echo", "Execute", "Control"],
-  resource: ["Energy", "Heat", "Corruption", "Charge", "Cooldown", "Sacrifice", "Cooling", "Shield", "Healing", "Movement", "Loot", "Stability", "Revive", "Targeting", "Pickup", "Affix", "Socket", "Prototype", "Currency", "Navigation", "Crafting", "Merchant", "Extraction", "Fault", "Elite", "Loadout"],
+  behavior: ["Critical", "Pierce", "Chain", "Explosive", "Homing", "Echo", "Execute", "Control", "Multishot"],
+  resource: ["Energy", "Heat", "Corruption", "Charge", "Cooldown", "Sacrifice", "Cooling", "Shield", "Healing", "Movement", "Loot", "Stability", "Revive", "Targeting", "Pickup", "Affix", "Socket", "Prototype", "Currency", "Navigation", "Crafting", "Merchant", "Extraction", "Fault", "Elite", "Loadout", "Dodge", "Hull", "Codex"],
   origin: ["Weapon", "ActiveModule", "PassiveModule", "Ship", "Reactor", "Affix", "Socket", "Relic", "Anomaly"]
 };
 

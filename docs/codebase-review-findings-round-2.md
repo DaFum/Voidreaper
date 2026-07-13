@@ -242,13 +242,13 @@ Latent because `createWeaponController` is not yet wired into bootstrap, but the
 
 ### Render / content
 
-- **`src/content/sectors/regions.js:2-6`** — every region's `enemies` list is consumed nowhere (spawning uses legacy `ETYPES`); if these IDs were ever spawned, all ten would hit the fallback visual profile. Dead content masking a real content→render gap.
-- **Tags `Multishot`, `Dodge`, `Hull`, `Codex`** are used on items but absent from `TAG_DEFINITIONS` → `console.warn` per collect; `Aura` is defined but unused. Validator never checks tag references.
-- **`ship-frame-assembly-profiles.js:17-26`** — every frame declares `lightPattern`/`connectorFamily` styles that no renderer reads; all 10 frames render connectors/lights identically.
-- **`onboarding-steps.js`** — several unlock flags are written but read nowhere, and no validator covers onboarding unlock IDs (a typo in `vesper`/`railgun`/`bastion` would soft-lock starter gear and ship green).
-- **`src/render/post/light-mask.js:25-28` (possible)** — a light missing `radius` produces NaN that passes the cull test and reaches `createRadialGradient(..., NaN)`, which throws — one malformed light kills the frame's mask pass. Similarly `combat-fx-stage.js:164` yields `alpha = NaN` for `maxLife` 0 (defensive gap only).
-- **`region-world-renderer.js:52,104` (possible)** — `globalAlpha` reset to 1 absolutely rather than restored; stomps any future fade-in wrapper. Same pattern in `core-renderer.js:20`.
-- **`static-layer-cache.js:30-32` (possible)** — bake cache keyed on snapshot identity + lod; palette is captured at first bake. Safe today only because snapshots are frozen and rebuilt per structural change.
+- **[FIXED] `src/content/sectors/regions.js:2-6`** — every region's `enemies` list is consumed nowhere (spawning uses legacy `ETYPES`); if these IDs were ever spawned, all ten would hit the fallback visual profile. Dead content masking a real content→render gap.
+- **[FIXED] Tags `Multishot`, `Dodge`, `Hull`, `Codex`** are used on items but absent from `TAG_DEFINITIONS` → `console.warn` per collect; `Aura` is defined but unused. Validator never checks tag references.
+- **[FIXED] `ship-frame-assembly-profiles.js:17-26`** — every frame declares `lightPattern`/`connectorFamily` styles that no renderer reads; all 10 frames render connectors/lights identically.
+- **[FIXED] `onboarding-steps.js`** — several unlock flags are written but read nowhere, and no validator covers onboarding unlock IDs (a typo in `vesper`/`railgun`/`bastion` would soft-lock starter gear and ship green).
+- **[FIXED] `src/render/post/light-mask.js:25-28` (possible)** — a light missing `radius` produces NaN that passes the cull test and reaches `createRadialGradient(..., NaN)`, which throws — one malformed light kills the frame's mask pass. Similarly `combat-fx-stage.js:164` yields `alpha = NaN` for `maxLife` 0 (defensive gap only).
+- **[FIXED] `region-world-renderer.js:52,104` (possible)** — `globalAlpha` reset to 1 absolutely rather than restored; stomps any future fade-in wrapper. Same pattern in `core-renderer.js:20`.
+- **[FIXED] `static-layer-cache.js:30-32` (possible)** — bake cache keyed on snapshot identity + lod; palette is captured at first bake. Safe today only because snapshots are frozen and rebuilt per structural change.
 
 ---
 

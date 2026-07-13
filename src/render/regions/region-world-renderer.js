@@ -7,6 +7,7 @@ import { renderRegionParallaxBackdrop, renderRegionParallaxDust } from "./region
 const TILE = 128;
 
 function drawGrid(ctx, profile, bounds, time, reducedMotion) {
+  const baseAlpha = ctx.globalAlpha;
   const { palette } = profile;
   ctx.strokeStyle = palette.grid;
   ctx.globalAlpha = .22;
@@ -49,7 +50,7 @@ function drawGrid(ctx, profile, bounds, time, reducedMotion) {
     for(let y=startY;y<=bounds.maxY;y+=TILE){ctx.moveTo(bounds.minX,y);ctx.lineTo(bounds.maxX,profile.grid==="salvage"?y+TILE*.18:y);}
     ctx.stroke();
   }
-  ctx.globalAlpha=1;
+  ctx.globalAlpha=baseAlpha;
 }
 
 const MOTIF_BAKE_SCALE = 2;
@@ -99,9 +100,10 @@ function drawMotifShape(ctx, profile, seed, time, reducedMotion) {
 
 // floorAlpha < 1 lets a backdrop layer (GPU environment stage) shine through the arena floor.
 export function renderRegionWorld(ctx,{regionId="shattered-approach",camera={x:0,y:0},viewport={width:1280,height:720},arena=1400,time=0,seed=0,reducedMotion=false,lowDetail=false,floorAlpha=1}={}){
+  const baseAlpha=ctx.globalAlpha;
   const profile=resolveRegionVisualProfile(regionId),width=viewport.width??1280,height=viewport.height??720;
   const bounds={minX:Math.max(-arena,camera.x-width*.72),maxX:Math.min(arena,camera.x+width*.72),minY:Math.max(-arena,camera.y-height*.72),maxY:Math.min(arena,camera.y+height*.72)};
-  const gradient=ctx.createRadialGradient(camera.x,camera.y,0,camera.x,camera.y,Math.max(width,height));gradient.addColorStop(0,profile.palette.floor);gradient.addColorStop(1,"#020307");ctx.globalAlpha=floorAlpha;ctx.fillStyle=gradient;ctx.fillRect(-arena,-arena,arena*2,arena*2);ctx.globalAlpha=1;
+  const gradient=ctx.createRadialGradient(camera.x,camera.y,0,camera.x,camera.y,Math.max(width,height));gradient.addColorStop(0,profile.palette.floor);gradient.addColorStop(1,"#020307");ctx.globalAlpha=floorAlpha;ctx.fillStyle=gradient;ctx.fillRect(-arena,-arena,arena*2,arena*2);ctx.globalAlpha=baseAlpha;
   ctx.save();ctx.beginPath();ctx.rect(-arena,-arena,arena*2,arena*2);ctx.clip();
   if(!lowDetail)renderRegionParallaxBackdrop(ctx,{regionId,camera,viewport:{width,height},time,reducedMotion});
   drawGrid(ctx,profile,bounds,time,reducedMotion);
