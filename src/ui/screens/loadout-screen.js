@@ -11,7 +11,32 @@ export function loadoutTagIds(inspection) {
   return totals?.keys ? [...totals.keys()] : [];
 }
 
-export function renderLoadoutScreen(container, inspection, loadout,{blueprints=[],activeBlueprintId=null,onBlueprintChange}={}) {
+export function renderLoadoutScreen(container, inspection, loadout,{blueprints=[],activeBlueprintId=null,choicesBySlot={},onBlueprintChange,onEquip,onUnequip}={}) {
   const status = loadoutStatus(inspection);
-  container.innerHTML = `<div class="loadout-orbit"><div class="ship-core"><span>FRAME</span><strong>${escapeHtml(inspection.sources.find(source => source.slot === "ship")?.name ?? "NO SHIP")}</strong><small>${status.percent}% ${escapeHtml(status.tier)}</small></div>${Object.entries(LOADOUT_SLOT_LAYOUT).filter(([slot]) => slot !== "ship").flatMap(([slot, count]) => Array.from({ length: count }, (_, index) => `<button class="loadout-slot" data-slot="${escapeHtml(slot)}" data-index="${index}"><span>${escapeHtml(slot)}</span><b>${escapeHtml(loadout.slots[slot]?.[index]?.definitionId ?? "EMPTY")}</b></button>`)).join("")}</div><aside class="loadout-telemetry"><div><span>CAPACITY</span><b>${inspection.capacity}</b></div><div><span>RESERVED</span><b>${inspection.reserved}</b></div><div><span>HEAT</span><b>${inspection.expectedHeat}</b></div><div><span>CORRUPTION</span><b>${inspection.startingCorruption}</b></div><div><span>TAGS</span><b>${loadoutTagIds(inspection).map(escapeHtml).join(" · ")}</b></div><label>BAUPLAN-VORLAGE<select data-blueprint><option value="">OHNE VORLAGE</option>${blueprints.map(blueprint=>`<option value="${escapeHtml(blueprint.blueprintId)}" ${blueprint.blueprintId===activeBlueprintId?"selected":""}>${escapeHtml(blueprint.name)}</option>`).join("")}</select></label><small>Vorlagen geben keine Module oder Werte.</small></aside>`;container.querySelector("[data-blueprint]")?.addEventListener("change",event=>onBlueprintChange?.(event.target.value||null));
+  const frameName = inspection.sources.find(source => source.slot === "ship")?.name ?? loadout.slots.ship?.[0]?.definitionId ?? "NO SHIP";
+  const slots = Object.entries(LOADOUT_SLOT_LAYOUT).flatMap(([slot, count]) => Array.from({ length: count }, (_, index) => {
+    const item = loadout.slots[slot]?.[index] ?? null;
+    const classes = slot === "ship" ? "ship-core loadout-slot" : "loadout-slot";
+    return `<button class="${classes}" data-slot="${escapeHtml(slot)}" data-index="${index}" aria-label="${escapeHtml(slot)} ${index + 1}: ${escapeHtml(item?.definitionId ?? "EMPTY")}"><span>${slot === "ship" ? "FRAME" : escapeHtml(slot)}</span><strong>${escapeHtml(slot === "ship" ? frameName : item?.definitionId ?? "EMPTY")}</strong>${slot === "ship" ? `<small>${status.percent}% ${escapeHtml(status.tier)}</small>` : ""}</button>`;
+  })).join("");
+  container.innerHTML = `<div class="loadout-orbit">${slots}</div><section class="loadout-picker" data-picker hidden></section><aside class="loadout-telemetry"><div><span>CAPACITY</span><b>${inspection.capacity}</b></div><div><span>RESERVED</span><b>${inspection.reserved}</b></div><div><span>HEAT</span><b>${inspection.expectedHeat}</b></div><div><span>CORRUPTION</span><b>${inspection.startingCorruption}</b></div><div><span>TAGS</span><b>${loadoutTagIds(inspection).map(escapeHtml).join(" · ")}</b></div><label>BAUPLAN-VORLAGE<select data-blueprint><option value="">OHNE VORLAGE</option>${blueprints.map(blueprint=>`<option value="${escapeHtml(blueprint.blueprintId)}" ${blueprint.blueprintId===activeBlueprintId?"selected":""}>${escapeHtml(blueprint.name)}</option>`).join("")}</select></label><small>Vorlagen geben keine Module oder Werte.</small></aside>`;
+  const picker = container.querySelector("[data-picker]");
+  const closePicker = () => { picker.hidden = true; picker.replaceChildren(); };
+  const openPicker = (slot, index) => {
+    const choices = choicesBySlot[slot] ?? [];
+    const current = loadout.slots[slot]?.[index] ?? null;
+    picker.hidden = false;
+    picker.innerHTML = `<header><small>${escapeHtml(slot)} ${index + 1}</small><button data-picker-close aria-label="Auswahl schließen">×</button></header><div class="item-catalog">${choices.map(definition => `<button class="item-card" data-choice="${escapeHtml(definition.id)}" aria-pressed="${definition.id === current?.definitionId}"><strong>${escapeHtml(definition.name ?? definition.id)}</strong><small>${escapeHtml(definition.description ?? definition.id)}</small></button>`).join("") || "<p>Keine freigeschalteten Komponenten.</p>"}</div><button data-unequip${current ? "" : " disabled"}>ENTFERNEN</button>`;
+    picker.onclick = event => {
+      const definitionId = event.target.closest("[data-choice]")?.dataset.choice;
+      if (definitionId) { onEquip?.(slot, index, definitionId); closePicker(); return; }
+      if (event.target.closest("[data-unequip]")) { onUnequip?.(slot, index); closePicker(); return; }
+      if (event.target.closest("[data-picker-close]")) closePicker();
+    };
+  };
+  container.querySelector(".loadout-orbit")?.addEventListener("click", event => {
+    const control = event.target.closest("[data-slot]");
+    if (control) openPicker(control.dataset.slot, Number(control.dataset.index));
+  });
+  container.querySelector("[data-blueprint]")?.addEventListener("change",event=>onBlueprintChange?.(event.target.value||null));
 }

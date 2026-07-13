@@ -4,6 +4,7 @@ import { renderAnomalyScreen } from "../../src/ui/screens/anomaly-screen.js";
 import { createBuildInspector, describeUpgradeImpact } from "../../src/ui/screens/build-inspector.js";
 import { renderCampaignSelect } from "../../src/ui/screens/campaign-select-screen.js";
 import { renderChallengesScreen } from "../../src/ui/screens/challenges-screen.js";
+import { createItemCard } from "../../src/ui/components/item-card.js";
 import { renderBuildHistory, renderCodexScreen } from "../../src/ui/screens/codex-screen.js";
 import { renderExtractionScreen } from "../../src/ui/screens/extraction-screen.js";
 import { createHangarScreen, resolveCheckpoint, resolveCurrencies } from "../../src/ui/screens/hangar-screen.js";
@@ -179,7 +180,8 @@ describe("hangar screen", () => {
     container.querySelector('[data-hangar-tab="Schiffe"]').click();
     const card = container.querySelector(".item-catalog .item-card");
     expect(card.dataset.itemId).toBe("ship-1");
-    expect(card.disabled).toBe(true);
+    expect(card.tagName).toBe("ARTICLE");
+    expect(card.getAttribute("aria-disabled")).toBe("true");
     expect(renderTab).toHaveBeenLastCalledWith("Schiffe", expect.anything());
 
     screen.show("Codex");
@@ -215,6 +217,29 @@ describe("loadout screen", () => {
     const container = root();
     renderLoadoutScreen(container, { ...inspection, tags: { totals: new Map([["Void", 2]]), provenance: new Map() } }, { slots: {} });
     expect(container.textContent).toContain("Void");
+  });
+
+  test("slot picker reports equip and unequip actions", () => {
+    const container = root(), onEquip = vi.fn(), onUnequip = vi.fn();
+    const loadout = { slots: { ship: [{ instanceId: "starter-vesper", definitionId: "vesper" }] } };
+    renderLoadoutScreen(container, inspection, loadout, {
+      choicesBySlot: { ship: [{ id: "vesper", name: "Vesper" }] },
+      onEquip,
+      onUnequip
+    });
+
+    container.querySelector('[data-slot="ship"]').click();
+    container.querySelector('[data-choice="vesper"]').click();
+    expect(onEquip).toHaveBeenCalledWith("ship", 0, "vesper");
+
+    container.querySelector('[data-slot="ship"]').click();
+    container.querySelector("[data-unequip]").click();
+    expect(onUnequip).toHaveBeenCalledWith("ship", 0);
+  });
+
+  test("read-only catalog cards are not focusable buttons", () => {
+    const card = createItemCard({ id: "vesper", name: "Vesper", slot: "ship", tags: [] });
+    expect(card.tagName).toBe("ARTICLE");
   });
 });
 

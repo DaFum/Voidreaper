@@ -22,7 +22,7 @@ import { updateResourceMeters } from "../ui/components/resource-meters.js";
 import { uiConfirm, uiPrompt } from "../ui/components/modal-dialog.js";
 import { createGameController } from "./game-controller.js";
 import { createEquipmentRegistry } from "../features/equipment/equipment-registry.js";
-import { createLoadoutService, resolvePrimaryLoadout } from "../features/equipment/loadout-service.js";
+import { createLoadoutItem, createLoadoutService, resolvePrimaryLoadout } from "../features/equipment/loadout-service.js";
 import { createUnlockService } from "../features/research/unlock-service.js";
 import { SHIPS } from "../content/ships/index.js";
 import { WEAPONS } from "../content/weapons/index.js";
@@ -441,9 +441,28 @@ export async function bootstrap() {
       }
       if (tab === "Loadout") {
         const loadout = resolvePrimaryLoadout(metaSave);
+        const choicesBySlot = services.equipment.values()
+          .filter(definition => services.unlocks.isUnlocked(definition))
+          .reduce((groups, definition) => {
+            (groups[definition.slot] ??= []).push(definition);
+            return groups;
+          }, {});
+        const persistLoadout = async mutate => {
+          const next = structuredClone(resolvePrimaryLoadout(metaSave));
+          if (mutate(next) === false) return;
+          await services.save.update(save => { save.loadouts.primary = next; });
+          metaSave = await services.save.load();
+          hangar.render();
+        };
         renderLoadoutScreen(content, services.loadouts.inspect(loadout), loadout, {
           blueprints: services.blueprints.list(),
           activeBlueprintId: services.blueprints.getActiveId(),
+          choicesBySlot,
+          onEquip: (slot, index, definitionId) => persistLoadout(next => {
+            try { services.loadouts.equip(next, slot, index, createLoadoutItem(slot, index, definitionId)); return true; }
+            catch (error) { legacyRuntime.ui.toast(error.message); return false; }
+          }),
+          onUnequip: (slot, index) => persistLoadout(next => services.loadouts.unequip(next, slot, index)),
           onBlueprintChange: async id => {
             if (id) await services.blueprints.setActive(id);
             else await services.save.update(save => { save.activeBlueprintId = null; });
