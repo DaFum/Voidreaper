@@ -25,6 +25,6 @@ test("run assembly candidates exclude the ship and empty slots", () => {
   assert.deepEqual(equippedAssemblyItems(loadout).map(item => item.definitionId), ["railgun", "phase-shield"]);
 });
 
-test("root ports clear sibling module geometry", () => {
+test("root port position scales direction by 72", () => {
   assert.deepEqual(createRootPortPosition({ direction: { x: -1, y: 0.15 } }), { x: -72, y: 10.799999999999999 });
 });
