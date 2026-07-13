@@ -3,13 +3,20 @@ import { createRunRng } from "../../core/rng.js";
 
 const COLLECTION = "__voidreaperCollection";
 
-function encodeCollections(value) {
-  if (value instanceof Map) return { [COLLECTION]: "Map", entries: [...value].map(([key, entry]) => [encodeCollections(key), encodeCollections(entry)]) };
-  if (value instanceof Set) return { [COLLECTION]: "Set", values: [...value].map(encodeCollections) };
-  if (Array.isArray(value)) return value.map(encodeCollections);
+function encodeCollections(value, seen = new WeakSet()) {
   if (!value || typeof value !== "object") return value;
-  if (typeof value.toJSON === "function") return encodeCollections(value.toJSON());
-  return Object.fromEntries(Object.entries(value).filter(([, entry]) => typeof entry !== "function").map(([key, entry]) => [key, encodeCollections(entry)]));
+  if (seen.has(value)) throw new Error("Cycle detected during checkpoint serialization");
+  seen.add(value);
+
+  let result;
+  if (value instanceof Map) result = { [COLLECTION]: "Map", entries: [...value].map(([key, entry]) => [encodeCollections(key, seen), encodeCollections(entry, seen)]) };
+  else if (value instanceof Set) result = { [COLLECTION]: "Set", values: [...value].map(v => encodeCollections(v, seen)) };
+  else if (Array.isArray(value)) result = value.map(v => encodeCollections(v, seen));
+  else if (typeof value.toJSON === "function") result = encodeCollections(value.toJSON(), seen);
+  else result = Object.fromEntries(Object.entries(value).filter(([, entry]) => typeof entry !== "function").map(([key, entry]) => [key, encodeCollections(entry, seen)]));
+
+  seen.delete(value);
+  return result;
 }
 
 function decodeCollections(value) {
