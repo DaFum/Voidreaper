@@ -508,3 +508,15 @@
     .research-node[data-state="locked"] { opacity: .55; }
     .vault-empty { grid-column: 1 / -1; display: grid; place-content: center; gap: 8px; min-height: 220px; text-align: center; color: var(--ice); letter-spacing: .1em; }
     .vault-empty span { color: rgba(239,234,247,.6); font-size: 10px; }
+
+    dialog.vr-modal { position: fixed; inset: 0; margin: auto; width: fit-content; height: fit-content; min-width: 300px; max-width: 440px; padding: 0; border: 1px solid rgba(76,201,240,.35); background: rgba(4,1,10,.96); color: var(--bone); font-family: var(--font-ui); box-shadow: 0 0 40px rgba(67,24,184,.45); }
+    dialog.vr-modal::backdrop { background: rgba(4,1,10,.7); backdrop-filter: blur(2px); }
+    dialog.vr-modal header { padding: 10px 16px; border-bottom: 1px solid rgba(76,201,240,.2); background: rgba(67,24,184,.18); }
+    dialog.vr-modal header small { color: var(--ice); font-size: 9px; letter-spacing: .22em; }
+    dialog.vr-modal [data-role="message"] { padding: 16px; font-size: 11px; line-height: 1.6; letter-spacing: .06em; white-space: pre-line; color: rgba(239,234,247,.85); }
+    dialog.vr-modal [data-role="input"] { display: block; width: calc(100% - 32px); margin: 0 16px 4px; padding: 8px 10px; border: 1px solid rgba(76,201,240,.3); background: rgba(4,1,10,.85); color: var(--bone); font: 11px var(--font-m); letter-spacing: .06em; }
+    dialog.vr-modal footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px; }
+    dialog.vr-modal footer button { padding: 8px 16px; border: 1px solid rgba(239,234,247,.25); background: transparent; color: rgba(239,234,247,.7); font: 10px var(--font-ui); letter-spacing: .18em; cursor: pointer; clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); }
+    dialog.vr-modal footer button:hover { border-color: rgba(239,234,247,.5); color: var(--bone); }
+    dialog.vr-modal footer [data-action="confirm"] { border-color: var(--phosphor); color: var(--phosphor); text-shadow: 0 0 8px rgba(6,255,165,.6); }
+    dialog.vr-modal footer [data-action="confirm"]:hover { background: rgba(6,255,165,.12); color: var(--phosphor); }

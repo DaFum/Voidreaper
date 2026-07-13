@@ -19,6 +19,7 @@ import { createSaveStore } from "../persistence/save-store.js";
 import { createInputController } from "../input/input-controller.js";
 import { createBuildInspector } from "../ui/screens/build-inspector.js";
 import { updateResourceMeters } from "../ui/components/resource-meters.js";
+import { uiConfirm, uiPrompt } from "../ui/components/modal-dialog.js";
 import { createGameController } from "./game-controller.js";
 import { createEquipmentRegistry } from "../features/equipment/equipment-registry.js";
 import { createEmptyLoadout, createLoadoutService } from "../features/equipment/loadout-service.js";
@@ -425,11 +426,11 @@ export async function bootstrap() {
           onAction: async action => {
             if (action === "back") return showLibrary();
             if (action === "activate") await services.blueprints.setActive(id);
-            if (action === "rename") { const name = prompt("Neuer Name", services.blueprints.require(id).name); if (name === null) return; await services.blueprints.rename(id, name); }
+            if (action === "rename") { const name = await uiPrompt("Neuer Name", services.blueprints.require(id).name, { title: "BAUPLAN UMBENENNEN" }); if (name === null) return; await services.blueprints.rename(id, name); }
             if (action === "duplicate") { const copy = await services.blueprints.duplicate(id); await refreshBlueprints(); return showDetail(copy.blueprintId); }
-            if (action === "variant") { if (!services.currentAssembly) return legacyRuntime.ui.toast("Varianten benötigen eine aktive Konstruktion."); const name = prompt("Name der Variante", "Variante"); if (name === null) return; await services.blueprints.createVariant(id, name, services.currentAssembly.getSnapshot()); }
-            if (action === "export") { const code = encodeBlueprint(services.blueprints.require(id)); if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(code); else prompt("Bauplan-Code kopieren", code); legacyRuntime.ui.toast("Bauplan-Code kopiert."); return; }
-            if (action === "delete") { if (!confirm(`Bauplan ${services.blueprints.require(id).name} löschen?`)) return; await services.blueprints.delete(id); await refreshBlueprints(); return showLibrary(); }
+            if (action === "variant") { if (!services.currentAssembly) return legacyRuntime.ui.toast("Varianten benötigen eine aktive Konstruktion."); const name = await uiPrompt("Name der Variante", "Variante", { title: "VARIANTE ANLEGEN" }); if (name === null) return; await services.blueprints.createVariant(id, name, services.currentAssembly.getSnapshot()); }
+            if (action === "export") { const code = encodeBlueprint(services.blueprints.require(id)); if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(code); else await uiPrompt("Bauplan-Code kopieren", code, { title: "BAUPLAN EXPORTIEREN", confirmLabel: "SCHLIESSEN" }); legacyRuntime.ui.toast("Bauplan-Code kopiert."); return; }
+            if (action === "delete") { if (!await uiConfirm(`Bauplan ${services.blueprints.require(id).name} löschen?`, { title: "BAUPLAN LÖSCHEN", confirmLabel: "LÖSCHEN" })) return; await services.blueprints.delete(id); await refreshBlueprints(); return showLibrary(); }
             await refreshBlueprints(); showDetail(id);
           }
         });
@@ -443,7 +444,7 @@ export async function bootstrap() {
       if (tab === "Statistiken") renderStatistics(content, metaSave.statistics, metaSave.records);
       if (tab === "Einstellungen") renderSettingsScreen(content, metaSave.settings, async settings => { for (const [code, action] of Object.entries(settings.bindings)) input.rebind(action, code); await services.save.update(save => { save.settings = structuredClone(settings); }); });
       if (tab === "Bergung") { const signal = services.wreckSignals.visible(metaSave.wreckSignals)[0]; if (!signal) content.innerHTML = `<div class="hangar-placeholder"><strong>KEIN AKTIVES WRACK-SIGNAL</strong><span>Legendäre verlorene Prototypen erscheinen nach dem nächsten Run.</span></div>`; else { const mission = services.salvageMissions.create(signal); renderSalvageMission(content, mission, () => game.start("standard")); } }
-      if (tab === "Run starten") { const step = services.onboarding.current(metaSave); if (step) content.append(createTutorialCallout(step, { onDismiss: () => {}, onSkip: async () => { await services.onboarding.skip(); metaSave = await services.save.load(); hangar.render(); } })); }
+      if (tab === "Run starten") { const step = services.onboarding.current(metaSave); if (step) content.append(createTutorialCallout(step, { onDismiss: async () => { await services.onboarding.complete(step.run); metaSave = await services.save.load(); hangar.render(); }, onSkip: async () => { await services.onboarding.skip(); metaSave = await services.save.load(); hangar.render(); } })); }
     }
   });
   ui.renderHangar = () => hangar.render();
