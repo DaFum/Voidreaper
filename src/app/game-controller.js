@@ -122,6 +122,13 @@ export function createGameController(services) {
               }
             });
             services.assemblyGeometry.rebuildNow();
+          } else {
+            pendingMountService.queue({
+              itemInstance: item,
+              profile: definition.assembly,
+              source: 'loadout',
+              acquiredAt: run.time
+            });
           }
         }
       }
