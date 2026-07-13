@@ -317,7 +317,7 @@ import { escapeHtml } from "../ui/escape-html.js";
       ico: definition.icon,
       nm: definition.name,
       req: definition.requirements.filter(requirement => requirement.type === "upgrade").map(requirement => requirement.id),
-      ds: definition.effects.join(" · "),
+      ds: definition.description ?? definition.effects.join(" · "),
       apply: player => evolutionEffectRunner?.(definition.effects[0], player)
     }));
 

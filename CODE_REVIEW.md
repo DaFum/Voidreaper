@@ -176,8 +176,14 @@ earlier when pressure spikes between events.
 **Fix:** re-evaluate `nextAt` when pressure drops to 0 (cancel the pending fault); handle the `"none"` tier
 explicitly.
 
-### M6 — Evolution level-up cards display a raw internal effect id as the description
+### M6 — Evolution level-up cards display a raw internal effect id as the description — ✅ FIXED
 **`src/legacy/legacy-runtime.js:320` (rendered at `:1884`)**
+
+> **Resolution:** added a German `description` field to each entry in `content/evolutions/legacy-evolutions.js`
+> (derived from the actual effect handlers, e.g. Prism Lance → "Durchschlägt alle Gegner · +50% Projektiltempo"),
+> and changed the card mapping to `ds: definition.description ?? definition.effects.join(" · ")` — so the
+> localized copy renders, with the old effect-id join kept only as a fallback. Content validator and tests pass.
+
 
 `ds: definition.effects.join(" · ")` uses the effect-handler id array (`["evolution-prism-lance"]`, …),
 which is machine copy, not localized text. The card renders literal strings like `evolution-prism-lance`
