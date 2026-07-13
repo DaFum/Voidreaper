@@ -647,13 +647,40 @@ export async function bootstrap() {
         return;
       }
       if (node.type === "workshop") {
-        const workshop = createWorkshopService({ affixRoller: services.affixes, eventBus: events }); const session = workshop.open(node.regionIndex); const target = previewRun.inventory[0] ?? { ...REACTORS[0], rarity: "rare", itemPower: 100, affixes: [] };
-        const showWorkshop = () => renderWorkshopScreen(stage, { service: workshop, session, target, onAction: (action, item) => attemptWorkshopAction({ workshop, session, action, target: item, payload: { rng: previewRun.rng, sector: node.regionIndex, repairService: services.repairs }, finish, onContinue: showWorkshop, onApplied:()=>events.emit(TUTORIAL_EVENTS.WORKSHOP_APPLIED,{success:true,action}) }), onLeave: finish });
-        showWorkshop(); return;
+        const workshop = createWorkshopService({ affixRoller: services.affixes, eventBus: events });
+        const session = workshop.open(node.regionIndex);
+        const target = previewRun.inventory[0] ?? { ...REACTORS[0], rarity: "rare", itemPower: 100, affixes: [] };
+        const showWorkshop = () => renderWorkshopScreen(stage, {
+          service: workshop,
+          session,
+          target,
+          onAction: (action, item) => attemptWorkshopAction({
+            workshop,
+            session,
+            action,
+            target: item,
+            payload: { rng: previewRun.rng, sector: node.regionIndex, repairService: services.repairs },
+            finish,
+            onContinue: showWorkshop,
+            onApplied: () => events.emit(TUTORIAL_EVENTS.WORKSHOP_APPLIED, { success: true, action })
+          }),
+          onLeave: finish
+        });
+        showWorkshop();
+        return;
       }
       if (node.type === "anomaly") {
-        const anomaly = createAnomalyService(events); const signal = anomaly.select(node.seed, previewRun.anomalies?.map(entry => entry.eventId));
-        renderAnomalyScreen(stage, { event: signal, onChoose: choiceId => { anomaly.resolve(previewRun, signal, choiceId); events.emit(TUTORIAL_EVENTS.ANOMALY_RESOLVED,{choiceId}); finish(); } }); return;
+        const anomaly = createAnomalyService(events);
+        const signal = anomaly.select(node.seed, previewRun.anomalies?.map(entry => entry.eventId));
+        renderAnomalyScreen(stage, {
+          event: signal,
+          onChoose: choiceId => {
+            anomaly.resolve(previewRun, signal, choiceId);
+            events.emit(TUTORIAL_EVENTS.ANOMALY_RESOLVED, { choiceId });
+            finish();
+          }
+        });
+        return;
       }
       finish();
     } });
