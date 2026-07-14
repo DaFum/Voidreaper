@@ -940,9 +940,10 @@ export async function bootstrap() {
       geometryById = new Map(
         model.geometry.nodes.map((node) => [node.nodeId, node]),
       );
+      const assemblyNodes = Object.values(model.assembly.nodesById);
       const looseInventory = model.inventory.filter(
         (item) =>
-          !Object.values(model.assembly.nodesById).some(
+          !assemblyNodes.some(
             (node) => node.moduleInstanceId === item.instanceId,
           ),
       );
