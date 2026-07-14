@@ -75,6 +75,16 @@ test("foundations resume does not restart an existing paused run", () => {
     "// During the foundations training",
     overlayActionStart,
   );
+  assert.notEqual(
+    overlayActionStart,
+    -1,
+    'expected bootstrap.js to contain the "onAction: async (action) => {" anchor',
+  );
+  assert.notEqual(
+    overlayActionEnd,
+    -1,
+    'expected bootstrap.js to contain the "// During the foundations training" anchor',
+  );
   const overlayActionSource = source.slice(overlayActionStart, overlayActionEnd);
 
   assert.match(
