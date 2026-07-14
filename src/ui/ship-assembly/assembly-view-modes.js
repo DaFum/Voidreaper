@@ -17,9 +17,16 @@ export function getViewModeOverlay(mode, { assembly, geometry, flightProfile } =
 
 export function layoutOverlayLabels(labels, { minimumDistance = 18 } = {}) {
   const placed = [];
+  // Calculate squared distance once to avoid repeated Math.hypot/sqrt calls in the inner loop
+  const minDistSq = minimumDistance * minimumDistance;
   for (const label of labels) {
     const next = { ...label, position: { ...label.position } };
-    while (placed.some(other => Math.hypot(other.position.x - next.position.x, other.position.y - next.position.y) < minimumDistance)) next.position.y += minimumDistance;
+    while (placed.some(other => {
+      const dx = other.position.x - next.position.x;
+      const dy = other.position.y - next.position.y;
+      // Using squared distance is a V8 performance optimization over Math.hypot
+      return dx * dx + dy * dy < minDistSq;
+    })) next.position.y += minimumDistance;
     placed.push(next);
   }
   return placed;
