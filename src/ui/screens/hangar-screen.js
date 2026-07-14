@@ -1,6 +1,6 @@
 import { createItemCard } from "../components/item-card.js";
 import { escapeHtml } from "../escape-html.js";
-import { LOADOUT_SLOT_LAYOUT } from "../../features/equipment/loadout-service.js";
+import { deriveEquipmentCatalogEntries, LOADOUT_SLOT_LAYOUT } from "../../features/equipment/loadout-service.js";
 
 
 const TABS = ["Run starten", "Tutorials", "Loadout", "Schiffe", "Waffen", "Module", "Baupläne", "Forschung", "Prototypen", "Codex", "Herausforderungen", "Kampagnen", "Bergung", "Simulator", "Statistiken", "Einstellungen"];
@@ -25,21 +25,10 @@ export const resolveCheckpoint = checkpoint => typeof checkpoint === "function" 
 export const resolveLoadout = loadout => typeof loadout === "function" ? loadout() : loadout;
 export const catalogUnlockLabel = source => UNLOCK_LABELS[source] ?? "Freischaltbedingung noch unbekannt";
 
-export function catalogEntries(definitions, { isUnlocked, loadout, query = "", status = "all", type = "all" }) {
-  const equippedById = new Map();
-  for (const [slot, items] of Object.entries(loadout?.slots ?? {})) {
-    items.forEach((item, index) => {
-      if (!item?.definitionId) return;
-      const slots = equippedById.get(item.definitionId) ?? [];
-      slots.push({ slot, index });
-      equippedById.set(item.definitionId, slots);
-    });
-  }
+export function catalogEntries(entries, { query = "", status = "all", type = "all" } = {}) {
   const normalizedQuery = query.trim().toLocaleLowerCase("de");
-  return definitions.map(definition => {
-    const equippedSlots = equippedById.get(definition.id) ?? [];
-    const state = equippedSlots.length ? "equipped" : isUnlocked(definition) ? "available" : "locked";
-    return { definition, state, equippedSlots, unlockLabel: catalogUnlockLabel(definition.unlockSource) };
+  return entries.map(({ unlocked: _unlocked, ...entry }) => {
+    return { ...entry, unlockLabel: catalogUnlockLabel(entry.definition.unlockSource) };
   }).filter(entry => {
     if (status === "available" && entry.state === "locked") return false;
     if (status === "locked" && entry.state !== "locked") return false;
@@ -105,16 +94,18 @@ export function createHangarScreen(container, { ships, weapons, modules, reactor
   const renderCatalog = (content, definitions) => {
     const config = CATALOG_CONFIG[tab];
     const state = catalogState[tab];
-    const availableCount = definitions.filter(definition => isUnlocked(definition)).length;
     const statusFilters = [["all", "Alle"], ["available", "Verfügbar"], ["locked", "Gesperrt"]];
-    content.innerHTML = `<section class="hangar-catalog" data-catalog="${escapeHtml(tab)}"><header class="catalog-intro"><div><span data-catalog-title>${escapeHtml(config.title)}</span><p>${escapeHtml(config.purpose)}</p></div><strong data-catalog-progress>${availableCount} von ${definitions.length} freigeschaltet</strong></header><div class="catalog-toolbar"><label>SUCHEN<input type="search" data-catalog-search value="${escapeHtml(state.query)}" placeholder="Name, Effekt oder Tag"></label><div class="catalog-filter-group" role="group" aria-label="Verfügbarkeit">${statusFilters.map(([value, label]) => `<button type="button" data-catalog-status="${value}" aria-pressed="${state.status === value}">${label}</button>`).join("")}</div>${config.types.length ? `<div class="catalog-filter-group" role="group" aria-label="Modultyp"><button type="button" data-catalog-type="all" aria-pressed="${state.type === "all"}">Alle</button>${config.types.map(([value, label]) => `<button type="button" data-catalog-type="${value}" aria-pressed="${state.type === value}">${label}</button>`).join("")}</div>` : ""}<span data-catalog-count aria-live="polite"></span></div><section class="catalog-selection" data-catalog-selection hidden></section><div class="item-catalog" data-catalog-results data-tutorial-id="catalog-grid"></div></section>`;
+    content.innerHTML = `<section class="hangar-catalog" data-catalog="${escapeHtml(tab)}"><header class="catalog-intro"><div><span data-catalog-title>${escapeHtml(config.title)}</span><p>${escapeHtml(config.purpose)}</p></div><strong data-catalog-progress></strong></header><div class="catalog-toolbar"><label>SUCHEN<input type="search" data-catalog-search value="${escapeHtml(state.query)}" placeholder="Name, Effekt oder Tag"></label><div class="catalog-filter-group" role="group" aria-label="Verfügbarkeit">${statusFilters.map(([value, label]) => `<button type="button" data-catalog-status="${value}" aria-pressed="${state.status === value}">${label}</button>`).join("")}</div>${config.types.length ? `<div class="catalog-filter-group" role="group" aria-label="Modultyp"><button type="button" data-catalog-type="all" aria-pressed="${state.type === "all"}">Alle</button>${config.types.map(([value, label]) => `<button type="button" data-catalog-type="${value}" aria-pressed="${state.type === value}">${label}</button>`).join("")}</div>` : ""}<span data-catalog-count aria-live="polite"></span></div><section class="catalog-selection" data-catalog-selection hidden></section><div class="item-catalog" data-catalog-results data-tutorial-id="catalog-grid"></div></section>`;
     const search = content.querySelector("[data-catalog-search]");
     const results = content.querySelector("[data-catalog-results]");
     const selection = content.querySelector("[data-catalog-selection]");
     const count = content.querySelector("[data-catalog-count]");
+    const progress = content.querySelector("[data-catalog-progress]");
     const refreshCatalog = () => {
       const currentLoadout = resolveLoadout(loadout) ?? { slots: {} };
-      const entries = catalogEntries(definitions, { isUnlocked, loadout: currentLoadout, query: state.query, status: state.status, type: state.type });
+      const derivedEntries = deriveEquipmentCatalogEntries(definitions, { isUnlocked, loadout: currentLoadout });
+      const entries = catalogEntries(derivedEntries, { query: state.query, status: state.status, type: state.type });
+      progress.textContent = `${derivedEntries.filter(entry => entry.unlocked).length} von ${definitions.length} freigeschaltet`;
       if (state.selectedItemId && !entries.some(entry => entry.definition.id === state.selectedItemId)) state.selectedItemId = null;
       count.textContent = `${entries.length} ${entries.length === 1 ? "Treffer" : "Treffer"}`;
       for (const control of content.querySelectorAll("[data-catalog-status]")) control.setAttribute("aria-pressed", String(control.dataset.catalogStatus === state.status));
@@ -137,7 +128,7 @@ export function createHangarScreen(container, { ships, weapons, modules, reactor
           }));
         }
       }
-      const selectedEntry = catalogEntries(definitions, { isUnlocked, loadout: currentLoadout }).find(entry => entry.definition.id === state.selectedItemId);
+      const selectedEntry = catalogEntries(derivedEntries).find(entry => entry.definition.id === state.selectedItemId);
       if (!selectedEntry) {
         selection.hidden = true;
         selection.replaceChildren();

@@ -176,23 +176,20 @@ describe("hangar screen", () => {
   });
 
   test("derives equipped, available and locked entries in the required order", () => {
-    const definitions = [
-      { id: "locked", name: "Alpha", slot: "passive", unlockSource: "research" },
-      { id: "available", name: "Beta", slot: "passive", unlockSource: "blueprint" },
-      { id: "equipped", name: "Gamma", slot: "passive", unlockSource: "starter" }
+    const entries = [
+      { definition: { id: "locked", name: "Alpha", slot: "passive", unlockSource: "research" }, state: "locked", equippedSlots: [] },
+      { definition: { id: "available", name: "Beta", slot: "passive", unlockSource: "blueprint" }, state: "available", equippedSlots: [] },
+      { definition: { id: "equipped", name: "Gamma", slot: "passive", unlockSource: "starter" }, state: "equipped", equippedSlots: [{ slot: "passive", index: 0 }] }
     ];
-    const loadout = { slots: { passive: [{ definitionId: "equipped" }, null] } };
-    const entries = catalogEntries(definitions, {
-      isUnlocked: definition => definition.id !== "locked",
-      loadout,
+    const filtered = catalogEntries(entries, {
       query: "",
       status: "all",
       type: "all"
     });
 
-    expect(entries.map(entry => entry.state)).toEqual(["equipped", "available", "locked"]);
-    expect(entries[0].equippedSlots).toEqual([{ slot: "passive", index: 0 }]);
-    expect(entries[2].unlockLabel).toBe("Über Forschung freischalten");
+    expect(filtered.map(entry => entry.state)).toEqual(["equipped", "available", "locked"]);
+    expect(filtered[0].equippedSlots).toEqual([{ slot: "passive", index: 0 }]);
+    expect(filtered[2].unlockLabel).toBe("Über Forschung freischalten");
   });
 
   test("resolves currencies and checkpoint from values or factories", () => {
@@ -233,6 +230,19 @@ describe("hangar screen", () => {
     expect([...container.querySelectorAll(".item-card")].map(card => card.dataset.itemId)).toEqual(["ship-equipped", "ship-open", "ship-locked"]);
     expect(container.querySelector('[data-item-id="ship-locked"]').textContent).toContain("GESPERRT");
     expect(container.querySelector('[data-item-id="ship-locked"]').textContent).toContain("Über Forschung freischalten");
+  });
+
+  test("does not count an equipped but locked definition as unlocked", () => {
+    const container = root();
+    createHangarScreen(container, {
+      ships: [{ id: "legacy-ship", slot: "ship", name: "Legacy", unlockSource: "research" }],
+      weapons: [], modules: [], reactors: [],
+      loadout: { slots: { ship: [{ definitionId: "legacy-ship" }] } },
+      isUnlocked: () => false
+    }).show("Schiffe");
+
+    expect(container.querySelector("[data-catalog-progress]").textContent).toBe("0 von 1 freigeschaltet");
+    expect(container.querySelector('[data-item-id="legacy-ship"]').dataset.state).toBe("equipped");
   });
 
   test("combines search, availability and module type filters and resets an empty result", () => {

@@ -156,7 +156,7 @@
     button.item-card:hover, button.item-card:focus-visible { border-color: var(--ice); background-color: rgba(76,201,240,.07); }
     .item-card[data-state="locked"] { border-color: rgba(255,143,31,.28); background: repeating-linear-gradient(135deg, rgba(255,143,31,.025) 0 8px, transparent 8px 16px); }
     .item-card[data-state="equipped"] { border-color: rgba(6,255,165,.5); box-shadow: inset 3px 0 rgba(6,255,165,.7); }
-    .item-card[data-selected] { outline: 1px solid var(--ice); outline-offset: 2px; }
+    .item-card[data-selected] { box-shadow: inset 0 0 0 2px var(--ice); }
     .item-card__status, .item-card__reason, .item-card__action, .item-card__equipped { display: block; }
     .item-card__status { color: var(--phosphor); font: 8px var(--font-m); letter-spacing: .12em; }
     .item-card[data-state="locked"] .item-card__status { color: var(--warn); }

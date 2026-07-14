@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createLoadoutItem, createStarterLoadout, resolvePrimaryLoadout } from "../../../src/features/equipment/loadout-service.js";
+import * as loadoutService from "../../../src/features/equipment/loadout-service.js";
+
+const { createLoadoutItem, createStarterLoadout, deriveEquipmentCatalogEntries, resolvePrimaryLoadout } = loadoutService;
 
 test("new profiles receive the three unlocked starter components", () => {
   const loadout = createStarterLoadout();
@@ -23,4 +25,33 @@ test("loadout selections receive stable slot-specific instance ids", () => {
 test("existing primary loadouts remain unchanged", () => {
   const primary = { slots: { ship: [{ definitionId: "vesper" }] } };
   assert.equal(resolvePrimaryLoadout({ loadouts: { primary } }), primary);
+});
+
+test("equipment catalog state derives unlocks and every equipped slot", () => {
+  assert.equal(typeof deriveEquipmentCatalogEntries, "function");
+  const definitions = [
+    { id: "locked", slot: "passive" },
+    { id: "equipped", slot: "passive" }
+  ];
+  const loadout = {
+    slots: {
+      passive: [{ definitionId: "equipped" }, null, { definitionId: "equipped" }]
+    }
+  };
+
+  assert.deepEqual(
+    deriveEquipmentCatalogEntries(definitions, {
+      isUnlocked: definition => definition.id !== "locked",
+      loadout
+    }),
+    [
+      { definition: definitions[0], state: "locked", equippedSlots: [], unlocked: false },
+      {
+        definition: definitions[1],
+        state: "equipped",
+        equippedSlots: [{ slot: "passive", index: 0 }, { slot: "passive", index: 2 }],
+        unlocked: true
+      }
+    ]
+  );
 });

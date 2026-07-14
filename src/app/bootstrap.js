@@ -1409,17 +1409,24 @@ export async function bootstrap() {
     mapScreen.render(services.sectors.model(previewRun));
   };
   const persistLoadout = async (mutate) => {
+    const mutationRejected = {};
     try {
-      const next = structuredClone(resolvePrimaryLoadout(metaSave));
-      if (mutate(next) === false)
-        return { ok: false, message: "Ausrüsten wurde abgelehnt." };
-      await services.save.update((save) => {
+      const saved = await services.save.update((save) => {
+        const next = structuredClone(resolvePrimaryLoadout(save));
+        if (mutate(next) === false) throw mutationRejected;
         save.loadouts.primary = next;
       });
-      metaSave = await services.save.load();
+      metaSave = saved;
+      try {
+        metaSave = await services.save.load();
+      } catch (error) {
+        legacyRuntime.ui.toast(error.message);
+      }
       hangar.render();
       return { ok: true };
     } catch (error) {
+      if (error === mutationRejected)
+        return { ok: false, message: "Ausrüsten wurde abgelehnt." };
       legacyRuntime.ui.toast(error.message);
       return { ok: false, message: error.message };
     }
