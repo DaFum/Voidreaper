@@ -88,12 +88,34 @@
       box-shadow: 0 0 5px var(--phosphor)
     }
 
-    #hangar { width: min(1120px, 96vw); max-height: 66vh; overflow: hidden; }
-    .hangar-tabs { display: flex; overflow-x: auto; border: 1px solid rgba(76,201,240,.2); background: rgba(4,1,10,.86); scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
+    #hangar { position: relative; width: min(1120px, 96vw); max-height: 66vh; overflow: hidden; }
+    .hangar-navigation { position: relative; flex: 0 0 auto; }
+    .hangar-tabs-shell { position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; border: 1px solid rgba(76,201,240,.2); background: rgba(4,1,10,.86); }
+    .hangar-tabs-shell::before, .hangar-tabs-shell::after { position: absolute; z-index: 2; top: 0; bottom: 0; width: 34px; content: ""; opacity: 0; pointer-events: none; transition: opacity .15s; }
+    .hangar-tabs-shell::before { left: 44px; background: linear-gradient(90deg, rgba(4,1,10,.98), transparent); }
+    .hangar-tabs-shell::after { right: 44px; background: linear-gradient(270deg, rgba(4,1,10,.98), transparent); }
+    .hangar-tabs-shell[data-overflow-start="true"]::before, .hangar-tabs-shell[data-overflow-end="true"]::after { opacity: 1; }
+    .hangar-tabs { display: flex; min-width: 0; overflow-x: auto; scrollbar-width: none; scroll-behavior: smooth; }
     .hangar-tabs::-webkit-scrollbar { display: none; }
     .hangar-tabs button { flex: 0 0 auto; min-height: 44px; padding: 9px 13px; border: 0; color: rgba(239,234,247,.55); background: transparent; font: 10px var(--font-m); letter-spacing: .08em; cursor: pointer; }
     .hangar-tabs button:hover { color: var(--bone); }
     .hangar-tabs button[aria-selected="true"] { color: var(--phosphor); box-shadow: inset 0 -2px var(--phosphor); }
+    .hangar-tabs-scroll { position: relative; z-index: 3; min-width: 44px; min-height: 44px; border: 0; color: var(--ice); background: linear-gradient(135deg, rgba(76,201,240,.12), rgba(4,1,10,.96)); font: 22px/1 var(--font-m); cursor: pointer; }
+    .hangar-tabs-scroll:not(:disabled):hover, .hangar-tabs-scroll:not(:disabled):focus-visible { color: var(--phosphor); background: rgba(6,255,165,.1); }
+    .hangar-tabs-scroll:disabled { color: rgba(239,234,247,.18); cursor: default; }
+    .hangar-area-toggle, .hangar-area-panel { display: none; }
+    .hangar-area-toggle { width: 100%; min-height: 52px; grid-template-columns: 1fr auto; align-items: center; gap: 2px 12px; padding: 8px 13px; border: 1px solid rgba(76,201,240,.34); color: var(--bone); background: linear-gradient(105deg, rgba(76,201,240,.12), rgba(4,1,10,.96) 42%); text-align: left; cursor: pointer; }
+    .hangar-area-toggle span { grid-column: 1; color: var(--ice); font: 8px var(--font-m); letter-spacing: .16em; }
+    .hangar-area-toggle strong { grid-column: 1; max-width: 100%; overflow: hidden; color: var(--phosphor); font: 12px var(--font-d); letter-spacing: .12em; text-overflow: ellipsis; white-space: nowrap; }
+    .hangar-area-toggle i { grid-column: 2; grid-row: 1 / 3; color: var(--ice); font: normal 20px var(--font-m); }
+    .hangar-area-toggle[aria-expanded="true"] i { transform: rotate(180deg); }
+    .hangar-area-panel { position: absolute; z-index: 8; top: calc(100% + 1px); right: 0; left: 0; max-height: min(62vh, 520px); overflow: auto; padding: 10px; border: 1px solid var(--ice); background: linear-gradient(155deg, rgba(5,7,20,.99), rgba(12,4,28,.99)); box-shadow: 0 20px 55px rgba(0,0,0,.72), 0 0 24px rgba(76,201,240,.12); }
+    .hangar-area-panel header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; color: var(--ice); font: 9px var(--font-m); letter-spacing: .16em; }
+    .hangar-area-panel header button { width: 44px; height: 44px; border: 1px solid rgba(76,201,240,.28); color: var(--bone); background: rgba(76,201,240,.06); font-size: 20px; }
+    .hangar-area-panel > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .hangar-area-panel [data-hangar-area] { min-height: 44px; padding: 9px 11px; border: 1px solid rgba(76,201,240,.2); color: rgba(239,234,247,.72); background: rgba(76,201,240,.04); font: 9px var(--font-m); letter-spacing: .08em; text-align: left; }
+    .hangar-area-panel [data-hangar-area]:hover, .hangar-area-panel [data-hangar-area]:focus-visible { border-color: var(--ice); color: var(--bone); }
+    .hangar-area-panel [data-hangar-area][aria-current="page"] { border-color: var(--phosphor); color: var(--phosphor); background: rgba(6,255,165,.08); box-shadow: inset 3px 0 var(--phosphor); }
     .hangar-stage { position: relative; min-height: min(440px, 56vh); border: 1px solid rgba(76,201,240,.18); border-top: 0; background: radial-gradient(circle at 50% 55%, rgba(67,24,184,.2), transparent 42%), linear-gradient(135deg, rgba(10,4,24,.95), rgba(4,1,10,.92)); }
     .hangar-stage::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(90deg, transparent 0 63px, rgba(76,201,240,.035) 64px); }
     .hangar-signal { display: flex; justify-content: space-between; padding: 9px 13px; color: var(--ice); border-bottom: 1px solid rgba(76,201,240,.16); font-size: 9px; letter-spacing: .12em; }
@@ -120,7 +142,22 @@
     .loadout-picker header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; color: var(--ice); }
     .loadout-picker header button, .loadout-picker > button { min-height: 44px; color: var(--bone); border: 1px solid rgba(76,201,240,.28); background: rgba(76,201,240,.06); }
     .loadout-telemetry, .comparison-grid { display: grid; grid-template-columns: auto 1fr; gap: 5px 12px; }
-    @media (max-width: 700px) { .hangar-stage { min-height: 58vh; } .hangar-signal b { display: none; } .item-catalog { grid-template-columns: 1fr; } .loadout-orbit { display: flex; flex-direction: column; } .ship-core { order: -1; } }
+    @media (max-width: 700px) {
+      #hangar { padding: 9px 8px 8px; }
+      .hangar-tabs-shell { display: none; }
+      .hangar-area-toggle { display: grid; }
+      .hangar-area-panel:not([hidden]) { display: block; }
+      .hangar-stage { min-height: 58vh; }
+      .hangar-signal { gap: 8px; padding-inline: 10px; }
+      .hangar-signal span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .hangar-signal b { display: none; }
+      .hangar-content { padding: 10px; }
+      .item-catalog { grid-template-columns: 1fr; }
+      .loadout-orbit { display: flex; flex-direction: column; }
+      .ship-core { order: -1; }
+    }
+    @media (max-width: 430px) { .hangar-area-panel > div { grid-template-columns: 1fr; } }
+    @media (prefers-reduced-motion: reduce) { .hangar-tabs, .hangar-tabs-shell::before, .hangar-tabs-shell::after { scroll-behavior: auto; transition: none; } }
 
     
 
@@ -132,7 +169,7 @@
     #start[data-view="menu"] { justify-content: flex-start; }
     #start[data-view="menu"] #menuclosebtn { flex: 0 0 auto; align-self: flex-start; }
     #start[data-view="menu"] #hangar { flex: 1; min-height: 0; max-height: none; display: flex; flex-direction: column; }
-    #start[data-view="menu"] .hangar-tabs { flex: 0 0 auto; }
+    #start[data-view="menu"] .hangar-navigation { flex: 0 0 auto; }
     #start[data-view="menu"] .hangar-stage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
     #start[data-view="menu"] .hangar-signal { flex: 0 0 auto; }
     #start[data-view="menu"] .hangar-content { flex: 1; min-height: 0; height: auto; }

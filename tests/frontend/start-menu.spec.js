@@ -1,5 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
+import { readFileSync } from "node:fs";
 import { attachStartMenuToggle } from "../../src/ui/screens/start-menu-toggle.js";
+
+const hangarCss = readFileSync("src/styles/hangar.css", "utf8");
 
 const setup = () => {
   const startScreen = document.createElement("div");
@@ -46,5 +49,12 @@ describe("start menu toggle", () => {
     const startScreen = document.createElement("div");
     expect(() => attachStartMenuToggle(startScreen, {}).open()).not.toThrow();
     expect(startScreen.dataset.view).toBe("menu");
+  });
+
+  test("hangar stylesheet exposes desktop overflow and mobile picker contracts", () => {
+    expect(hangarCss).toContain('.hangar-tabs-shell[data-overflow-start="true"]');
+    expect(hangarCss).toContain('.hangar-tabs-shell[data-overflow-end="true"]');
+    expect(hangarCss).toContain(".hangar-area-toggle");
+    expect(hangarCss).toMatch(/@media \(max-width: 700px\)[\s\S]*\.hangar-tabs-shell[\s\S]*display: none/);
   });
 });
