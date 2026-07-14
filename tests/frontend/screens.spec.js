@@ -7,7 +7,7 @@ import { renderChallengesScreen } from "../../src/ui/screens/challenges-screen.j
 import { createItemCard } from "../../src/ui/components/item-card.js";
 import { renderBuildHistory, renderCodexScreen } from "../../src/ui/screens/codex-screen.js";
 import { renderExtractionScreen } from "../../src/ui/screens/extraction-screen.js";
-import { createHangarScreen, resolveCheckpoint, resolveCurrencies } from "../../src/ui/screens/hangar-screen.js";
+import { catalogEntries, catalogUnlockLabel, createHangarScreen, resolveCheckpoint, resolveCurrencies } from "../../src/ui/screens/hangar-screen.js";
 import { loadoutStatus, renderLoadoutScreen } from "../../src/ui/screens/loadout-screen.js";
 import { canAffordOffer, renderMerchantScreen } from "../../src/ui/screens/merchant-screen.js";
 import { renderPrototypeVault } from "../../src/ui/screens/prototype-vault-screen.js";
@@ -156,6 +156,34 @@ describe("extraction screen", () => {
 
 describe("hangar screen", () => {
   const catalogs = { ships: [{ id: "ship-1", slot: "ship", name: "Frame" }], weapons: [], modules: [], reactors: [] };
+
+  test("maps every catalog unlock source to player-facing copy", () => {
+    expect(catalogUnlockLabel("starter")).toBe("Startausrüstung");
+    expect(catalogUnlockLabel("research")).toBe("Über Forschung freischalten");
+    expect(catalogUnlockLabel("blueprint")).toBe("Durch Blaupause freischalten");
+    expect(catalogUnlockLabel("challenge")).toBe("Über Herausforderung freischalten");
+    expect(catalogUnlockLabel("secret")).toBe("Geheime Bedingung erfüllen");
+  });
+
+  test("derives equipped, available and locked entries in the required order", () => {
+    const definitions = [
+      { id: "locked", name: "Alpha", slot: "passive", unlockSource: "research" },
+      { id: "available", name: "Beta", slot: "passive", unlockSource: "blueprint" },
+      { id: "equipped", name: "Gamma", slot: "passive", unlockSource: "starter" }
+    ];
+    const loadout = { slots: { passive: [{ definitionId: "equipped" }, null] } };
+    const entries = catalogEntries(definitions, {
+      isUnlocked: definition => definition.id !== "locked",
+      loadout,
+      query: "",
+      status: "all",
+      type: "all"
+    });
+
+    expect(entries.map(entry => entry.state)).toEqual(["equipped", "available", "locked"]);
+    expect(entries[0].equippedSlots).toEqual([{ slot: "passive", index: 0 }]);
+    expect(entries[2].unlockLabel).toBe("Über Forschung freischalten");
+  });
 
   test("resolves currencies and checkpoint from values or factories", () => {
     expect(resolveCurrencies({ scrap: 1 })).toEqual({ scrap: 1 });

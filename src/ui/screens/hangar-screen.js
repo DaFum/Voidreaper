@@ -4,9 +4,43 @@ import { escapeHtml } from "../escape-html.js";
 
 const TABS = ["Run starten", "Tutorials", "Loadout", "Schiffe", "Waffen", "Module", "Baupläne", "Forschung", "Prototypen", "Codex", "Herausforderungen", "Kampagnen", "Bergung", "Simulator", "Statistiken", "Einstellungen"];
 const tutorialId = name => `hangar-tab-${name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-")}`;
+const UNLOCK_LABELS = Object.freeze({
+  starter: "Startausrüstung",
+  research: "Über Forschung freischalten",
+  blueprint: "Durch Blaupause freischalten",
+  challenge: "Über Herausforderung freischalten",
+  secret: "Geheime Bedingung erfüllen"
+});
+const STATE_RANK = Object.freeze({ equipped: 0, available: 1, locked: 2 });
 
 export const resolveCurrencies = currencies => typeof currencies === "function" ? currencies() : currencies;
 export const resolveCheckpoint = checkpoint => typeof checkpoint === "function" ? checkpoint() : checkpoint;
+export const catalogUnlockLabel = source => UNLOCK_LABELS[source] ?? "Freischaltbedingung noch unbekannt";
+
+export function catalogEntries(definitions, { isUnlocked, loadout, query = "", status = "all", type = "all" }) {
+  const equippedById = new Map();
+  for (const [slot, items] of Object.entries(loadout?.slots ?? {})) {
+    items.forEach((item, index) => {
+      if (!item?.definitionId) return;
+      const slots = equippedById.get(item.definitionId) ?? [];
+      slots.push({ slot, index });
+      equippedById.set(item.definitionId, slots);
+    });
+  }
+  const normalizedQuery = query.trim().toLocaleLowerCase("de");
+  return definitions.map(definition => {
+    const equippedSlots = equippedById.get(definition.id) ?? [];
+    const state = equippedSlots.length ? "equipped" : isUnlocked(definition) ? "available" : "locked";
+    return { definition, state, equippedSlots, unlockLabel: catalogUnlockLabel(definition.unlockSource) };
+  }).filter(entry => {
+    if (status === "available" && entry.state === "locked") return false;
+    if (status === "locked" && entry.state !== "locked") return false;
+    if (type !== "all" && entry.definition.slot !== type) return false;
+    if (!normalizedQuery) return true;
+    const searchable = [entry.definition.name, entry.definition.description, entry.definition.signature, ...(entry.definition.tags ?? []).map(tag => tag.id ?? tag)].join(" ").toLocaleLowerCase("de");
+    return searchable.includes(normalizedQuery);
+  }).sort((left, right) => STATE_RANK[left.state] - STATE_RANK[right.state] || left.definition.name.localeCompare(right.definition.name, "de"));
+}
 
 export function createHangarScreen(container, { ships, weapons, modules, reactors, currencies = {}, checkpoint = null, isUnlocked = () => true, onStart = () => {}, onResume = () => {}, renderTab = () => {} }) {
   let tab = "Run starten";
