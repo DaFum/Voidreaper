@@ -38,7 +38,18 @@ export function createTutorialService({ saveStore, eventBus, chapters, onPersist
     // Announce completion only once the save has actually committed — persist() swallows write
     // failures in its catch, so emitting from a trailing .then() would fire on a failed save too.
     () => { if (completedChapterId) eventBus.emit(TUTORIAL_EVENTS.CHAPTER_COMPLETED, { chapterId: completedChapterId }); }); };
-  for (const eventName of new Set(chapters.flatMap(chapter => chapter.steps.map(step => step.event).filter(Boolean)))) offs.push(eventBus.on(eventName, payload => { const { chapter, step } = current(); if (!state?.active?.paused && step?.kind === "action" && step.event === eventName && (!step.matches || step.matches(payload))) void advance({ chapterId: chapter.id, stepId: step.id }); }));
+
+  // MICRO-OPTIMIZATION: Avoid intermediate array allocations (.flatMap, .map, .filter)
+  // when extracting unique event names for the tutorial service.
+  // Nested for...of loops and a direct Set.add() avoid garbage collection overhead and V8 slowdowns.
+  const uniqueEvents = new Set();
+  for (const chapter of chapters) {
+    for (const step of chapter.steps) {
+      if (step.event) uniqueEvents.add(step.event);
+    }
+  }
+
+  for (const eventName of uniqueEvents) offs.push(eventBus.on(eventName, payload => { const { chapter, step } = current(); if (!state?.active?.paused && step?.kind === "action" && step.event === eventName && (!step.matches || step.matches(payload))) void advance({ chapterId: chapter.id, stepId: step.id }); }));
   const api = {
     hydrate(tutorial) { state = clone(tutorial); state.active = normalizedActive(state.active); notify(); return this.snapshot(); },
     snapshot() { if (!state) return { active: null, completedChapters: {}, skippedChapters: {}, seenSteps: {} }; const { chapter, step } = current(); return { ...clone(state), active: state.active ? { ...clone(state.active), chapter, step, stepIndex: chapter.steps.indexOf(step), stepCount: chapter.steps.length } : null }; },
