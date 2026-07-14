@@ -259,6 +259,25 @@ describe("hangar screen", () => {
     expect(container.querySelectorAll(".item-card")).toHaveLength(2);
   });
 
+  test("closes a selection when filters hide its card", () => {
+    const container = root();
+    const screen = createHangarScreen(container, {
+      ships: [
+        { id: "open", slot: "ship", name: "Open", unlockSource: "starter" },
+        { id: "locked", slot: "ship", name: "Locked", unlockSource: "research" }
+      ],
+      weapons: [], modules: [], reactors: [], loadout: { slots: { ship: [null] } },
+      isUnlocked: definition => definition.id === "open"
+    });
+    screen.show("Schiffe");
+    container.querySelector('[data-item-id="locked"]').click();
+    expect(container.querySelector("[data-catalog-selection]").hidden).toBe(false);
+
+    container.querySelector('[data-catalog-status="available"]').click();
+
+    expect(container.querySelector("[data-catalog-selection]").hidden).toBe(true);
+  });
+
   test("opens current matching slots and equips only the explicitly chosen slot", async () => {
     const container = root(), onEquip = vi.fn().mockResolvedValue({ ok: true });
     const screen = createHangarScreen(container, {

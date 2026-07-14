@@ -115,6 +115,7 @@ export function createHangarScreen(container, { ships, weapons, modules, reactor
     const refreshCatalog = () => {
       const currentLoadout = resolveLoadout(loadout) ?? { slots: {} };
       const entries = catalogEntries(definitions, { isUnlocked, loadout: currentLoadout, query: state.query, status: state.status, type: state.type });
+      if (state.selectedItemId && !entries.some(entry => entry.definition.id === state.selectedItemId)) state.selectedItemId = null;
       count.textContent = `${entries.length} ${entries.length === 1 ? "Treffer" : "Treffer"}`;
       for (const control of content.querySelectorAll("[data-catalog-status]")) control.setAttribute("aria-pressed", String(control.dataset.catalogStatus === state.status));
       for (const control of content.querySelectorAll("[data-catalog-type]")) control.setAttribute("aria-pressed", String(control.dataset.catalogType === state.type));
