@@ -9,7 +9,7 @@ test("diagnostic labels receive deterministic non-overlapping positions", () => 
   ], { minimumDistance: 12 });
 
   assert.deepEqual(labels[0].position, { x: 0, y: 0 });
-  assert.ok(Math.hypot(labels[1].position.x, labels[1].position.y) >= 12);
+  assert.ok(Math.sqrt(labels[1].position.x * labels[1].position.x + labels[1].position.y * labels[1].position.y) >= 12);
   assert.deepEqual(layoutOverlayLabels(labels, { minimumDistance: 12 }), labels);
 });
 
