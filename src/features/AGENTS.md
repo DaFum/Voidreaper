@@ -18,6 +18,7 @@
 - Feature services are often long-lived singletons created in bootstrap; changes to constructor expectations can break startup before screens render.
 - Event payload shapes on the shared event bus act as implicit APIs. Keep backward compatibility when possible or migrate all listeners at once.
 - Avoid putting fallback defaults only in UI. Core feature models should emit stable, complete state for all consumers.
+- Equipment catalog state (unlock status and equipped-slot mapping) is derived in [equipment/loadout-service.js](equipment/loadout-service.js); UI catalogs should consume that domain state rather than rebuilding it.
 - Controllers holding per-run state (drones, mines, infections, …) must be created per run — typically inside a weapon adapter's `createState()` — never at module scope, or state leaks across runs.
 - The canonical corruption field on item *instances* is `corruptionLevel`; readers should fall back to the legacy `corruption` field, and run-level corruption changes must go through the corruption system (`changeRunCorruption`) so state and the `corruption-changed` event payload stay real.
 - Energy `ratio` and `tier` are derived together; never set `energy.ratio` directly — go through `energySystem.recalculate` (or `calculateLoad`) so `LOAD_MODIFIERS[tier]` consumers see a consistent tier.
