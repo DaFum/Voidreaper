@@ -190,6 +190,40 @@ describe("hangar screen", () => {
     screen.show("Nicht vorhanden");
     expect(container.querySelector(".hangar-stage").dataset.activeTab).toBe("Codex");
   });
+
+  test("provides desktop overflow controls and keyboard tab navigation", () => {
+    const container = root();
+    createHangarScreen(container, catalogs);
+    expect(container.querySelector('[data-hangar-scroll="previous"]').getAttribute("aria-label")).toBe("Vorherige Bereiche anzeigen");
+    expect(container.querySelector('[data-hangar-scroll="next"]').getAttribute("aria-label")).toBe("Weitere Bereiche anzeigen");
+
+    const selected = () => container.querySelector('[role="tab"][aria-selected="true"]');
+    selected().dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    expect(container.querySelector(".hangar-stage").dataset.activeTab).toBe("Tutorials");
+    selected().dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true }));
+    expect(container.querySelector(".hangar-stage").dataset.activeTab).toBe("Einstellungen");
+    selected().dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
+    expect(container.querySelector(".hangar-stage").dataset.activeTab).toBe("Run starten");
+  });
+
+  test("mobile area picker uses the shared tab path and restores focus", () => {
+    const container = root(), renderTab = vi.fn();
+    document.body.append(container);
+    createHangarScreen(container, { ...catalogs, renderTab });
+    const trigger = container.querySelector("[data-hangar-area-toggle]");
+    expect(trigger.textContent).toContain("Run starten");
+    trigger.click();
+    const panel = container.querySelector("[data-hangar-area-panel]");
+    expect(panel.hidden).toBe(false);
+    expect(panel.querySelectorAll("[data-hangar-area]")).toHaveLength(16);
+    panel.querySelector('[data-hangar-area="Einstellungen"]').click();
+    expect(container.querySelector(".hangar-stage").dataset.activeTab).toBe("Einstellungen");
+
+    container.querySelector("[data-hangar-area-toggle]").click();
+    container.querySelector("[data-hangar-area-panel]").dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    expect(document.activeElement).toBe(container.querySelector("[data-hangar-area-toggle]"));
+    container.remove();
+  });
 });
 
 describe("loadout screen", () => {
