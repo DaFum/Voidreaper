@@ -22,6 +22,11 @@ function fixture(initial = {}) {
   const state = { tutorial: { version: 1, autoOffer: true, active: null, completedChapters: {}, skippedChapters: {}, seenSteps: {}, ...initial } };
   const saveStore = { async update(mutator) { mutator(state); return structuredClone(state); } };
   const eventBus = createEventBus();
+
+  // NOTE on `chapters` creation: The `createTutorialService` extracts events from steps.
+  // We've implemented a performance micro-optimization in `createTutorialService` that avoids
+  // intermediate array allocations (.flatMap, .map, .filter) by using simple nested for...of loops.
+  // This reduces V8 garbage collection overhead and prevents memory spikes during tutorial initialization.
   const chapters = [{ id: "foundations", title: "Grundlagen", available: () => true, steps: [
     { id: "intro", kind: "explanation", title: "Start", body: "Los" },
     { id: "move", kind: "action", event: TUTORIAL_EVENTS.MOVEMENT_USED, matches: payload => payload.magnitude > .25 },
