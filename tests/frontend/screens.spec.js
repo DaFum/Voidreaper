@@ -156,6 +156,16 @@ describe("extraction screen", () => {
 
 describe("hangar screen", () => {
   const catalogs = { ships: [{ id: "ship-1", slot: "ship", name: "Frame" }], weapons: [], modules: [], reactors: [] };
+  const catalogLoadout = {
+    slots: {
+      ship: [{ definitionId: "ship-equipped" }],
+      "primary-weapon": [{ definitionId: "weapon-equipped" }],
+      passive: [{ definitionId: "mod-equipped" }, { definitionId: "mod-old" }, null, null],
+      active: [null, null],
+      utility: [null, null],
+      relic: [null]
+    }
+  };
 
   test("maps every catalog unlock source to player-facing copy", () => {
     expect(catalogUnlockLabel("starter")).toBe("Startausrüstung");
@@ -206,14 +216,115 @@ describe("hangar screen", () => {
     expect(panel.getAttribute("aria-labelledby")).toBe(tab.id);
   });
 
+  test("shows catalog orientation, visible lock state and stable default order", () => {
+    const container = root();
+    createHangarScreen(container, {
+      ships: [
+        { id: "ship-locked", slot: "ship", name: "Alpha", unlockSource: "research" },
+        { id: "ship-equipped", slot: "ship", name: "Gamma", unlockSource: "starter" },
+        { id: "ship-open", slot: "ship", name: "Beta", unlockSource: "challenge" }
+      ],
+      weapons: [], modules: [], reactors: [], loadout: catalogLoadout,
+      isUnlocked: definition => definition.id !== "ship-locked"
+    }).show("Schiffe");
+
+    expect(container.querySelector("[data-catalog-title]").textContent).toContain("Schiffe");
+    expect(container.querySelector("[data-catalog-progress]").textContent).toContain("2 von 3 freigeschaltet");
+    expect([...container.querySelectorAll(".item-card")].map(card => card.dataset.itemId)).toEqual(["ship-equipped", "ship-open", "ship-locked"]);
+    expect(container.querySelector('[data-item-id="ship-locked"]').textContent).toContain("GESPERRT");
+    expect(container.querySelector('[data-item-id="ship-locked"]').textContent).toContain("Über Forschung freischalten");
+  });
+
+  test("combines search, availability and module type filters and resets an empty result", () => {
+    const container = root();
+    const screen = createHangarScreen(container, {
+      ships: [], weapons: [], reactors: [], loadout: catalogLoadout,
+      modules: [
+        { id: "passive-open", slot: "passive", name: "Open Matrix", unlockSource: "starter" },
+        { id: "active-locked", slot: "active", name: "Locked Burst", unlockSource: "challenge" }
+      ],
+      isUnlocked: definition => definition.id === "passive-open"
+    });
+    screen.show("Module");
+
+    container.querySelector('[data-catalog-status="locked"]').click();
+    container.querySelector('[data-catalog-type="active"]').click();
+    expect([...container.querySelectorAll(".item-card")].map(card => card.dataset.itemId)).toEqual(["active-locked"]);
+
+    const search = container.querySelector("[data-catalog-search]");
+    search.value = "missing";
+    search.dispatchEvent(new Event("input", { bubbles: true }));
+    expect(container.querySelector("[data-catalog-empty]").textContent).toContain("Keine Treffer");
+    container.querySelector("[data-catalog-reset]").click();
+    expect(container.querySelectorAll(".item-card")).toHaveLength(2);
+  });
+
+  test("opens current matching slots and equips only the explicitly chosen slot", async () => {
+    const container = root(), onEquip = vi.fn().mockResolvedValue({ ok: true });
+    const screen = createHangarScreen(container, {
+      ships: [], weapons: [], reactors: [], loadout: catalogLoadout,
+      modules: [{ id: "mod-new", slot: "passive", name: "New Module", unlockSource: "starter" }],
+      isUnlocked: () => true,
+      onEquip
+    });
+    screen.show("Module");
+    container.querySelector('[data-item-id="mod-new"]').click();
+
+    const slots = [...container.querySelectorAll("[data-catalog-equip]")];
+    expect(slots).toHaveLength(4);
+    expect(slots[1].textContent).toContain("mod-old");
+    container.querySelector("[data-catalog-selection-close]").click();
+    expect(container.querySelector("[data-catalog-selection]").hidden).toBe(true);
+    container.querySelector('[data-item-id="mod-new"]').click();
+    const reopenedSlots = [...container.querySelectorAll("[data-catalog-equip]")];
+    reopenedSlots[1].click();
+    await vi.waitFor(() => expect(onEquip).toHaveBeenCalledWith("passive", 1, "mod-new"));
+  });
+
+  test("keeps locked details inspectable but never offers or dispatches equip", () => {
+    const container = root(), onEquip = vi.fn();
+    const screen = createHangarScreen(container, {
+      ships: [{ id: "locked", slot: "ship", name: "Locked", unlockSource: "secret" }],
+      weapons: [], modules: [], reactors: [], loadout: catalogLoadout,
+      isUnlocked: () => false,
+      onEquip
+    });
+    screen.show("Schiffe");
+    container.querySelector('[data-item-id="locked"]').click();
+
+    expect(container.querySelector("[data-catalog-selection]").textContent).toContain("Geheime Bedingung erfüllen");
+    expect(container.querySelector("[data-catalog-equip]")).toBeNull();
+    expect(onEquip).not.toHaveBeenCalled();
+  });
+
+  test("preserves each catalog query while switching tabs and rendering again", () => {
+    const container = root();
+    const screen = createHangarScreen(container, {
+      ships: [{ id: "vesper", slot: "ship", name: "Vesper" }],
+      weapons: [{ id: "railgun", slot: "primary-weapon", name: "Railgun" }],
+      modules: [], reactors: [], loadout: catalogLoadout,
+      isUnlocked: () => true
+    });
+    screen.show("Schiffe");
+    const search = container.querySelector("[data-catalog-search]");
+    search.value = "ves";
+    search.dispatchEvent(new Event("input", { bubbles: true }));
+    screen.show("Waffen");
+    screen.show("Schiffe");
+    expect(container.querySelector("[data-catalog-search]").value).toBe("ves");
+    screen.render();
+    expect(container.querySelector("[data-catalog-search]").value).toBe("ves");
+  });
+
   test("switches tabs by click, renders catalogs with lock state and delegates unknown tabs", () => {
     const container = root(), renderTab = vi.fn();
     const screen = createHangarScreen(container, { ...catalogs, isUnlocked: () => false, renderTab });
     container.querySelector('[data-hangar-tab="Schiffe"]').click();
     const card = container.querySelector(".item-catalog .item-card");
     expect(card.dataset.itemId).toBe("ship-1");
-    expect(card.tagName).toBe("ARTICLE");
-    expect(card.getAttribute("aria-disabled")).toBe("true");
+    expect(card.tagName).toBe("BUTTON");
+    expect(card.dataset.state).toBe("locked");
+    expect(card.textContent).toContain("GESPERRT");
     expect(renderTab).toHaveBeenLastCalledWith("Schiffe", expect.anything());
 
     screen.show("Codex");

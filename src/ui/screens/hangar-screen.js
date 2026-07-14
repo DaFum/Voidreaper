@@ -1,5 +1,6 @@
 import { createItemCard } from "../components/item-card.js";
 import { escapeHtml } from "../escape-html.js";
+import { LOADOUT_SLOT_LAYOUT } from "../../features/equipment/loadout-service.js";
 
 
 const TABS = ["Run starten", "Tutorials", "Loadout", "Schiffe", "Waffen", "Module", "Baupläne", "Forschung", "Prototypen", "Codex", "Herausforderungen", "Kampagnen", "Bergung", "Simulator", "Statistiken", "Einstellungen"];
@@ -12,9 +13,16 @@ const UNLOCK_LABELS = Object.freeze({
   secret: "Geheime Bedingung erfüllen"
 });
 const STATE_RANK = Object.freeze({ equipped: 0, available: 1, locked: 2 });
+const CATALOG_CONFIG = Object.freeze({
+  Schiffe: { title: "Schiffe", purpose: "Frames ansehen und ausrüsten", types: [] },
+  Waffen: { title: "Waffen", purpose: "Primärwaffen ansehen und ausrüsten", types: [] },
+  Module: { title: "Module", purpose: "Module nach Aufgabe filtern und ausrüsten", types: [["passive", "Passiv"], ["active", "Aktiv"], ["utility", "Utility"], ["relic", "Relikt"]] }
+});
+const SLOT_LABELS = Object.freeze({ ship: "Schiff", "primary-weapon": "Waffe", passive: "Passiv", active: "Aktiv", utility: "Utility", relic: "Relikt" });
 
 export const resolveCurrencies = currencies => typeof currencies === "function" ? currencies() : currencies;
 export const resolveCheckpoint = checkpoint => typeof checkpoint === "function" ? checkpoint() : checkpoint;
+export const resolveLoadout = loadout => typeof loadout === "function" ? loadout() : loadout;
 export const catalogUnlockLabel = source => UNLOCK_LABELS[source] ?? "Freischaltbedingung noch unbekannt";
 
 export function catalogEntries(definitions, { isUnlocked, loadout, query = "", status = "all", type = "all" }) {
@@ -42,10 +50,12 @@ export function catalogEntries(definitions, { isUnlocked, loadout, query = "", s
   }).sort((left, right) => STATE_RANK[left.state] - STATE_RANK[right.state] || left.definition.name.localeCompare(right.definition.name, "de"));
 }
 
-export function createHangarScreen(container, { ships, weapons, modules, reactors, currencies = {}, checkpoint = null, isUnlocked = () => true, onStart = () => {}, onResume = () => {}, renderTab = () => {} }) {
+export function createHangarScreen(container, { ships, weapons, modules, reactors, currencies = {}, checkpoint = null, loadout = null, isUnlocked = () => true, onEquip = async () => ({ ok: false, message: "Ausrüsten ist nicht verfügbar." }), onStart = () => {}, onResume = () => {}, renderTab = () => {} }) {
   let tab = "Run starten";
   let focusTabAfterRender = false;
   let focusMobileAfterRender = false;
+  const catalogState = Object.fromEntries(Object.keys(CATALOG_CONFIG).map(name => [name, { query: "", status: "all", type: "all", selectedItemId: null }]));
+  const slotLabel = (slot, index) => `${SLOT_LABELS[slot] ?? slot} ${index + 1}`;
   const activateTab = (name, { focus = false, mobile = false } = {}) => {
     if (!TABS.includes(name)) return false;
     tab = name;
@@ -92,6 +102,86 @@ export function createHangarScreen(container, { ships, weapons, modules, reactor
   const refreshActiveNavigation = () => {
     updateOverflowState(positionActiveTab());
   };
+  const renderCatalog = (content, definitions) => {
+    const config = CATALOG_CONFIG[tab];
+    const state = catalogState[tab];
+    const availableCount = definitions.filter(definition => isUnlocked(definition)).length;
+    const statusFilters = [["all", "Alle"], ["available", "Verfügbar"], ["locked", "Gesperrt"]];
+    content.innerHTML = `<section class="hangar-catalog" data-catalog="${escapeHtml(tab)}"><header class="catalog-intro"><div><span data-catalog-title>${escapeHtml(config.title)}</span><p>${escapeHtml(config.purpose)}</p></div><strong data-catalog-progress>${availableCount} von ${definitions.length} freigeschaltet</strong></header><div class="catalog-toolbar"><label>SUCHEN<input type="search" data-catalog-search value="${escapeHtml(state.query)}" placeholder="Name, Effekt oder Tag"></label><div class="catalog-filter-group" role="group" aria-label="Verfügbarkeit">${statusFilters.map(([value, label]) => `<button type="button" data-catalog-status="${value}" aria-pressed="${state.status === value}">${label}</button>`).join("")}</div>${config.types.length ? `<div class="catalog-filter-group" role="group" aria-label="Modultyp"><button type="button" data-catalog-type="all" aria-pressed="${state.type === "all"}">Alle</button>${config.types.map(([value, label]) => `<button type="button" data-catalog-type="${value}" aria-pressed="${state.type === value}">${label}</button>`).join("")}</div>` : ""}<span data-catalog-count aria-live="polite"></span></div><section class="catalog-selection" data-catalog-selection hidden></section><div class="item-catalog" data-catalog-results data-tutorial-id="catalog-grid"></div></section>`;
+    const search = content.querySelector("[data-catalog-search]");
+    const results = content.querySelector("[data-catalog-results]");
+    const selection = content.querySelector("[data-catalog-selection]");
+    const count = content.querySelector("[data-catalog-count]");
+    const refreshCatalog = () => {
+      const currentLoadout = resolveLoadout(loadout) ?? { slots: {} };
+      const entries = catalogEntries(definitions, { isUnlocked, loadout: currentLoadout, query: state.query, status: state.status, type: state.type });
+      count.textContent = `${entries.length} ${entries.length === 1 ? "Treffer" : "Treffer"}`;
+      for (const control of content.querySelectorAll("[data-catalog-status]")) control.setAttribute("aria-pressed", String(control.dataset.catalogStatus === state.status));
+      for (const control of content.querySelectorAll("[data-catalog-type]")) control.setAttribute("aria-pressed", String(control.dataset.catalogType === state.type));
+      results.replaceChildren();
+      if (!entries.length) {
+        results.innerHTML = `<div class="catalog-empty" data-catalog-empty><strong>Keine Treffer</strong><span>Suche oder Filter blenden derzeit alle Einträge aus.</span><button type="button" data-catalog-reset>Filter zurücksetzen</button></div>`;
+      } else {
+        for (const entry of entries) {
+          const statusLabel = entry.state === "equipped" ? "AUSGERÜSTET" : entry.state === "locked" ? "GESPERRT" : "VERFÜGBAR";
+          const actionLabel = entry.state === "equipped" ? "Belegung ändern" : entry.state === "locked" ? "Freischaltweg ansehen" : "Slots wählen";
+          results.append(createItemCard(entry.definition, {
+            selected: entry.definition.id === state.selectedItemId,
+            state: entry.state,
+            statusLabel,
+            statusDetail: entry.state === "locked" ? entry.unlockLabel : "",
+            actionLabel,
+            equippedSlots: entry.equippedSlots.map(({ slot, index }) => slotLabel(slot, index)),
+            onSelect: definition => { state.selectedItemId = definition.id; refreshCatalog(); }
+          }));
+        }
+      }
+      const selectedEntry = catalogEntries(definitions, { isUnlocked, loadout: currentLoadout }).find(entry => entry.definition.id === state.selectedItemId);
+      if (!selectedEntry) {
+        selection.hidden = true;
+        selection.replaceChildren();
+        return;
+      }
+      selection.hidden = false;
+      if (selectedEntry.state === "locked") {
+        selection.innerHTML = `<header><div><small>GESPERRT</small><strong>${escapeHtml(selectedEntry.definition.name)}</strong></div><button type="button" data-catalog-selection-close aria-label="Auswahl schließen">×</button></header><p>${escapeHtml(selectedEntry.unlockLabel)}</p><p data-catalog-message role="status" aria-live="polite"></p>`;
+        return;
+      }
+      const slot = selectedEntry.definition.slot;
+      const configuredCount = LOADOUT_SLOT_LAYOUT[slot] ?? 0;
+      const slotCount = currentLoadout.slots?.[slot]?.length ?? configuredCount;
+      const slotActions = Array.from({ length: slotCount }, (_, index) => {
+        const current = currentLoadout.slots?.[slot]?.[index]?.definitionId ?? null;
+        return `<button type="button" data-catalog-equip data-slot="${escapeHtml(slot)}" data-index="${index}"><span>${escapeHtml(slotLabel(slot, index))}</span><strong>${escapeHtml(current ?? "Leer")}</strong><small>${current ? "Ersetzen" : "Hier ausrüsten"}</small></button>`;
+      }).join("");
+      selection.innerHTML = `<header><div><small>${escapeHtml(selectedEntry.state === "equipped" ? "AUSGERÜSTET" : "VERFÜGBAR")}</small><strong>${escapeHtml(selectedEntry.definition.name)}</strong></div><button type="button" data-catalog-selection-close aria-label="Auswahl schließen">×</button></header><div class="catalog-selection__slots">${slotActions}</div><p data-catalog-message role="status" aria-live="polite"></p>`;
+    };
+    search.addEventListener("input", event => { state.query = event.target.value; refreshCatalog(); });
+    content.addEventListener("click", async event => {
+      const status = event.target.closest("[data-catalog-status]")?.dataset.catalogStatus;
+      if (status) { state.status = status; refreshCatalog(); return; }
+      const type = event.target.closest("[data-catalog-type]")?.dataset.catalogType;
+      if (type) { state.type = type; refreshCatalog(); return; }
+      if (event.target.closest("[data-catalog-reset]")) {
+        Object.assign(state, { query: "", status: "all", type: "all", selectedItemId: null });
+        search.value = "";
+        refreshCatalog();
+        return;
+      }
+      if (event.target.closest("[data-catalog-selection-close]")) { state.selectedItemId = null; refreshCatalog(); return; }
+      const equip = event.target.closest("[data-catalog-equip]");
+      if (!equip) return;
+      const selectedItemId = state.selectedItemId;
+      state.selectedItemId = null;
+      equip.disabled = true;
+      const result = await onEquip(equip.dataset.slot, Number(equip.dataset.index), selectedItemId);
+      if (result?.ok) return;
+      state.selectedItemId = selectedItemId;
+      equip.disabled = false;
+      content.querySelector("[data-catalog-message]").textContent = result?.message ?? "Ausrüsten fehlgeschlagen.";
+    });
+    refreshCatalog();
+  };
   const render = () => {
     const currentCurrencies = resolveCurrencies(currencies) ?? {};
     const currentCheckpoint = resolveCheckpoint(checkpoint);
@@ -99,14 +189,10 @@ export function createHangarScreen(container, { ships, weapons, modules, reactor
     container.innerHTML = `<div class="hangar-navigation"><div class="hangar-tabs-shell" data-overflow-start="false" data-overflow-end="false"><button type="button" class="hangar-tabs-scroll" data-hangar-scroll="previous" aria-label="Vorherige Bereiche anzeigen">‹</button><nav class="hangar-tabs" role="tablist" aria-label="Hangar-Bereiche">${TABS.map(name => `<button type="button" id="hangar-panel-tab-${tutorialId(name)}" data-hangar-tab="${escapeHtml(name)}" data-tutorial-id="${tutorialId(name)}" role="tab" aria-selected="${name === tab}" tabindex="${name === tab ? "0" : "-1"}">${escapeHtml(name)}</button>`).join("")}</nav><button type="button" class="hangar-tabs-scroll" data-hangar-scroll="next" aria-label="Weitere Bereiche anzeigen">›</button></div><button type="button" class="hangar-area-toggle" data-hangar-area-toggle aria-expanded="false"><span>AKTIVER BEREICH</span><strong>${escapeHtml(tab)}</strong><i aria-hidden="true">⌄</i></button><section class="hangar-area-panel" data-hangar-area-panel role="dialog" aria-label="Hangar-Bereich wählen" hidden><header><span>BEREICH WÄHLEN</span><button type="button" data-hangar-area-close aria-label="Bereichsauswahl schließen">×</button></header><div>${TABS.map(name => `<button type="button" data-hangar-area="${escapeHtml(name)}"${name === tab ? ' aria-current="page"' : ""}>${escapeHtml(name)}</button>`).join("")}</div></section></div><section class="hangar-stage" role="tabpanel" aria-labelledby="${activeTabId}" data-active-tab="${escapeHtml(tab)}"><header class="hangar-signal"><span>VR // HANGAR LINK · ◇${currentCurrencies.voidShards ?? 0} · ⬡${currentCurrencies.bossCores ?? 0} · ◉${currentCurrencies.anomalyData ?? 0} · ✦${currentCurrencies.challengeSeals ?? 0} · ▱${currentCurrencies.salvageFragments ?? 0}</span><b>${ships.length} FRAMES · ${weapons.length} WEAPONS · ${reactors.length} CORES · ${modules.length} MODULES</b></header><div class="hangar-content"></div></section>`;
     const content = container.querySelector(".hangar-content");
     if (tab === "Run starten") content.innerHTML = `<div class="launch-console" data-tutorial-id="hangar-launch"><span>CAMPAIGN PATH // ARCHITECT</span><h3>BUILD THE IMPOSSIBLE.<br>PAY ITS PRICE.</h3><p>Loadout prüfen, Last bewusst wählen und den Run-Seed fixieren.</p><button class="btn" data-launch>Standard-Kampagne starten</button>${currentCheckpoint ? `<button class="btn small" data-resume data-tutorial-id="checkpoint-resume">Checkpoint fortsetzen · ${escapeHtml(currentCheckpoint.nodeId)}</button>` : ""}</div>`;
-    else {
-      const catalog = tab === "Schiffe" ? ships : tab === "Waffen" ? weapons : tab === "Module" ? modules : [];
-      if (catalog.length) {
-        const grid = document.createElement("div"); grid.className = "item-catalog"; grid.dataset.tutorialId = "catalog-grid";
-        for (const definition of catalog) grid.append(createItemCard(definition, { locked: !isUnlocked(definition) }));
-        content.append(grid);
-      } else content.innerHTML = `<div class="hangar-placeholder"><strong>${escapeHtml(tab.toUpperCase())}</strong><span>Subsystem ist verbunden. Inhalte werden aus dem persistenten Meta-State geladen.</span></div>`;
-    }
+    else if (tab === "Schiffe") renderCatalog(content, ships);
+    else if (tab === "Waffen") renderCatalog(content, weapons);
+    else if (tab === "Module") renderCatalog(content, modules);
+    else content.innerHTML = `<div class="hangar-placeholder"><strong>${escapeHtml(tab.toUpperCase())}</strong><span>Subsystem ist verbunden. Inhalte werden aus dem persistenten Meta-State geladen.</span></div>`;
     renderTab(tab, content);
     const tabs = container.querySelector(".hangar-tabs");
     const selectedTab = container.querySelector('[role="tab"][aria-selected="true"]');
