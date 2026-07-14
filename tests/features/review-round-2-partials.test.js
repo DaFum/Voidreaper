@@ -56,7 +56,7 @@ test("merchant reroll derives a new seed (and offer set) on every paid reroll", 
   });
   const run = {};
   const keyOf = offers => offers.map(offer => offer.offerId).join("|");
-  const base = merchant.roll(7, 0, 1);
+  const base = merchant.roll(run, 7, 0, 1);
   const first = merchant.reroll(run, 7, 0, 1);
   const second = merchant.reroll(run, 7, 0, 1);
   assert.notEqual(keyOf(first), keyOf(base));

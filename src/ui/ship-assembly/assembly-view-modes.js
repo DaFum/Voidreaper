@@ -3,13 +3,13 @@ export const ASSEMBLY_VIEW_MODES = Object.freeze({ NORMAL: "normal", STRUCTURE: 
 export const ASSEMBLY_VIEW_MODE_LABELS = Object.freeze({ normal: "KONSTRUKTION", structure: "STRUKTUR", energy: "ENERGIE", damage: "SCHADEN", flight: "FLUGPROFIL" });
 
 const branchDepthFor = (node, assembly) => {
-  const portDepth = assembly.portsById[node.parentPortId]?.branchDepth;
+  const portDepth = assembly?.portsById?.[node?.parentPortId]?.branchDepth;
   if (portDepth != null) return portDepth;
   let depth = -1;
-  let current = assembly.nodesById?.[node.nodeId] ?? node;
+  let current = assembly?.nodesById?.[node?.nodeId] ?? node;
   while (current?.parentNodeId) {
     depth += 1;
-    current = assembly.nodesById?.[current.parentNodeId];
+    current = assembly?.nodesById?.[current.parentNodeId];
   }
   return Math.max(0, depth);
 };

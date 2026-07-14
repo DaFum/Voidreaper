@@ -24,6 +24,17 @@ test("structure labels derive depth through parent nodes when no parent port rem
   assert.equal(overlay.labels[1].text, "T1");
 });
 
+test("structure labels fall back to depth zero when assembly data is unavailable", () => {
+  const geometry = {
+    connections: [],
+    nodes: [{ nodeId: "module", isRoot: false, worldPosition: { x: 1, y: 1 } }]
+  };
+
+  const overlay = getViewModeOverlay(ASSEMBLY_VIEW_MODES.STRUCTURE, { geometry });
+
+  assert.equal(overlay.labels[0].text, "T0");
+});
+
 test("diagnostic labels receive deterministic non-overlapping positions", () => {
   const labels = layoutOverlayLabels([
     { text: "A", position: { x: 0, y: 0 } },

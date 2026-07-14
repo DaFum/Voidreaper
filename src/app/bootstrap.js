@@ -1341,7 +1341,7 @@ export async function bootstrap() {
               },
               onLeave: finish,
             });
-          showMerchant(merchant.roll(node.seed, node.regionIndex));
+          showMerchant(merchant.roll(previewRun, node.seed, node.regionIndex));
           return;
         }
         if (node.type === "workshop") {

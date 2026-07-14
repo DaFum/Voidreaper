@@ -15,14 +15,18 @@ test("merchant offers can only be purchased once", () => {
     modules: [{ id: "module", name: "Module", itemPower: 1 }],
     currencyService: { spend: () => { spends += 1; return true; } }
   });
-  const offer = merchant.roll(7)[0];
   const run = { inventory: [], resources: {}, ids: { create: () => "item-1" } };
+  const offer = merchant.roll(run, 7)[0];
 
   assert.equal(merchant.buy(run, offer), true);
   assert.equal(merchant.buy(run, offer), false);
   assert.equal(merchant.buy(run, { ...offer, purchased: false }), false);
   assert.equal(spends, 1);
-  assert.equal(merchant.roll(7).some(entry => entry.offerId === offer.offerId), false);
+  assert.equal(merchant.roll(run, 7).some(entry => entry.offerId === offer.offerId), false);
+  assert.deepEqual(JSON.parse(JSON.stringify(run)).consumedOfferIds, [offer.offerId]);
+
+  const nextRun = { inventory: [], resources: {}, ids: { create: () => "item-2" } };
+  assert.equal(merchant.roll(nextRun, 7).some(entry => entry.offerId === offer.offerId), true);
 });
 
 test("weapon telemetry omits an unsupported hardcoded damage figure", () => {

@@ -9,19 +9,21 @@ export const merchantPrice = (item, regionIndex = 0, tier = 1) => item.basePrice
 
 export function createMerchantService({ modules = [], weapons = [], reactors = [], currencyService, eventBus } = {}) {
   const cache = new Map();
-  const consumedOfferIds = new Set();
   const rerollCounts = new Map();
-  function roll(seed, regionIndex = 0, tier = 1) {
+  const consumedOfferIdsFor = run => run.consumedOfferIds ??= [];
+  function roll(run, seed, regionIndex = 0, tier = 1) {
     const key = `${seed}:${regionIndex}:${tier}`;
-    if (cache.has(key)) return cache.get(key);
-    const rng = createRunRng(seed);
-    const moduleOffers = Array.from({ length: rng.integer(3, 5) }, () => modules[rng.integer(0, Math.max(0, modules.length - 1))]).filter(Boolean);
-    const equipment = rng.next() < .5 ? weapons : reactors;
-    const offers = [...new Map(moduleOffers.map(item => [item.id, item])).values(), equipment[rng.integer(0, Math.max(0, equipment.length - 1))], ...MERCHANT_SERVICES.slice(0, 2), CORRUPT_OFFER]
-      .filter(Boolean)
-      .map((item, index) => ({ ...item, offerId: `${key}:${index}`, price: merchantPrice(item, regionIndex, tier), reserved: false }));
-    cache.set(key, offers);
-    return offers;
+    if (!cache.has(key)) {
+      const rng = createRunRng(seed);
+      const moduleOffers = Array.from({ length: rng.integer(3, 5) }, () => modules[rng.integer(0, Math.max(0, modules.length - 1))]).filter(Boolean);
+      const equipment = rng.next() < .5 ? weapons : reactors;
+      const offers = [...new Map(moduleOffers.map(item => [item.id, item])).values(), equipment[rng.integer(0, Math.max(0, equipment.length - 1))], ...MERCHANT_SERVICES.slice(0, 2), CORRUPT_OFFER]
+        .filter(Boolean)
+        .map((item, index) => ({ ...item, offerId: `${key}:${index}`, price: merchantPrice(item, regionIndex, tier), reserved: false }));
+      cache.set(key, offers);
+    }
+    const consumedOfferIds = consumedOfferIdsFor(run);
+    return cache.get(key).filter(offer => !consumedOfferIds.includes(offer.offerId)).map(offer => ({ ...offer }));
   }
   function applyService(run, offer) {
     if (offer.id === "repair") { const player = run.player ?? {}; player.hull = player.maxHull ?? player.hull; }
@@ -33,7 +35,8 @@ export function createMerchantService({ modules = [], weapons = [], reactors = [
   return {
     roll,
     buy(run, offer) {
-      if (!offer || offer.purchased || (offer.offerId && consumedOfferIds.has(offer.offerId))) return false;
+      const consumedOfferIds = consumedOfferIdsFor(run);
+      if (!offer || offer.purchased || (offer.offerId && consumedOfferIds.includes(offer.offerId))) return false;
       const cost = offer.currency === "flux" ? { flux: offer.price } : { scrap: offer.price };
       if (!offer.corrupted && !currencyService.spend(run, cost)) return false;
       if (offer.corrupted) {
@@ -44,11 +47,7 @@ export function createMerchantService({ modules = [], weapons = [], reactors = [
       else if (offer.service) applyService(run, offer);
       else { const item={...offer,instanceId:offer.instanceId??run.ids?.create?.("merchant-item")??`merchant-${offer.offerId}`,definitionId:offer.definitionId??offer.id,ownership:"temporary"};run.inventory.push(item);eventBus?.emit("run-item-acquired",{item,source:"merchant",run}); }
       offer.purchased = true;
-      if (offer.offerId) consumedOfferIds.add(offer.offerId);
-      for (const offers of cache.values()) {
-        const index = offers.findIndex(entry => entry === offer || entry.offerId === offer.offerId);
-        if (index >= 0) offers.splice(index, 1);
-      }
+      if (offer.offerId) consumedOfferIds.push(offer.offerId);
       eventBus?.emit("merchant-purchase", { offerId: offer.offerId });
       return true;
     },
@@ -56,7 +55,7 @@ export function createMerchantService({ modules = [], weapons = [], reactors = [
     reserve(offer) { offer.reserved = true; return offer; },
     // each paid reroll must produce a fresh offer set, so the derived seed
     // carries a per-node reroll counter instead of a fixed offset
-    reroll(run, seed, regionIndex, tier) { if (!currencyService.spend(run, { scrap: 5 })) return null; const key = `${seed}:${regionIndex}:${tier}`; const count = (rerollCounts.get(key) ?? 0) + 1; rerollCounts.set(key, count); return roll(typeof seed === "number" ? seed + 0x9e3779b9 * count : `${seed}:rerolled:${count}`, regionIndex, tier); },
+    reroll(run, seed, regionIndex, tier) { if (!currencyService.spend(run, { scrap: 5 })) return null; const key = `${seed}:${regionIndex}:${tier}`; const count = (rerollCounts.get(key) ?? 0) + 1; rerollCounts.set(key, count); return roll(run, typeof seed === "number" ? seed + 0x9e3779b9 * count : `${seed}:rerolled:${count}`, regionIndex, tier); },
     reveal
   };
 }

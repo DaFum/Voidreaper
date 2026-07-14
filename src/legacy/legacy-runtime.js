@@ -526,7 +526,7 @@ import { escapeHtml } from "../ui/escape-html.js";
           warpT: this.grand(2, 4), healT: 2,
           hitT: 0, fireT: this.grand(1, 2.5), wobble: this.grand(0, TAU),
           elite: null, volatile: false, vampiric: false, orbCd: 0, dotT: 0, wasSplit: false,
-          birth: immediate ? 0.35 : 0.35, fusing: false, dead: false
+          birth: immediate ? 0 : 0.35, fusing: false, dead: false
         };
         if (!e.boss && type !== "swarm" && this.wave >= 3) {
           const chance = 0.04 + this.wave * 0.008 + this.corruption * 0.1;
@@ -803,9 +803,11 @@ import { escapeHtml } from "../ui/escape-html.js";
 
       killEnemyQuiet(e) {
         const i = this.enemies.indexOf(e);
-        if (i >= 0) { this.enemies[i] = this.enemies[this.enemies.length - 1]; this.enemies.pop(); }
-        e.dead = true;
-        this.kills++;
+        if (i >= 0) {
+          this.enemies[i] = this.enemies[this.enemies.length - 1]; this.enemies.pop();
+          e.dead = true;
+          this.kills++;
+        }
       },
 
       dropPickup(x, y) {

@@ -651,6 +651,16 @@ describe("simulator screen", () => {
     renderSimulatorScreen(container, { onStart: () => {} });
     expect(container.innerHTML).not.toContain("DPS");
   });
+
+  test("uses default simulator values when config is null", () => {
+    const container = root();
+
+    renderSimulatorScreen(container, { config: null, onStart: () => {} });
+
+    expect(container.querySelector("[data-density]").value).toBe("1");
+    expect(container.querySelector("[data-duration]").value).toBe("60");
+    expect(container.querySelector("[data-seed]").value).toBe("1");
+  });
 });
 
 describe("statistics screen", () => {
