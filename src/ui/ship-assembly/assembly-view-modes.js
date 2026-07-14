@@ -17,8 +17,11 @@ export function getViewModeOverlay(mode, { assembly, geometry, flightProfile } =
 
 export function layoutOverlayLabels(labels, { minimumDistance = 18 } = {}) {
   const placed = [];
-  // Calculate squared distance once to avoid repeated Math.hypot/sqrt calls in the inner loop
-  const minDistSq = minimumDistance * minimumDistance;
+  // Calculate squared distance once to avoid repeated Math.hypot/sqrt calls in the inner loop.
+  // Guard non-positive distances: squaring a negative value would otherwise turn it into a
+  // positive threshold and shift labels, whereas the original Math.hypot check (distance is
+  // always >= 0) never triggered for minimumDistance <= 0. Clamp to 0 to preserve that.
+  const minDistSq = minimumDistance > 0 ? minimumDistance * minimumDistance : 0;
   for (const label of labels) {
     const next = { ...label, position: { ...label.position } };
     while (placed.some(other => {

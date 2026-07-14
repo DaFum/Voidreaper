@@ -150,6 +150,15 @@ const prefersReducedMotion = () =>
   globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ??
   false;
 
+// German inspector labels for the assembly node damage states
+// (see DAMAGE_STATE in features/ship-assembly/model/assembly-constants.js).
+const DAMAGE_STATE_LABELS = {
+  intact: "INTAKT",
+  "armor-broken": "PANZERUNG ZERSTÖRT",
+  "core-disrupted": "KERN GESTÖRT",
+  detached: "ABGETRENNT",
+};
+
 export async function bootstrap() {
   document.documentElement.dataset.app = "voidreaper-modular";
   const events = createEventBus();
@@ -695,6 +704,9 @@ export async function bootstrap() {
       lodOptions: { userSetting: getAssemblyLod() },
     });
     if (rendered && player.shield > 0) {
+      // save/restore so strokeStyle, shadowColor and lineWidth do not leak into
+      // subsequent legacy draw calls sharing this context.
+      context.save();
       context.strokeStyle = "#4f6df5";
       context.shadowColor = "#4f6df5";
       context.shadowBlur = 14;
@@ -708,7 +720,7 @@ export async function bootstrap() {
         Math.PI * 2,
       );
       context.stroke();
-      context.shadowBlur = 0;
+      context.restore();
     }
     return rendered;
   });
@@ -771,7 +783,7 @@ export async function bootstrap() {
     if (game.mode === "tutorial") return 0;
     const geometry = services.assemblyGeometry?.getSnapshot(),
       target = (geometry?.nodes ?? [])
-        .filter((node) => !node.isRoot)
+        .filter((node) => !node.isRoot && node.worldPosition)
         .sort(
           (a, b) =>
             b.worldPosition.x * b.worldPosition.x +
@@ -1018,9 +1030,9 @@ export async function bootstrap() {
           ["MASSE", selected.mass ?? "—"],
           [
             "ZUSTAND",
-            selected.damageState === "intact"
-              ? "INTAKT"
-              : (selected.damageState ?? "—"),
+            DAMAGE_STATE_LABELS[selected.damageState] ??
+              selected.damageState ??
+              "—",
           ],
         ];
       } else if (selectedItem) {
@@ -1034,9 +1046,11 @@ export async function bootstrap() {
           ["MONTAGE", (assembly.mountTypes ?? []).join(" / ") || "—"],
         ];
       } else if (selectedPort) {
-        title = `${selectedPort.sizeClass}-PORT`;
+        title = selectedPort.sizeClass
+          ? `${selectedPort.sizeClass}-PORT`
+          : "PORT";
         deltas = [
-          ["KLASSE", selectedPort.sizeClass],
+          ["KLASSE", selectedPort.sizeClass ?? "—"],
           ["ENERGIE", selectedPort.energyClass ?? "—"],
           ["TRAGLAST", selectedPort.loadCapacity ?? "—"],
           ["TYP", selectedPort.mountType ?? "—"],
@@ -1070,41 +1084,45 @@ export async function bootstrap() {
       ctx.translate(width / 2, height / 2);
       ctx.scale(camera.zoom, camera.zoom);
       ctx.translate(camera.offset.x, camera.offset.y);
-      services.assemblyRenderer.renderPlayerShip(ctx, {
-        geometrySnapshot: model.geometry,
-        position: { x: 0, y: 0 },
-        time: clock,
-        buildAnimations: services.buildAnimations?.snapshot?.() ?? [],
-        lodOptions: { userSetting: getAssemblyLod() },
-      });
-      const selectedGeometry = geometryById.get(
-        workbench.session?.selectedNodeId,
-      );
-      if (selectedGeometry) {
-        ctx.save();
-        ctx.strokeStyle = "#ffc857";
-        ctx.lineWidth = 1.5 / camera.zoom;
-        ctx.setLineDash([6, 5]);
-        ctx.lineDashOffset = -clock * 14;
-        ctx.beginPath();
-        ctx.arc(
-          selectedGeometry.worldPosition.x,
-          selectedGeometry.worldPosition.y,
-          (selectedGeometry.geometry?.size ?? 14) + 9,
-          0,
-          Math.PI * 2,
+      // model is set by render() before the frame loop starts, but guard against
+      // a frame firing after the session was cleared to avoid a null dereference.
+      if (model) {
+        services.assemblyRenderer.renderPlayerShip(ctx, {
+          geometrySnapshot: model.geometry,
+          position: { x: 0, y: 0 },
+          time: clock,
+          buildAnimations: services.buildAnimations?.snapshot?.() ?? [],
+          lodOptions: { userSetting: getAssemblyLod() },
+        });
+        const selectedGeometry = geometryById.get(
+          workbench.session?.selectedNodeId,
         );
-        ctx.stroke();
-        ctx.restore();
+        if (selectedGeometry) {
+          ctx.save();
+          ctx.strokeStyle = "#ffc857";
+          ctx.lineWidth = 1.5 / camera.zoom;
+          ctx.setLineDash([6, 5]);
+          ctx.lineDashOffset = -clock * 14;
+          ctx.beginPath();
+          ctx.arc(
+            selectedGeometry.worldPosition.x,
+            selectedGeometry.worldPosition.y,
+            (selectedGeometry.geometry?.size ?? 14) + 9,
+            0,
+            Math.PI * 2,
+          );
+          ctx.stroke();
+          ctx.restore();
+        }
+        renderViewModeOverlay(
+          ctx,
+          getViewModeOverlay(workbench.session?.viewMode ?? "normal", {
+            assembly: model.assembly,
+            geometry: model.geometry,
+            flightProfile: services.flightProfile?.getProfile(),
+          }),
+        );
       }
-      renderViewModeOverlay(
-        ctx,
-        getViewModeOverlay(workbench.session?.viewMode ?? "normal", {
-          assembly: model.assembly,
-          geometry: model.geometry,
-          flightProfile: services.flightProfile?.getProfile(),
-        }),
-      );
       ctx.restore();
       screen.portsLayer.style.transform = `scale(${camera.zoom}) translate(${camera.offset.x}px, ${camera.offset.y}px)`;
     };
@@ -1367,10 +1385,12 @@ export async function bootstrap() {
           );
           renderAnomalyScreen(stage, {
             event: signal,
-            onChoose: (choiceId) => {
+            onChoose: async (choiceId) => {
               anomaly.resolve(previewRun, signal, choiceId);
+              // emit the tutorial event only after finish() has persisted the
+              // sector checkpoint, matching the merchant/workshop node flows.
+              await finish();
               events.emit(TUTORIAL_EVENTS.ANOMALY_RESOLVED, { choiceId });
-              finish();
             },
           });
           return;
