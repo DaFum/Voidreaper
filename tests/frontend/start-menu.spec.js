@@ -56,5 +56,6 @@ describe("start menu toggle", () => {
     expect(hangarCss).toContain('.hangar-tabs-shell[data-overflow-end="true"]');
     expect(hangarCss).toContain(".hangar-area-toggle");
     expect(hangarCss).toMatch(/@media \(max-width: 700px\)[\s\S]*\.hangar-tabs-shell[\s\S]*display: none/);
+    expect(hangarCss).not.toMatch(/\.hangar-tabs\s*\{[^}]*scroll-behavior:\s*smooth/);
   });
 });

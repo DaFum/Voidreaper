@@ -95,7 +95,7 @@
     .hangar-tabs-shell::before { left: 44px; background: linear-gradient(90deg, rgba(4,1,10,.98), transparent); }
     .hangar-tabs-shell::after { right: 44px; background: linear-gradient(270deg, rgba(4,1,10,.98), transparent); }
     .hangar-tabs-shell[data-overflow-start="true"]::before, .hangar-tabs-shell[data-overflow-end="true"]::after { opacity: 1; }
-    .hangar-tabs { display: flex; min-width: 0; overflow-x: auto; scrollbar-width: none; scroll-behavior: smooth; }
+    .hangar-tabs { display: flex; min-width: 0; overflow-x: auto; scrollbar-width: none; }
     .hangar-tabs::-webkit-scrollbar { display: none; }
     .hangar-tabs button { flex: 0 0 auto; min-height: 44px; padding: 9px 13px; border: 0; color: rgba(239,234,247,.55); background: transparent; font: 10px var(--font-m); letter-spacing: .08em; cursor: pointer; }
     .hangar-tabs button:hover { color: var(--bone); }
@@ -162,7 +162,7 @@
       .ship-core { order: -1; }
     }
     @media (max-width: 430px) { .hangar-area-panel > div { grid-template-columns: 1fr; } }
-    @media (prefers-reduced-motion: reduce) { .hangar-tabs, .hangar-tabs-shell::before, .hangar-tabs-shell::after { scroll-behavior: auto; transition: none; } }
+    @media (prefers-reduced-motion: reduce) { .hangar-tabs-shell::before, .hangar-tabs-shell::after { transition: none; } }
 
     
 

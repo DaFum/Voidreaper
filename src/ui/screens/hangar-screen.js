@@ -28,16 +28,35 @@ export function createHangarScreen(container, { ships, weapons, modules, reactor
     trigger.setAttribute("aria-expanded", "false");
     if (restoreFocus) trigger.focus();
   };
-  const updateOverflowState = () => {
+  const updateOverflowState = (projectedScrollLeft) => {
     const shell = container.querySelector(".hangar-tabs-shell");
     const tabs = container.querySelector(".hangar-tabs");
     if (!shell || !tabs) return;
-    const atStart = tabs.scrollLeft <= 1;
-    const atEnd = tabs.scrollLeft + tabs.clientWidth >= tabs.scrollWidth - 1;
+    const scrollLeft = projectedScrollLeft ?? tabs.scrollLeft;
+    const atStart = scrollLeft <= 3;
+    const atEnd = scrollLeft + tabs.clientWidth >= tabs.scrollWidth - 3;
     shell.dataset.overflowStart = String(!atStart);
     shell.dataset.overflowEnd = String(!atEnd);
     shell.querySelector('[data-hangar-scroll="previous"]').disabled = atStart;
     shell.querySelector('[data-hangar-scroll="next"]').disabled = atEnd;
+  };
+  const positionActiveTab = () => {
+    const tabs = container.querySelector(".hangar-tabs");
+    const selected = container.querySelector('[role="tab"][aria-selected="true"]');
+    if (!tabs || !selected || !tabs.clientWidth) return null;
+    const tabStart = selected.offsetLeft;
+    const tabEnd = tabStart + selected.offsetWidth;
+    const visibleEnd = tabs.scrollLeft + tabs.clientWidth;
+    let target = tabs.scrollLeft;
+    if (tabStart < tabs.scrollLeft) target = Math.max(0, tabStart);
+    else if (tabEnd > visibleEnd) {
+      target = Math.min(tabs.scrollWidth - tabs.clientWidth, tabEnd - tabs.clientWidth);
+    }
+    tabs.scrollLeft = target;
+    return target;
+  };
+  const refreshActiveNavigation = () => {
+    updateOverflowState(positionActiveTab());
   };
   const render = () => {
     const currentCurrencies = resolveCurrencies(currencies) ?? {};
@@ -54,16 +73,16 @@ export function createHangarScreen(container, { ships, weapons, modules, reactor
       } else content.innerHTML = `<div class="hangar-placeholder"><strong>${escapeHtml(tab.toUpperCase())}</strong><span>Subsystem ist verbunden. Inhalte werden aus dem persistenten Meta-State geladen.</span></div>`;
     }
     renderTab(tab, content);
+    const tabs = container.querySelector(".hangar-tabs");
     const selectedTab = container.querySelector('[role="tab"][aria-selected="true"]');
-    selectedTab?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    const projectedScrollLeft = positionActiveTab();
     if (focusTabAfterRender) selectedTab?.focus();
     if (focusMobileAfterRender) container.querySelector("[data-hangar-area-toggle]")?.focus();
     focusTabAfterRender = false;
     focusMobileAfterRender = false;
-    const tabs = container.querySelector(".hangar-tabs");
-    tabs?.addEventListener("scroll", updateOverflowState, { passive: true });
-    updateOverflowState();
-    requestAnimationFrame(updateOverflowState);
+    tabs?.addEventListener("scrollend", () => updateOverflowState(), { passive: true });
+    updateOverflowState(projectedScrollLeft);
+    requestAnimationFrame(() => requestAnimationFrame(refreshActiveNavigation));
   };
   container.addEventListener("click", event => {
     const tabButton = event.target.closest("[data-hangar-tab]");
@@ -85,10 +104,12 @@ export function createHangarScreen(container, { ships, weapons, modules, reactor
       const tabs = container.querySelector(".hangar-tabs");
       const direction = scrollButton.dataset.hangarScroll === "previous" ? -1 : 1;
       const distance = direction * Math.max(180, tabs.clientWidth * .7);
-      const behavior = document.documentElement.dataset.reducedMotion === "true" ? "auto" : "smooth";
+      const target = Math.max(0, Math.min(tabs.scrollWidth - tabs.clientWidth, tabs.scrollLeft + distance));
+      const prefersReducedMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      const behavior = document.documentElement.dataset.reducedMotion === "true" || prefersReducedMotion ? "auto" : "smooth";
       if (typeof tabs.scrollBy === "function") tabs.scrollBy({ left: distance, behavior });
       else tabs.scrollLeft += distance;
-      requestAnimationFrame(updateOverflowState);
+      updateOverflowState(target);
       return;
     }
     if (event.target.closest("[data-launch]")) onStart();
@@ -116,6 +137,13 @@ export function createHangarScreen(container, { ships, weapons, modules, reactor
     if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
   });
+  const startScreen = container.closest("#start");
+  if (startScreen && typeof MutationObserver !== "undefined") {
+    new MutationObserver(() => requestAnimationFrame(refreshActiveNavigation)).observe(startScreen, {
+      attributes: true,
+      attributeFilter: ["data-view"]
+    });
+  }
   render();
   return { render, show(name) { activateTab(name); } };
 }

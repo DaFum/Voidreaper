@@ -225,6 +225,73 @@ describe("hangar screen", () => {
     expect(document.activeElement).toBe(container.querySelector("[data-hangar-area-toggle]"));
     container.remove();
   });
+
+  test("refreshes overflow controls when the hidden start hangar becomes visible", async () => {
+    const start = document.createElement("section"), container = root();
+    start.id = "start";
+    start.dataset.view = "home";
+    start.append(container);
+    document.body.append(start);
+    createHangarScreen(container, catalogs);
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    const tabs = container.querySelector(".hangar-tabs");
+    Object.defineProperties(tabs, {
+      clientWidth: { configurable: true, value: 300 },
+      scrollWidth: { configurable: true, value: 900 }
+    });
+
+    start.dataset.view = "menu";
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    expect(container.querySelector('[data-hangar-scroll="next"]').disabled).toBe(false);
+    start.remove();
+  });
+
+  test("positions the active tab after layout and refreshes overflow controls", async () => {
+    let layoutReady = false;
+    const originalClientWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "clientWidth");
+    const originalScrollWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "scrollWidth");
+    const originalOffsetLeft = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetLeft");
+    const originalOffsetWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetWidth");
+    Object.defineProperty(HTMLElement.prototype, "clientWidth", { configurable: true, get() { return layoutReady && this.classList?.contains("hangar-tabs") ? 300 : 0; } });
+    Object.defineProperty(HTMLElement.prototype, "scrollWidth", { configurable: true, get() { return layoutReady && this.classList?.contains("hangar-tabs") ? 900 : 0; } });
+    Object.defineProperty(HTMLElement.prototype, "offsetLeft", { configurable: true, get() { return this.dataset?.hangarTab === "Einstellungen" ? 800 : 0; } });
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", { configurable: true, get() { return this.dataset?.hangarTab === "Einstellungen" ? 100 : 0; } });
+    try {
+      const container = root();
+      createHangarScreen(container, catalogs).show("Einstellungen");
+      layoutReady = true;
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      expect(container.querySelector(".hangar-tabs").scrollLeft).toBe(600);
+      expect(container.querySelector('[data-hangar-scroll="next"]').disabled).toBe(true);
+      expect(container.querySelector('[data-hangar-scroll="previous"]').disabled).toBe(false);
+    } finally {
+      const restore = (name, descriptor) => descriptor
+        ? Object.defineProperty(HTMLElement.prototype, name, descriptor)
+        : delete HTMLElement.prototype[name];
+      restore("clientWidth", originalClientWidth);
+      restore("scrollWidth", originalScrollWidth);
+      restore("offsetLeft", originalOffsetLeft);
+      restore("offsetWidth", originalOffsetWidth);
+    }
+  });
+
+  test("measures manual tab scrolling from its settled position", async () => {
+    const container = root();
+    createHangarScreen(container, catalogs);
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    const tabs = container.querySelector(".hangar-tabs");
+    Object.defineProperties(tabs, {
+      clientWidth: { configurable: true, value: 300 },
+      scrollWidth: { configurable: true, value: 900 }
+    });
+    tabs.scrollLeft = 600;
+    tabs.dispatchEvent(new Event("scrollend"));
+    expect(container.querySelector('[data-hangar-scroll="next"]').disabled).toBe(true);
+    expect(container.querySelector('[data-hangar-scroll="previous"]').disabled).toBe(false);
+  });
 });
 
 describe("loadout screen", () => {
