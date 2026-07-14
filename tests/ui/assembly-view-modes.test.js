@@ -13,6 +13,18 @@ test("diagnostic labels receive deterministic non-overlapping positions", () => 
   assert.deepEqual(layoutOverlayLabels(labels, { minimumDistance: 12 }), labels);
 });
 
+test("non-positive minimumDistance never shifts labels", () => {
+  const input = [
+    { text: "A", position: { x: 0, y: 0 } },
+    { text: "B", position: { x: 1, y: 1 } }
+  ];
+
+  // A negative minimumDistance must not be squared into a positive threshold:
+  // overlapping labels stay put, matching the original Math.hypot behaviour.
+  assert.deepEqual(layoutOverlayLabels(input, { minimumDistance: -12 }), input);
+  assert.deepEqual(layoutOverlayLabels(input, { minimumDistance: 0 }), input);
+});
+
 test("connection overlays draw paths and labels", () => {
   const calls = [];
   const context = new Proxy({}, {
