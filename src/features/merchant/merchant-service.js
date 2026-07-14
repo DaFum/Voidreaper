@@ -9,6 +9,7 @@ export const merchantPrice = (item, regionIndex = 0, tier = 1) => item.basePrice
 
 export function createMerchantService({ modules = [], weapons = [], reactors = [], currencyService, eventBus } = {}) {
   const cache = new Map();
+  const consumedOfferIds = new Set();
   const rerollCounts = new Map();
   function roll(seed, regionIndex = 0, tier = 1) {
     const key = `${seed}:${regionIndex}:${tier}`;
@@ -32,6 +33,7 @@ export function createMerchantService({ modules = [], weapons = [], reactors = [
   return {
     roll,
     buy(run, offer) {
+      if (!offer || offer.purchased || (offer.offerId && consumedOfferIds.has(offer.offerId))) return false;
       const cost = offer.currency === "flux" ? { flux: offer.price } : { scrap: offer.price };
       if (!offer.corrupted && !currencyService.spend(run, cost)) return false;
       if (offer.corrupted) {
@@ -41,6 +43,12 @@ export function createMerchantService({ modules = [], weapons = [], reactors = [
       }
       else if (offer.service) applyService(run, offer);
       else { const item={...offer,instanceId:offer.instanceId??run.ids?.create?.("merchant-item")??`merchant-${offer.offerId}`,definitionId:offer.definitionId??offer.id,ownership:"temporary"};run.inventory.push(item);eventBus?.emit("run-item-acquired",{item,source:"merchant",run}); }
+      offer.purchased = true;
+      if (offer.offerId) consumedOfferIds.add(offer.offerId);
+      for (const offers of cache.values()) {
+        const index = offers.findIndex(entry => entry === offer || entry.offerId === offer.offerId);
+        if (index >= 0) offers.splice(index, 1);
+      }
       eventBus?.emit("merchant-purchase", { offerId: offer.offerId });
       return true;
     },

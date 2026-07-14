@@ -69,6 +69,7 @@ import { escapeHtml } from "../ui/escape-html.js";
           this.unlocked = true; this.startDrone();
         } catch (_) { }
       },
+      suspend() { if (this.ctx && this.ctx.state === "running") this.ctx.suspend(); },
       resume() { if (this.ctx && this.ctx.state === "suspended") this.ctx.resume(); },
       startDrone() {
         const g = this.ctx.createGain(); g.gain.value = 0.05; g.connect(this.master);
@@ -224,8 +225,6 @@ import { escapeHtml } from "../ui/escape-html.js";
         window.addEventListener("keydown", e => {
           if (e.target && (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(e.target.tagName) || e.target.isContentEditable)) return;
           this.keys.add(e.code);
-          if ((e.code === "KeyP" || e.code === "Escape") && Game.state === "run") Game.pause();
-          else if ((e.code === "KeyP" || e.code === "Escape") && Game.state === "pause") Game.resume();
           if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(e.code)) e.preventDefault();
         });
         window.addEventListener("keyup", e => this.keys.delete(e.code));
@@ -482,7 +481,7 @@ import { escapeHtml } from "../ui/escape-html.js";
         this.startWave(1);
         if (mode === "daily") UI.toast("DAILY SEED · " + todayKey());
       },
-      pause() { if (this.state !== "run") return; this.state = "pause"; UI.pauseStats(this); UI.show("pausescr"); },
+      pause() { if (this.state !== "run") return; this.state = "pause"; AudioSys.suspend(); UI.pauseStats(this); UI.show("pausescr"); },
       resume() { if (this.state !== "pause") return; this.state = "run"; UI.show("hud"); AudioSys.resume(); },
       quit() { if(this.mode!=="tutorial")this.bankShards(); this.state = "menu"; UI.menu(); },
 
@@ -527,7 +526,7 @@ import { escapeHtml } from "../ui/escape-html.js";
           warpT: this.grand(2, 4), healT: 2,
           hitT: 0, fireT: this.grand(1, 2.5), wobble: this.grand(0, TAU),
           elite: null, volatile: false, vampiric: false, orbCd: 0, dotT: 0, wasSplit: false,
-          birth: immediate ? 0.35 : 0.35, fusing: false
+          birth: immediate ? 0.35 : 0.35, fusing: false, dead: false
         };
         if (!e.boss && type !== "swarm" && this.wave >= 3) {
           const chance = 0.04 + this.wave * 0.008 + this.corruption * 0.1;
@@ -737,6 +736,7 @@ import { escapeHtml } from "../ui/escape-html.js";
         const i = this.enemies.indexOf(e);
         if (i < 0) return;
         this.enemies[i] = this.enemies[this.enemies.length - 1]; this.enemies.pop();
+        e.dead = true;
         this.kills++;
 
         this.combo++; this.comboT = 2.4;
@@ -804,6 +804,7 @@ import { escapeHtml } from "../ui/escape-html.js";
       killEnemyQuiet(e) {
         const i = this.enemies.indexOf(e);
         if (i >= 0) { this.enemies[i] = this.enemies[this.enemies.length - 1]; this.enemies.pop(); }
+        e.dead = true;
         this.kills++;
       },
 
@@ -985,7 +986,8 @@ import { escapeHtml } from "../ui/escape-html.js";
       shake(m) { if (!isReducedMotion()) this.cam.shake = Math.max(this.cam.shake, m); },
       glitch() {
         document.body.classList.add("glitching", "hitfx");
-        setTimeout(() => document.body.classList.remove("glitching", "hitfx"), 220);
+        clearTimeout(this.glitchTimer);
+        this.glitchTimer = setTimeout(() => document.body.classList.remove("glitching", "hitfx"), 220);
       },
 
       gameOver() {
@@ -1228,7 +1230,7 @@ import { escapeHtml } from "../ui/escape-html.js";
           this.hash.query(e.x, e.y, e.r * 2, this.qbuf);
           let sx = 0, sy = 0;
           for (const o of this.qbuf) {
-            if (o === e) continue;
+            if (o === e || o.dead) continue;
             const d2 = dist2(e.x, e.y, o.x, o.y), rr = e.r + o.r;
             if (d2 < rr * rr && d2 > 0.001) {
               const d = Math.sqrt(d2), push = (rr - d) / rr;
@@ -1249,6 +1251,9 @@ import { escapeHtml } from "../ui/escape-html.js";
           const cr = e.r + p.r;
           if (dist2(e.x, e.y, p.x, p.y) < cr * cr) this.hurtPlayer(p, e.dmg);
         }
+
+        this.hash.clear();
+        for (const e of this.enemies) this.hash.insert(e);
 
         this.bullets.update(b => {
           b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;

@@ -75,6 +75,7 @@ export function createTutorialOverlay({ root, resolveTarget, onAction = () => {}
   let target = null;
   let targetId = null;
   let refreshFrame = null;
+  let observing = false;
 
   const refresh = () => {
     if (!model?.active) return;
@@ -97,6 +98,7 @@ export function createTutorialOverlay({ root, resolveTarget, onAction = () => {}
 
   const render = next => {
     model = next;
+    setObserving(Boolean(next?.active));
     root.hidden = !next?.active;
     if (root.hidden) {
       root.replaceChildren();
@@ -122,7 +124,12 @@ export function createTutorialOverlay({ root, resolveTarget, onAction = () => {}
       refresh();
     });
   });
-  observer.observe(document.body, { childList: true, subtree: true });
+  const setObserving = active => {
+    if (active === observing) return;
+    observing = active;
+    if (active) observer.observe(document.body, { childList: true, subtree: true });
+    else observer.disconnect();
+  };
   return {
     render,
     refresh,
@@ -133,6 +140,7 @@ export function createTutorialOverlay({ root, resolveTarget, onAction = () => {}
       removeEventListener("resize", refresh);
       removeEventListener("scroll", refresh, true);
       observer.disconnect();
+      observing = false;
       if (refreshFrame != null) cancelAnimationFrame(refreshFrame);
       root.onclick = null;
       root.replaceChildren();

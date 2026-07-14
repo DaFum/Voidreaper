@@ -60,6 +60,15 @@ export function createSaveStore(storage = globalThis.storage ?? globalThis.local
     }
   }
 
+  function migrateForWrite(data) {
+    try {
+      return migrateSave(data);
+    } catch (error) {
+      onWarning?.("Speichern fehlgeschlagen – Fortschritt wurde nicht gesichert.", error);
+      throw error;
+    }
+  }
+
   // Earlier builds wrote a `${SAVE_KEY}-pending` copy before the main key and
   // could strand it (as a stale duplicate, or as the only surviving write when
   // the main set hit the quota). Read it once; it is only removed after the
@@ -129,14 +138,14 @@ export function createSaveStore(storage = globalThis.storage ?? globalThis.local
       return createDefaultSave();
     },
     async save(data) {
-      return enqueue(() => persist(migrateSave(data)));
+      return enqueue(() => persist(migrateForWrite(data)));
     },
     async update(mutator) {
       return enqueue(async () => {
         const current = await this.load();
         const draft = structuredClone(current);
         const result = await mutator(draft);
-        return persist(migrateSave(result ?? draft));
+        return persist(migrateForWrite(result ?? draft));
       });
     },
     async getCheckpoint() { return (await this.load()).checkpoint ?? null; },

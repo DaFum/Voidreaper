@@ -16,7 +16,10 @@ export function createPlacementSuggestionService({ compatibilityService, geometr
           ...geometryService.measurePlacement(entry.port, moduleProfile, blueprint),
           blueprintMatch: blueprintMatchBonus(target?.match)
         };
-        const flightDelta = flightProfileService.previewPlacement(entry.port, moduleProfile);
+        const flightDelta = flightProfileService.previewPlacement({
+          ...entry.port,
+          worldPosition: entry.result.candidate?.center
+        }, moduleProfile);
         // lateralImbalance is an absolute coordinate (tens of units); normalize it
         // to the 0-1 range of the other metrics so it doesn't dominate the score.
         const score = scorePlacement({ ...metrics, massAsymmetry: Math.min(1, Math.abs(flightDelta.lateralImbalance ?? 0) / 60) });

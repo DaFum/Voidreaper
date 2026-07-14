@@ -9,7 +9,7 @@ export function createWeaponController(services) {
       assertWeaponAdapter(definition.adapter, definition.id);
       const context = createWeaponContext(run, services);
       const state = definition.adapter.createState(context);
-      equipped = { definition, state, context, shots: 0, damage: 0 };
+      equipped = { definition, state, context, shots: 0 };
       definition.adapter.onEquip(context, state);
       return equipped;
     },
@@ -25,7 +25,7 @@ export function createWeaponController(services) {
     },
     telemetry() {
       if (!equipped) return null;
-      return { weaponId: equipped.definition.id, shots: equipped.shots, damage: equipped.damage, ...equipped.definition.adapter.getTelemetry(equipped.context, equipped.state) };
+      return { weaponId: equipped.definition.id, shots: equipped.shots, ...equipped.definition.adapter.getTelemetry(equipped.context, equipped.state) };
     },
     get equipped() { return equipped; }
   };

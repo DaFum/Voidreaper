@@ -34,7 +34,7 @@ export function createHeatSystem({ eventBus, modules } = {}) {
         state.lastThreshold = threshold;
         eventBus?.emit("heat-threshold", { threshold, value: state.value, previous });
       }
-      if (!state.warningIssued && state.value >= 85 && state.coolingDelay > 0) {
+      if (!state.warningIssued && state.value >= 85) {
         state.warningIssued = true;
         eventBus?.emit("heat-warning", { seconds: 1.0 });
       }

@@ -82,3 +82,48 @@ test("migrateSave keeps new tutorial chapters incomplete after a legacy skip", (
   assert.deepEqual(output.tutorial.completedChapters, {});
   assert.deepEqual(output.tutorial.skippedChapters, {});
 });
+
+test("migrateSave caps migration backups instead of growing them on every retry", () => {
+  const input = {
+    saveVersion: 5,
+    migrationBackups: {
+      "v1-1": { saveVersion: 1 },
+      "v2-2": { saveVersion: 2 },
+      "v3-3": { saveVersion: 3 }
+    }
+  };
+
+  const output = migrateSave(input);
+
+  assert.equal(Object.keys(output.migrationBackups).length, 3);
+  assert.equal(Object.hasOwn(output.migrationBackups, "v1-1"), false);
+});
+
+test("legacy meta conversion consumes the refunded source data", () => {
+  const output = migrateSave({ meta: { mhp: 1 }, shards: 0 });
+
+  assert.equal(output.currencies.voidShards, 25);
+  assert.deepEqual(output.legacy.meta, {});
+
+  output.migrationHistory = [];
+  assert.equal(migrateSave(output).currencies.voidShards, 25);
+});
+
+test("tutorial migration preserves pre-existing tutorial progress", () => {
+  const output = migrateSave({
+    saveVersion: 5,
+    tutorial: {
+      version: 1,
+      autoOffer: true,
+      active: null,
+      completedChapters: { foundations: { completedAt: "before-v6" } },
+      skippedChapters: {},
+      seenSteps: { existing: true }
+    },
+    onboarding: { completed: { 1: true } }
+  });
+
+  assert.deepEqual(output.tutorial.completedChapters, { foundations: { completedAt: "before-v6" } });
+  assert.equal(output.tutorial.seenSteps.existing, true);
+  assert.equal(output.tutorial.seenSteps["legacy-run-1"], true);
+});

@@ -1888,6 +1888,11 @@ export async function bootstrap() {
       runQuickMountAction(QUICK_MOUNT_VERB_BY_ACTION[action], action);
       return;
     }
+    if (action === "pause") {
+      if (game.state === "run") game.pause();
+      else if (game.state === "pause") game.resume();
+      return;
+    }
     if (action === "dodge" && game.state === "run")
       controller.useDodge(game, input.axis());
   });

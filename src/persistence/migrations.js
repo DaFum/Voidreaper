@@ -10,6 +10,7 @@ const isPlainObject = value => value !== null && typeof value === "object" && !A
 // Keys that must never be copied from (possibly hand-edited or imported) save
 // JSON, or a crafted value would pollute Object.prototype during the merge.
 const UNSAFE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+const MAX_MIGRATION_BACKUPS = 3;
 
 function mergeDefaults(defaults, value) {
   if (!isPlainObject(value)) return clone(defaults);
@@ -87,8 +88,10 @@ export function migrateSave(input) {
       }
     }
     save.migrationBackups[`v${originalVersion}-${Date.now()}`] = backup;
+    const backupKeys = Object.keys(save.migrationBackups);
+    for (const key of backupKeys.slice(0, -MAX_MIGRATION_BACKUPS)) delete save.migrationBackups[key];
     save.migrationHistory.push({ from: originalVersion, to: CURRENT_SAVE_VERSION, at: new Date().toISOString() });
   }
   save.saveVersion = CURRENT_SAVE_VERSION;
-  return convertLegacyMeta(migrateTutorialSave(migrateShipAssemblySave(save,{fromVersion:originalVersion}), { fromVersion: originalVersion, legacyOnboarding }));
+  return convertLegacyMeta(migrateTutorialSave(migrateShipAssemblySave(save,{fromVersion:originalVersion}), { fromVersion: originalVersion, legacyOnboarding, existingTutorial: processedInput.tutorial }));
 }

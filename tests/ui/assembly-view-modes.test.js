@@ -1,6 +1,28 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { layoutOverlayLabels, renderViewModeOverlay } from "../../src/ui/ship-assembly/assembly-view-modes.js";
+import { ASSEMBLY_VIEW_MODES, getViewModeOverlay, layoutOverlayLabels, renderViewModeOverlay } from "../../src/ui/ship-assembly/assembly-view-modes.js";
+
+test("structure labels derive depth through parent nodes when no parent port remains", () => {
+  const assembly = {
+    nodesById: {
+      root: { nodeId: "root", parentNodeId: null },
+      branch: { nodeId: "branch", parentNodeId: "root" },
+      relocated: { nodeId: "relocated", parentNodeId: "branch", parentPortId: null }
+    },
+    portsById: {}
+  };
+  const geometry = {
+    connections: [],
+    nodes: [
+      { nodeId: "root", isRoot: true, worldPosition: { x: 0, y: 0 } },
+      { nodeId: "relocated", isRoot: false, parentNodeId: "branch", parentPortId: null, worldPosition: { x: 1, y: 1 } }
+    ]
+  };
+
+  const overlay = getViewModeOverlay(ASSEMBLY_VIEW_MODES.STRUCTURE, { assembly, geometry });
+
+  assert.equal(overlay.labels[1].text, "T1");
+});
 
 test("diagnostic labels receive deterministic non-overlapping positions", () => {
   const labels = layoutOverlayLabels([

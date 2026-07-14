@@ -4,6 +4,26 @@ import { applyTutorialTargets, createTutorialOverlay } from "../../src/ui/compon
 import { renderTutorialLibrary } from "../../src/ui/screens/tutorial-library-screen.js";
 
 describe("tutorial overlay", () => {
+  test("observes DOM mutations only while guidance is active", () => {
+    const observe = vi.fn(), disconnect = vi.fn();
+    const OriginalObserver = globalThis.MutationObserver;
+    vi.stubGlobal("MutationObserver", class { observe = observe; disconnect = disconnect; });
+    try {
+      const root = document.createElement("div");
+      const overlay = createTutorialOverlay({ root, resolveTarget: () => null });
+      expect(observe).not.toHaveBeenCalled();
+
+      overlay.render({ active: { chapter: { title: "Navigation" }, step: { kind: "action", title: "Karte", body: "Öffne sie." }, stepIndex: 0, stepCount: 1 } });
+      expect(observe).toHaveBeenCalledOnce();
+
+      overlay.render({ active: null });
+      expect(disconnect).toHaveBeenCalledOnce();
+      overlay.destroy();
+    } finally {
+      vi.stubGlobal("MutationObserver", OriginalObserver);
+    }
+  });
+
   test("maps every combat tutorial target to the real HUD containers", () => {
     document.body.innerHTML = `<canvas id="game"></canvas><div id="resource-meters"></div><button id="pausebtn"></button><button id="resumebtn"></button><button id="dodgebtn"></button><div id="combat-actions"></div><div id="cards"></div>`;
     applyTutorialTargets(document);
