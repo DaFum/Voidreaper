@@ -44,8 +44,10 @@ export function createTutorialService({ saveStore, eventBus, chapters, onPersist
   // Nested for...of loops and a direct Set.add() avoid garbage collection overhead and V8 slowdowns.
   const uniqueEvents = new Set();
   for (const chapter of chapters) {
-    for (const step of chapter.steps) {
-      if (step.event) uniqueEvents.add(step.event);
+    if (chapter?.steps) {
+      for (const step of chapter.steps) {
+        if (step?.event) uniqueEvents.add(step.event);
+      }
     }
   }
 
