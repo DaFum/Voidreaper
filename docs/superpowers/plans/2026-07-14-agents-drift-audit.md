@@ -272,7 +272,7 @@ Run:
 
 ```powershell
 $scripts = (Get-Content -Raw package.json | ConvertFrom-Json).scripts.PSObject.Properties.Name
-$commands = rg -o 'npm run [a-zA-Z0-9:_-]+' -g 'AGENTS.md' |
+$commands = rg -o --no-filename 'npm run [a-zA-Z0-9:_-]+' -g 'AGENTS.md' |
   ForEach-Object { ($_ -split 'npm run ')[1] } |
   Sort-Object -Unique
 $missing = $commands | Where-Object { $_ -notin $scripts }
