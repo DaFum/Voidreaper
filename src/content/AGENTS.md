@@ -16,6 +16,7 @@
 
 ## Non-Obvious Pitfalls
 - Content validators enforce fixed catalog sizes in key areas; adding/removing entries usually requires validator updates and design sign-off.
+- `validate-content` requires both `id` and `name` for ships, weapons, reactors, modules, and socket chips; do not add UI fallbacks that hide a missing required name.
 - ID changes are migration-sensitive even for "meta" content because old saves, blueprint imports, and codex history can reference those IDs.
 - Some shape fields are consumed indirectly through assembly resolvers and effect systems; missing defaults may fail only at runtime, not at import.
 - Weapon adapter modules must not hold per-run state at module scope (drone/mine/nanite controllers once leaked across runs this way). Create controllers inside `createState()` and store them on the weapon state so each equip gets a fresh instance.

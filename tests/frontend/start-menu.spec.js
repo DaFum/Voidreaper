@@ -58,4 +58,9 @@ describe("start menu toggle", () => {
     expect(hangarCss).toMatch(/@media \(max-width: 700px\)[\s\S]*\.hangar-tabs-shell[\s\S]*display: none/);
     expect(hangarCss).not.toMatch(/\.hangar-tabs\s*\{[^}]*scroll-behavior:\s*smooth/);
   });
+
+  test("selected clipped catalog cards draw their marker inside the clipped area", () => {
+    expect(hangarCss).toMatch(/\.item-card\[data-selected\]\s*\{[^}]*box-shadow:\s*inset/);
+    expect(hangarCss).not.toMatch(/\.item-card\[data-selected\]\s*\{[^}]*outline-offset:\s*[1-9]/);
+  });
 });

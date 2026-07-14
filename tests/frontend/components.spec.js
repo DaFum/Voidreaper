@@ -54,10 +54,43 @@ describe("item card", () => {
     expect(card.hasAttribute("aria-pressed")).toBe(false);
   });
 
-  test("locked cards are disabled and selected cards carry aria-pressed", () => {
-    const card = createItemCard({ id: "x", slot: "s", name: "n" }, { selected: true, locked: true, onSelect: vi.fn() });
-    expect(card.disabled).toBe(true);
-    expect(card.hasAttribute("aria-pressed")).toBe(true);
+  test("shows locked state and unlock path before selection without disabling details", () => {
+    const onSelect = vi.fn();
+    const card = createItemCard(
+      { id: "x", slot: "passive", name: "Locked Module", description: "Desc" },
+      {
+        state: "locked",
+        statusLabel: "GESPERRT",
+        statusDetail: "Über Forschung freischalten",
+        actionLabel: "Freischaltweg ansehen",
+        onSelect
+      }
+    );
+
+    expect(card.tagName).toBe("BUTTON");
+    expect(card.disabled).toBe(false);
+    expect(card.dataset.state).toBe("locked");
+    expect(card.textContent).toContain("GESPERRT");
+    expect(card.textContent).toContain("Über Forschung freischalten");
+    expect(card.getAttribute("aria-label")).toContain("gesperrt");
+    card.click();
+    expect(onSelect).toHaveBeenCalledOnce();
+  });
+
+  test("shows equipped slots on equipped cards", () => {
+    const card = createItemCard(
+      { id: "split", slot: "passive", name: "Split Matrix" },
+      {
+        state: "equipped",
+        statusLabel: "AUSGERÜSTET",
+        actionLabel: "Belegung ändern",
+        equippedSlots: ["Passiv 1", "Passiv 3"],
+        onSelect: vi.fn()
+      }
+    );
+
+    expect(card.textContent).toContain("AUSGERÜSTET");
+    expect(card.textContent).toContain("Passiv 1 · Passiv 3");
   });
 });
 

@@ -26,3 +26,5 @@
 - [superpowers/plans/2026-07-13-interactive-tutorial-master.md](superpowers/plans/2026-07-13-interactive-tutorial-master.md)
 - [superpowers/specs/2026-07-13-interactive-tutorial-design.md](superpowers/specs/2026-07-13-interactive-tutorial-design.md)
 - [manual-validation/interactive-tutorial.md](manual-validation/interactive-tutorial.md)
+- [superpowers/plans/2026-07-14-hangar-catalog-selection.md](superpowers/plans/2026-07-14-hangar-catalog-selection.md)
+- [superpowers/specs/2026-07-14-hangar-catalog-selection-design.md](superpowers/specs/2026-07-14-hangar-catalog-selection-design.md)

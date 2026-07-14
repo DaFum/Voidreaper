@@ -1408,6 +1408,29 @@ export async function bootstrap() {
     });
     mapScreen.render(services.sectors.model(previewRun));
   };
+  const persistLoadout = async (mutate) => {
+    const mutationRejected = {};
+    try {
+      const saved = await services.save.update((save) => {
+        const next = structuredClone(resolvePrimaryLoadout(save));
+        if (mutate(next) === false) throw mutationRejected;
+        save.loadouts.primary = next;
+      });
+      metaSave = saved;
+      try {
+        metaSave = await services.save.load();
+      } catch (error) {
+        legacyRuntime.ui.toast(error.message);
+      }
+      hangar.render();
+      return { ok: true };
+    } catch (error) {
+      if (error === mutationRejected)
+        return { ok: false, message: "Ausrüsten wurde abgelehnt." };
+      legacyRuntime.ui.toast(error.message);
+      return { ok: false, message: error.message };
+    }
+  };
   const hangar = createHangarScreen(hangarRoot, {
     ships: SHIPS,
     weapons: WEAPONS,
@@ -1416,6 +1439,17 @@ export async function bootstrap() {
     currencies: () => metaSave.currencies,
     checkpoint: () => currentCheckpoint,
     isUnlocked: (definition) => services.unlocks.isUnlocked(definition),
+    loadout: () => resolvePrimaryLoadout(metaSave),
+    onEquip: (slot, index, definitionId) =>
+      persistLoadout((next) => {
+        services.loadouts.equip(
+          next,
+          slot,
+          index,
+          createLoadoutItem(slot, index, definitionId),
+        );
+        return true;
+      }),
     onStart: () => {
       previewRun = resetCampaignResume(services);
       activeCampaignNodeId = null;
@@ -1470,15 +1504,6 @@ export async function bootstrap() {
             (groups[definition.slot] ??= []).push(definition);
             return groups;
           }, {});
-        const persistLoadout = async (mutate) => {
-          const next = structuredClone(resolvePrimaryLoadout(metaSave));
-          if (mutate(next) === false) return;
-          await services.save.update((save) => {
-            save.loadouts.primary = next;
-          });
-          metaSave = await services.save.load();
-          hangar.render();
-        };
         renderLoadoutScreen(
           content,
           services.loadouts.inspect(loadout),
@@ -1490,18 +1515,13 @@ export async function bootstrap() {
             onNavigate: (area) => hangar.show(area),
             onEquip: (slot, index, definitionId) =>
               persistLoadout((next) => {
-                try {
-                  services.loadouts.equip(
-                    next,
-                    slot,
-                    index,
-                    createLoadoutItem(slot, index, definitionId),
-                  );
-                  return true;
-                } catch (error) {
-                  legacyRuntime.ui.toast(error.message);
-                  return false;
-                }
+                services.loadouts.equip(
+                  next,
+                  slot,
+                  index,
+                  createLoadoutItem(slot, index, definitionId),
+                );
+                return true;
               }),
             onUnequip: (slot, index) =>
               persistLoadout((next) =>

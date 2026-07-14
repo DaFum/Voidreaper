@@ -21,6 +21,7 @@
 ## Non-Obvious Pitfalls
 
 - Validators are intentionally opinionated and include product-level contracts (for example fixed catalog counts), not only type/shape checks.
+- When a UI review suggests tolerating missing catalog fields, check `validate-content.mjs` first; required-field fallbacks can mask invalid content instead of improving resilience.
 - Never derive a validator allowlist from the same content it validates — the check becomes circular and a typo'd id validates itself. Module effect ids are allowlisted via `src/content/effects/module-effect-manifest.js`, a hand-maintained list updated deliberately when module effects are added.
 - These scripts run under Node ESM; avoid CommonJS patterns or path assumptions that only work in bundlers.
 - A "small" import change in a validator can trigger broader side effects by evaluating module init code from features or render layers.

@@ -35,6 +35,24 @@ export function resolvePrimaryLoadout(metaSave) {
   return metaSave?.loadouts?.primary?.slots ? metaSave.loadouts.primary : createStarterLoadout();
 }
 
+export function deriveEquipmentCatalogEntries(definitions, { isUnlocked = () => true, loadout = null } = {}) {
+  const equippedById = new Map();
+  for (const [slot, items] of Object.entries(loadout?.slots ?? {})) {
+    items.forEach((item, index) => {
+      if (!item?.definitionId) return;
+      const slots = equippedById.get(item.definitionId) ?? [];
+      slots.push({ slot, index });
+      equippedById.set(item.definitionId, slots);
+    });
+  }
+  return definitions.map(definition => {
+    const equippedSlots = equippedById.get(definition.id) ?? [];
+    const unlocked = isUnlocked(definition);
+    const state = equippedSlots.length ? "equipped" : unlocked ? "available" : "locked";
+    return { definition, state, equippedSlots, unlocked };
+  });
+}
+
 export function createLoadoutService({ registry, tagEngine, unlocks }) {
   function sources(loadout) {
     return Object.values(loadout.slots).flat().filter(Boolean).map(item => ({
