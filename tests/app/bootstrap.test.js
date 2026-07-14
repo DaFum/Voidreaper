@@ -43,6 +43,32 @@ test("bootstrap still exposes exactly one export: the async bootstrap function",
   assert.deepEqual(exportLines, ["export async function bootstrap() {"]);
 });
 
+test("foundations waits on the start screen for an explicit continue action", () => {
+  const overlayActionStart = source.indexOf("onAction: async (action) => {");
+  const overlayActionEnd = source.indexOf(
+    "// During the foundations training",
+    overlayActionStart,
+  );
+  const overlayActionSource = source.slice(overlayActionStart, overlayActionEnd);
+  assert.match(
+    overlayActionSource,
+    /game\.start\("tutorial"\)/,
+    "expected an explicit tutorial-overlay action to start the foundations run",
+  );
+
+  const startupSource = source.slice(source.lastIndexOf("await legacyRuntime.start();"));
+  assert.match(
+    startupSource,
+    /services\.tutorial\s*\.start\("foundations"\)/,
+    "expected fresh profiles to keep receiving the foundations offer",
+  );
+  assert.doesNotMatch(
+    startupSource,
+    /game\.start\("tutorial"\)/,
+    "bootstrap must leave the start screen visible until the offer is continued",
+  );
+});
+
 test("the wrapped ships/weapons/reactors/modules content summary preserves its exact wording", () => {
   const match = source.match(
     /console\.info\(\s*(`[^`]*`)\s*\+\s*(`[^`]*`),?\s*\);/,

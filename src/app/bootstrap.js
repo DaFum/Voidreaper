@@ -810,14 +810,20 @@ export async function bootstrap() {
     resolveTarget: (id) => document.querySelector(`[data-tutorial-id="${id}"]`),
     onAction: async (action) => {
       const before = services.tutorial.snapshot();
+      const startsFoundationsRun =
+        game.state !== "run" &&
+        before.active?.chapterId === "foundations" &&
+        (action === "next" || action === "resume");
       if (action === "next") await services.tutorial.advanceExplanation();
       if (action === "back") await services.tutorial.back();
       if (action === "pause") await services.tutorial.pause();
       if (action === "resume") await services.tutorial.resume();
       if (action === "skip") await services.tutorial.skipChapter();
       if (action === "stop") await services.tutorial.stop();
-      if (shouldExitFoundationsRun(before, services.tutorial.snapshot()))
-        exitFoundationsRun();
+      const after = services.tutorial.snapshot();
+      if (startsFoundationsRun && after.active?.chapterId === "foundations")
+        game.start("tutorial");
+      if (shouldExitFoundationsRun(before, after)) exitFoundationsRun();
     },
   });
   // During the foundations training, hold back level-up dialogs until the tutorial's evolution
@@ -1951,9 +1957,10 @@ export async function bootstrap() {
 
   await legacyRuntime.start();
   if (shouldAutoOfferFoundations(initialSave.tutorial))
-    void services.tutorial
-      .start("foundations")
-      .then(() => game.start("tutorial"));
-  else if (initialSave.tutorial.active?.chapterId === "foundations")
-    game.start("tutorial");
+    void services.tutorial.start("foundations");
+  else if (
+    initialSave.tutorial.active?.chapterId === "foundations" &&
+    !initialSave.tutorial.active.paused
+  )
+    void services.tutorial.pause();
 }
