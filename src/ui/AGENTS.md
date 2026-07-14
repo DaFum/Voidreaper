@@ -23,4 +23,5 @@
 - Pointer-drag interactions must track the initiating `pointerId` and release on `pointercancel`/`lostpointercapture`, not just `pointerup` — otherwise a browser-cancelled touch drag leaves the interaction stuck and a second finger causes jumps.
 
 ## Ship-Assembly Note
+
 - Ship-assembly UI changes should be checked together with the ship-assembly feature and styles.

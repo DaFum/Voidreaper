@@ -24,5 +24,6 @@
 - Energy `ratio` and `tier` are derived together; never set `energy.ratio` directly — go through `energySystem.recalculate` (or `calculateLoad`) so `LOAD_MODIFIERS[tier]` consumers see a consistent tier.
 
 ## Ship-Assembly Note
+
 - Ship-assembly work is coupled to content, geometry, mounting, damage, flight, UI, and rendering.
 - Use the adaptive ship-assembly docs as the design reference rather than recreating the spec in code comments.

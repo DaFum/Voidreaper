@@ -292,7 +292,10 @@ describe("hangar screen", () => {
     const container = root(), onEquip = vi.fn().mockResolvedValue({ ok: true });
     const screen = createHangarScreen(container, {
       ships: [], weapons: [], reactors: [], loadout: catalogLoadout,
-      modules: [{ id: "mod-new", slot: "passive", name: "New Module", unlockSource: "starter" }],
+      modules: [
+        { id: "mod-new", slot: "passive", name: "New Module", unlockSource: "starter" },
+        { id: "mod-old", slot: "passive", name: "Altes Modul", unlockSource: "starter" }
+      ],
       isUnlocked: () => true,
       onEquip
     });
@@ -301,7 +304,8 @@ describe("hangar screen", () => {
 
     const slots = [...container.querySelectorAll("[data-catalog-equip]")];
     expect(slots).toHaveLength(4);
-    expect(slots[1].textContent).toContain("mod-old");
+    expect(slots[1].textContent).toContain("Altes Modul");
+    expect(slots[2].textContent).toContain("Leer");
     container.querySelector("[data-catalog-selection-close]").click();
     expect(container.querySelector("[data-catalog-selection]").hidden).toBe(true);
     container.querySelector('[data-item-id="mod-new"]').click();
