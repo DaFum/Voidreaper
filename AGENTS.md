@@ -12,6 +12,8 @@
 - [docs/superpowers/plans/2026-07-13-interactive-tutorial-master.md](docs/superpowers/plans/2026-07-13-interactive-tutorial-master.md)
 - [docs/superpowers/specs/2026-07-13-interactive-tutorial-design.md](docs/superpowers/specs/2026-07-13-interactive-tutorial-design.md)
 - [docs/manual-validation/interactive-tutorial.md](docs/manual-validation/interactive-tutorial.md)
+- [docs/superpowers/plans/2026-07-14-hangar-catalog-selection.md](docs/superpowers/plans/2026-07-14-hangar-catalog-selection.md)
+- [docs/superpowers/specs/2026-07-14-hangar-catalog-selection-design.md](docs/superpowers/specs/2026-07-14-hangar-catalog-selection-design.md)
 
 ## Validation
 - `npm run build` runs the content, ship-assembly, and tutorial validators before the Vite production build.
