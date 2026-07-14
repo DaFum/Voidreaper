@@ -161,3 +161,16 @@ test("the rewrapped import specifiers were not accidentally duplicated or droppe
     "expected at least one multi-line named import to verify",
   );
 });
+
+test("hangar catalogs receive the live loadout and shared equip persistence path", () => {
+  const hangarStart = source.indexOf("const hangar = createHangarScreen");
+  const hangarEnd = source.indexOf("renderTab: (tab, content) => {", hangarStart);
+  const hangarOptions = source.slice(hangarStart, hangarEnd);
+  const persistStart = source.indexOf("const persistLoadout = async");
+
+  assert.notEqual(hangarStart, -1, "expected createHangarScreen wiring");
+  assert.ok(persistStart >= 0 && persistStart < hangarStart, "expected shared persistence before hangar creation");
+  assert.match(hangarOptions, /loadout:\s*\(\) => resolvePrimaryLoadout\(metaSave\)/);
+  assert.match(hangarOptions, /onEquip:\s*\(slot, index, definitionId\) =>\s*persistLoadout/);
+  assert.equal(source.match(/const persistLoadout = async/g)?.length, 1);
+});

@@ -297,6 +297,22 @@ describe("hangar screen", () => {
     expect(onEquip).not.toHaveBeenCalled();
   });
 
+  test("keeps the slot chooser open and announces a rejected equip result", async () => {
+    const container = root();
+    const screen = createHangarScreen(container, {
+      ships: [{ id: "vesper", slot: "ship", name: "Vesper", unlockSource: "starter" }],
+      weapons: [], modules: [], reactors: [], loadout: catalogLoadout,
+      isUnlocked: () => true,
+      onEquip: vi.fn().mockResolvedValue({ ok: false, message: "Vesper kann nicht ausgerüstet werden" })
+    });
+    screen.show("Schiffe");
+    container.querySelector('[data-item-id="vesper"]').click();
+    container.querySelector("[data-catalog-equip]").click();
+
+    await vi.waitFor(() => expect(container.querySelector("[data-catalog-message]").textContent).toContain("kann nicht ausgerüstet werden"));
+    expect(container.querySelector("[data-catalog-selection]").hidden).toBe(false);
+  });
+
   test("preserves each catalog query while switching tabs and rendering again", () => {
     const container = root();
     const screen = createHangarScreen(container, {
