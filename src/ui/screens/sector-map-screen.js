@@ -7,9 +7,9 @@ export function createSectorMapScreen(root, { onConfirm = () => {}, onWorkbench 
   let model = null;
   let connections = null;
 
-  function statusFor(node) {
-    if (model.visitedNodeIds.includes(node.id)) return "visited";
-    if (model.reachableNodeIds.includes(node.id)) return "reachable";
+  function statusFor(node, visitedSet, reachableSet) {
+    if (visitedSet.has(node.id)) return "visited";
+    if (reachableSet.has(node.id)) return "reachable";
     return "locked";
   }
 
@@ -18,6 +18,8 @@ export function createSectorMapScreen(root, { onConfirm = () => {}, onWorkbench 
     if (!root || !model?.map) return;
     connections?.destroy();
     connections = null;
+    const visitedSet = new Set(model.visitedNodeIds);
+    const reachableSet = new Set(model.reachableNodeIds);
     const nodes = flattenSectorMap(model.map).filter(node => node.regionIndex === model.regionIndex);
     root.innerHTML = `<section class="sector-map" data-tutorial-id="sector-map"><header><span>VR // SECTOR TRACE</span><b>REGION ${model.regionIndex + 1}/5</b>${onWorkbench?`<button class="btn small" data-assembly-workbench>WERKBANK</button>`:""}</header><div class="sector-map__graph"></div><aside class="sector-map__detail" data-tutorial-id="sector-detail">Signal wählen. Zweiter Tap bestätigt den erreichbaren Knoten.</aside></section>`;
     root.querySelector("[data-assembly-workbench]")?.addEventListener("click",onWorkbench);
@@ -25,7 +27,7 @@ export function createSectorMapScreen(root, { onConfirm = () => {}, onWorkbench 
     const nodeElements = [];
     for (const node of nodes) {
       const element=createSectorNode(node, {
-        status: statusFor(node),
+        status: statusFor(node, visitedSet, reachableSet),
         selected: selectedId === node.id,
         onSelect(candidate, alreadySelected) {
           if (alreadySelected) return onConfirm(candidate);

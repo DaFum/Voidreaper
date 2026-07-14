@@ -10,7 +10,11 @@ const TOGGLES = [
 ];
 
 export function renderSettingsScreen(root, settings, onChange) {
-  const codeFor = (action, fallback) => Object.entries(settings.bindings).find(([, bound]) => bound === action)?.[0] ?? fallback;
+  const codeForAction = {};
+  for (const code in settings.bindings) {
+    codeForAction[settings.bindings[code]] = code;
+  }
+  const codeFor = (action, fallback) => codeForAction[action] ?? fallback;
   root.innerHTML = `<section class="service-screen"><header>ACCESSIBILITY / CONTROLS <b>LIVE SAVE</b></header>${TOGGLES.map(([id, label, tutorialId]) => `<label${tutorialId ? ` data-tutorial-id="${tutorialId}"` : ""}><input type="checkbox" data-setting="${id}" ${settings[id] ? "checked" : ""}> ${escapeHtml(label)}</label>`).join("")}<label>UI-Skalierung <input type="range" min=".8" max="1.4" step=".1" value="${escapeHtml(settings.uiScale)}" data-setting="uiScale"></label><div data-tutorial-id="settings-bindings"><label>Dodge <input value="${escapeHtml(codeFor("dodge", "Space"))}" data-binding="dodge" readonly placeholder="Taste drücken"></label><label>Aktivmodul 1 <input value="${escapeHtml(codeFor("active-1", "KeyQ"))}" data-binding="active-1" readonly placeholder="Taste drücken"></label><label>Aktivmodul 2 <input value="${escapeHtml(codeFor("active-2", "KeyE"))}" data-binding="active-2" readonly placeholder="Taste drücken"></label></div></section>`;
   root.onchange = event => {
     const setting = event.target.dataset.setting;
@@ -28,13 +32,22 @@ export function renderSettingsScreen(root, settings, onChange) {
     const binding = event.target.dataset?.binding;
     if (!binding || event.code === "Tab") return;
     event.preventDefault();
-    const previousCode = Object.entries(settings.bindings).find(([, action]) => action === binding)?.[0] ?? null;
+    const previousCode = codeForAction[binding] ?? null;
     const displacedAction = settings.bindings[event.code] !== binding ? settings.bindings[event.code] : null;
-    for (const [code, action] of Object.entries(settings.bindings)) if (action === binding || code === event.code) delete settings.bindings[code];
+    for (const code in settings.bindings) {
+      const action = settings.bindings[code];
+      if (action === binding || code === event.code) delete settings.bindings[code];
+    }
     settings.bindings[event.code] = binding;
+    codeForAction[binding] = event.code;
     event.target.value = event.code;
     if (displacedAction) {
-      if (previousCode && previousCode !== event.code) settings.bindings[previousCode] = displacedAction;
+      if (previousCode && previousCode !== event.code) {
+        settings.bindings[previousCode] = displacedAction;
+        codeForAction[displacedAction] = previousCode;
+      } else {
+        delete codeForAction[displacedAction];
+      }
       const displacedInput = root.querySelector(`[data-binding="${displacedAction}"]`);
       if (displacedInput) displacedInput.value = previousCode ?? "";
     }
