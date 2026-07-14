@@ -13,7 +13,7 @@ const bootstrapPath = fileURLToPath(
   new URL("../../src/app/bootstrap.js", import.meta.url),
 );
 const source = readFileSync(bootstrapPath, "utf8");
-const lines = source.split("\n");
+const lines = source.split(/\r?\n/);
 
 test("bootstrap.js remains syntactically valid after the line-wrap refactor", () => {
   // node --check parses the file as an ES module without importing it, so this

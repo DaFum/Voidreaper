@@ -1130,7 +1130,8 @@ export async function bootstrap() {
         );
       }
       ctx.restore();
-      screen.portsLayer.style.transform = `scale(${camera.zoom}) translate(${camera.offset.x}px, ${camera.offset.y}px)`;
+      screen.portsLayer.style.transform =
+        `scale(${camera.zoom}) translate(${camera.offset.x}px, ${camera.offset.y}px)`;
     };
     screen = createAssemblyWorkbenchScreen(stage, {
       onAction: (action, data) => {
