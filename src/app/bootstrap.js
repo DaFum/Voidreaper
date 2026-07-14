@@ -1341,7 +1341,7 @@ export async function bootstrap() {
               },
               onLeave: finish,
             });
-          showMerchant(merchant.roll(node.seed, node.regionIndex));
+          showMerchant(merchant.roll(previewRun, node.seed, node.regionIndex));
           return;
         }
         if (node.type === "workshop") {
@@ -1886,6 +1886,11 @@ export async function bootstrap() {
   events.on("action", ({ action }) => {
     if (services.quickMount?.session) {
       runQuickMountAction(QUICK_MOUNT_VERB_BY_ACTION[action], action);
+      return;
+    }
+    if (action === "pause") {
+      if (game.state === "run") game.pause();
+      else if (game.state === "pause") game.resume();
       return;
     }
     if (action === "dodge" && game.state === "run")

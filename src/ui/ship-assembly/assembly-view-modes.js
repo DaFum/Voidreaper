@@ -2,13 +2,25 @@ import { escapeHtml } from "../escape-html.js";
 export const ASSEMBLY_VIEW_MODES = Object.freeze({ NORMAL: "normal", STRUCTURE: "structure", ENERGY: "energy", DAMAGE: "damage", FLIGHT: "flight" });
 export const ASSEMBLY_VIEW_MODE_LABELS = Object.freeze({ normal: "KONSTRUKTION", structure: "STRUKTUR", energy: "ENERGIE", damage: "SCHADEN", flight: "FLUGPROFIL" });
 
+const branchDepthFor = (node, assembly) => {
+  const portDepth = assembly?.portsById?.[node?.parentPortId]?.branchDepth;
+  if (portDepth != null) return portDepth;
+  let depth = -1;
+  let current = assembly?.nodesById?.[node?.nodeId] ?? node;
+  while (current?.parentNodeId) {
+    depth += 1;
+    current = assembly?.nodesById?.[current.parentNodeId];
+  }
+  return Math.max(0, depth);
+};
+
 export function renderAssemblyToolbar(root, active, onChange) {
   root.innerHTML = Object.values(ASSEMBLY_VIEW_MODES).map(mode => `<button data-mode="${mode}" aria-pressed="${mode === active}">${escapeHtml(ASSEMBLY_VIEW_MODE_LABELS[mode])}</button>`).join("");
   root.onclick = event => { const mode = event.target.closest("[data-mode]")?.dataset.mode; if (mode) onChange(mode); };
 }
 
 export function getViewModeOverlay(mode, { assembly, geometry, flightProfile } = {}) {
-  if (mode === ASSEMBLY_VIEW_MODES.STRUCTURE) return { connections: geometry.connections, labels: geometry.nodes.map(node => ({ position: node.worldPosition, text: node.isRoot ? "KERN" : `T${assembly.portsById[node.parentPortId]?.branchDepth ?? 0}` })) };
+  if (mode === ASSEMBLY_VIEW_MODES.STRUCTURE) return { connections: geometry.connections, labels: geometry.nodes.map(node => ({ position: node.worldPosition, text: node.isRoot ? "KERN" : `T${branchDepthFor(node, assembly)}` })) };
   if (mode === ASSEMBLY_VIEW_MODES.ENERGY) return { connections: geometry.connections.map(connection => ({ ...connection, label: connection.cable.energyClass })), labels: [] };
   if (mode === ASSEMBLY_VIEW_MODES.DAMAGE) return { labels: geometry.nodes.map(node => ({ position: node.worldPosition, text: node.isRoot ? "KERN" : `${Math.round(node.armorIntegrity ?? 0)}A / ${Math.round(node.coreIntegrity ?? 0)}C` })) };
   if (mode === ASSEMBLY_VIEW_MODES.FLIGHT) return { centerOfMass: flightProfile?.centerOfMass, thrustVectors: flightProfile?.thrustVectors ?? [], labels: [{ position: { x: 0, y: 0 }, text: `MASSE ${flightProfile?.totalMass ?? "—"}` }] };

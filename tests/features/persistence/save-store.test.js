@@ -75,6 +75,20 @@ test("failed writes surface a warning instead of failing silently", async () => 
     assert.equal(warnings.length, 2);
 });
 
+test("migration failures during save and update surface the write warning", async () => {
+    const warnings = [];
+    const store = createSaveStore(createMemoryLocalStorage(), { onWarning: message => warnings.push(message) });
+    const circular = createDefaultSave();
+    circular.profile.circular = circular;
+
+    await assert.rejects(() => store.save(circular));
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0], /Speichern fehlgeschlagen/);
+
+    await assert.rejects(() => store.update(save => { save.profile.circular = save; }));
+    assert.equal(warnings.length, 2);
+});
+
 test("a stranded pending save survives when the recovery write fails", async () => {
     const pendingSave = { ...createDefaultSave(), currencies: { voidShards: 3 } };
     const storage = createMemoryLocalStorage({ [PENDING_KEY]: JSON.stringify(pendingSave) });

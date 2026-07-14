@@ -42,6 +42,7 @@ export function createRunState({ seed = Date.now(), mode = "campaign", difficult
       flux: 0
     },
     inventory: [],
+    consumedOfferIds: [],
     telemetry: {
       damageBySource: {},
       heatPeaks: [],

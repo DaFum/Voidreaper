@@ -4,6 +4,19 @@ import { uiConfirm, uiPrompt } from "../../src/ui/components/modal-dialog.js";
 const modal = () => document.querySelector("dialog.vr-modal");
 
 describe("modal dialog", () => {
+  test("restores focus to the opener after close", async () => {
+    const opener = document.createElement("button");
+    document.body.append(opener);
+    opener.focus();
+    const result = uiConfirm("Löschen?");
+
+    modal().querySelector('[data-action="cancel"]').click();
+    await result;
+
+    expect(document.activeElement).toBe(opener);
+    opener.remove();
+  });
+
   test("uiConfirm resolves true on confirm and cleans up", async () => {
     const result = uiConfirm("Endgültig ausführen?", { title: "COLD FORGE" });
     expect(modal().textContent).toContain("Endgültig ausführen?");

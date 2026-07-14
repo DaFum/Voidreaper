@@ -161,6 +161,7 @@ test("adopting is a no-op when the combat run is the preview run (checkpoint res
 test("adopted combat build survives a checkpoint serialize/hydrate round-trip", () => {
   const previewRun = createRunState({ seed: 3 });
   const combatRun = createRunState({ seed: 4 });
+  previewRun.consumedOfferIds.push("merchant-offer-1");
   combatRun.assembly = { version: 1, shipFrameId: "vesper", rootNodeId: "root", nodesById: { root: { nodeId: "root", childPortIds: [] } }, portsById: {} };
   combatRun.inventory = [{ instanceId: "item-1", definitionId: "railgun", affixes: [], sockets: [] }];
   adoptCombatRunState(previewRun, combatRun);
@@ -171,6 +172,7 @@ test("adopted combat build survives a checkpoint serialize/hydrate round-trip", 
   assert.equal(hydrated.assembly.shipFrameId, "vesper");
   assert.equal(hydrated.assembly.nodesById.root.nodeId, "root");
   assert.equal(hydrated.inventory[0].definitionId, "railgun");
+  assert.deepEqual(hydrated.consumedOfferIds, ["merchant-offer-1"]);
   assert.equal(hydrated.services, services);
 });
 

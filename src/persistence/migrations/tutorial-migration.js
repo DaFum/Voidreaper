@@ -7,9 +7,16 @@ export const createTutorialState = ({ autoOffer = true } = {}) => ({
   seenSteps: {}
 });
 
-export function migrateTutorialSave(save, { fromVersion = 0, legacyOnboarding } = {}) {
+export function migrateTutorialSave(save, { fromVersion = 0, legacyOnboarding, existingTutorial } = {}) {
   if (fromVersion < 6) {
-    const tutorial = createTutorialState({ autoOffer: false });
+    const existing = existingTutorial ?? {};
+    const tutorial = {
+      ...createTutorialState({ autoOffer: false }),
+      ...existing,
+      completedChapters: { ...(existing.completedChapters ?? {}) },
+      skippedChapters: { ...(existing.skippedChapters ?? {}) },
+      seenSteps: { ...(existing.seenSteps ?? {}) }
+    };
     for (const [run, completed] of Object.entries(legacyOnboarding?.completed ?? {})) {
       if (completed) tutorial.seenSteps[`legacy-run-${run}`] = true;
     }

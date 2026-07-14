@@ -94,6 +94,14 @@ test("foundations resume does not restart an existing paused run", () => {
   );
 });
 
+test("the modern pause action toggles the live runtime", () => {
+  const actionStart = source.indexOf('events.on("action"');
+  const actionHandler = source.slice(actionStart, source.indexOf("applyTutorialTargets", actionStart));
+  assert.match(actionHandler, /action === "pause"/);
+  assert.match(actionHandler, /game\.pause\(\)/);
+  assert.match(actionHandler, /game\.resume\(\)/);
+});
+
 test("the wrapped ships/weapons/reactors/modules content summary preserves its exact wording", () => {
   const match = source.match(
     /console\.info\(\s*(`[^`]*`)\s*\+\s*(`[^`]*`),?\s*\);/,

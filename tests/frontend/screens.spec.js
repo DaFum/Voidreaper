@@ -173,6 +173,9 @@ describe("hangar screen", () => {
     expect(onStart).toHaveBeenCalledOnce();
     container.querySelector("[data-resume]").click();
     expect(onResume).toHaveBeenCalledWith({ nodeId: "cp-1" });
+    const tab = container.querySelector('[role="tab"][aria-selected="true"]');
+    const panel = container.querySelector('[role="tabpanel"]');
+    expect(panel.getAttribute("aria-labelledby")).toBe(tab.id);
   });
 
   test("switches tabs by click, renders catalogs with lock state and delegates unknown tabs", () => {
@@ -453,6 +456,10 @@ describe("research screen", () => {
 });
 
 describe("run summary screen", () => {
+  test("tolerates a missing root", () => {
+    expect(() => renderRunSummary(null)).not.toThrow();
+  });
+
   test("summarizes the assembly and reports the blueprint choice with replacement target", () => {
     const container = root(), onBlueprintChoice = vi.fn();
     renderRunSummary(container, {
@@ -625,6 +632,10 @@ describe("settings screen", () => {
 });
 
 describe("simulator screen", () => {
+  test("tolerates a missing root", () => {
+    expect(() => renderSimulatorScreen(null, {})).not.toThrow();
+  });
+
   test("prefills the config and collects the form into onStart", () => {
     const container = root(), onStart = vi.fn();
     renderSimulatorScreen(container, { config: { enemyId: "armored", density: 2, duration: 90, seed: 5 }, summary: { dps: 12.34, triggers: 9, faults: [], seed: 5 }, onStart });
@@ -639,6 +650,16 @@ describe("simulator screen", () => {
     const container = root();
     renderSimulatorScreen(container, { onStart: () => {} });
     expect(container.innerHTML).not.toContain("DPS");
+  });
+
+  test("uses default simulator values when config is null", () => {
+    const container = root();
+
+    renderSimulatorScreen(container, { config: null, onStart: () => {} });
+
+    expect(container.querySelector("[data-density]").value).toBe("1");
+    expect(container.querySelector("[data-duration]").value).toBe("60");
+    expect(container.querySelector("[data-seed]").value).toBe("1");
   });
 });
 

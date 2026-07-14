@@ -259,7 +259,12 @@ adjacent ports both pass the overlap check and then render visibly clipped into 
 
 ---
 
-## Low
+## Low — ✅ FIXED
+
+> **Resolution (2026-07-14):** All Low findings below were revalidated against the live paths and resolved.
+> The hangar already had roving keyboard focus, so only its missing tabpanel association was added. The
+> unused weapon controller had no damage signal to measure, so its misleading hardcoded `damage: 0` field
+> was removed instead of adding a speculative API. The unreferenced canvas renderer was deleted.
 
 ### Persistence
 - **`migrations.js:56-67`** — `migrationBackups` stores a full `clone(input)` per version bump and is never

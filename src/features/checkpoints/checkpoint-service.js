@@ -61,6 +61,7 @@ export function serializeCheckpointRun(run) {
 export function hydrateCheckpointRun(snapshot, services) {
   const run = decodeCollections(snapshot);
   run.pendingAssemblyItems ??= [];
+  run.consumedOfferIds ??= [];
   run.pools = asMap(run.pools);
   run.eventState = asMap(run.eventState);
   if (run.build.tags?.totals) { run.build.tags.totals = asMap(run.build.tags.totals); if (run.build.tags.provenance) run.build.tags.provenance = asMap(run.build.tags.provenance); } else run.build.tags = asMap(run.build.tags);
