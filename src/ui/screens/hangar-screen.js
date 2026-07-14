@@ -139,7 +139,14 @@ export function createHangarScreen(container, { ships, weapons, modules, reactor
   });
   const startScreen = container.closest("#start");
   if (startScreen && typeof MutationObserver !== "undefined") {
-    new MutationObserver(() => requestAnimationFrame(refreshActiveNavigation)).observe(startScreen, {
+    const observer = new MutationObserver(() => {
+      if (!container.isConnected) {
+        observer.disconnect();
+        return;
+      }
+      requestAnimationFrame(refreshActiveNavigation);
+    });
+    observer.observe(startScreen, {
       attributes: true,
       attributeFilter: ["data-view"]
     });

@@ -69,6 +69,21 @@ test("foundations waits on the start screen for an explicit continue action", ()
   );
 });
 
+test("foundations resume does not restart an existing paused run", () => {
+  const overlayActionStart = source.indexOf("onAction: async (action) => {");
+  const overlayActionEnd = source.indexOf(
+    "// During the foundations training",
+    overlayActionStart,
+  );
+  const overlayActionSource = source.slice(overlayActionStart, overlayActionEnd);
+
+  assert.match(
+    overlayActionSource,
+    /game\.state !== "pause"/,
+    "expected tutorial auto-start to preserve an existing paused run",
+  );
+});
+
 test("the wrapped ships/weapons/reactors/modules content summary preserves its exact wording", () => {
   const match = source.match(
     /console\.info\(\s*(`[^`]*`)\s*\+\s*(`[^`]*`),?\s*\);/,

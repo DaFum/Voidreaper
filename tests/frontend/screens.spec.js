@@ -247,6 +247,23 @@ describe("hangar screen", () => {
     start.remove();
   });
 
+  test("disconnects the visibility observer after the hangar is detached", async () => {
+    const disconnect = vi.spyOn(MutationObserver.prototype, "disconnect");
+    const start = document.createElement("section"), container = root();
+    start.id = "start";
+    start.append(container);
+    document.body.append(start);
+    createHangarScreen(container, catalogs);
+
+    container.remove();
+    start.dataset.view = "menu";
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(disconnect).toHaveBeenCalledOnce();
+    disconnect.mockRestore();
+    start.remove();
+  });
+
   test("positions the active tab after layout and refreshes overflow controls", async () => {
     let layoutReady = false;
     const originalClientWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "clientWidth");
@@ -520,6 +537,14 @@ describe("sector map screen", () => {
     expect(button.querySelector(".sector-node__region").textContent).toBe("shattered approach");
     expect(button.querySelector(".sector-node__danger").textContent).toContain("Gefahr 3");
     expect(button.querySelector(".sector-node__reward").textContent).toContain("Prototyp-Chance");
+  });
+
+  test("sector nodes tolerate a missing region id", () => {
+    const button = createSectorNode({
+      id: "n", type: "combat", layer: 0, index: 0,
+      informationLevel: 2, danger: 3, reward: "Scrap", corruptionDelta: 0
+    }, { status: "reachable", selected: false, onSelect: () => {} });
+    expect(button.querySelector(".sector-node__region").textContent).toBe("");
   });
 });
 

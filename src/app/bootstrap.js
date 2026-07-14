@@ -812,6 +812,7 @@ export async function bootstrap() {
       const before = services.tutorial.snapshot();
       const startsFoundationsRun =
         game.state !== "run" &&
+        game.state !== "pause" &&
         before.active?.chapterId === "foundations" &&
         (action === "next" || action === "resume");
       if (action === "next") await services.tutorial.advanceExplanation();
