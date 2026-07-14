@@ -20,7 +20,7 @@ export function createSectorNode(node, { status, selected, onSelect }) {
   const hidden = node.informationLevel < 1 && status !== "visited";
   button.innerHTML = hidden
     ? `<b class="sector-node__sigil" data-sigil="unknown">?</b><span>UNBEKANNTE SIGNATUR</span><small>Gefahr ${node.danger}</small>`
-    : `<b class="sector-node__sigil" data-sigil="${escapeHtml(node.type)}"><i aria-hidden="true"></i><em>${escapeHtml(definition.icon)}</em></b><span>${escapeHtml(definition.label)}</span><small>${escapeHtml(node.regionId.replaceAll("-", " "))} · Gefahr ${node.danger}<br>${escapeHtml(node.reward)} · Korr. ${node.corruptionDelta >= 0 ? "+" : ""}${node.corruptionDelta}</small>`;
+    : `<b class="sector-node__sigil" data-sigil="${escapeHtml(node.type)}"><i aria-hidden="true"></i><em>${escapeHtml(definition.icon)}</em></b><span>${escapeHtml(definition.label)}</span><small><span class="sector-node__region">${escapeHtml(node.regionId.replaceAll("-", " "))}</span><span class="sector-node__danger">Gefahr ${node.danger}</span><span class="sector-node__reward">${escapeHtml(node.reward)} · Korr. ${node.corruptionDelta >= 0 ? "+" : ""}${node.corruptionDelta}</span></small>`;
   button.addEventListener("click", () => onSelect(node, selected));
   return button;
 }

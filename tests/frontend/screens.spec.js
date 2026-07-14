@@ -15,6 +15,7 @@ import { renderResearchScreen } from "../../src/ui/screens/research-screen.js";
 import { renderRunSummary } from "../../src/ui/screens/run-summary-screen.js";
 import { renderSalvageMission } from "../../src/ui/screens/salvage-mission-screen.js";
 import { createSectorMapScreen } from "../../src/ui/screens/sector-map-screen.js";
+import { createSectorNode } from "../../src/ui/components/sector-node.js";
 import { renderSectorSummary } from "../../src/ui/screens/sector-summary-screen.js";
 import { renderSettingsScreen } from "../../src/ui/screens/settings-screen.js";
 import { renderSimulatorScreen } from "../../src/ui/screens/simulator-screen.js";
@@ -441,6 +442,17 @@ describe("sector map screen", () => {
     createSectorMapScreen(container, {}).render(model);
     expect(container.querySelector("[data-assembly-workbench]")).toBeNull();
     container.remove();
+  });
+
+  test("sector nodes expose region, danger, and reward as responsive text units", () => {
+    const button = createSectorNode({
+      id: "n", type: "combat", layer: 0, index: 0,
+      informationLevel: 2, regionId: "shattered-approach", danger: 3,
+      reward: "Prototyp-Chance", corruptionDelta: 2
+    }, { status: "reachable", selected: false, onSelect: () => {} });
+    expect(button.querySelector(".sector-node__region").textContent).toBe("shattered approach");
+    expect(button.querySelector(".sector-node__danger").textContent).toContain("Gefahr 3");
+    expect(button.querySelector(".sector-node__reward").textContent).toContain("Prototyp-Chance");
   });
 });
 

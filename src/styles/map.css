@@ -115,6 +115,10 @@
 }
 
 .sector-node small { color: rgba(239,234,247,.58); font-size: 8px; line-height: 1.5; }
+.sector-node small > span { display: block; overflow-wrap: anywhere; }
+.sector-node__region { color: rgba(239,234,247,.48); }
+.sector-node__danger { color: rgba(239,234,247,.7); }
+.sector-node__reward { margin-top: 2px; }
 .sector-node--reachable { border-color: var(--ice); box-shadow: 0 0 16px rgba(76,201,240,.1); cursor: pointer; }
 .sector-node--reachable:hover, .sector-node--reachable:focus-visible { border-color: var(--phosphor); box-shadow: 0 0 22px rgba(6,255,165,.24); transform: translateY(-3px); }
 .sector-node--visited { border-color: rgba(6,255,165,.38); opacity: .72; }
@@ -138,10 +142,10 @@
 }
 
 @media (max-width: 700px) {
-  .sector-map { padding: 13px 10px; overflow-x: auto; }
-  .sector-map > header { position: sticky; left: 0; width: calc(100vw - 56px); }
-  .sector-map__graph { --layer-width: 152px; grid-template-columns: repeat(4, var(--layer-width)); gap: 8px 42px; min-width: 760px; min-height: 360px; }
-  .sector-node { min-height: 88px; padding-left: 50px; }
+  .sector-map { padding: 13px 10px; overflow-x: auto; box-shadow: inset -18px 0 18px -18px rgba(76,201,240,.7); }
+  .sector-map > header { position: sticky; left: 0; width: min(100%, calc(100vw - 56px)); box-sizing: border-box; }
+  .sector-map__graph { --layer-width: 176px; grid-template-columns: repeat(4, var(--layer-width)); gap: 8px 34px; min-width: 806px; min-height: 360px; }
+  .sector-node { min-height: 96px; padding-left: 50px; }
   .sector-node__sigil { left: 10px; width: 30px; height: 30px; }
-  .sector-map__detail { position: sticky; left: 0; width: calc(100vw - 56px); }
+  .sector-map__detail { position: sticky; left: 0; width: min(100%, calc(100vw - 56px)); box-sizing: border-box; }
 }
