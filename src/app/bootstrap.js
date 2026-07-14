@@ -1486,6 +1486,7 @@ export async function bootstrap() {
             blueprints: services.blueprints.list(),
             activeBlueprintId: services.blueprints.getActiveId(),
             choicesBySlot,
+            onNavigate: (area) => hangar.show(area),
             onEquip: (slot, index, definitionId) =>
               persistLoadout((next) => {
                 try {

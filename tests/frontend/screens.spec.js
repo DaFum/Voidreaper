@@ -271,6 +271,15 @@ describe("loadout screen", () => {
     expect(onUnequip).toHaveBeenCalledWith("ship", 0);
   });
 
+  test("empty slot picker explains recovery paths and navigates through the hangar", () => {
+    const container = root(), onNavigate = vi.fn();
+    renderLoadoutScreen(container, inspection, { slots: {} }, { choicesBySlot: {}, onNavigate });
+    container.querySelector('[data-slot="passive"]').click();
+    expect(container.querySelector("[data-picker-empty]").textContent).toContain("Forschung oder Bergung");
+    container.querySelector('[data-picker-navigate="Forschung"]').click();
+    expect(onNavigate).toHaveBeenCalledWith("Forschung");
+  });
+
   test("read-only catalog cards are not focusable buttons", () => {
     const card = createItemCard({ id: "vesper", name: "Vesper", slot: "ship", tags: [] });
     expect(card.tagName).toBe("ARTICLE");
