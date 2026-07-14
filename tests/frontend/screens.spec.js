@@ -15,6 +15,7 @@ import { renderResearchScreen } from "../../src/ui/screens/research-screen.js";
 import { renderRunSummary } from "../../src/ui/screens/run-summary-screen.js";
 import { renderSalvageMission } from "../../src/ui/screens/salvage-mission-screen.js";
 import { createSectorMapScreen } from "../../src/ui/screens/sector-map-screen.js";
+import { createSectorNode } from "../../src/ui/components/sector-node.js";
 import { renderSectorSummary } from "../../src/ui/screens/sector-summary-screen.js";
 import { renderSettingsScreen } from "../../src/ui/screens/settings-screen.js";
 import { renderSimulatorScreen } from "../../src/ui/screens/simulator-screen.js";
@@ -190,6 +191,124 @@ describe("hangar screen", () => {
     screen.show("Nicht vorhanden");
     expect(container.querySelector(".hangar-stage").dataset.activeTab).toBe("Codex");
   });
+
+  test("provides desktop overflow controls and keyboard tab navigation", () => {
+    const container = root();
+    createHangarScreen(container, catalogs);
+    expect(container.querySelector('[data-hangar-scroll="previous"]').getAttribute("aria-label")).toBe("Vorherige Bereiche anzeigen");
+    expect(container.querySelector('[data-hangar-scroll="next"]').getAttribute("aria-label")).toBe("Weitere Bereiche anzeigen");
+
+    const selected = () => container.querySelector('[role="tab"][aria-selected="true"]');
+    selected().dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    expect(container.querySelector(".hangar-stage").dataset.activeTab).toBe("Tutorials");
+    selected().dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true }));
+    expect(container.querySelector(".hangar-stage").dataset.activeTab).toBe("Einstellungen");
+    selected().dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
+    expect(container.querySelector(".hangar-stage").dataset.activeTab).toBe("Run starten");
+  });
+
+  test("mobile area picker uses the shared tab path and restores focus", () => {
+    const container = root(), renderTab = vi.fn();
+    document.body.append(container);
+    createHangarScreen(container, { ...catalogs, renderTab });
+    const trigger = container.querySelector("[data-hangar-area-toggle]");
+    expect(trigger.textContent).toContain("Run starten");
+    trigger.click();
+    const panel = container.querySelector("[data-hangar-area-panel]");
+    expect(panel.hidden).toBe(false);
+    expect(panel.querySelectorAll("[data-hangar-area]")).toHaveLength(16);
+    panel.querySelector('[data-hangar-area="Einstellungen"]').click();
+    expect(container.querySelector(".hangar-stage").dataset.activeTab).toBe("Einstellungen");
+
+    container.querySelector("[data-hangar-area-toggle]").click();
+    container.querySelector("[data-hangar-area-panel]").dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    expect(document.activeElement).toBe(container.querySelector("[data-hangar-area-toggle]"));
+    container.remove();
+  });
+
+  test("refreshes overflow controls when the hidden start hangar becomes visible", async () => {
+    const start = document.createElement("section"), container = root();
+    start.id = "start";
+    start.dataset.view = "home";
+    start.append(container);
+    document.body.append(start);
+    createHangarScreen(container, catalogs);
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    const tabs = container.querySelector(".hangar-tabs");
+    Object.defineProperties(tabs, {
+      clientWidth: { configurable: true, value: 300 },
+      scrollWidth: { configurable: true, value: 900 }
+    });
+
+    start.dataset.view = "menu";
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    expect(container.querySelector('[data-hangar-scroll="next"]').disabled).toBe(false);
+    start.remove();
+  });
+
+  test("disconnects the visibility observer after the hangar is detached", async () => {
+    const disconnect = vi.spyOn(MutationObserver.prototype, "disconnect");
+    const start = document.createElement("section"), container = root();
+    start.id = "start";
+    start.append(container);
+    document.body.append(start);
+    createHangarScreen(container, catalogs);
+
+    container.remove();
+    start.dataset.view = "menu";
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(disconnect).toHaveBeenCalledOnce();
+    disconnect.mockRestore();
+    start.remove();
+  });
+
+  test("positions the active tab after layout and refreshes overflow controls", async () => {
+    let layoutReady = false;
+    const originalClientWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "clientWidth");
+    const originalScrollWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "scrollWidth");
+    const originalOffsetLeft = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetLeft");
+    const originalOffsetWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetWidth");
+    Object.defineProperty(HTMLElement.prototype, "clientWidth", { configurable: true, get() { return layoutReady && this.classList?.contains("hangar-tabs") ? 300 : 0; } });
+    Object.defineProperty(HTMLElement.prototype, "scrollWidth", { configurable: true, get() { return layoutReady && this.classList?.contains("hangar-tabs") ? 900 : 0; } });
+    Object.defineProperty(HTMLElement.prototype, "offsetLeft", { configurable: true, get() { return this.dataset?.hangarTab === "Einstellungen" ? 800 : 0; } });
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", { configurable: true, get() { return this.dataset?.hangarTab === "Einstellungen" ? 100 : 0; } });
+    try {
+      const container = root();
+      createHangarScreen(container, catalogs).show("Einstellungen");
+      layoutReady = true;
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      expect(container.querySelector(".hangar-tabs").scrollLeft).toBe(600);
+      expect(container.querySelector('[data-hangar-scroll="next"]').disabled).toBe(true);
+      expect(container.querySelector('[data-hangar-scroll="previous"]').disabled).toBe(false);
+    } finally {
+      const restore = (name, descriptor) => descriptor
+        ? Object.defineProperty(HTMLElement.prototype, name, descriptor)
+        : delete HTMLElement.prototype[name];
+      restore("clientWidth", originalClientWidth);
+      restore("scrollWidth", originalScrollWidth);
+      restore("offsetLeft", originalOffsetLeft);
+      restore("offsetWidth", originalOffsetWidth);
+    }
+  });
+
+  test("measures manual tab scrolling from its settled position", async () => {
+    const container = root();
+    createHangarScreen(container, catalogs);
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    const tabs = container.querySelector(".hangar-tabs");
+    Object.defineProperties(tabs, {
+      clientWidth: { configurable: true, value: 300 },
+      scrollWidth: { configurable: true, value: 900 }
+    });
+    tabs.scrollLeft = 600;
+    tabs.dispatchEvent(new Event("scrollend"));
+    expect(container.querySelector('[data-hangar-scroll="next"]').disabled).toBe(true);
+    expect(container.querySelector('[data-hangar-scroll="previous"]').disabled).toBe(false);
+  });
 });
 
 describe("loadout screen", () => {
@@ -235,6 +354,15 @@ describe("loadout screen", () => {
     container.querySelector('[data-slot="ship"]').click();
     container.querySelector("[data-unequip]").click();
     expect(onUnequip).toHaveBeenCalledWith("ship", 0);
+  });
+
+  test("empty slot picker explains recovery paths and navigates through the hangar", () => {
+    const container = root(), onNavigate = vi.fn();
+    renderLoadoutScreen(container, inspection, { slots: {} }, { choicesBySlot: {}, onNavigate });
+    container.querySelector('[data-slot="passive"]').click();
+    expect(container.querySelector("[data-picker-empty]").textContent).toContain("Forschung oder Bergung");
+    container.querySelector('[data-picker-navigate="Forschung"]').click();
+    expect(onNavigate).toHaveBeenCalledWith("Forschung");
   });
 
   test("read-only catalog cards are not focusable buttons", () => {
@@ -398,6 +526,25 @@ describe("sector map screen", () => {
     createSectorMapScreen(container, {}).render(model);
     expect(container.querySelector("[data-assembly-workbench]")).toBeNull();
     container.remove();
+  });
+
+  test("sector nodes expose region, danger, and reward as responsive text units", () => {
+    const button = createSectorNode({
+      id: "n", type: "combat", layer: 0, index: 0,
+      informationLevel: 2, regionId: "shattered-approach", danger: 3,
+      reward: "Prototyp-Chance", corruptionDelta: 2
+    }, { status: "reachable", selected: false, onSelect: () => {} });
+    expect(button.querySelector(".sector-node__region").textContent).toBe("shattered approach");
+    expect(button.querySelector(".sector-node__danger").textContent).toContain("Gefahr 3");
+    expect(button.querySelector(".sector-node__reward").textContent).toContain("Prototyp-Chance");
+  });
+
+  test("sector nodes tolerate a missing region id", () => {
+    const button = createSectorNode({
+      id: "n", type: "combat", layer: 0, index: 0,
+      informationLevel: 2, danger: 3, reward: "Scrap", corruptionDelta: 0
+    }, { status: "reachable", selected: false, onSelect: () => {} });
+    expect(button.querySelector(".sector-node__region").textContent).toBe("");
   });
 });
 

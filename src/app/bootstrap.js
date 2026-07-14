@@ -810,14 +810,21 @@ export async function bootstrap() {
     resolveTarget: (id) => document.querySelector(`[data-tutorial-id="${id}"]`),
     onAction: async (action) => {
       const before = services.tutorial.snapshot();
+      const startsFoundationsRun =
+        game.state !== "run" &&
+        game.state !== "pause" &&
+        before.active?.chapterId === "foundations" &&
+        (action === "next" || action === "resume");
       if (action === "next") await services.tutorial.advanceExplanation();
       if (action === "back") await services.tutorial.back();
       if (action === "pause") await services.tutorial.pause();
       if (action === "resume") await services.tutorial.resume();
       if (action === "skip") await services.tutorial.skipChapter();
       if (action === "stop") await services.tutorial.stop();
-      if (shouldExitFoundationsRun(before, services.tutorial.snapshot()))
-        exitFoundationsRun();
+      const after = services.tutorial.snapshot();
+      if (startsFoundationsRun && after.active?.chapterId === "foundations")
+        game.start("tutorial");
+      if (shouldExitFoundationsRun(before, after)) exitFoundationsRun();
     },
   });
   // During the foundations training, hold back level-up dialogs until the tutorial's evolution
@@ -1124,7 +1131,8 @@ export async function bootstrap() {
         );
       }
       ctx.restore();
-      screen.portsLayer.style.transform = `scale(${camera.zoom}) translate(${camera.offset.x}px, ${camera.offset.y}px)`;
+      screen.portsLayer.style.transform =
+        `scale(${camera.zoom}) translate(${camera.offset.x}px, ${camera.offset.y}px)`;
     };
     screen = createAssemblyWorkbenchScreen(stage, {
       onAction: (action, data) => {
@@ -1479,6 +1487,7 @@ export async function bootstrap() {
             blueprints: services.blueprints.list(),
             activeBlueprintId: services.blueprints.getActiveId(),
             choicesBySlot,
+            onNavigate: (area) => hangar.show(area),
             onEquip: (slot, index, definitionId) =>
               persistLoadout((next) => {
                 try {
@@ -1951,9 +1960,10 @@ export async function bootstrap() {
 
   await legacyRuntime.start();
   if (shouldAutoOfferFoundations(initialSave.tutorial))
-    void services.tutorial
-      .start("foundations")
-      .then(() => game.start("tutorial"));
-  else if (initialSave.tutorial.active?.chapterId === "foundations")
-    game.start("tutorial");
+    void services.tutorial.start("foundations");
+  else if (
+    initialSave.tutorial.active?.chapterId === "foundations" &&
+    !initialSave.tutorial.active.paused
+  )
+    void services.tutorial.pause();
 }

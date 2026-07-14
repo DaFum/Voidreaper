@@ -13,7 +13,7 @@ const bootstrapPath = fileURLToPath(
   new URL("../../src/app/bootstrap.js", import.meta.url),
 );
 const source = readFileSync(bootstrapPath, "utf8");
-const lines = source.split("\n");
+const lines = source.split(/\r?\n/);
 
 test("bootstrap.js remains syntactically valid after the line-wrap refactor", () => {
   // node --check parses the file as an ES module without importing it, so this
@@ -41,6 +41,57 @@ test("no line in bootstrap.js exceeds the 120 character limit", () => {
 test("bootstrap still exposes exactly one export: the async bootstrap function", () => {
   const exportLines = lines.filter((line) => line.startsWith("export"));
   assert.deepEqual(exportLines, ["export async function bootstrap() {"]);
+});
+
+test("foundations waits on the start screen for an explicit continue action", () => {
+  const overlayActionStart = source.indexOf("onAction: async (action) => {");
+  const overlayActionEnd = source.indexOf(
+    "// During the foundations training",
+    overlayActionStart,
+  );
+  const overlayActionSource = source.slice(overlayActionStart, overlayActionEnd);
+  assert.match(
+    overlayActionSource,
+    /game\.start\("tutorial"\)/,
+    "expected an explicit tutorial-overlay action to start the foundations run",
+  );
+
+  const startupSource = source.slice(source.lastIndexOf("await legacyRuntime.start();"));
+  assert.match(
+    startupSource,
+    /services\.tutorial\s*\.start\("foundations"\)/,
+    "expected fresh profiles to keep receiving the foundations offer",
+  );
+  assert.doesNotMatch(
+    startupSource,
+    /game\.start\("tutorial"\)/,
+    "bootstrap must leave the start screen visible until the offer is continued",
+  );
+});
+
+test("foundations resume does not restart an existing paused run", () => {
+  const overlayActionStart = source.indexOf("onAction: async (action) => {");
+  const overlayActionEnd = source.indexOf(
+    "// During the foundations training",
+    overlayActionStart,
+  );
+  assert.notEqual(
+    overlayActionStart,
+    -1,
+    'expected bootstrap.js to contain the "onAction: async (action) => {" anchor',
+  );
+  assert.notEqual(
+    overlayActionEnd,
+    -1,
+    'expected bootstrap.js to contain the "// During the foundations training" anchor',
+  );
+  const overlayActionSource = source.slice(overlayActionStart, overlayActionEnd);
+
+  assert.match(
+    overlayActionSource,
+    /game\.state !== "pause"/,
+    "expected tutorial auto-start to preserve an existing paused run",
+  );
 });
 
 test("the wrapped ships/weapons/reactors/modules content summary preserves its exact wording", () => {

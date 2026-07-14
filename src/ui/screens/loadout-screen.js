@@ -11,7 +11,7 @@ export function loadoutTagIds(inspection) {
   return totals?.keys ? [...totals.keys()] : [];
 }
 
-export function renderLoadoutScreen(container, inspection, loadout,{blueprints=[],activeBlueprintId=null,choicesBySlot={},onBlueprintChange,onEquip,onUnequip}={}) {
+export function renderLoadoutScreen(container, inspection, loadout,{blueprints=[],activeBlueprintId=null,choicesBySlot={},onBlueprintChange,onEquip,onUnequip,onNavigate}={}) {
   const status = loadoutStatus(inspection);
   const frameName = inspection.sources.find(source => source.slot === "ship")?.name ?? loadout.slots.ship?.[0]?.definitionId ?? "NO SHIP";
   const slots = Object.entries(LOADOUT_SLOT_LAYOUT).flatMap(([slot, count]) => Array.from({ length: count }, (_, index) => {
@@ -25,11 +25,14 @@ export function renderLoadoutScreen(container, inspection, loadout,{blueprints=[
   const openPicker = (slot, index) => {
     const choices = choicesBySlot[slot] ?? [];
     const current = loadout.slots[slot]?.[index] ?? null;
+    const emptyState = `<div class="loadout-picker__empty" data-picker-empty><p>Keine freigeschalteten Komponenten. Neue Optionen erhältst du über Forschung oder Bergung.</p><div><button data-picker-navigate="Forschung">Forschung öffnen</button><button data-picker-navigate="Bergung">Bergung öffnen</button></div></div>`;
     picker.hidden = false;
-    picker.innerHTML = `<header><small>${escapeHtml(slot)} ${index + 1}</small><button data-picker-close aria-label="Auswahl schließen">×</button></header><div class="item-catalog">${choices.map(definition => `<button class="item-card" data-choice="${escapeHtml(definition.id)}" aria-pressed="${definition.id === current?.definitionId}"><strong>${escapeHtml(definition.name ?? definition.id)}</strong><small>${escapeHtml(definition.description ?? definition.id)}</small></button>`).join("") || "<p>Keine freigeschalteten Komponenten.</p>"}</div><button data-unequip${current ? "" : " disabled"}>ENTFERNEN</button>`;
+    picker.innerHTML = `<header><small>${escapeHtml(slot)} ${index + 1}</small><button data-picker-close aria-label="Auswahl schließen">×</button></header><div class="item-catalog">${choices.map(definition => `<button class="item-card" data-choice="${escapeHtml(definition.id)}" aria-pressed="${definition.id === current?.definitionId}"><strong>${escapeHtml(definition.name ?? definition.id)}</strong><small>${escapeHtml(definition.description ?? definition.id)}</small></button>`).join("") || emptyState}</div><button data-unequip${current ? "" : " disabled"}>ENTFERNEN</button>`;
     picker.onclick = event => {
       const definitionId = event.target.closest("[data-choice]")?.dataset.choice;
       if (definitionId) { onEquip?.(slot, index, definitionId); closePicker(); return; }
+      const area = event.target.closest("[data-picker-navigate]")?.dataset.pickerNavigate;
+      if (area) { onNavigate?.(area); return; }
       if (event.target.closest("[data-unequip]")) { onUnequip?.(slot, index); closePicker(); return; }
       if (event.target.closest("[data-picker-close]")) closePicker();
     };
