@@ -36,4 +36,3 @@ Die Hangar-Synchronisierung übernimmt ebenfalls ein kleiner Helper in `click-pa
 - Frontend-Test für sichtbare Komponentennamen im Loadout.
 - Vollständige Tests und `npm run build`.
 - Live-Browsertest ohne technische Save-Änderung: Ressourcen erspielen, zwei Schiffe und vier Waffen über Forschung freischalten, drei Modul-Blaupausen durch Kampagnenextraktion erhalten, neues Schiff ausrüsten und einen Kampf mit diesem Loadout starten.
-
