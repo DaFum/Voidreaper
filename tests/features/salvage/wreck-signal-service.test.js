@@ -7,8 +7,7 @@ test("Wreck Signal Service - create() modifiers logic", async (t) => {
   const mockItem = { instanceId: "test-item-123" };
 
   await t.test("default fallback values (corruption < 75, deathCause not overheat)", () => {
-    const run = { corruption: 0, deathCause: "hull-collapse" };
-    const signal = service.create(mockItem, run);
+    const signal = service.create(mockItem);
     assert.deepEqual(signal.modifiers, ["echo-affixes", "wreck-field"]);
   });
 
