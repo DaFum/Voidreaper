@@ -19,9 +19,9 @@ export function attemptWorkshopAction({ workshop, session, action, target, paylo
 
 export function canResumeCampaignCombat(game) {
   return game?.state === "sector-map"
-    && game.mode === "standard"
-    && game.wave > 0
-    && game.player?.hp > 0;
+    && game?.mode === "standard"
+    && game?.wave > 0
+    && game?.player?.hp > 0;
 }
 
 export function prepareCheckpointResume({ services, controller, game, run }) {
@@ -40,9 +40,12 @@ export function syncLegacyVoidShards({ persistence, root, currencies }) {
 }
 
 export function syncMetaFromLegacy(metaSave, legacyData) {
-  metaSave.currencies.voidShards = legacyData.shards;
-  metaSave.profile.totalKills = legacyData.totalKills;
-  metaSave.profile.totalRuns = legacyData.totalRuns;
+  if (!metaSave || !legacyData) return metaSave;
+  metaSave.currencies ??= {};
+  metaSave.profile ??= {};
+  if (legacyData.shards !== undefined) metaSave.currencies.voidShards = legacyData.shards;
+  if (legacyData.totalKills !== undefined) metaSave.profile.totalKills = legacyData.totalKills;
+  if (legacyData.totalRuns !== undefined) metaSave.profile.totalRuns = legacyData.totalRuns;
   return metaSave;
 }
 

@@ -12,8 +12,8 @@ export function loadoutTagIds(inspection) {
 }
 
 export function loadoutDefinitionNames(inspection) {
-  return new Map((inspection.sources ?? [])
-    .filter(source => (source.id ?? source.definitionId) && source.name)
+  return new Map((inspection?.sources ?? [])
+    .filter(source => source && (source.id ?? source.definitionId) && source.name)
     .map(source => [source.id ?? source.definitionId, source.name]));
 }
 

@@ -1817,7 +1817,6 @@ export async function bootstrap() {
   originalStartWave = game.startWave.bind(game);
   const finishCampaignCombatNode = async (completedNode, completedNodeId) => {
     services.campaignRewards.apply(controller.run, completedNode);
-    adoptCombatRunState(previewRun, controller.run);
     const bossReward = await services.campaignRewards.extractBossCore(
       controller.run,
       completedNode,
@@ -1825,6 +1824,8 @@ export async function bootstrap() {
     if (completedNode.type === "extraction") {
       await services.campaignRewards.extractBlueprints(controller.run);
     }
+    adoptCombatRunState(previewRun, controller.run);
+    previewRun.rewardedBossNodeIds = controller.run.rewardedBossNodeIds ?? [];
     if (completedNode.type === "extraction" || bossReward.applied) {
       metaSave = await services.save.load();
       services.unlocks.hydrate(unlockFlagsFromSave(metaSave));
