@@ -1824,7 +1824,7 @@ export async function bootstrap() {
     if (completedNode.type === "extraction") {
       await services.campaignRewards.extractBlueprints(controller.run);
     }
-    if (previewRun) {
+    if (previewRun && controller.run) {
       adoptCombatRunState(previewRun, controller.run);
       previewRun.rewardedBossNodeIds = controller.run.rewardedBossNodeIds ?? [];
     }
