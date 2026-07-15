@@ -1826,6 +1826,7 @@ export async function bootstrap() {
     }
     if (previewRun) {
       adoptCombatRunState(previewRun, controller.run);
+      previewRun.resources = { ...controller.run.resources };
       previewRun.rewardedBossNodeIds = controller.run.rewardedBossNodeIds ?? [];
     }
     if (completedNode.type === "extraction" || bossReward.applied) {
