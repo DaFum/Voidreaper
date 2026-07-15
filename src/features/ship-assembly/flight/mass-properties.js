@@ -1,7 +1,8 @@
 export const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+const DEFAULT_ROOT_POSITION = { x: 0, y: 0 };
 // V8 performance optimization: Using for loops instead of reduce() avoids allocating
 // multiple intermediate objects and callback overhead during hot-path flight recalculations.
-export function calculateMassProperties(nodes, rootPosition = { x: 0, y: 0 }) {
+export function calculateMassProperties(nodes, rootPosition = DEFAULT_ROOT_POSITION) {
   let totalMass = 0;
   let comX = 0;
   let comY = 0;
