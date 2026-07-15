@@ -19,8 +19,14 @@ test('Build History Service', async (t) => {
     const build = service.capture(run, 'win');
     assert.equal(build.id, 'build-1600000000000-4fzzzx');
     assert.equal(build.createdAt, '2020-09-13T12:26:40.000Z');
+    assert.equal(build.ship, 's1');
+    assert.equal(build.weapon, 'w1');
+    assert.equal(build.reactor, 'r1');
+    assert.deepEqual(build.modules, ['m1']);
     assert.deepEqual(build.evolutions, ['e1', 'e2']);
     assert.deepEqual(build.tags, [['t1', 1]]);
+    assert.equal(build.seed, 'seed1');
+    assert.equal(build.result, 'win');
     assert.equal(build.favorite, false);
   });
 
@@ -37,7 +43,9 @@ test('Build History Service', async (t) => {
     assert.deepEqual(build.modules, []);
     assert.deepEqual(build.evolutions, []);
     assert.deepEqual(build.tags, []);
+    assert.equal(build.seed, 'seed2');
     assert.equal(build.result, 'loss');
+    assert.equal(build.favorite, false);
   });
 
   await t.test('save and favorite', async () => {
