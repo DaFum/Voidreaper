@@ -42,11 +42,7 @@ test("Build Code Encoding & Decoding", async (t) => {
     const code = encodeBuildCode(build);
     const decoded = decodeBuildCode(code);
 
-    // Using deepEqual because the object is initialized with undefined fields
-    assert.equal(decoded.build.ship, "frigate");
-    assert.equal(decoded.build.weapon, "missile");
-    assert.equal(decoded.build.reactor, undefined);
-    assert.equal(decoded.build.modules, undefined);
+    assert.deepEqual(decoded.build, { ship: "frigate", weapon: "missile" });
   });
 
   await t.test("decodeBuildCode throws for unsupported prefix", () => {
