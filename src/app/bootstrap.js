@@ -140,6 +140,7 @@ import {
   openReplacingQuickMount,
   prepareCheckpointResume,
   resetCampaignResume,
+  startFreshCampaign,
   subscribeWorkbenchGeometry,
   syncLegacyVoidShards,
   syncMetaFromLegacy,
@@ -1456,7 +1457,7 @@ export async function bootstrap() {
         return true;
       }),
     onStart: () => {
-      previewRun = resetCampaignResume(services);
+      previewRun = startFreshCampaign({ services, game });
       activeCampaignNodeId = null;
       showCampaignMap();
     },
@@ -1817,8 +1818,14 @@ export async function bootstrap() {
   const finishCampaignCombatNode = async (completedNode, completedNodeId) => {
     services.campaignRewards.apply(controller.run, completedNode);
     adoptCombatRunState(previewRun, controller.run);
+    const bossReward = await services.campaignRewards.extractBossCore(
+      controller.run,
+      completedNode,
+    );
     if (completedNode.type === "extraction") {
       await services.campaignRewards.extractBlueprints(controller.run);
+    }
+    if (completedNode.type === "extraction" || bossReward.applied) {
       metaSave = await services.save.load();
       services.unlocks.hydrate(unlockFlagsFromSave(metaSave));
     }

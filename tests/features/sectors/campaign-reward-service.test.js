@@ -86,3 +86,20 @@ test("extraction without modules writes nothing", async () => {
   });
   assert.equal(writes, 0);
 });
+
+test("defeating a boss node awards one permanent boss core exactly once", async () => {
+  const save = { currencies: { bossCores: 0 } };
+  const events = [];
+  const service = createCampaignRewardService({
+    equipment,
+    eventBus: { emit: (...args) => events.push(args) },
+    saveStore: { update: async mutate => { await mutate(save); return save; } }
+  });
+  const run = createRunState({ seed: 5 });
+  const node = { id: "mid-boss-1", type: "mid-boss" };
+
+  assert.deepEqual(await service.extractBossCore(run, node), { applied: true, amount: 1 });
+  assert.deepEqual(await service.extractBossCore(run, node), { applied: false, amount: 0 });
+  assert.equal(save.currencies.bossCores, 1);
+  assert.equal(events[0][0], "campaign-boss-core-extracted");
+});

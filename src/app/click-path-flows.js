@@ -64,6 +64,12 @@ export function resetCampaignResume(services) {
   return null;
 }
 
+export function startFreshCampaign({ services, game }) {
+  resetCampaignResume(services);
+  game.state = "start";
+  return null;
+}
+
 // Combat nodes play out in a separate run created by controller.attachLegacy,
 // while campaign checkpoints are serialized from the map's preview run. Pull
 // the combat run's build back into the preview run before writing a

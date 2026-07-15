@@ -35,6 +35,18 @@ export function createCampaignRewardService({ equipment, eventBus, saveStore }) 
       });
       eventBus.emit("campaign-blueprints-extracted", { definitionIds, run });
       return { applied: true, definitionIds };
+    },
+    async extractBossCore(run, node) {
+      if (!node || !["mid-boss", "boss"].includes(node.type)) return { applied: false, amount: 0 };
+      run.rewardedBossNodeIds ??= [];
+      if (run.rewardedBossNodeIds.includes(node.id)) return { applied: false, amount: 0 };
+      await saveStore.update(save => {
+        save.currencies ??= {};
+        save.currencies.bossCores = (save.currencies.bossCores ?? 0) + 1;
+      });
+      run.rewardedBossNodeIds.push(node.id);
+      eventBus.emit("campaign-boss-core-extracted", { amount: 1, nodeId: node.id, run });
+      return { applied: true, amount: 1 };
     }
   };
 }

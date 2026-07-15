@@ -11,6 +11,7 @@ import {
   openReplacingQuickMount,
   prepareCheckpointResume,
   resetCampaignResume,
+  startFreshCampaign,
   subscribeWorkbenchGeometry,
   syncMetaFromLegacy,
   syncLegacyVoidShards
@@ -30,6 +31,15 @@ test("only a standing campaign combat run may continue from the sector map", () 
   assert.equal(canResumeCampaignCombat({ ...standing, wave: 0 }), false);
   assert.equal(canResumeCampaignCombat({ ...standing, player: { hp: 0 } }), false);
   assert.equal(canResumeCampaignCombat({ ...standing, player: null }), false);
+});
+
+test("starting a new campaign cannot reuse the previous campaign combat", () => {
+  const services = { resumeRun: { id: "old-run" } };
+  const game = { state: "sector-map", wave: 4, player: { hp: 68 } };
+
+  assert.equal(startFreshCampaign({ services, game }), null);
+  assert.equal(game.state, "start");
+  assert.equal("resumeRun" in services, false);
 });
 
 test("merchant rejection keeps the service open and reports the shortage", () => {
