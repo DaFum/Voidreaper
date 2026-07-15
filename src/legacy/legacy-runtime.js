@@ -1,4 +1,5 @@
 import { escapeHtml } from "../ui/escape-html.js";
+import { uiConfirm } from "../ui/components/modal-dialog.js";
 
 
     import { LEGACY_EVOLUTIONS } from "../content/evolutions/legacy-evolutions.js";
@@ -1969,7 +1970,13 @@ import { escapeHtml } from "../ui/escape-html.js";
         UI.el("retrybtn").addEventListener("click", () => { AudioSys.resume(); Game.start(Game.mode); });
         UI.el("menubtn").addEventListener("click", () => { Game.state = "menu"; UI.menu(); });
         UI.el("resumebtn").addEventListener("click", () => Game.resume());
-        UI.el("quitbtn").addEventListener("click", () => Game.quit());
+        UI.el("quitbtn").addEventListener("click", () => {
+          uiConfirm("Are you sure you want to abandon this run? All progress will be lost.", { title: "ABANDON RUN", confirmLabel: "ABANDON", cancelLabel: "CANCEL" }).then(confirmed => {
+            if (confirmed) {
+              Game.quit();
+            }
+          });
+        });
         UI.el("pausebtn").addEventListener("click", () => Game.pause());
         UI.el("rerollbtn").addEventListener("click", () => Game.reroll());
         UI.el("banishbtn").addEventListener("click", () => {
