@@ -135,6 +135,7 @@ import {
   adoptCombatRunState,
   attemptMerchantPurchase,
   attemptWorkshopAction,
+  canResumeCampaignCombat,
   canUseWorkbenchPort,
   openReplacingQuickMount,
   prepareCheckpointResume,
@@ -1300,12 +1301,7 @@ export async function bootstrap() {
           activeCampaignNodeId = node.id;
           // Resume only a standing campaign run: a leftover tutorial run or a dead player must
           // never be revived here, or the node drops straight onto a stale game-over screen.
-          if (
-            game.mode === "standard" &&
-            game.player &&
-            game.wave > 0 &&
-            game.player.hp > 0
-          ) {
+          if (canResumeCampaignCombat(game)) {
             game.state = "run";
             ui.show("hud");
             originalStartWave(game.wave + 1);

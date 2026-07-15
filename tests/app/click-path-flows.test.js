@@ -6,6 +6,7 @@ import {
   adoptCombatRunState,
   attemptMerchantPurchase,
   attemptWorkshopAction,
+  canResumeCampaignCombat,
   canUseWorkbenchPort,
   openReplacingQuickMount,
   prepareCheckpointResume,
@@ -13,6 +14,22 @@ import {
   subscribeWorkbenchGeometry,
   syncLegacyVoidShards
 } from "../../src/app/click-path-flows.js";
+
+test("only a standing campaign combat run may continue from the sector map", () => {
+  const standing = {
+    state: "sector-map",
+    mode: "standard",
+    wave: 2,
+    player: { hp: 50 }
+  };
+
+  assert.equal(canResumeCampaignCombat(standing), true);
+  assert.equal(canResumeCampaignCombat({ ...standing, state: "start" }), false);
+  assert.equal(canResumeCampaignCombat({ ...standing, mode: "tutorial" }), false);
+  assert.equal(canResumeCampaignCombat({ ...standing, wave: 0 }), false);
+  assert.equal(canResumeCampaignCombat({ ...standing, player: { hp: 0 } }), false);
+  assert.equal(canResumeCampaignCombat({ ...standing, player: null }), false);
+});
 
 test("merchant rejection keeps the service open and reports the shortage", () => {
   let finished = false;
