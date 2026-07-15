@@ -8,7 +8,11 @@ import { createItemCard } from "../../src/ui/components/item-card.js";
 import { renderBuildHistory, renderCodexScreen } from "../../src/ui/screens/codex-screen.js";
 import { renderExtractionScreen } from "../../src/ui/screens/extraction-screen.js";
 import { catalogEntries, catalogUnlockLabel, createHangarScreen, resolveCheckpoint, resolveCurrencies } from "../../src/ui/screens/hangar-screen.js";
-import { loadoutStatus, renderLoadoutScreen } from "../../src/ui/screens/loadout-screen.js";
+import {
+  loadoutDefinitionNames,
+  loadoutStatus,
+  renderLoadoutScreen
+} from "../../src/ui/screens/loadout-screen.js";
 import { canAffordOffer, renderMerchantScreen } from "../../src/ui/screens/merchant-screen.js";
 import { renderPrototypeVault } from "../../src/ui/screens/prototype-vault-screen.js";
 import { renderResearchScreen } from "../../src/ui/screens/research-screen.js";
@@ -503,18 +507,37 @@ describe("hangar screen", () => {
 });
 
 describe("loadout screen", () => {
-  const inspection = { sources: [{ slot: "ship", name: "Frame X" }], capacity: 12, reserved: 4, load: { ratio: .42, tier: "stable" }, expectedHeat: 9, startingCorruption: 1, tags: new Map([["Void", 1]]) };
+  const inspection = {
+    sources: [
+      { id: "frame-x", slot: "ship", name: "Frame X" },
+      { id: "mod-1", slot: "passive", name: "Module One" }
+    ],
+    capacity: 12,
+    reserved: 4,
+    load: { ratio: .42, tier: "stable" },
+    expectedHeat: 9,
+    startingCorruption: 1,
+    tags: new Map([["Void", 1]])
+  };
 
   test("loadoutStatus reports unconfigured loadouts explicitly", () => {
     expect(loadoutStatus({ sources: [], load: { ratio: 9, tier: "collapse" } })).toEqual({ percent: 0, tier: "unconfigured" });
     expect(loadoutStatus(inspection)).toEqual({ percent: 42, tier: "stable" });
   });
 
+  test("maps equipped definition ids to their player-facing names", () => {
+    expect(loadoutDefinitionNames(inspection)).toEqual(new Map([
+      ["frame-x", "Frame X"],
+      ["mod-1", "Module One"]
+    ]));
+  });
+
   test("renders frame, slot grid, telemetry and blueprint selection", () => {
     const container = root(), onBlueprintChange = vi.fn();
     renderLoadoutScreen(container, inspection, { slots: { passive: [{ definitionId: "mod-1" }] } }, { blueprints: [{ blueprintId: "bp-1", name: "Vorlage" }], activeBlueprintId: "bp-1", onBlueprintChange });
     expect(container.innerHTML).toContain("Frame X");
-    expect(container.innerHTML).toContain("mod-1");
+    expect(container.querySelector('[data-slot="passive"] strong').textContent).toBe("Module One");
+    expect(container.querySelector('[data-slot="passive"]').getAttribute("aria-label")).toContain("Module One");
     expect(container.querySelector('option[value="bp-1"]').selected).toBe(true);
 
     const select = container.querySelector("[data-blueprint]");

@@ -17,6 +17,13 @@ export function attemptWorkshopAction({ workshop, session, action, target, paylo
   return true;
 }
 
+export function canResumeCampaignCombat(game) {
+  return game?.state === "sector-map"
+    && game.mode === "standard"
+    && game.wave > 0
+    && game.player?.hp > 0;
+}
+
 export function prepareCheckpointResume({ services, controller, game, run }) {
   services.resumeRun = run;
   controller.attachLegacy(game, { sync: false });
@@ -30,6 +37,16 @@ export function syncLegacyVoidShards({ persistence, root, currencies }) {
   const counter = root.querySelector("#shards0");
   if (counter) counter.textContent = String(value);
   return value;
+}
+
+export function syncMetaFromLegacy(metaSave, legacyData) {
+  if (!metaSave || !legacyData) return metaSave;
+  metaSave.currencies ??= {};
+  metaSave.profile ??= {};
+  if (legacyData.shards !== undefined) metaSave.currencies.voidShards = legacyData.shards;
+  if (legacyData.totalKills !== undefined) metaSave.profile.totalKills = legacyData.totalKills;
+  if (legacyData.totalRuns !== undefined) metaSave.profile.totalRuns = legacyData.totalRuns;
+  return metaSave;
 }
 
 export const canUseWorkbenchPort = port => Boolean(port && !port.occupiedByNodeId);
@@ -47,6 +64,12 @@ export function subscribeWorkbenchGeometry({ events, isActive, render }) {
 
 export function resetCampaignResume(services) {
   delete services.resumeRun;
+  return null;
+}
+
+export function startFreshCampaign({ services, game }) {
+  resetCampaignResume(services);
+  game.state = "start";
   return null;
 }
 

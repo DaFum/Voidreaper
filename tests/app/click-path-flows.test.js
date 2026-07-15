@@ -6,13 +6,41 @@ import {
   adoptCombatRunState,
   attemptMerchantPurchase,
   attemptWorkshopAction,
+  canResumeCampaignCombat,
   canUseWorkbenchPort,
   openReplacingQuickMount,
   prepareCheckpointResume,
   resetCampaignResume,
+  startFreshCampaign,
   subscribeWorkbenchGeometry,
+  syncMetaFromLegacy,
   syncLegacyVoidShards
 } from "../../src/app/click-path-flows.js";
+
+test("only a standing campaign combat run may continue from the sector map", () => {
+  const standing = {
+    state: "sector-map",
+    mode: "standard",
+    wave: 2,
+    player: { hp: 50 }
+  };
+
+  assert.equal(canResumeCampaignCombat(standing), true);
+  assert.equal(canResumeCampaignCombat({ ...standing, state: "start" }), false);
+  assert.equal(canResumeCampaignCombat({ ...standing, mode: "tutorial" }), false);
+  assert.equal(canResumeCampaignCombat({ ...standing, wave: 0 }), false);
+  assert.equal(canResumeCampaignCombat({ ...standing, player: { hp: 0 } }), false);
+  assert.equal(canResumeCampaignCombat({ ...standing, player: null }), false);
+});
+
+test("starting a new campaign cannot reuse the previous campaign combat", () => {
+  const services = { resumeRun: { id: "old-run" } };
+  const game = { state: "sector-map", wave: 4, player: { hp: 68 } };
+
+  assert.equal(startFreshCampaign({ services, game }), null);
+  assert.equal(game.state, "start");
+  assert.equal("resumeRun" in services, false);
+});
 
 test("merchant rejection keeps the service open and reports the shortage", () => {
   let finished = false;
@@ -121,6 +149,23 @@ test("void shard synchronization updates legacy state and its visible counter", 
 
   assert.equal(persistence.data.shards, 45);
   assert.equal(counter.textContent, "45");
+});
+
+test("live legacy progress refreshes stale Hangar meta without dropping other currencies", () => {
+  const metaSave = {
+    currencies: { voidShards: 10, bossCores: 2 },
+    profile: { totalKills: 15, totalRuns: 1 }
+  };
+
+  assert.equal(syncMetaFromLegacy(metaSave, {
+    shards: 11,
+    totalKills: 42,
+    totalRuns: 3
+  }), metaSave);
+  assert.deepEqual(metaSave, {
+    currencies: { voidShards: 11, bossCores: 2 },
+    profile: { totalKills: 42, totalRuns: 3 }
+  });
 });
 
 test("workbench port selection rejects missing and occupied ports", () => {

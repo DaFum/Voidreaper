@@ -30,7 +30,10 @@ import {
   createLoadoutService,
   resolvePrimaryLoadout,
 } from "../features/equipment/loadout-service.js";
-import { createUnlockService } from "../features/research/unlock-service.js";
+import {
+  createUnlockService,
+  unlockFlagsFromSave,
+} from "../features/research/unlock-service.js";
 import { SHIPS } from "../content/ships/index.js";
 import { WEAPONS } from "../content/weapons/index.js";
 import { REACTORS } from "../content/reactors/reactors.js";
@@ -132,12 +135,15 @@ import {
   adoptCombatRunState,
   attemptMerchantPurchase,
   attemptWorkshopAction,
+  canResumeCampaignCombat,
   canUseWorkbenchPort,
   openReplacingQuickMount,
   prepareCheckpointResume,
   resetCampaignResume,
+  startFreshCampaign,
   subscribeWorkbenchGeometry,
   syncLegacyVoidShards,
+  syncMetaFromLegacy,
 } from "./click-path-flows.js";
 import { renderLoadoutScreen } from "../ui/screens/loadout-screen.js";
 import { REGION_BY_ID } from "../content/sectors/regions.js";
@@ -272,13 +278,14 @@ export async function bootstrap() {
   console.info(
     `[assembly] ${services.assemblyProfiles.getCounts().shipFrames} ship profiles`,
   );
-  services.unlocks = createUnlockService(initialSave.unlocks);
+  services.unlocks = createUnlockService(unlockFlagsFromSave(initialSave));
   services.equipment = createEquipmentRegistry();
   for (const definition of [...SHIPS, ...WEAPONS, ...REACTORS, ...MODULES])
     services.equipment.register(definition);
   services.campaignRewards = createCampaignRewardService({
     equipment: services.equipment,
     eventBus: events,
+    saveStore: services.save,
   });
   services.loadouts = createLoadoutService({
     registry: services.equipment,
@@ -1296,12 +1303,7 @@ export async function bootstrap() {
           activeCampaignNodeId = node.id;
           // Resume only a standing campaign run: a leftover tutorial run or a dead player must
           // never be revived here, or the node drops straight onto a stale game-over screen.
-          if (
-            game.mode === "standard" &&
-            game.player &&
-            game.wave > 0 &&
-            game.player.hp > 0
-          ) {
+          if (canResumeCampaignCombat(game)) {
             game.state = "run";
             ui.show("hud");
             originalStartWave(game.wave + 1);
@@ -1455,7 +1457,7 @@ export async function bootstrap() {
         return true;
       }),
     onStart: () => {
-      previewRun = resetCampaignResume(services);
+      previewRun = startFreshCampaign({ services, game });
       activeCampaignNodeId = null;
       showCampaignMap();
     },
@@ -1552,7 +1554,7 @@ export async function bootstrap() {
           onPurchase: async (id) => {
             await services.research.purchase(id);
             metaSave = await services.save.load();
-            services.unlocks.hydrate(metaSave.unlocks);
+            services.unlocks.hydrate(unlockFlagsFromSave(metaSave));
             events.emit(TUTORIAL_EVENTS.RESEARCH_PURCHASED, { id });
             syncLegacyVoidShards({
               persistence: legacyRuntime.persistence,
@@ -1783,7 +1785,10 @@ export async function bootstrap() {
       }
     },
   });
-  ui.renderHangar = () => hangar.render();
+  ui.renderHangar = () => {
+    syncMetaFromLegacy(metaSave, legacyRuntime.persistence.data);
+    hangar.render();
+  };
 
   // Merchant hull repair targets the map preview run, but between campaign
   // combat nodes the legacy game.player keeps its damaged hull — heal it too,
@@ -1810,22 +1815,46 @@ export async function bootstrap() {
     hangar.render();
   };
   originalStartWave = game.startWave.bind(game);
+  const finishCampaignCombatNode = async (completedNode, completedNodeId) => {
+    services.campaignRewards.apply(controller.run, completedNode);
+    const bossReward = await services.campaignRewards.extractBossCore(
+      controller.run,
+      completedNode,
+    );
+    if (completedNode.type === "extraction") {
+      await services.campaignRewards.extractBlueprints(controller.run);
+    }
+    if (previewRun && controller.run) {
+      adoptCombatRunState(previewRun, controller.run);
+      previewRun.rewardedBossNodeIds = controller.run.rewardedBossNodeIds ?? [];
+    }
+    if (completedNode.type === "extraction" || bossReward.applied) {
+      metaSave = await services.save.load();
+      services.unlocks.hydrate(unlockFlagsFromSave(metaSave));
+    }
+    services.sectors.complete(previewRun, completedNodeId);
+    await writeCurrentCheckpoint(previewRun, completedNodeId);
+    game.state = "sector-map";
+    ui.show("start");
+    hangar.render();
+    showCampaignMap();
+  };
   game.startWave = (wave) => {
     if (activeCampaignNodeId && wave > 1) {
+      const completedNodeId = activeCampaignNodeId;
       const completedNode = flattenSectorMap(previewRun.campaign.map).find(
-        (node) => node.id === activeCampaignNodeId,
-      );
-      services.campaignRewards.apply(controller.run, completedNode);
-      adoptCombatRunState(previewRun, controller.run);
-      services.sectors.complete(previewRun, activeCampaignNodeId);
-      void writeCurrentCheckpoint(previewRun, activeCampaignNodeId).catch(
-        () => {},
+        (node) => node.id === completedNodeId,
       );
       activeCampaignNodeId = null;
-      game.state = "sector-map";
-      ui.show("start");
-      hangar.render();
-      showCampaignMap();
+      void finishCampaignCombatNode(completedNode, completedNodeId).catch(
+        (error) => {
+          legacyRuntime.ui.toast(error.message);
+          game.state = "sector-map";
+          ui.show("start");
+          hangar.render();
+          showCampaignMap();
+        },
+      );
       return;
     }
     originalStartWave(wave);

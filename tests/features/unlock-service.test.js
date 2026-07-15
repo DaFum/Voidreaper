@@ -1,6 +1,21 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createUnlockService } from "../../src/features/research/unlock-service.js";
+import {
+  createUnlockService,
+  unlockFlagsFromSave
+} from "../../src/features/research/unlock-service.js";
+
+test("save unlock flags include persisted component blueprints", () => {
+  assert.deepEqual(unlockFlagsFromSave({
+    unlocks: { bastion: true, ignored: false },
+    blueprints: { "shield-pulse": { source: "campaign-extraction" } }
+  }), {
+    bastion: true,
+    ignored: false,
+    "shield-pulse": true
+  });
+  assert.deepEqual(unlockFlagsFromSave(), {});
+});
 
 test("hydrate adds persisted unlock flags without dropping in-session unlocks", () => {
   const unlocks = createUnlockService({ vesper: true, stale: false });

@@ -1,5 +1,11 @@
 export const UNLOCK_TYPES = Object.freeze(["research", "challenge", "blueprint", "secret", "starter"]);
 
+export function unlockFlagsFromSave(save) {
+  const flags = { ...(save?.unlocks ?? {}) };
+  for (const definitionId of Object.keys(save?.blueprints ?? {})) flags[definitionId] = true;
+  return flags;
+}
+
 export function createUnlockService(flags = {}) {
   const unlocked = new Set(Object.keys(flags).filter(id => flags[id]));
   return {
