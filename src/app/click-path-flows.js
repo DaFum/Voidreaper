@@ -39,6 +39,13 @@ export function syncLegacyVoidShards({ persistence, root, currencies }) {
   return value;
 }
 
+export function syncMetaFromLegacy(metaSave, legacyData) {
+  metaSave.currencies.voidShards = legacyData.shards;
+  metaSave.profile.totalKills = legacyData.totalKills;
+  metaSave.profile.totalRuns = legacyData.totalRuns;
+  return metaSave;
+}
+
 export const canUseWorkbenchPort = port => Boolean(port && !port.occupiedByNodeId);
 
 export function openReplacingQuickMount({ active, close, open }) {

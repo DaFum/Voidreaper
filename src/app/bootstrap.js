@@ -142,6 +142,7 @@ import {
   resetCampaignResume,
   subscribeWorkbenchGeometry,
   syncLegacyVoidShards,
+  syncMetaFromLegacy,
 } from "./click-path-flows.js";
 import { renderLoadoutScreen } from "../ui/screens/loadout-screen.js";
 import { REGION_BY_ID } from "../content/sectors/regions.js";
@@ -1783,7 +1784,10 @@ export async function bootstrap() {
       }
     },
   });
-  ui.renderHangar = () => hangar.render();
+  ui.renderHangar = () => {
+    syncMetaFromLegacy(metaSave, legacyRuntime.persistence.data);
+    hangar.render();
+  };
 
   // Merchant hull repair targets the map preview run, but between campaign
   // combat nodes the legacy game.player keeps its damaged hull — heal it too,
