@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createCodexService } from "../../../src/features/codex/codex-service.js";
+import { CODEX_STRINGS } from "../../../src/features/codex/codex-strings.js";
 
 test("codex service handles empty registries", () => {
   const service = createCodexService();
@@ -44,7 +45,7 @@ test("codex service maps definition registries to entries", () => {
   assert.equal(shipB.source, "ships");
 
   const shipC = service.entries.find(e => e.id === "ships:ship-c");
-  assert.equal(shipC.description, "Signal ohne lesbaren Text");
+  assert.equal(shipC.description, CODEX_STRINGS.FALLBACK_DESCRIPTION);
   assert.deepEqual(shipC.tags, []);
 
   const secret1 = service.entries.find(e => e.id === "forbidden:secret-1");
@@ -73,6 +74,11 @@ test("codex service discovers entries and updates levels", () => {
   result = service.discover(save, "ships:ship-a", 4);
   assert.equal(result.evidence, 7);
   assert.equal(result.level, "mastered");
+
+  // Discover with even more evidence to test upper bound capping
+  result = service.discover(save, "ships:ship-a", 10);
+  assert.equal(result.evidence, 17);
+  assert.equal(result.level, "mastered");
 });
 
 test("codex service views entries based on state", () => {
@@ -96,7 +102,7 @@ test("codex service views entries based on state", () => {
   assert.deepEqual(service.view(normalEntry, null), {
     ...normalEntry,
     level: "unknown",
-    description: "Unbekannte Signatur"
+    description: CODEX_STRINGS.UNKNOWN_SIGNATURE
   });
 
   // Normal entry, known state
@@ -110,8 +116,8 @@ test("codex service views entries based on state", () => {
   assert.deepEqual(service.view(forbiddenEntry, null), {
     ...forbiddenEntry,
     level: "unknown",
-    name: "VERBOTENE SIGNATUR",
-    description: "[DATEN GESPERRT]"
+    name: CODEX_STRINGS.FORBIDDEN_NAME,
+    description: CODEX_STRINGS.FORBIDDEN_DESCRIPTION
   });
 
   // Forbidden entry, known state
