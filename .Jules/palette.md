@@ -8,5 +8,6 @@
 **Action:** When adding or updating overlay screens in this app, ensure they include `role="dialog"`, `aria-modal="true"`, and a clean `aria-label` attribute (not `aria-labelledby` on stylized headings), and handle focus management (moving focus into the dialog on open) separately at runtime.
 
 ## 2024-07-15 - Add confirmation dialog to Abandon Run
-**Learning:** Native `window.confirm` dialogs are a quick and functional way to prevent accidental clicks on destructive actions in legacy runtime files, even if they aren't as polished as custom in-app modals.
-**Action:** Use native browser dialogs for rapid micro-UX wins on destructive actions in legacy code where a full modal implementation would be too heavy.
+
+**Learning:** Using the custom uiConfirm modal dialog ensures visual consistency and accessibility across the application, even when triggering actions from legacy runtime files.
+**Action:** Use the existing uiConfirm helper for confirmation dialogs to maintain a unified theme and consistent user experience.
