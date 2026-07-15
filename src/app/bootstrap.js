@@ -1824,8 +1824,10 @@ export async function bootstrap() {
     if (completedNode.type === "extraction") {
       await services.campaignRewards.extractBlueprints(controller.run);
     }
-    adoptCombatRunState(previewRun, controller.run);
-    previewRun.rewardedBossNodeIds = controller.run.rewardedBossNodeIds ?? [];
+    if (previewRun) {
+      adoptCombatRunState(previewRun, controller.run);
+      previewRun.rewardedBossNodeIds = controller.run.rewardedBossNodeIds ?? [];
+    }
     if (completedNode.type === "extraction" || bossReward.applied) {
       metaSave = await services.save.load();
       services.unlocks.hydrate(unlockFlagsFromSave(metaSave));

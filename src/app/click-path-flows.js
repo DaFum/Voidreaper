@@ -19,9 +19,9 @@ export function attemptWorkshopAction({ workshop, session, action, target, paylo
 
 export function canResumeCampaignCombat(game) {
   return game?.state === "sector-map"
-    && game?.mode === "standard"
-    && game?.wave > 0
-    && game?.player?.hp > 0;
+    && game.mode === "standard"
+    && game.wave > 0
+    && game.player?.hp > 0;
 }
 
 export function prepareCheckpointResume({ services, controller, game, run }) {
