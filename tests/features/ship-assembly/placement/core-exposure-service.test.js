@@ -36,7 +36,7 @@ describe('core-exposure-service', () => {
             const blockedExcept0AndPI4 = [
                 { minX: -50, maxX: 50, minY: -50, maxY: -20 },
                 { minX: -50, maxX: -20, minY: -20, maxY: 50 },
-                { minX: -20, maxX: 20, minY: 20, maxY: 50 },
+                { minX: -10, maxX: 10, minY: 20, maxY: 50 },
             ];
             assert.equal(hasRequiredCoreExposure({ coreBounds, occupiedBounds: blockedExcept0AndPI4 }), false);
         });
@@ -96,6 +96,11 @@ describe('core-exposure-service', () => {
                 const coreGeometry = { bounds: { minX: -10, maxX: 10, minY: -10, maxY: 10 } };
                 const candidate = { minX: 20, maxX: 50, minY: -10, maxY: 10 };
                 assert.equal(service.accepts({ coreGeometry, candidate }), true);
+            });
+
+            it('should handle undefined coreGeometry', () => {
+                const candidate = { minX: 20, maxX: 50, minY: -10, maxY: 10 };
+                assert.equal(service.accepts({ candidate }), true);
             });
         });
 
