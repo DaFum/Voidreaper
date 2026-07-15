@@ -35,7 +35,7 @@ test("assertWreckSignal", async (t) => {
 
       assert.throws(
         () => assertWreckSignal(invalidSignal),
-        new Error(`Invalid wreck signal: ${field}`)
+        { message: `Invalid wreck signal: ${field}` }
       );
     });
 
@@ -45,7 +45,7 @@ test("assertWreckSignal", async (t) => {
 
       assert.throws(
         () => assertWreckSignal(invalidSignal),
-        new Error(`Invalid wreck signal: ${field}`)
+        { message: `Invalid wreck signal: ${field}` }
       );
     });
   }
