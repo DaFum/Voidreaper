@@ -40,9 +40,12 @@ export function syncLegacyVoidShards({ persistence, root, currencies }) {
 }
 
 export function syncMetaFromLegacy(metaSave, legacyData) {
-  metaSave.currencies.voidShards = legacyData.shards;
-  metaSave.profile.totalKills = legacyData.totalKills;
-  metaSave.profile.totalRuns = legacyData.totalRuns;
+  if (!metaSave || !legacyData) return metaSave;
+  metaSave.currencies ??= {};
+  metaSave.profile ??= {};
+  if (legacyData.shards !== undefined) metaSave.currencies.voidShards = legacyData.shards;
+  if (legacyData.totalKills !== undefined) metaSave.profile.totalKills = legacyData.totalKills;
+  if (legacyData.totalRuns !== undefined) metaSave.profile.totalRuns = legacyData.totalRuns;
   return metaSave;
 }
 

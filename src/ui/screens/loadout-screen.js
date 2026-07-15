@@ -2,7 +2,7 @@ import { LOADOUT_SLOT_LAYOUT } from "../../features/equipment/loadout-service.js
 import { escapeHtml } from "../escape-html.js";
 
 export function loadoutStatus(inspection) {
-  if (!inspection.sources.length) return { percent: 0, tier: "unconfigured" };
+  if (!inspection?.sources?.length) return { percent: 0, tier: "unconfigured" };
   return { percent: Math.round(inspection.load.ratio * 100), tier: inspection.load.tier };
 }
 
@@ -12,22 +12,22 @@ export function loadoutTagIds(inspection) {
 }
 
 export function loadoutDefinitionNames(inspection) {
-  return new Map((inspection.sources ?? [])
-    .filter(source => (source.id ?? source.definitionId) && source.name)
+  return new Map((inspection?.sources ?? [])
+    .filter(source => source && (source.id ?? source.definitionId) && source.name)
     .map(source => [source.id ?? source.definitionId, source.name]));
 }
 
 export function renderLoadoutScreen(container, inspection, loadout,{blueprints=[],activeBlueprintId=null,choicesBySlot={},onBlueprintChange,onEquip,onUnequip,onNavigate}={}) {
   const status = loadoutStatus(inspection);
   const definitionNames = loadoutDefinitionNames(inspection);
-  const frameName = inspection.sources.find(source => source.slot === "ship")?.name ?? loadout.slots.ship?.[0]?.definitionId ?? "NO SHIP";
+  const frameName = inspection?.sources?.find(source => source.slot === "ship")?.name ?? loadout.slots.ship?.[0]?.definitionId ?? "NO SHIP";
   const slots = Object.entries(LOADOUT_SLOT_LAYOUT).flatMap(([slot, count]) => Array.from({ length: count }, (_, index) => {
     const item = loadout.slots[slot]?.[index] ?? null;
     const itemName = item ? definitionNames.get(item.definitionId) ?? item.definitionId : "EMPTY";
     const classes = slot === "ship" ? "ship-core loadout-slot" : "loadout-slot";
     return `<button class="${classes}" data-slot="${escapeHtml(slot)}" data-index="${index}" aria-label="${escapeHtml(slot)} ${index + 1}: ${escapeHtml(slot === "ship" ? frameName : itemName)}"><span>${slot === "ship" ? "FRAME" : escapeHtml(slot)}</span><strong>${escapeHtml(slot === "ship" ? frameName : itemName)}</strong>${slot === "ship" ? `<small>${status.percent}% ${escapeHtml(status.tier)}</small>` : ""}</button>`;
   })).join("");
-  container.innerHTML = `<div class="loadout-orbit">${slots}</div><section class="loadout-picker" data-picker hidden></section><aside class="loadout-telemetry"><div><span>CAPACITY</span><b>${inspection.capacity}</b></div><div><span>RESERVED</span><b>${inspection.reserved}</b></div><div><span>HEAT</span><b>${inspection.expectedHeat}</b></div><div><span>CORRUPTION</span><b>${inspection.startingCorruption}</b></div><div><span>TAGS</span><b>${loadoutTagIds(inspection).map(escapeHtml).join(" · ")}</b></div><label>BAUPLAN-VORLAGE<select data-blueprint><option value="">OHNE VORLAGE</option>${blueprints.map(blueprint=>`<option value="${escapeHtml(blueprint.blueprintId)}" ${blueprint.blueprintId===activeBlueprintId?"selected":""}>${escapeHtml(blueprint.name)}</option>`).join("")}</select></label><small>Vorlagen geben keine Module oder Werte.</small></aside>`;
+  container.innerHTML = `<div class="loadout-orbit">${slots}</div><section class="loadout-picker" data-picker hidden></section><aside class="loadout-telemetry"><div><span>CAPACITY</span><b>${inspection?.capacity ?? 0}</b></div><div><span>RESERVED</span><b>${inspection?.reserved ?? 0}</b></div><div><span>HEAT</span><b>${inspection?.expectedHeat ?? 0}</b></div><div><span>CORRUPTION</span><b>${inspection?.startingCorruption ?? 0}</b></div><div><span>TAGS</span><b>${loadoutTagIds(inspection).map(escapeHtml).join(" · ")}</b></div><label>BAUPLAN-VORLAGE<select data-blueprint><option value="">OHNE VORLAGE</option>${blueprints.map(blueprint=>`<option value="${escapeHtml(blueprint.blueprintId)}" ${blueprint.blueprintId===activeBlueprintId?"selected":""}>${escapeHtml(blueprint.name)}</option>`).join("")}</select></label><small>Vorlagen geben keine Module oder Werte.</small></aside>`;
   const picker = container.querySelector("[data-picker]");
   const closePicker = () => { picker.hidden = true; picker.replaceChildren(); };
   const openPicker = (slot, index) => {
