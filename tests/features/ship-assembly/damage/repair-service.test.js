@@ -11,13 +11,13 @@ describe('createRepairService', () => {
     let repairService;
 
     beforeEach(() => {
-        let currentNode = null;
+        const nodes = {};
 
         mockAssemblyService = {
             requireNode: (nodeId) => {
                 if (nodeId === 'invalid-node') throw new Error('Invalid node');
-                if (!currentNode) {
-                    currentNode = {
+                if (!nodes[nodeId]) {
+                    nodes[nodeId] = {
                         id: nodeId,
                         armorIntegrity: 10,
                         maxArmorIntegrity: 100,
@@ -28,7 +28,7 @@ describe('createRepairService', () => {
                         damageState: 'core-disrupted'
                     };
                 }
-                return currentNode;
+                return nodes[nodeId];
             },
             getSnapshot: () => ({
                 portsById: {
