@@ -3,7 +3,7 @@ import { createItemInstance } from "../equipment/item-factory.js";
 
 const REWARD_SLOTS = new Set(["passive", "active", "utility", "relic"]);
 
-export function createCampaignRewardService({ equipment, eventBus }) {
+export function createCampaignRewardService({ equipment, eventBus, saveStore }) {
   return {
     apply(run, node) {
       run.rewardedNodeIds ??= [];
@@ -20,6 +20,21 @@ export function createCampaignRewardService({ equipment, eventBus }) {
       run.rewardedNodeIds.push(node.id);
       eventBus.emit("run-item-acquired", { item, source: `sector-${node.type}`, run });
       return { applied: true, item };
+    },
+    async extractBlueprints(run) {
+      const definitionIds = [...new Set((run?.inventory ?? [])
+        .map(item => equipment.get(item.definitionId))
+        .filter(definition => definition && REWARD_SLOTS.has(definition.slot))
+        .map(definition => definition.id))];
+      if (!definitionIds.length) return { applied: false, definitionIds };
+      await saveStore.update(save => {
+        save.blueprints ??= {};
+        for (const definitionId of definitionIds) {
+          save.blueprints[definitionId] ??= { source: "campaign-extraction" };
+        }
+      });
+      eventBus.emit("campaign-blueprints-extracted", { definitionIds, run });
+      return { applied: true, definitionIds };
     }
   };
 }

@@ -30,7 +30,10 @@ import {
   createLoadoutService,
   resolvePrimaryLoadout,
 } from "../features/equipment/loadout-service.js";
-import { createUnlockService } from "../features/research/unlock-service.js";
+import {
+  createUnlockService,
+  unlockFlagsFromSave,
+} from "../features/research/unlock-service.js";
 import { SHIPS } from "../content/ships/index.js";
 import { WEAPONS } from "../content/weapons/index.js";
 import { REACTORS } from "../content/reactors/reactors.js";
@@ -272,13 +275,14 @@ export async function bootstrap() {
   console.info(
     `[assembly] ${services.assemblyProfiles.getCounts().shipFrames} ship profiles`,
   );
-  services.unlocks = createUnlockService(initialSave.unlocks);
+  services.unlocks = createUnlockService(unlockFlagsFromSave(initialSave));
   services.equipment = createEquipmentRegistry();
   for (const definition of [...SHIPS, ...WEAPONS, ...REACTORS, ...MODULES])
     services.equipment.register(definition);
   services.campaignRewards = createCampaignRewardService({
     equipment: services.equipment,
     eventBus: events,
+    saveStore: services.save,
   });
   services.loadouts = createLoadoutService({
     registry: services.equipment,
@@ -1552,7 +1556,7 @@ export async function bootstrap() {
           onPurchase: async (id) => {
             await services.research.purchase(id);
             metaSave = await services.save.load();
-            services.unlocks.hydrate(metaSave.unlocks);
+            services.unlocks.hydrate(unlockFlagsFromSave(metaSave));
             events.emit(TUTORIAL_EVENTS.RESEARCH_PURCHASED, { id });
             syncLegacyVoidShards({
               persistence: legacyRuntime.persistence,
@@ -1810,22 +1814,37 @@ export async function bootstrap() {
     hangar.render();
   };
   originalStartWave = game.startWave.bind(game);
+  const finishCampaignCombatNode = async (completedNode, completedNodeId) => {
+    services.campaignRewards.apply(controller.run, completedNode);
+    adoptCombatRunState(previewRun, controller.run);
+    if (completedNode.type === "extraction") {
+      await services.campaignRewards.extractBlueprints(controller.run);
+      metaSave = await services.save.load();
+      services.unlocks.hydrate(unlockFlagsFromSave(metaSave));
+    }
+    services.sectors.complete(previewRun, completedNodeId);
+    await writeCurrentCheckpoint(previewRun, completedNodeId);
+    game.state = "sector-map";
+    ui.show("start");
+    hangar.render();
+    showCampaignMap();
+  };
   game.startWave = (wave) => {
     if (activeCampaignNodeId && wave > 1) {
+      const completedNodeId = activeCampaignNodeId;
       const completedNode = flattenSectorMap(previewRun.campaign.map).find(
-        (node) => node.id === activeCampaignNodeId,
-      );
-      services.campaignRewards.apply(controller.run, completedNode);
-      adoptCombatRunState(previewRun, controller.run);
-      services.sectors.complete(previewRun, activeCampaignNodeId);
-      void writeCurrentCheckpoint(previewRun, activeCampaignNodeId).catch(
-        () => {},
+        (node) => node.id === completedNodeId,
       );
       activeCampaignNodeId = null;
-      game.state = "sector-map";
-      ui.show("start");
-      hangar.render();
-      showCampaignMap();
+      void finishCampaignCombatNode(completedNode, completedNodeId).catch(
+        (error) => {
+          legacyRuntime.ui.toast(error.message);
+          game.state = "sector-map";
+          ui.show("start");
+          hangar.render();
+          showCampaignMap();
+        },
+      );
       return;
     }
     originalStartWave(wave);

@@ -67,7 +67,7 @@ Extend `createCampaignRewardService({ equipment, eventBus, saveStore })`. Resolv
 
 - [ ] **Step 8: Run focused tests and confirm GREEN**
 
-Run: `node --test tests/features/unlock-service.test.js tests/features/sectors/campaign-reward-service.test.js tests/app/bootstrap-source.test.js`
+Run: `node --test tests/features/unlock-service.test.js tests/features/sectors/campaign-reward-service.test.js tests/app/bootstrap.test.js`
 
 Expected: PASS.
 
@@ -97,7 +97,7 @@ Add the pure predicate and replace the inline `game.mode/player/wave/hp` conditi
 
 - [ ] **Step 4: Run the focused tests and confirm GREEN**
 
-Run: `node --test tests/app/click-path-flows.test.js tests/app/bootstrap-source.test.js`
+Run: `node --test tests/app/click-path-flows.test.js tests/app/bootstrap.test.js`
 
 Expected: PASS.
 
@@ -152,4 +152,3 @@ Start a clean ordinary profile through the visible game UI. Earn the required re
 - [ ] **Step 3: Verify player-visible results**
 
 Confirm the catalog counts, final Loadout names, energy/load telemetry, active-module control, fresh campaign wave/score values, current Hangar currency, and browser console. Reproduce and fix any additional deterministic regression through the same red-green cycle.
-
