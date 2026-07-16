@@ -82,18 +82,35 @@ export function createLoadoutService({ registry, tagEngine, unlocks }) {
     },
     inspect(loadout) {
       const equipped = sources(loadout);
-      const reactor = equipped.find(source => source.slot === EQUIPMENT_SLOT.REACTOR);
-      const ship = equipped.find(source => source.slot === EQUIPMENT_SLOT.SHIP);
+      let reactor = null;
+      let ship = null;
+      let reserved = 0;
+      let expectedHeat = 0;
+      let startingCorruption = 0;
+
+      // V8 performance optimization: Using a single-pass for-loop instead of chained
+      // .find() and .reduce() calls avoids allocating multiple closures and traversing
+      // the array 5 separate times, minimizing GC overhead and execution time.
+      for (let i = 0; i < equipped.length; i++) {
+        const source = equipped[i];
+        if (!reactor && source.slot === EQUIPMENT_SLOT.REACTOR) reactor = source;
+        else if (!ship && source.slot === EQUIPMENT_SLOT.SHIP) ship = source;
+
+        reserved += source.energyCost ?? 0;
+        expectedHeat += source.heat ?? 0;
+        startingCorruption += source.corruption ?? 0;
+      }
+
       const capacity = (reactor?.energyCapacity ?? 0) + (ship?.energyCapacity ?? 0);
-      const reserved = equipped.reduce((sum, source) => sum + (source.energyCost ?? 0), 0);
+
       return {
         sources: equipped,
         capacity,
         reserved,
         load: calculateLoad({ capacity, reserved }),
         tags: tagEngine.collect(equipped),
-        expectedHeat: equipped.reduce((sum, source) => sum + (source.heat ?? 0), 0),
-        startingCorruption: equipped.reduce((sum, source) => sum + (source.corruption ?? 0), 0)
+        expectedHeat,
+        startingCorruption
       };
     },
     assemblyItems(loadout) { return sources(loadout).filter(source => source.item?.instanceId).map(source => ({ moduleInstanceId: source.item.instanceId, definitionId: source.id })); }
