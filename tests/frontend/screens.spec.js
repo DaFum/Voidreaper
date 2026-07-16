@@ -41,7 +41,7 @@ describe("abyss transition screen", () => {
     expect(onExtract).toHaveBeenCalledOnce();
   });
 
-  test("tolerates a missing root", () => {
+  test("renderAbyssTransition tolerates a missing root", () => {
     expect(() => renderAbyssTransition(null, { profile: {} })).not.toThrow();
   });
 });
@@ -667,7 +667,7 @@ describe("research screen", () => {
 });
 
 describe("run summary screen", () => {
-  test("tolerates a missing root", () => {
+  test("renderRunSummary tolerates a missing root", () => {
     expect(() => renderRunSummary(null)).not.toThrow();
   });
 
@@ -843,7 +843,7 @@ describe("settings screen", () => {
 });
 
 describe("simulator screen", () => {
-  test("tolerates a missing root", () => {
+  test("renderSimulatorScreen tolerates a missing root", () => {
     expect(() => renderSimulatorScreen(null, {})).not.toThrow();
   });
 
