@@ -98,7 +98,7 @@ export function createLoadoutService({ registry, tagEngine, unlocks }) {
 
         reserved += source.energyCost ?? 0;
         expectedHeat += source.heat ?? 0;
-        startingCorruption += source.corruption ?? 0;
+        startingCorruption += source.item?.corruptionLevel ?? source.corruption ?? 0;
       }
 
       const capacity = (reactor?.energyCapacity ?? 0) + (ship?.energyCapacity ?? 0);
