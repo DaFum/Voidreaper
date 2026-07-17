@@ -47,9 +47,6 @@ test("decodeBuildCode correctly identifies missing ids based on validIds", () =>
   assert.deepEqual(decoded.missing, ["evo-1"]);
 });
 
-import test from "node:test";
-import assert from "node:assert/strict";
-import { encodeBuildCode, decodeBuildCode } from "../../../src/features/codex/build-code.js";
 
 test("Build Code Encoding & Decoding", async (t) => {
   await t.test("encodeBuildCode correctly serializes and encodes a full build", () => {
