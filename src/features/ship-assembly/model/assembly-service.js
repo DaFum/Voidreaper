@@ -79,8 +79,9 @@ export function createAssemblyService({ state, eventBus, idFactory, runInventory
       delete state.nodesById[currentId];
       if (state.nodeIdByModuleInstanceId && node.moduleInstanceId) delete state.nodeIdByModuleInstanceId[node.moduleInstanceId];
     }
-    for (const [id, connection] of Object.entries(state.connectionsById)) if (detachedSet.has(connection.sourceNodeId) || detachedSet.has(connection.targetNodeId)) delete state.connectionsById[id];
-    for (const connection of Object.values(state.secondaryConnectionsById)) if (detachedSet.has(connection.sourceNodeId) || detachedSet.has(connection.targetNodeId)) delete state.secondaryConnectionsById[connection.connectionId];
+    // ⚡ Bolt: avoided Object.entries/values to prevent temporary array allocations during detachment loop
+    for (const id in state.connectionsById) { if (Object.hasOwn(state.connectionsById, id)) { const connection = state.connectionsById[id]; if (detachedSet.has(connection.sourceNodeId) || detachedSet.has(connection.targetNodeId)) delete state.connectionsById[id]; } }
+    for (const id in state.secondaryConnectionsById) { if (Object.hasOwn(state.secondaryConnectionsById, id)) { const connection = state.secondaryConnectionsById[id]; if (detachedSet.has(connection.sourceNodeId) || detachedSet.has(connection.targetNodeId)) delete state.secondaryConnectionsById[id]; } }
     const parentPort = state.portsById[rootParentPortId];
     if (parentPort) parentPort.occupiedByNodeId = null;
     publish(detachBranch ? ASSEMBLY_EVENTS.BRANCH_DETACHED : ASSEMBLY_EVENTS.MODULE_DETACHED, { nodeIds });
