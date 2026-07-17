@@ -26,7 +26,7 @@ export function createHeatSystem({ eventBus, modules } = {}) {
     },
     update(state, dt, { coolingRate, generationMultiplier = 1, canExceed = false } = {}) {
       const previous = state.value;
-      const activeDt = state.coolingDelay > 0 ? Math.max(0, dt - state.coolingDelay) : dt;
+      const activeDt = Math.max(0, dt - state.coolingDelay);
       state.coolingDelay = Math.max(0, state.coolingDelay - dt);
       if (activeDt > 0) state.value -= coolingRate * activeDt;
       state.value = clamp(state.value, 0, canExceed ? 150 : 100);
