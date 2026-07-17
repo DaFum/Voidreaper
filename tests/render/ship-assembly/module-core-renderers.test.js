@@ -37,10 +37,7 @@ test("createModuleCoreRendererRegistry renders fallback and specific renderers",
   registry.render("test-renderer", ctx, state);
   assert.equal(mockRenderer.mock.calls.length, 1, "Calls registered renderer");
 
-  try {
+  assert.doesNotThrow(() => {
     registry.render("unknown-renderer", ctx, state);
-    assert.ok(true, "Fallback renderer executed without errors");
-  } catch(e) {
-    assert.fail(`Fallback renderer threw: ${e.message}`);
-  }
+  }, "Fallback renderer should execute without errors");
 });

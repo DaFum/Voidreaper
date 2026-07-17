@@ -24,8 +24,9 @@ test("createInputController rebinds actions and triggers custom ones", () => {
   const eventBus = { emit: test.mock.fn() };
   const controller = createInputController({ eventBus, stickElement: mockElement(), stickKnob: { style: {} } });
 
-  controller.rebind("move-up", "KeyW");
-  assert.equal(controller.bindings["KeyW"], "move-up", "Action rebounded successfully");
+  controller.rebind("move-up", "KeyZ");
+  assert.equal(controller.bindings["KeyZ"], "move-up", "Action rebounded successfully to KeyZ");
+  assert.equal(controller.bindings["KeyW"], undefined, "Old duplicate binding for KeyW is cleared");
 
   controller.trigger("fire", "keyboard");
   assert.equal(eventBus.emit.mock.calls.length, 1);
