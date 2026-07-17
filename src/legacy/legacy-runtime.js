@@ -835,7 +835,9 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
         this.ring(x, y, R);
         this.shockwave(x, y, R * 1.15, "#ff8f1f", .5);
         this.burst(x, y, 50, "#ff8f1f", 400);
-        for (const e of this.enemies.slice()) {
+        for (let i = this.enemies.length - 1; i >= 0; i--) {
+          if (i >= this.enemies.length) continue;
+          const e = this.enemies[i];
           if (dist2(x, y, e.x, e.y) < R * R) {
             const a = Math.atan2(e.y - y, e.x - x);
             e.vx += Math.cos(a) * 380; e.vy += Math.sin(a) * 380;
@@ -914,7 +916,9 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
         this.shake(6); AudioSys.noise(0.35, 0.25, 700);
         this.ring(p.x, p.y, R);
         this.shockwave(p.x, p.y, R * 1.1, p.evoSing ? "#c77dff" : "#4cc9f0", .45);
-        for (const e of this.enemies.slice()) {
+        for (let i = this.enemies.length - 1; i >= 0; i--) {
+          if (i >= this.enemies.length) continue;
+          const e = this.enemies[i];
           if (dist2(p.x, p.y, e.x, e.y) < R * R) {
             this.damageEnemy(e, 14 * p.dmgMul * p.nova, false);
             const a = Math.atan2(e.y - p.y, e.x - p.x);
@@ -1112,8 +1116,11 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
             if (z.telegraph) {
               this.bombBlast(z.x, z.y, z.r + 14, 0);
               AudioSys.bomb(); this.shake(7);
-              for (const e of this.enemies.slice())
+              for (let i = this.enemies.length - 1; i >= 0; i--) {
+                if (i >= this.enemies.length) continue;
+                const e = this.enemies[i];
                 if (dist2(z.x, z.y, e.x, e.y) < (z.r + 14) * (z.r + 14)) this.damageEnemy(e, 50, false);
+              }
               if (dist2(z.x, z.y, p.x, p.y) < (z.r + 14) * (z.r + 14)) this.hurtPlayer(p, 22);
             }
             z.dead = true; return;
