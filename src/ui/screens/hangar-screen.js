@@ -142,9 +142,10 @@ export function createHangarScreen(container, { ships, weapons, modules, reactor
       const slot = selectedEntry.definition.slot;
       const configuredCount = LOADOUT_SLOT_LAYOUT[slot] ?? 0;
       const slotCount = currentLoadout.slots?.[slot]?.length ?? configuredCount;
+      const definitionsById = new Map(definitions.map(d => [d.id, d]));
       const slotActions = Array.from({ length: slotCount }, (_, index) => {
         const current = currentLoadout.slots?.[slot]?.[index]?.definitionId ?? null;
-        const currentName = definitions.find(definition => definition.id === current)?.name ?? current ?? "Leer";
+        const currentName = definitionsById.get(current)?.name ?? current ?? "Leer";
         return `<button type="button" data-catalog-equip data-slot="${escapeHtml(slot)}" data-index="${index}"><span>${escapeHtml(slotLabel(slot, index))}</span><strong>${escapeHtml(currentName)}</strong><small>${current ? "Ersetzen" : "Hier ausrüsten"}</small></button>`;
       }).join("");
       selection.innerHTML = `<header><div><small>${escapeHtml(selectedEntry.state === "equipped" ? "AUSGERÜSTET" : "VERFÜGBAR")}</small><strong>${escapeHtml(selectedEntry.definition.name)}</strong></div><button type="button" data-catalog-selection-close aria-label="Auswahl schließen">×</button></header><div class="catalog-selection__slots">${slotActions}</div><p data-catalog-message role="status" aria-live="polite"></p>`;
