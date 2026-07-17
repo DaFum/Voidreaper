@@ -61,7 +61,7 @@ export function generateSectorMap({ seed, contentVersion = "3.0.0", campaignPath
 const flattenCache = new WeakMap();
 
 export function flattenSectorMap(map) {
-  if (!map || !map.regions) return [];
+  if (typeof map !== 'object' || map === null || !Array.isArray(map.regions)) return [];
   let flat = flattenCache.get(map);
   if (!flat) {
     flat = map.regions.flatMap(region => region.layers.flat());
