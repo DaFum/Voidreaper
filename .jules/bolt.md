@@ -13,3 +13,6 @@
 ## 2025-02-18 - Avoid Intermediate Array Allocations in Hot Paths
 **Learning:** Using chained array methods like `.filter()`, `.slice()`, or using the spread operator (`[...map.values()]`) with `.reduce()` on Collections like Maps inside high-frequency game loops (such as the nanite controller iterating over enemies) creates unnecessary intermediate array allocations. This leads to increased Garbage Collection overhead and performance degradation (observed as >2x slower in benchmarks).
 **Action:** When iterating over collections in hot paths, avoid array methods and spread operators. Instead, use indexed `for` loops (e.g. `for (let i = 0; i < arr.length; i++)`) with early `break` statements, or iterate over Maps directly using `for...of` (e.g. `for (const val of map.values())`).
+## 2024-05-18 - Encapsulating memoization with WeakMap
+**Learning:** When optimizing repetitive calculations like `flattenSectorMap` that depend on immutable or infrequently changing parent objects, storing the cache in a closure `WeakMap` inside the generator/utility file is safer and cleaner than forcing callers to hold references.
+**Action:** Use `WeakMap` for transparent object-keyed caching inside utility functions to prevent memory leaks and keep call sites simple.

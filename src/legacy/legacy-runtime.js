@@ -24,6 +24,17 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
 
     /* ---------- utilities ---------- */
     const TAU = Math.PI * 2;
+    const ARRAY_POOL = [];
+    function getArrayFromPool(source) {
+      const arr = ARRAY_POOL.length > 0 ? ARRAY_POOL.pop() : [];
+      arr.length = source.length;
+      for (let i = 0; i < source.length; i++) arr[i] = source[i];
+      return arr;
+    }
+    function releaseArrayToPool(arr) {
+      arr.length = 0;
+      ARRAY_POOL.push(arr);
+    }
     const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
     const lerp = (a, b, t) => a + (b - a) * t;
     const dist2 = (ax, ay, bx, by) => { const dx = ax - bx, dy = ay - by; return dx * dx + dy * dy; };
@@ -835,13 +846,17 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
         this.ring(x, y, R);
         this.shockwave(x, y, R * 1.15, "#ff8f1f", .5);
         this.burst(x, y, 50, "#ff8f1f", 400);
-        for (const e of this.enemies.slice()) {
+        const snap = getArrayFromPool(this.enemies);
+        for (let i = snap.length - 1; i >= 0; i--) {
+          const e = snap[i];
+          if (e.dead) continue;
           if (dist2(x, y, e.x, e.y) < R * R) {
             const a = Math.atan2(e.y - y, e.x - x);
             e.vx += Math.cos(a) * 380; e.vy += Math.sin(a) * 380;
             if (dmg > 0) this.damageEnemy(e, dmg, false);
           }
         }
+        releaseArrayToPool(snap);
       },
 
       gainXP(p, v) {
@@ -914,7 +929,10 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
         this.shake(6); AudioSys.noise(0.35, 0.25, 700);
         this.ring(p.x, p.y, R);
         this.shockwave(p.x, p.y, R * 1.1, p.evoSing ? "#c77dff" : "#4cc9f0", .45);
-        for (const e of this.enemies.slice()) {
+        const snap = getArrayFromPool(this.enemies);
+        for (let i = snap.length - 1; i >= 0; i--) {
+          const e = snap[i];
+          if (e.dead) continue;
           if (dist2(p.x, p.y, e.x, e.y) < R * R) {
             this.damageEnemy(e, 14 * p.dmgMul * p.nova, false);
             const a = Math.atan2(e.y - p.y, e.x - p.x);
@@ -922,6 +940,7 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
             e.vx += Math.cos(a) * 260 * dir; e.vy += Math.sin(a) * 260 * dir;
           }
         }
+        releaseArrayToPool(snap);
         if (p.evoSing) {
           const z = this.zones.get();
           z.x = p.x; z.y = p.y; z.r = R * 0.6; z.life = z.maxLife = 3; z.dps = 10 * p.dmgMul; z.color = "#c77dff"; z.pull = 140; z.telegraph = false;
@@ -1112,8 +1131,13 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
             if (z.telegraph) {
               this.bombBlast(z.x, z.y, z.r + 14, 0);
               AudioSys.bomb(); this.shake(7);
-              for (const e of this.enemies.slice())
+              const snap = getArrayFromPool(this.enemies);
+              for (let i = snap.length - 1; i >= 0; i--) {
+                const e = snap[i];
+                if (e.dead) continue;
                 if (dist2(z.x, z.y, e.x, e.y) < (z.r + 14) * (z.r + 14)) this.damageEnemy(e, 50, false);
+              }
+              releaseArrayToPool(snap);
               if (dist2(z.x, z.y, p.x, p.y) < (z.r + 14) * (z.r + 14)) this.hurtPlayer(p, 22);
             }
             z.dead = true; return;
