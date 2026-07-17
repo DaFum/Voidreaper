@@ -57,10 +57,7 @@ test("Heat System", async (t) => {
     // Second update passes cooling delay, remaining dt cools
     system.update(state, 0.3, { coolingRate: 10 });
     assert.equal(state.coolingDelay, 0);
-    // TODO: This asserts a bug in heat-system.js where cooling is applied for the full dt (0.3)
-    // instead of only the remaining time after the delay is depleted (0.1).
-    // Correct value should be 49 (50 - 10 * 0.1) once the implementation is fixed.
-    assert.equal(state.value, 47);
+    assert.equal(state.value, 49);
   });
 
   await t.test("update() clamps heat value", () => {
