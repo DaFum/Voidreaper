@@ -17,19 +17,26 @@ test("createBloomPass exits early if document is undefined", () => {
 });
 
 test("createBloomPass exits early if canvas is missing or invalid", () => {
+  const originalDocument = global.document;
   global.document = {
     createElement: () => ({ getContext: () => null })
   };
 
-  const bloom = createBloomPass();
+  try {
+    const bloom = createBloomPass();
 
-  const ctxNoCanvas = { save: test.mock.fn() };
-  bloom.apply(ctxNoCanvas);
-  assert.equal(ctxNoCanvas.save.mock.calls.length, 0, "Exits if no canvas on ctx");
+    const ctxNoCanvas = { save: test.mock.fn() };
+    bloom.apply(ctxNoCanvas);
+    assert.equal(ctxNoCanvas.save.mock.calls.length, 0, "Exits if no canvas on ctx");
 
-  const ctxInvalidCanvas = { canvas: { width: 0, height: 100 }, save: test.mock.fn() };
-  bloom.apply(ctxInvalidCanvas);
-  assert.equal(ctxInvalidCanvas.save.mock.calls.length, 0, "Exits if canvas has 0 width");
-
-  delete global.document;
+    const ctxInvalidCanvas = { canvas: { width: 0, height: 100 }, save: test.mock.fn() };
+    bloom.apply(ctxInvalidCanvas);
+    assert.equal(ctxInvalidCanvas.save.mock.calls.length, 0, "Exits if canvas has 0 width");
+  } finally {
+    if (originalDocument === undefined) {
+      delete global.document;
+    } else {
+      global.document = originalDocument;
+    }
+  }
 });

@@ -31,5 +31,5 @@ test("createIdService generates scoped IDs and can be restored", () => {
 
   service2.restore(10);
   const id4 = service2.create("mob");
-  assert.equal(id4, "run2-mob-b", "Restored to 10 (b in base36) and increments to 11 (b in base36)");
+  assert.equal(id4, "run2-mob-b", "Restored to 10 (a in base36) and increments to 11 (b in base36)");
 });
