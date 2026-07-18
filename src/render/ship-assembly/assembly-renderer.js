@@ -25,6 +25,15 @@ export const ASSEMBLY_RENDER_LAYERS = Object.freeze([
 ]);
 export function createAssemblyRenderer() {
   const modules = createModuleCoreRendererRegistry();
+  const DEFAULT_ACTIVITY = Object.freeze({
+    charge: 0,
+    cooldown: 0,
+    firing: false,
+    heat: 0,
+    energyFlow: 0.35,
+    faulting: false,
+    activeUnits: 0,
+  });
   return {
     renderPlayerShip(
       ctx,
@@ -41,12 +50,12 @@ export function createAssemblyRenderer() {
     ) {
       if (!geometrySnapshot?.coreGeometry) return false;
       // ⚡ Bolt: avoided new Map(buildAnimations.map()) to prevent intermediate array allocation in the hot render path
-      const buildAnimationByNodeId = new Map();
-      for (let i = 0; i < buildAnimations.length; i++)
-        buildAnimationByNodeId.set(
-          buildAnimations[i].nodeId,
-          buildAnimations[i],
-        );
+      const buildAnimationByNodeId = buildAnimations && buildAnimations.length > 0 ? new Map() : null;
+      if (buildAnimationByNodeId) {
+        for (let i = 0; i < buildAnimations.length; i++) {
+          buildAnimationByNodeId.set(buildAnimations[i].nodeId, buildAnimations[i]);
+        }
+      }
       const lod = resolveAssemblyLod({
           zoom: 1,
           visibleSegments: geometrySnapshot.nodes.length - 1,
@@ -102,16 +111,8 @@ export function createAssemblyRenderer() {
       });
       for (const node of geometrySnapshot.nodes) {
         if (node.isRoot) continue;
-        const activity = telemetryByNodeId[node.nodeId] ?? {
-            charge: 0,
-            cooldown: 0,
-            firing: false,
-            heat: 0,
-            energyFlow: 0.35,
-            faulting: false,
-            activeUnits: 0,
-          },
-          build = buildAnimationByNodeId.get(node.nodeId);
+        const activity = telemetryByNodeId[node.nodeId] ?? DEFAULT_ACTIVITY,
+          build = buildAnimationByNodeId?.get(node.nodeId);
         ctx.save();
         ctx.translate(node.worldPosition.x, node.worldPosition.y);
         ctx.rotate(node.worldRotation);
@@ -149,6 +150,7 @@ export function createAssemblyRenderer() {
         palette,
         telemetryByNodeId,
         buildAnimations,
+        buildAnimationByNodeId,
         movement,
       });
       for (const node of geometrySnapshot.nodes)
