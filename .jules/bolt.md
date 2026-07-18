@@ -16,3 +16,6 @@
 ## 2024-05-18 - Encapsulating memoization with WeakMap
 **Learning:** When optimizing repetitive calculations like `flattenSectorMap` that depend on immutable or infrequently changing parent objects, storing the cache in a closure `WeakMap` inside the generator/utility file is safer and cleaner than forcing callers to hold references.
 **Action:** Use `WeakMap` for transparent object-keyed caching inside utility functions to prevent memory leaks and keep call sites simple.
+## 2024-07-24 - V8 Array Map Allocation Bottleneck
+**Learning:** In highly frequent HTML5 Canvas render loops (like `renderActivityAnimations` or `renderPlayerShip`), using `new Map(arr.map(x => [k, v]))` forces V8 to allocate intermediate array wrappers and nested closure tuples every frame. This triggers frequent GC sweeps which manifest as micro-stutters during rendering.
+**Action:** Replace functional `.map()` patterns with imperative `for` loops inside hot rendering paths when populating collections to avoid intermediate object allocation overhead.
