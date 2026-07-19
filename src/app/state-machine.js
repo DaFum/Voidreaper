@@ -1,4 +1,4 @@
-export const APP_STATES = Object.freeze([
+const APP_STATES = Object.freeze([
   "menu",
   "hangar",
   "run",

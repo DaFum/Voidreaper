@@ -1,4 +1,4 @@
-export const FORGED_ABYSS_PALETTE = Object.freeze({
+const FORGED_ABYSS_PALETTE = Object.freeze({
   hull: "#0b131c",
   metal: "#182a36",
   structure: "#20323d",

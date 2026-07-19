@@ -10,7 +10,7 @@ export function calculateLoad({ capacity, reserved }) {
   return { ratio, tier };
 }
 
-export const LOAD_MODIFIERS = Object.freeze({
+const LOAD_MODIFIERS = Object.freeze({
   stable: { heatMultiplier: 1, faultPressure: 0, corruptionPerSecond: 0, overloadAffixMultiplier: 1 },
   strained: { heatMultiplier: 1.1, faultPressure: 0.15, corruptionPerSecond: 0, overloadAffixMultiplier: 1.05 },
   overloaded: { heatMultiplier: 1.25, faultPressure: 0.4, corruptionPerSecond: 0, overloadAffixMultiplier: 1.25 },

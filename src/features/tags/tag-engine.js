@@ -1,4 +1,4 @@
-export function collectTags(sources) {
+function collectTags(sources) {
   const totals = new Map();
   const provenance = new Map();
   for (const source of sources) {
@@ -15,7 +15,7 @@ export function collectTags(sources) {
 
 const requirementValue = (tags, requirement) => tags.totals.get(requirement.id) ?? 0;
 
-export function resolveSynergies(tags, definitions, context = {}) {
+function resolveSynergies(tags, definitions, context = {}) {
   const active = [];
   const near = [];
   const blocked = [];

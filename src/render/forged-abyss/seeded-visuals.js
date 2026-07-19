@@ -15,7 +15,7 @@ export function seededUnit(seed, channel = 0) {
   return (value >>> 0) / 0xffffffff;
 }
 
-export function seededChoice(items, seed, channel = 0) {
+function seededChoice(items, seed, channel = 0) {
   if (!items?.length) return undefined;
   return items[Math.min(items.length - 1, Math.floor(seededUnit(seed, channel) * items.length))];
 }

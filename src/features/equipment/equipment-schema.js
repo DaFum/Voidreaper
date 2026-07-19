@@ -8,6 +8,6 @@ export const EQUIPMENT_SLOT = Object.freeze({
   RELIC: "relic"
 });
 
-export const ITEM_RARITY = Object.freeze(["common", "uncommon", "rare", "epic", "legendary", "unique"]);
+const ITEM_RARITY = Object.freeze(["common", "uncommon", "rare", "epic", "legendary", "unique"]);
 
 export const EQUIPMENT_REQUIRED_FIELDS = Object.freeze(["slot", "energyCost", "tags", "effects", "faultProfileId"]);

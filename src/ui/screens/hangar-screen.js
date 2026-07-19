@@ -22,7 +22,7 @@ const SLOT_LABELS = Object.freeze({ ship: "Schiff", "primary-weapon": "Waffe", p
 
 export const resolveCurrencies = currencies => typeof currencies === "function" ? currencies() : currencies;
 export const resolveCheckpoint = checkpoint => typeof checkpoint === "function" ? checkpoint() : checkpoint;
-export const resolveLoadout = loadout => typeof loadout === "function" ? loadout() : loadout;
+const resolveLoadout = loadout => typeof loadout === "function" ? loadout() : loadout;
 export const catalogUnlockLabel = source => UNLOCK_LABELS[source] ?? "Freischaltbedingung noch unbekannt";
 
 export function catalogEntries(entries, { query = "", status = "all", type = "all" } = {}) {

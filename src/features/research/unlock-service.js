@@ -1,4 +1,4 @@
-export const UNLOCK_TYPES = Object.freeze(["research", "challenge", "blueprint", "secret", "starter"]);
+const UNLOCK_TYPES = Object.freeze(["research", "challenge", "blueprint", "secret", "starter"]);
 
 export function unlockFlagsFromSave(save) {
   const flags = { ...(save?.unlocks ?? {}) };

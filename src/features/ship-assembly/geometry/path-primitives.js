@@ -1,7 +1,7 @@
 export function traceTaperedPlate(c,{length,frontWidth,rearWidth,notch=0}){c.beginPath();c.moveTo(0,-frontWidth/2);c.lineTo(length-notch,-rearWidth/2);c.lineTo(length,0);c.lineTo(length-notch,rearWidth/2);c.lineTo(0,frontWidth/2);c.closePath()}
 export function traceCapsule(c,length,r){c.beginPath();c.arc(-length/2,0,r,Math.PI/2,Math.PI*1.5);c.arc(length/2,0,r,Math.PI*1.5,Math.PI/2);c.closePath()}
-export function traceBrace(c,length,width=5){c.beginPath();c.moveTo(0,-width);c.lineTo(length*.42,-width*.45);c.lineTo(length*.58,-width*.45);c.lineTo(length,width);c.lineTo(length*.58,width*.45);c.lineTo(length*.42,width*.45);c.closePath()}
-export function traceJoint(c,r=7,teeth=6){c.beginPath();for(let i=0;i<teeth*2;i++){const a=i*Math.PI/teeth;const q=i%2?r:r*.72;c.lineTo(Math.cos(a)*q,Math.sin(a)*q)}c.closePath()}
+function traceBrace(c,length,width=5){c.beginPath();c.moveTo(0,-width);c.lineTo(length*.42,-width*.45);c.lineTo(length*.58,-width*.45);c.lineTo(length,width);c.lineTo(length*.58,width*.45);c.lineTo(length*.42,width*.45);c.closePath()}
+function traceJoint(c,r=7,teeth=6){c.beginPath();for(let i=0;i<teeth*2;i++){const a=i*Math.PI/teeth;const q=i%2?r:r*.72;c.lineTo(Math.cos(a)*q,Math.sin(a)*q)}c.closePath()}
 export function tracePipe(c,from,to,bend=.35){c.beginPath();c.moveTo(from.x,from.y);c.bezierCurveTo(from.x+(to.x-from.x)*bend,from.y,to.x-(to.x-from.x)*bend,to.y,to.x,to.y)}
 export function traceLens(c,x,y,rx,ry,rotation=0){c.beginPath();c.ellipse(x,y,rx,ry,rotation,0,Math.PI*2)}
 export function traceCoil(c,x,length,radius,turns=4){c.beginPath();for(let i=0;i<=turns*12;i++){const t=i/(turns*12);const px=x+t*length;const py=Math.sin(t*Math.PI*2*turns)*radius;i?c.lineTo(px,py):c.moveTo(px,py)}}
