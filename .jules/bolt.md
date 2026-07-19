@@ -19,3 +19,6 @@
 ## 2024-07-24 - V8 Array Map Allocation Bottleneck
 **Learning:** In highly frequent HTML5 Canvas render loops (like `renderActivityAnimations` or `renderPlayerShip`), using `new Map(arr.map(x => [k, v]))` forces V8 to allocate intermediate array wrappers and nested closure tuples every frame. This triggers frequent GC sweeps which manifest as micro-stutters during rendering.
 **Action:** Replace functional `.map()` patterns with imperative `for` loops inside hot rendering paths when populating collections to avoid intermediate object allocation overhead.
+## 2024-06-25 - Avoid spreading Maps and Sets in hot paths
+**Learning:** In V8 and Node.js, `[...map.values()]` creates a new iterator and converts it into a fresh array via spreading. If you chain this with `.filter()`, `.map()`, and `.flat()`, you allocate multiple temporary arrays for every single execution. In high-frequency hot paths (like `snapshotFromCache` in assembly rendering), this causes heavy Garbage Collection (GC) overhead and frame stutter.
+**Action:** Always replace spread array creation on Maps and Sets with a single-pass `for...of` loop over the iterator, pushing into a pre-allocated or newly created array. Never use `.flat()` inside a frame render function if it can be avoided by nested loops.
