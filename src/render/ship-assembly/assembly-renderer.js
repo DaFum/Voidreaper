@@ -11,7 +11,7 @@ import { resolveAssemblyLod } from "./assembly-lod-policy.js";
 import { getShipStaticLayers } from "./static-layer-cache.js";
 import { mergeVisualPalette } from "../forged-abyss/palettes.js";
 
-export const ASSEMBLY_RENDER_LAYERS = Object.freeze([
+const ASSEMBLY_RENDER_LAYERS = Object.freeze([
   "lower-structure",
   "ventral-modules",
   "rear-connectors",

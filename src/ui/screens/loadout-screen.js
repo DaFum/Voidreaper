@@ -6,7 +6,7 @@ export function loadoutStatus(inspection) {
   return { percent: Math.round(inspection.load.ratio * 100), tier: inspection.load.tier };
 }
 
-export function loadoutTagIds(inspection) {
+function loadoutTagIds(inspection) {
   const totals = inspection.tags?.totals ?? inspection.tags;
   return totals?.keys ? [...totals.keys()] : [];
 }

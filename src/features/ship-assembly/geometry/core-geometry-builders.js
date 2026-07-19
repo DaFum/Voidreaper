@@ -29,7 +29,7 @@ const core = ({
   voidPaths
 });
 
-export function registerCoreGeometry(id, builder) { builders.set(id, builder); }
+function registerCoreGeometry(id, builder) { builders.set(id, builder); }
 export function buildCoreGeometry(id, context = {}) { const builder = builders.get(id); if (!builder) throw new Error(`Unknown core geometry: ${id}`); return builder(context); }
 export const getCoreGeometryIds = () => [...builders.keys()];
 

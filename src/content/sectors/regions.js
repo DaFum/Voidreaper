@@ -1,4 +1,4 @@
-export const REGIONS = Object.freeze([
+const REGIONS = Object.freeze([
   { id: "shattered-approach", name: "Shattered Approach", palette: ["#12052a", "#04010a"], floor: "clear", enemies: ["swarm", "chaser"], loot: "balanced", audio: "approach", rule: "baseline" },
   { id: "furnace-expanse", name: "Furnace Expanse", palette: ["#35110a", "#080202"], floor: "heat-zones", enemies: ["bomber", "tank"], loot: "flux", audio: "furnace", rule: "heat" },
   { id: "grave-circuit", name: "Grave Circuit", palette: ["#071f21", "#020708"], floor: "wrecks", enemies: ["orbiter", "splitter"], loot: "salvage", audio: "grave", rule: "wrecks" },

@@ -46,7 +46,7 @@ const byId = value => {
   return Object.fromEntries(entries);
 };
 
-export function migrateLegacySave(legacy = {}) {
+function migrateLegacySave(legacy = {}) {
   const save = createDefaultSave();
   save.profile.totalRuns = Number(legacy.totalRuns) || 0;
   save.profile.totalKills = Number(legacy.totalKills) || 0;

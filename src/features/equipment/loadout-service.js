@@ -11,7 +11,7 @@ export const LOADOUT_SLOT_LAYOUT = Object.freeze({
   [EQUIPMENT_SLOT.RELIC]: 2
 });
 
-export function createEmptyLoadout({ secondRelicUnlocked = false } = {}) {
+function createEmptyLoadout({ secondRelicUnlocked = false } = {}) {
   return {
     slots: Object.fromEntries(Object.entries(LOADOUT_SLOT_LAYOUT).map(([slot, count]) => [slot, Array.from({ length: slot === EQUIPMENT_SLOT.RELIC && !secondRelicUnlocked ? 1 : count }, () => null)])),
     cosmeticProfile: null

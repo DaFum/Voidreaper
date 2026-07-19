@@ -1,6 +1,6 @@
 const LOAD_PRESSURE = { stable: 0, strained: 0.2, overloaded: 0.5, critical: 1, collapse: 1.8 };
 
-export function calculateFaultPressure({ loadTier, heat, corruption, stability = 100, resistance = 0, cooldown = 0 }) {
+function calculateFaultPressure({ loadTier, heat, corruption, stability = 100, resistance = 0, cooldown = 0 }) {
   const raw = (LOAD_PRESSURE[loadTier] ?? 0)
     + Math.max(0, heat - 60) / 70
     + corruption / 140

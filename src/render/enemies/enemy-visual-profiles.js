@@ -10,7 +10,7 @@ const profile = (id, family, options = {}) => Object.freeze({
   orbit: options.orbit ?? false
 });
 
-export const ENEMY_VISUAL_PROFILES = Object.freeze({
+const ENEMY_VISUAL_PROFILES = Object.freeze({
   swarm: profile("swarm", "drone", { points: 4, armor: .35, fins: 2 }),
   chaser: profile("chaser", "lancer", { points: 3, armor: .7, fins: 2 }),
   orbiter: profile("orbiter", "orbiter", { points: 6, orbit: true, armor: .55 }),

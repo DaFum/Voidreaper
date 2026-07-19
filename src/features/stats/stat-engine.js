@@ -1,4 +1,4 @@
-export const MODIFIER_STAGE = Object.freeze({
+const MODIFIER_STAGE = Object.freeze({
   BASE: 10,
   SHIP: 20,
   REACTOR: 30,

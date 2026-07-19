@@ -18,7 +18,7 @@ export function assertDefinition(definition, requiredKeys = [], kind = "content"
   return definition;
 }
 
-export function validateReferences(definitions, registries, referenceFields) {
+function validateReferences(definitions, registries, referenceFields) {
   const errors = [];
   for (const definition of definitions) {
     for (const [field, registryName] of Object.entries(referenceFields)) {

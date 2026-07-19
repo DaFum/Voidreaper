@@ -4,4 +4,3 @@ export const DIFFICULTY_PROFILES = Object.freeze([
   { id: "reaper", name: "Reaper", enemyDensity: 1.25, faultRate: 1.35, repairCost: 1.3, eliteSynergy: 1.4, loot: 1.25, protectCommonPrototypes: false, startingCorruption: 10 },
   { id: "abyssal", name: "Abyssal", enemyDensity: 1.5, faultRate: 1.7, repairCost: 1.6, eliteSynergy: 1.8, loot: 1.5, protectCommonPrototypes: false, startingCorruption: 25, extendedBossMechanics: true }
 ]);
-export const DIFFICULTY_BY_ID = new Map(DIFFICULTY_PROFILES.map(profile => [profile.id, profile]));

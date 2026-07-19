@@ -5,7 +5,7 @@ const profile = (id, grid, motifs, density, motion = "drift") => Object.freeze({
   motifs: Object.freeze(motifs), density, motion
 });
 
-export const REGION_VISUAL_PROFILES = Object.freeze({
+const REGION_VISUAL_PROFILES = Object.freeze({
   "shattered-approach": profile("shattered-approach", "fracture", ["shard", "broken-rail"], .42),
   "furnace-expanse": profile("furnace-expanse", "plates", ["vent", "slag-crack"], .58, "heat"),
   "grave-circuit": profile("grave-circuit", "salvage", ["wreck", "cable"], .64, "static"),

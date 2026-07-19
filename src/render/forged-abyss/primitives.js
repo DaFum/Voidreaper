@@ -23,7 +23,7 @@ export function traceChamferedPlate(ctx, {
   ctx.closePath();
 }
 
-export function traceRib(ctx, { x = 0, y = 0, length, width = 3, rotation = 0 }) {
+function traceRib(ctx, { x = 0, y = 0, length, width = 3, rotation = 0 }) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(rotation);

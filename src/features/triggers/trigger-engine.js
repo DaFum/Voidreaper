@@ -1,4 +1,4 @@
-export const TRIGGER_EVENTS = Object.freeze([
+const TRIGGER_EVENTS = Object.freeze([
   "shot-fired", "enemy-hit", "critical-hit", "enemy-killed", "elite-killed", "boss-hit",
   "player-damaged", "dodge-used", "heat-threshold", "overheated", "corruption-changed",
   "active-module-used", "pickup-collected", "sector-entered", "extraction-completed", "tick"
