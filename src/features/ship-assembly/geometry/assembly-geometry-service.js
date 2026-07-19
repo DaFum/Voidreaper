@@ -9,7 +9,7 @@ import { buildPreviewBounds } from "./hit-shape-preview.js";
 import { add, rotate } from "./vector-math.js";
 import { enforceAssemblyBudget } from "../performance/assembly-performance-budget.js";
 
-const freezeList=list=>Object.freeze(list.map(item=>Object.freeze(item)));
+const freezeList = list => { for (let i = 0; i < list.length; i++) list[i] = Object.freeze(list[i]); return Object.freeze(list); };
 export function createAssemblyGeometryService({eventBus,assemblyService,profileRegistry,equipmentRegistry,errorBoundary}){
   const cache=createGeometryCache();
   let scheduled=false,pendingSnapshot=null;
@@ -19,30 +19,40 @@ export function createAssemblyGeometryService({eventBus,assemblyService,profileR
   // would poison cache.revision and blank the entire ship for the run).
   const profileFor=node=>equipmentRegistry?.getAssemblyProfile?.(node.definitionId)??profileRegistry?.getModuleProfile(node.visualProfileId)??{rendererId:node.visualProfileId,sizeClass:node.sizeClass};
   const snapshotFromCache = () => {
-    // ⚡ Bolt: Avoid spread operators on Maps and Set, use for...of to prevent intermediate array allocations and GC overhead
-    const nodes = [];
-    for (const node of cache.nodeGeometry.values()) nodes.push(node);
+    // ⚡ Bolt: Pre-allocate arrays to avoid dynamic resizing overhead in V8
+    const nodes = new Array(cache.nodeGeometry.size);
+    let nodeIdx = 0;
+    for (const node of cache.nodeGeometry.values()) {
+      nodes[nodeIdx++] = node;
+    }
 
-    const connections = [];
-    for (const conn of cache.connectionGeometry.values()) connections.push(conn);
+    const connections = new Array(cache.connectionGeometry.size);
+    let connIdx = 0;
+    for (const conn of cache.connectionGeometry.values()) {
+      connections[connIdx++] = conn;
+    }
 
     const armor = [];
     for (const armors of cache.armorGeometry.values()) {
-      for (const a of armors) armor.push(a);
+      for (const a of armors) {
+        armor.push(a);
+      }
     }
 
+    // Since all elements are already frozen, we can use Object.freeze directly
+    // and avoid the intermediate array allocations caused by freezeList (.map()).
     return Object.freeze(enforceAssemblyBudget({
       revision: cache.revision,
       structuralKey: cache.structuralKey,
       shipFrameId: cache.shipFrameId,
       coreGeometry: cache.coreGeometry,
       shipStyle: cache.shipStyle,
-      nodes: freezeList(nodes),
-      connections: freezeList(connections),
-      armor: freezeList(armor),
-      decorators: freezeList(cache.decorators),
-      occupiedBounds: freezeList(cache.occupiedBounds),
-      totalBounds: cache.totalBounds ? Object.freeze({ ...cache.totalBounds }) : null,
+      nodes: Object.freeze(nodes),
+      connections: Object.freeze(connections),
+      armor: Object.freeze(armor),
+      decorators: Object.freeze(cache.decorators),
+      occupiedBounds: Object.freeze(cache.occupiedBounds),
+      totalBounds: cache.totalBounds || null,
       previewBounds: buildPreviewBounds
     }));
   };
@@ -52,15 +62,15 @@ export function createAssemblyGeometryService({eventBus,assemblyService,profileR
     if(pending.length)console.warn("Assembly geometry skipped orphaned nodes",pending.map(node=>({nodeId:node.nodeId,parentNodeId:node.parentNodeId})));
     for(const connection of Object.values(snapshot.connectionsById)){const source=cache.nodeGeometry.get(connection.sourceNodeId),target=cache.nodeGeometry.get(connection.targetNodeId);if(!source||!target)continue;const geometry=buildConnectorGeometry({id:connection.connectionId,sourceNodeId:connection.sourceNodeId,targetNodeId:connection.targetNodeId,from:source.worldPosition,to:target.worldPosition,loadClass:connection.structuralStrength,energyClass:connection.energyThroughput,style:frame.style.connectorFamily});cache.connectionGeometry.set(connection.connectionId,geometry);cache.armorGeometry.set(connection.connectionId,freezeList(generateAdaptiveArmor(geometry,frame.style)));}
     // ⚡ Bolt: Avoid intermediate arrays from filter/map/spread. Use a single pass loop.
-    cache.occupiedBounds = [{ ownerId: root.nodeId, ...cache.coreGeometry.bounds }];
+    cache.occupiedBounds = [Object.freeze({ ownerId: root.nodeId, ...cache.coreGeometry.bounds })];
     const decoratorNodes = [];
     for (const node of cache.nodeGeometry.values()) {
       if (!node.isRoot) {
-        cache.occupiedBounds.push(node.geometry.bounds);
+        cache.occupiedBounds.push(Object.freeze(node.geometry.bounds));
         decoratorNodes.push(node);
       }
     }
-    cache.totalBounds = calculateTotalBounds(cache.occupiedBounds);
+    cache.totalBounds = Object.freeze(calculateTotalBounds(cache.occupiedBounds));
     cache.decorators = buildBalanceDecorators({ nodes: decoratorNodes, shipStyle: frame.style });
     cache.revision = snapshot.structuralRevision;
     cache.structuralKey = {};
