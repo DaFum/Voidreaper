@@ -13,6 +13,8 @@ describe("legacy runtime combat reporting", () => {
     game.enemies = [{ x: 10, y: 0, birth: 0 }];
     game.bullets = { get: vi.fn(() => bullet) };
     game.parts = { get: vi.fn(() => particle) };
+    game.hash = { query: (x, y, r, buf) => { buf.length = 0; if(game.enemies.length > 0) buf.push(game.enemies[0]); } };
+    game.qbuf = [];
     legacyRuntime.configureShotFiredReporter(reportShotFired);
 
     game.fire(player);
