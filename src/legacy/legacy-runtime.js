@@ -193,7 +193,11 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
     class SpatialHash {
       constructor(cell) { this.cell = cell; this.map = new Map(); }
       clear() {
-        for (const col of this.map.values()) col.clear();
+        for (const col of this.map.values()) {
+          for (const b of col.values()) {
+            b.length = 0;
+          }
+        }
       }
       insert(e) {
         const gx = (e.x / this.cell) | 0;
@@ -655,7 +659,7 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
         let target = null, best = 560 * 560;
         this.hash.query(p.x, p.y, 560, this.qbuf);
         for (const e of this.qbuf) {
-          if (e.birth > 0) continue;
+          if (e.birth > 0 || e.dead) continue;
           const d = dist2(p.x, p.y, e.x, e.y);
           if (d < best) { best = d; target = e; }
         }
@@ -1107,6 +1111,9 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
 
         let rateMul = (p.evoTempest && p.moveCharge > 0.5) ? 0.6 : 1;
         if (this.event?.id === "frenzy") rateMul *= 0.45;
+        this.hash.clear();
+        for (const e of this.enemies) this.hash.insert(e);
+
         p.fireT -= dt;
         if (p.fireT <= 0 && this.enemies.length) { p.fireT = p.fireRate * rateMul; this.fire(p); }
 
@@ -1115,9 +1122,6 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
           if (p.novaT <= 0) { p.novaT = p.novaCd; this.novaBlast(p); }
         }
         p.orbA += dt * 3.1;
-
-        this.hash.clear();
-        for (const e of this.enemies) this.hash.insert(e);
 
         if (p.orbitals > 0) {
           const oR = p.evoHalo ? 78 : 62, bladeR = p.evoHalo ? 17 : 12;

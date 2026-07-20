@@ -12,10 +12,12 @@ export function renderActivityAnimations(
   },
 ) {
   // ⚡ Bolt: avoided new Map(buildAnimations.map()) to prevent intermediate array allocation in the hot render path
-  const getBuildAnimation = (nodeId) =>
-    providedAnimationMap
-      ? providedAnimationMap.get(nodeId)
-      : buildAnimations?.find((b) => b.nodeId === nodeId);
+  const getBuildAnimation = (nodeId) => {
+    if (providedAnimationMap) {
+      return providedAnimationMap.get(nodeId);
+    }
+    return buildAnimations?.find((b) => b.nodeId === nodeId);
+  };
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   for (const node of snapshot.nodes) {
