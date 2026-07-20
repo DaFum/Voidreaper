@@ -10,6 +10,9 @@ export function withAlpha(color, alpha) {
   if (color.startsWith("rgb(")) {
     return color.replace("rgb(", "rgba(").replace(")", `,${alpha})`);
   }
+  if (color.startsWith("rgba(")) {
+    return color.replace(/,[^,]+\)$/, `,${alpha})`);
+  }
   if (color[0] !== "#") return color;
   const hex = color.slice(1);
   const full = hex.length === 3 ? hex.split("").map((c) => c + c).join("") : hex;
