@@ -26,7 +26,16 @@ test("createModuleCoreRendererRegistry renders fallback and specific renderers",
     lineTo: test.mock.fn(),
     stroke: test.mock.fn(),
     fill: test.mock.fn(),
-    arc: test.mock.fn()
+    arc: test.mock.fn(),
+    ellipse: test.mock.fn(),
+    createRadialGradient: test.mock.fn(() => ({
+      addColorStop: test.mock.fn()
+    })),
+    createLinearGradient: test.mock.fn(() => ({
+      addColorStop: test.mock.fn()
+    })),
+    clip: test.mock.fn(),
+    fillRect: test.mock.fn()
   };
 
   const mockRenderer = test.mock.fn();

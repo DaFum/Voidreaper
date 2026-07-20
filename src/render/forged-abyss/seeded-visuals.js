@@ -1,3 +1,4 @@
+// Unchanged from repo — seeded procedural helpers (kept for parity).
 export function visualHash(value) {
   let hash = 2166136261;
   for (const character of String(value ?? 0)) {
@@ -14,7 +15,6 @@ export function seededUnit(seed, channel = 0) {
   value ^= value << 5;
   return (value >>> 0) / 0xffffffff;
 }
-
 
 export function seededSigned(seed, channel = 0) {
   return seededUnit(seed, channel) * 2 - 1;

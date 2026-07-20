@@ -1,11 +1,37 @@
 import { seededSigned, seededUnit } from "./seeded-visuals.js";
 
-export function traceChamferedPlate(ctx, {
-  width,
-  height,
-  chamfer = Math.min(width, height) * .18,
-  inset = 0
-}) {
+const TAU = Math.PI * 2;
+
+// --- color utils -------------------------------------------------------------
+// Convert a #rgb / #rrggbb color to rgba() with a given alpha. Falls back to the
+// original string for named/rgb() colors so callers can pass anything.
+export function withAlpha(color, alpha) {
+  if (typeof color !== "string") return color;
+  if (color.startsWith("rgb(")) {
+    return color.replace("rgb(", "rgba(").replace(")", `,${alpha})`);
+  }
+  if (color.startsWith("rgba(")) {
+    return color.replace(/,[^,]+\)$/, `,${alpha})`);
+  }
+  if (color[0] !== "#") return color;
+  const hex = color.slice(1);
+  const full = hex.length === 3 ? hex.split("").map((c) => c + c).join("") : hex;
+  const n = parseInt(full, 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+}
+
+function mix(a, b, t) {
+  const pa = parseInt(a.slice(1).length === 3 ? a.slice(1).split("").map((c) => c + c).join("") : a.slice(1), 16);
+  const pb = parseInt(b.slice(1).length === 3 ? b.slice(1).split("").map((c) => c + c).join("") : b.slice(1), 16);
+  const r = Math.round(((pa >> 16) & 255) * (1 - t) + ((pb >> 16) & 255) * t);
+  const g = Math.round(((pa >> 8) & 255) * (1 - t) + ((pb >> 8) & 255) * t);
+  const bl = Math.round((pa & 255) * (1 - t) + (pb & 255) * t);
+  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${bl.toString(16).padStart(2, "0")}`;
+}
+export { mix as mixColor };
+
+// --- plating ----------------------------------------------------------------
+export function traceChamferedPlate(ctx, { width, height, chamfer = Math.min(width, height) * .18, inset = 0 }) {
   const left = -width / 2 + inset;
   const right = width / 2 - inset;
   const top = -height / 2 + inset;
@@ -23,28 +49,63 @@ export function traceChamferedPlate(ctx, {
   ctx.closePath();
 }
 
-function traceRib(ctx, { x = 0, y = 0, length, width = 3, rotation = 0 }) {
+// Fill the current-or-traced path with a top-lit vertical gradient so metal
+// reads as a 3D surface. `trace` should leave a path ready to fill; if omitted
+// the existing path is used.
+export function fillSheen(ctx, trace, { light, base, dark, top = -1, bottom = 1, span = 1 }) {
+  if (trace) trace();
+  const g = ctx.createLinearGradient(0, top * span, 0, bottom * span);
+  g.addColorStop(0, light);
+  g.addColorStop(0.5, base);
+  g.addColorStop(1, dark);
+  ctx.fillStyle = g;
+  ctx.fill();
+}
+
+
+// Soft contact shadow beneath a footprint — grounds modules onto the hull.
+export function drawContactShadow(ctx, { radius, alpha = .35 }) {
   ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(rotation);
-  traceChamferedPlate(ctx, { width, height: length, chamfer: width * .4 });
+  const g = ctx.createRadialGradient(0, radius * .2, radius * .2, 0, radius * .2, radius * 1.25);
+  g.addColorStop(0, `rgba(0,0,0,${alpha})`);
+  g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.ellipse(0, radius * .18, radius * 1.2, radius * .7, 0, 0, TAU);
+  ctx.fill();
   ctx.restore();
 }
 
-export function drawEnergyRail(ctx, {
-  from,
-  to,
-  color,
-  width = 2,
-  flow = 0,
-  alpha = .8,
-  reducedMotion = false
-}) {
+// Additive bloom dot for hot points (muzzles, vents, coil taps).
+export function drawBloomDot(ctx, { x = 0, y = 0, radius, color, alpha = 1 }) {
   ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  const g = ctx.createRadialGradient(x, y, 0, x, y, radius);
+  g.addColorStop(0, withAlpha(color, .9 * alpha));
+  g.addColorStop(.4, withAlpha(color, .35 * alpha));
+  g.addColorStop(1, withAlpha(color, 0));
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+}
+
+// --- energy -----------------------------------------------------------------
+export function drawEnergyRail(ctx, { from, to, color, width = 2, flow = 0, alpha = .8, reducedMotion = false }) {
+  ctx.save();
+  ctx.lineCap = "round";
+  // soft underglow
+  ctx.strokeStyle = withAlpha(color, alpha * .28);
+  ctx.lineWidth = width * 3.2;
+  ctx.beginPath();
+  ctx.moveTo(from.x, from.y);
+  ctx.lineTo(to.x, to.y);
+  ctx.stroke();
+  // travelling dashes
   ctx.strokeStyle = color;
   ctx.globalAlpha *= alpha;
   ctx.lineWidth = width;
-  ctx.lineCap = "round";
   ctx.setLineDash([Math.max(2, width * 2), Math.max(3, width * 3)]);
   ctx.lineDashOffset = reducedMotion ? 0 : -flow * 14;
   ctx.beginPath();
@@ -54,32 +115,44 @@ export function drawEnergyRail(ctx, {
   ctx.restore();
 }
 
-export function drawVoidCore(ctx, {
-  x = 0,
-  y = 0,
-  radius,
-  palette,
-  time = 0,
-  seed = 0,
-  reducedMotion = false,
-  intensity = 1
-}) {
-  const pulse = reducedMotion ? 1 : 1 + Math.sin(time * 2.1 + seededUnit(seed, 2) * Math.PI * 2) * .08;
+// Layered void core: bloom halo -> jagged plasma body -> inner hotspot ->
+// bright containment ring -> a couple of orbiting sparks.
+export function drawVoidCore(ctx, { x = 0, y = 0, radius, palette, time = 0, seed = 0, reducedMotion = false, intensity = 1 }) {
+  const pulse = reducedMotion ? 1 : 1 + Math.sin(time * 2.1 + seededUnit(seed, 2) * TAU) * .08;
   ctx.save();
   ctx.translate(x, y);
+
+  // halo
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  const halo = ctx.createRadialGradient(0, 0, radius * .25, 0, 0, radius * 2.2);
+  halo.addColorStop(0, withAlpha(palette.energy, .45 * intensity));
+  halo.addColorStop(.45, withAlpha(palette.energy, .13 * intensity));
+  halo.addColorStop(1, withAlpha(palette.energy, 0));
+  ctx.fillStyle = halo;
+  ctx.beginPath();
+  ctx.arc(0, 0, radius * 2.2, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+
   ctx.scale(pulse, pulse);
-  const gradient = ctx.createRadialGradient(-radius * .18, -radius * .22, radius * .06, 0, 0, radius);
+
+  // plasma body
+  ctx.save();
+  const gradient = ctx.createRadialGradient(-radius * .22, -radius * .26, radius * .05, 0, 0, radius);
   gradient.addColorStop(0, palette.cockpit);
-  gradient.addColorStop(.22, palette.energy);
-  gradient.addColorStop(.5, palette.fault);
+  gradient.addColorStop(.2, palette.energySoft ?? palette.energy);
+  gradient.addColorStop(.48, palette.fault);
+  gradient.addColorStop(.8, palette.voidBright ?? palette.void);
   gradient.addColorStop(1, palette.void);
   ctx.fillStyle = gradient;
   ctx.globalAlpha *= intensity;
   ctx.beginPath();
-  const points = 12;
+  const points = 14;
   for (let index = 0; index < points; index += 1) {
-    const angle = index / points * Math.PI * 2;
-    const variance = .84 + seededUnit(seed, index + 10) * .22;
+    const angle = (index / points) * TAU;
+    const wobble = reducedMotion ? 0 : Math.sin(time * 3 + index) * .05;
+    const variance = .82 + seededUnit(seed, index + 10) * .24 + wobble;
     const distance = radius * variance;
     const px = Math.cos(angle) * distance;
     const py = Math.sin(angle) * distance;
@@ -87,45 +160,73 @@ export function drawVoidCore(ctx, {
   }
   ctx.closePath();
   ctx.fill();
-  ctx.strokeStyle = palette.edge;
-  ctx.lineWidth = Math.max(1, radius * .08);
-  ctx.stroke();
   ctx.restore();
-}
 
-export function drawCracks(ctx, {
-  x = 0,
-  y = 0,
-  radius,
-  color,
-  seed = 0,
-  count = 4,
-  alpha = .8
-}) {
+  // inner hotspot
   ctx.save();
-  ctx.translate(x, y);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = Math.max(1, radius * .05);
-  ctx.globalAlpha *= alpha;
-  for (let index = 0; index < count; index += 1) {
-    const angle = seededUnit(seed, 30 + index) * Math.PI * 2;
-    const bend = seededSigned(seed, 60 + index) * .38;
-    ctx.beginPath();
-    ctx.moveTo(Math.cos(angle) * radius * .18, Math.sin(angle) * radius * .18);
-    ctx.lineTo(Math.cos(angle + bend) * radius * .58, Math.sin(angle + bend) * radius * .58);
-    ctx.lineTo(Math.cos(angle - bend * .4) * radius, Math.sin(angle - bend * .4) * radius);
-    ctx.stroke();
+  ctx.globalCompositeOperation = "lighter";
+  const hot = ctx.createRadialGradient(-radius * .18, -radius * .2, 0, -radius * .18, -radius * .2, radius * .7);
+  hot.addColorStop(0, withAlpha(palette.cockpit, .9));
+  hot.addColorStop(1, withAlpha(palette.cockpit, 0));
+  ctx.fillStyle = hot;
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+
+  // containment ring
+  ctx.strokeStyle = palette.edge;
+  ctx.lineWidth = Math.max(1, radius * .09);
+  ctx.beginPath();
+  ctx.arc(0, 0, radius * .96, 0, TAU);
+  ctx.stroke();
+
+  // orbiting sparks
+  if (!reducedMotion) {
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.fillStyle = palette.cockpit;
+    const sparkAlpha = ctx.globalAlpha * .55;
+    for (let i = 0; i < 3; i += 1) {
+      const a = time * (1.4 + i * .5) + i * 2.1 + seededUnit(seed, i) * TAU;
+      const rr = radius * (1.05 + i * .12);
+      ctx.globalAlpha = sparkAlpha;
+      ctx.beginPath();
+      ctx.arc(Math.cos(a) * rr, Math.sin(a) * rr * .7, radius * .09, 0, TAU);
+      ctx.fill();
+    }
+    ctx.restore();
   }
   ctx.restore();
 }
 
-export function drawArmorHatch(ctx, {
-  width,
-  height,
-  color,
-  spacing = 6,
-  alpha = .25
-}) {
+export function drawCracks(ctx, { x = 0, y = 0, radius, color, seed = 0, count = 4, alpha = .8 }) {
+  const baseAlpha = ctx.globalAlpha;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.lineCap = "round";
+  for (let index = 0; index < count; index += 1) {
+    const angle = seededUnit(seed, 30 + index) * TAU;
+    const bend = seededSigned(seed, 60 + index) * .38;
+    const p0 = { x: Math.cos(angle) * radius * .18, y: Math.sin(angle) * radius * .18 };
+    const p1 = { x: Math.cos(angle + bend) * radius * .58, y: Math.sin(angle + bend) * radius * .58 };
+    const p2 = { x: Math.cos(angle - bend * .4) * radius, y: Math.sin(angle - bend * .4) * radius };
+    // dark fracture underneath, bright hairline on top -> reads as depth
+    for (const [c, w, a] of [["rgba(0,0,0,.55)", radius * .1, 1], [color, radius * .045, 1]]) {
+      ctx.strokeStyle = c;
+      ctx.lineWidth = Math.max(1, w);
+      ctx.globalAlpha = baseAlpha * alpha * a;
+      ctx.beginPath();
+      ctx.moveTo(p0.x, p0.y);
+      ctx.lineTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+export function drawArmorHatch(ctx, { width, height, color, spacing = 6, alpha = .25 }) {
   ctx.save();
   ctx.strokeStyle = color;
   ctx.globalAlpha *= alpha;
