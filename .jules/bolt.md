@@ -22,3 +22,9 @@
 ## 2024-06-25 - Avoid spreading Maps and Sets in hot paths
 **Learning:** In V8 and Node.js, `[...map.values()]` creates a new iterator and converts it into a fresh array via spreading. If you chain this with `.filter()`, `.map()`, and `.flat()`, you allocate multiple temporary arrays for every single execution. In high-frequency hot paths (like `snapshotFromCache` in assembly rendering), this causes heavy Garbage Collection (GC) overhead and frame stutter.
 **Action:** Always replace spread array creation on Maps and Sets with a single-pass `for...of` loop over the iterator, pushing into a pre-allocated or newly created array. Never use `.flat()` inside a frame render function if it can be avoided by nested loops.
+
+## 2024-06-25 - Splice inside loops
+
+**Learning:** Using `Array.prototype.splice()` inside a loop that iterates over a large array (especially in high-frequency rendering or assembly logic) can cause severe performance issues due to the O(n) array element shifting on every call, leading to O(n^2) overall time complexity.
+
+**Action:** Instead of `splice`, use the "swap and pop" pattern (if order doesn't matter) or assign the index to `null` and do a single pass cleanup at the end (e.g., using `filter(Boolean)`) to improve performance.
