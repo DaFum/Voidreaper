@@ -36,9 +36,8 @@ test("sector-map-generator", async (t) => {
 
         for (const nextId of merchant.next) {
           const nextNode = flat.find(n => n.id === nextId);
-          if (nextNode) {
-            assert.notStrictEqual(nextNode.type, "merchant", "Merchant connected to merchant");
-          }
+          assert.ok(nextNode, 'Connected node ' + nextId + ' should exist in the map');
+          assert.notStrictEqual(nextNode.type, "merchant", "Merchant connected to merchant");
         }
       }
     }
