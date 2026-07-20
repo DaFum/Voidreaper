@@ -1,6 +1,7 @@
 import { createSectorNode } from "../components/sector-node.js";
 import { flattenSectorMap } from "../../features/sectors/sector-map-generator.js";
 import { createSectorMapConnections } from "../components/sector-map-connections.js";
+import { escapeHtml } from "../escape-html.js";
 
 export function createSectorMapScreen(root, { onConfirm = () => {}, onWorkbench = null, onSelect = () => {} } = {}) {
   let selectedId = null;
@@ -21,7 +22,7 @@ export function createSectorMapScreen(root, { onConfirm = () => {}, onWorkbench 
     const visitedSet = new Set(model.visitedNodeIds);
     const reachableSet = new Set(model.reachableNodeIds);
     const nodes = flattenSectorMap(model.map).filter(node => node.regionIndex === model.regionIndex);
-    root.innerHTML = `<section class="sector-map" data-tutorial-id="sector-map"><header><span>VR // SECTOR TRACE</span><b>REGION ${model.regionIndex + 1}/5</b>${onWorkbench?`<button class="btn small" data-assembly-workbench>WERKBANK</button>`:""}</header><div class="sector-map__graph"></div><aside class="sector-map__detail" data-tutorial-id="sector-detail">Signal wählen. Zweiter Tap bestätigt den erreichbaren Knoten.</aside></section>`;
+    root.innerHTML = `<section class="sector-map" data-tutorial-id="sector-map"><header><span>VR // SECTOR TRACE</span><b>REGION ${escapeHtml(model.regionIndex + 1)}/5</b>${onWorkbench?`<button class="btn small" data-assembly-workbench>WERKBANK</button>`:""}</header><div class="sector-map__graph"></div><aside class="sector-map__detail" data-tutorial-id="sector-detail">Signal wählen. Zweiter Tap bestätigt den erreichbaren Knoten.</aside></section>`;
     root.querySelector("[data-assembly-workbench]")?.addEventListener("click",onWorkbench);
     const graph = root.querySelector(".sector-map__graph");
     const nodeElements = [];
