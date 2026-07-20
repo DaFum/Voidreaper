@@ -33,7 +33,7 @@ export function createBuildInspector(container, services) {
     } else if (activeTab === "Evolutionen") {
       panel.innerHTML = model.evolutions.map(entry => `<article class="evolution-entry" data-ready="${entry.eligible}"><b>${escapeHtml(entry.definition.name)}</b><span>${entry.requirements.filter(requirement => requirement.met).length}/${entry.requirements.length}</span><small>${entry.blockedBy ? `Blockiert durch ${escapeHtml(entry.blockedBy)}` : escapeHtml(entry.definition.kind)}</small></article>`).join("");
     } else if (activeTab === "Risiken") {
-      panel.innerHTML = `<div class="risk-grid"><span>LAST</span><b>${Math.round(model.load.ratio * 100)}% ${escapeHtml(model.load.tier)}</b><span>HITZE</span><b>${Math.round(model.heat)}°</b><span>KORRUPTION</span><b>${Math.round(model.corruption)}%</b><span>FEHLERDRUCK</span><b>${model.faultPressure.toFixed(2)}</b></div>`;
+      panel.innerHTML = `<div class="risk-grid"><span>LAST</span><b>${escapeHtml(Math.round(model.load.ratio * 100))}% ${escapeHtml(model.load.tier)}</b><span>HITZE</span><b>${escapeHtml(Math.round(model.heat))}°</b><span>KORRUPTION</span><b>${escapeHtml(Math.round(model.corruption))}%</b><span>FEHLERDRUCK</span><b>${escapeHtml(model.faultPressure.toFixed(2))}</b></div>`;
     } else {
       renderSynergyList(panel, model.synergies);
     }

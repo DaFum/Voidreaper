@@ -13,7 +13,7 @@ function openModal({ title, message, input = null, confirmLabel, cancelLabel }) 
     dialog.className = "vr-modal";
     dialog.setAttribute("aria-labelledby", titleId);
     dialog.setAttribute("aria-describedby", descId);
-    dialog.innerHTML = `<header><small id="${titleId}">${escapeHtml(title)}</small></header><p id="${descId}" data-role="message"></p>${input === null ? "" : `<input data-role="input" type="text" spellcheck="false" aria-labelledby="${titleId}" aria-describedby="${descId}">`}<footer><button type="button" data-action="cancel">${escapeHtml(cancelLabel)}</button><button type="button" data-action="confirm">${escapeHtml(confirmLabel)}</button></footer>`;
+    dialog.innerHTML = `<header><small id="${escapeHtml(titleId)}">${escapeHtml(title)}</small></header><p id="${escapeHtml(descId)}" data-role="message"></p>${input === null ? "" : `<input data-role="input" type="text" spellcheck="false" aria-labelledby="${escapeHtml(titleId)}" aria-describedby="${escapeHtml(descId)}">`}<footer><button type="button" data-action="cancel">${escapeHtml(cancelLabel)}</button><button type="button" data-action="confirm">${escapeHtml(confirmLabel)}</button></footer>`;
     dialog.querySelector('[data-role="message"]').textContent = message;
     const field = dialog.querySelector('[data-role="input"]');
     if (field) field.value = input;

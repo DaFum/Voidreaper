@@ -1851,7 +1851,7 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
           btn.className = "meta";
           btn.disabled = maxed || Persist.data.shards < cost;
           const pips = Array.from({ length: m.max }, (_, i) => `<i class="${i < lv ? "on" : ""}"></i>`).join("");
-          btn.innerHTML = `<span class="mn">${escapeHtml(m.nm)}</span><div class="mp">${escapeHtml(m.ds)}</div><div class="pips">${pips}</div><div class="mc">${maxed ? "MAXED" : "◇ " + cost}</div>`;
+          btn.innerHTML = `<span class="mn">${escapeHtml(m.nm)}</span><div class="mp">${escapeHtml(m.ds)}</div><div class="pips">${pips}</div><div class="mc">${escapeHtml(maxed ? "MAXED" : "◇ " + cost)}</div>`;
           btn.addEventListener("click", () => {
             if (maxed || Persist.data.shards < cost) return;
             Persist.data.shards -= cost;
@@ -1933,7 +1933,7 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
           } else {
             const lv = (Game.upgradeCounts[o.up.id] || 0) + 1;
             btn.className = "card";
-            btn.innerHTML = `<span class="ico">${escapeHtml(o.up.ico)}</span><span class="nm">${escapeHtml(o.up.nm)}</span> <span class="lv">LV ${lv}/${o.up.max}</span><div class="ds">${escapeHtml(o.up.ds)}</div>`;
+            btn.innerHTML = `<span class="ico">${escapeHtml(o.up.ico)}</span><span class="nm">${escapeHtml(o.up.nm)}</span> <span class="lv">LV ${escapeHtml(lv)}/${escapeHtml(o.up.max)}</span><div class="ds">${escapeHtml(o.up.ds)}</div>`;
           }
           btn.addEventListener("click", () => {
             if (Game.banishMode && !o.evo) { Game.banishMode = false; Game.banish(o); return; }
