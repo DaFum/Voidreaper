@@ -1,12 +1,19 @@
 import { escapeHtml } from "../escape-html.js";
 
+let modalCounter = 0;
+
 function openModal({ title, message, input = null, confirmLabel, cancelLabel }) {
   return new Promise(resolve => {
+    modalCounter++;
+    const titleId = `vr-modal-title-${modalCounter}`;
+    const descId = `vr-modal-desc-${modalCounter}`;
     const opener = document.activeElement;
     const host = document.createElement("div");
     const dialog = document.createElement("dialog");
     dialog.className = "vr-modal";
-    dialog.innerHTML = `<header><small>${escapeHtml(title)}</small></header><p data-role="message"></p>${input === null ? "" : '<input data-role="input" type="text" spellcheck="false">'}<footer><button type="button" data-action="cancel">${escapeHtml(cancelLabel)}</button><button type="button" data-action="confirm">${escapeHtml(confirmLabel)}</button></footer>`;
+    dialog.setAttribute("aria-labelledby", titleId);
+    dialog.setAttribute("aria-describedby", descId);
+    dialog.innerHTML = `<header><small id="${titleId}">${escapeHtml(title)}</small></header><p id="${descId}" data-role="message"></p>${input === null ? "" : `<input data-role="input" type="text" spellcheck="false" aria-labelledby="${titleId}" aria-describedby="${descId}">`}<footer><button type="button" data-action="cancel">${escapeHtml(cancelLabel)}</button><button type="button" data-action="confirm">${escapeHtml(confirmLabel)}</button></footer>`;
     dialog.querySelector('[data-role="message"]').textContent = message;
     const field = dialog.querySelector('[data-role="input"]');
     if (field) field.value = input;
