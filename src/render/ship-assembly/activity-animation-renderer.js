@@ -12,6 +12,7 @@ export function renderActivityAnimations(
   },
 ) {
   // ⚡ Bolt: avoided new Map(buildAnimations.map()) to prevent intermediate array allocation in the hot render path
+
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   for (const node of snapshot.nodes) {

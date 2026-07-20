@@ -50,7 +50,7 @@ export function createAssemblyRenderer() {
       },
     ) {
       if (!geometrySnapshot?.coreGeometry) return false;
-      // ⚡ Bolt: avoided intermediate Map allocation per frame. buildAnimationByNodeId can be passed from caller, otherwise fallback to array find.
+      // ⚡ Bolt: avoided intermediate Map allocation per frame.
       const lod = resolveAssemblyLod({
           zoom: 1,
           visibleSegments: geometrySnapshot.nodes.length - 1,
