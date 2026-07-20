@@ -11,6 +11,8 @@ describe("legacy runtime combat reporting", () => {
     const bullet = {};
     const particle = {};
     game.enemies = [{ x: 10, y: 0, birth: 0 }];
+    game.qbuf = [...game.enemies];
+    game.hash = { query: vi.fn() };
     game.bullets = { get: vi.fn(() => bullet) };
     game.parts = { get: vi.fn(() => particle) };
     legacyRuntime.configureShotFiredReporter(reportShotFired);
@@ -22,6 +24,7 @@ describe("legacy runtime combat reporting", () => {
     expect(reportShotFired).toHaveBeenCalledWith({ shots: 3 });
 
     game.enemies = [];
+    game.qbuf = [];
     game.fire(player);
     expect(reportShotFired).toHaveBeenCalledOnce();
   });
