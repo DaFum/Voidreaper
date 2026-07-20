@@ -51,12 +51,6 @@ export function createAssemblyRenderer() {
     ) {
       if (!geometrySnapshot?.coreGeometry) return false;
       // ⚡ Bolt: avoided intermediate Map allocation per frame. buildAnimationByNodeId can be passed from caller, otherwise fallback to array find.
-      const getBuildAnimation = (nodeId) => {
-        if (buildAnimationByNodeId) {
-          return buildAnimationByNodeId.get(nodeId);
-        }
-        return buildAnimations?.find((b) => b.nodeId === nodeId);
-      };
       const lod = resolveAssemblyLod({
           zoom: 1,
           visibleSegments: geometrySnapshot.nodes.length - 1,
@@ -113,7 +107,7 @@ export function createAssemblyRenderer() {
       for (const node of geometrySnapshot.nodes) {
         if (node.isRoot) continue;
         const activity = telemetryByNodeId[node.nodeId] ?? DEFAULT_ACTIVITY,
-          build = getBuildAnimation(node.nodeId);
+          build = buildAnimationByNodeId ? buildAnimationByNodeId.get(node.nodeId) : buildAnimations?.find((b) => b.nodeId === node.nodeId);
         ctx.save();
         ctx.translate(node.worldPosition.x, node.worldPosition.y);
         ctx.rotate(node.worldRotation);

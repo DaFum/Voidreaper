@@ -12,12 +12,6 @@ export function renderActivityAnimations(
   },
 ) {
   // ⚡ Bolt: avoided new Map(buildAnimations.map()) to prevent intermediate array allocation in the hot render path
-  const getBuildAnimation = (nodeId) => {
-    if (providedAnimationMap) {
-      return providedAnimationMap.get(nodeId);
-    }
-    return buildAnimations?.find((b) => b.nodeId === nodeId);
-  };
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   for (const node of snapshot.nodes) {
@@ -47,7 +41,7 @@ export function renderActivityAnimations(
       continue;
     }
     const activity = telemetryByNodeId[node.nodeId],
-      build = getBuildAnimation(node.nodeId);
+      build = providedAnimationMap ? providedAnimationMap.get(node.nodeId) : buildAnimations?.find((b) => b.nodeId === node.nodeId);
     if (!activity?.firing && !(activity?.energyFlow > 0) && !build) continue;
     const pulse = 0.45 + Math.sin(time * 7 + node.variantSeed) * 0.25;
     ctx.globalAlpha =
