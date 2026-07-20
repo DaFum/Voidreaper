@@ -59,53 +59,6 @@ export function fillSheen(ctx, trace, { light, base, dark, top = -1, bottom = 1,
   ctx.fill();
 }
 
-// A single bright rim on the light-facing (top) edge — cheap fake specular.
-export function strokeRim(ctx, trace, { color, width = 1.4, alpha = .7 }) {
-  const prev = ctx.globalAlpha;
-  ctx.save();
-  if (trace) trace();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = width;
-  ctx.globalAlpha = prev * alpha;
-  ctx.stroke();
-  ctx.restore();
-}
-
-// Recessed panel seams inside a plate footprint.
-export function drawPanelSeams(ctx, { width, height, color, rows = 2, cols = 1, alpha = .5, inset = 0.14 }) {
-  ctx.save();
-  ctx.strokeStyle = color;
-  ctx.globalAlpha *= alpha;
-  ctx.lineWidth = 1;
-  const x0 = -width / 2, x1 = width / 2, y0 = -height / 2, y1 = height / 2;
-  for (let r = 1; r < rows; r += 1) {
-    const y = y0 + (height * r) / rows;
-    ctx.beginPath();
-    ctx.moveTo(x0 + width * inset, y);
-    ctx.lineTo(x1 - width * inset, y);
-    ctx.stroke();
-  }
-  for (let c = 1; c < cols; c += 1) {
-    const x = x0 + (width * c) / cols;
-    ctx.beginPath();
-    ctx.moveTo(x, y0 + height * inset);
-    ctx.lineTo(x, y1 - height * inset);
-    ctx.stroke();
-  }
-  ctx.restore();
-}
-
-export function drawRivets(ctx, { points, color, radius = 1.3, alpha = .8 }) {
-  ctx.save();
-  ctx.fillStyle = color;
-  ctx.globalAlpha *= alpha;
-  for (const p of points) {
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, radius, 0, TAU);
-    ctx.fill();
-  }
-  ctx.restore();
-}
 
 // Soft contact shadow beneath a footprint — grounds modules onto the hull.
 export function drawContactShadow(ctx, { radius, alpha = .35 }) {
@@ -256,10 +209,10 @@ export function drawCracks(ctx, { x = 0, y = 0, radius, color, seed = 0, count =
     const p1 = { x: Math.cos(angle + bend) * radius * .58, y: Math.sin(angle + bend) * radius * .58 };
     const p2 = { x: Math.cos(angle - bend * .4) * radius, y: Math.sin(angle - bend * .4) * radius };
     // dark fracture underneath, bright hairline on top -> reads as depth
-    for (const [c, w, a] of [["rgba(0,0,0,.55)", radius * .1, alpha], [color, radius * .045, 1]]) {
+    for (const [c, w, a] of [["rgba(0,0,0,.55)", radius * .1, 1], [color, radius * .045, 1]]) {
       ctx.strokeStyle = c;
       ctx.lineWidth = Math.max(1, w);
-      ctx.globalAlpha = baseAlpha * a * alpha;
+      ctx.globalAlpha = baseAlpha * alpha * a;
       ctx.beginPath();
       ctx.moveTo(p0.x, p0.y);
       ctx.lineTo(p1.x, p1.y);

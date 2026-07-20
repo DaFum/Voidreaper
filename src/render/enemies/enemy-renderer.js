@@ -2,7 +2,6 @@ import {
   drawCracks,
   drawVoidCore,
   fillSheen,
-  strokeRim,
   drawBloomDot,
   drawContactShadow,
   withAlpha,
@@ -168,9 +167,9 @@ export function renderForgedEnemy(ctx, enemy, {
     ctx.fill();
   } else {
     fillSheen(ctx, () => tracePolygon(ctx, pts), {
-      light: mixColor(shade(baseColor), "#ffffff", .45),
+      light: mixColor(baseColor, "#ffffff", .45),
       base: shade(baseColor),
-      dark: mixColor(shade(baseColor), "#000000", .5),
+      dark: mixColor(baseColor, "#000000", .5),
       span: maxD,
     });
   }
