@@ -44,18 +44,13 @@ export function createAssemblyRenderer() {
         time = 0,
         telemetryByNodeId = {},
         buildAnimations = [],
+        buildAnimationByNodeId = null,
         movement = {},
         lodOptions = {},
       },
     ) {
       if (!geometrySnapshot?.coreGeometry) return false;
-      // ⚡ Bolt: avoided new Map(buildAnimations.map()) to prevent intermediate array allocation in the hot render path
-      const buildAnimationByNodeId = buildAnimations && buildAnimations.length > 0 ? new Map() : null;
-      if (buildAnimationByNodeId) {
-        for (let i = 0; i < buildAnimations.length; i++) {
-          buildAnimationByNodeId.set(buildAnimations[i].nodeId, buildAnimations[i]);
-        }
-      }
+      // ⚡ Bolt: avoided intermediate Map allocation per frame.
       const lod = resolveAssemblyLod({
           zoom: 1,
           visibleSegments: geometrySnapshot.nodes.length - 1,
@@ -112,7 +107,7 @@ export function createAssemblyRenderer() {
       for (const node of geometrySnapshot.nodes) {
         if (node.isRoot) continue;
         const activity = telemetryByNodeId[node.nodeId] ?? DEFAULT_ACTIVITY,
-          build = buildAnimationByNodeId?.get(node.nodeId);
+          build = buildAnimationByNodeId ? buildAnimationByNodeId.get(node.nodeId) : buildAnimations?.find((b) => b.nodeId === node.nodeId);
         ctx.save();
         ctx.translate(node.worldPosition.x, node.worldPosition.y);
         ctx.rotate(node.worldRotation);

@@ -192,11 +192,20 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
     /* ---------- spatial hash ---------- */
     class SpatialHash {
       constructor(cell) { this.cell = cell; this.map = new Map(); }
-      clear() { this.map.clear(); }
+      clear() {
+        for (const col of this.map.values()) {
+          for (const b of col.values()) {
+            b.length = 0;
+          }
+        }
+      }
       insert(e) {
-        const k = ((e.x / this.cell) | 0) * 73856093 ^ ((e.y / this.cell) | 0) * 19349663;
-        let b = this.map.get(k);
-        if (!b) { b = []; this.map.set(k, b); }
+        const gx = (e.x / this.cell) | 0;
+        const gy = (e.y / this.cell) | 0;
+        let col = this.map.get(gx);
+        if (!col) { col = new Map(); this.map.set(gx, col); }
+        let b = col.get(gy);
+        if (!b) { b = []; col.set(gy, b); }
         b.push(e);
       }
       query(x, y, r, out) {
@@ -204,9 +213,14 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
         const c = this.cell;
         const x0 = ((x - r) / c) | 0, x1 = ((x + r) / c) | 0;
         const y0 = ((y - r) / c) | 0, y1 = ((y + r) / c) | 0;
-        for (let gx = x0; gx <= x1; gx++) for (let gy = y0; gy <= y1; gy++) {
-          const b = this.map.get(gx * 73856093 ^ gy * 19349663);
-          if (b) for (let i = 0; i < b.length; i++) out.push(b[i]);
+        for (let gx = x0; gx <= x1; gx++) {
+          const col = this.map.get(gx);
+          if (col) {
+            for (let gy = y0; gy <= y1; gy++) {
+              const b = col.get(gy);
+              if (b) for (let i = 0; i < b.length; i++) out.push(b[i]);
+            }
+          }
         }
         return out;
       }
@@ -643,8 +657,9 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
       /* ---------- combat ---------- */
       fire(p) {
         let target = null, best = 560 * 560;
-        for (const e of this.enemies) {
-          if (e.birth > 0) continue;
+        this.hash.query(p.x, p.y, 560, this.qbuf);
+        for (const e of this.qbuf) {
+          if (e.birth > 0 || e.dead) continue;
           const d = dist2(p.x, p.y, e.x, e.y);
           if (d < best) { best = d; target = e; }
         }
@@ -837,7 +852,7 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
           case "freeze": this.freezeT = 4; AudioSys.freeze(); UI.freezeFlash(); break;
           case "shield": p.shield = Math.min(3, p.shield + 1); UI.shield(p.shield); break;
           case "magnet":
-            for (const g of this.gems.live) { const a = Math.atan2(p.y - g.y, p.x - g.x); g.vx = Math.cos(a) * 900; g.vy = Math.sin(a) * 900; }
+            for (const g of this.gems.live) { const dx = p.x - g.x, dy = p.y - g.y; const d = Math.sqrt(dx * dx + dy * dy) || 1; g.vx = (dx / d) * 900; g.vy = (dy / d) * 900; }
             break;
         }
       },
@@ -1096,6 +1111,9 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
 
         let rateMul = (p.evoTempest && p.moveCharge > 0.5) ? 0.6 : 1;
         if (this.event?.id === "frenzy") rateMul *= 0.45;
+        this.hash.clear();
+        for (const e of this.enemies) this.hash.insert(e);
+
         p.fireT -= dt;
         if (p.fireT <= 0 && this.enemies.length) { p.fireT = p.fireRate * rateMul; this.fire(p); }
 
@@ -1104,9 +1122,6 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
           if (p.novaT <= 0) { p.novaT = p.novaCd; this.novaBlast(p); }
         }
         p.orbA += dt * 3.1;
-
-        this.hash.clear();
-        for (const e of this.enemies) this.hash.insert(e);
 
         if (p.orbitals > 0) {
           const oR = p.evoHalo ? 78 : 62, bladeR = p.evoHalo ? 17 : 12;
@@ -1278,10 +1293,6 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
           const cr = e.r + p.r;
           if (dist2(e.x, e.y, p.x, p.y) < cr * cr) this.hurtPlayer(p, e.dmg);
         }
-
-        this.hash.clear();
-        for (const e of this.enemies) this.hash.insert(e);
-
         this.bullets.update(b => {
           b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
           if (b.life <= 0) { b.dead = true; return; }
@@ -1593,7 +1604,12 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
         }
 
         // enemies
-        for (const e of this.enemies) this.drawEnemy(e, frozen);
+        const hw = (W / 2) + 120, hh = (H / 2) + 120; // 120 is max enemy radius padding
+        for (const e of this.enemies) {
+          if (Math.abs(e.x - camX) < hw && Math.abs(e.y - camY) < hh) {
+            this.drawEnemy(e, frozen);
+          }
+        }
 
         // orbitals
         if (p.orbitals > 0) {

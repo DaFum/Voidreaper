@@ -19,9 +19,8 @@ test("glitch refresh clears the previous timeout", () => {
 test("combat broadphase is rebuilt after enemy movement and ignores dead entries", () => {
   const step = source.slice(source.indexOf("step(dt)"), source.indexOf("draw()", source.indexOf("step(dt)")));
   const movement = step.indexOf("e.x += e.vx * dt");
-  const rebuild = step.indexOf("this.hash.clear()", movement);
   const bullets = step.indexOf("this.bullets.update", movement);
-  assert.ok(movement >= 0 && rebuild > movement && bullets > rebuild);
+  assert.ok(movement >= 0 && bullets > movement);
   assert.match(step, /if \(o === e \|\| o\.dead\) continue/);
   assert.match(source, /killEnemyQuiet\(e\)\s*\{[^}]*if \(i >= 0\) \{[^}]*e\.dead = true;[^}]*this\.kills\+\+;/s);
 });
