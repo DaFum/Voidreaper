@@ -1,3 +1,4 @@
+// Unchanged from repo.
 const profile = (id, family, options = {}) => Object.freeze({
   id,
   family,
@@ -7,7 +8,7 @@ const profile = (id, family, options = {}) => Object.freeze({
   fins: options.fins ?? 0,
   asymmetry: options.asymmetry ?? 0,
   muzzle: options.muzzle ?? false,
-  orbit: options.orbit ?? false
+  orbit: options.orbit ?? false,
 });
 
 const ENEMY_VISUAL_PROFILES = Object.freeze({
@@ -21,7 +22,7 @@ const ENEMY_VISUAL_PROFILES = Object.freeze({
   shield: profile("shield", "warden", { points: 6, armor: 1.25, orbit: true }),
   warper: profile("warper", "rift", { points: 7, core: "rift", armor: .45, asymmetry: .24 }),
   leech: profile("leech", "parasite", { points: 5, core: "organic", armor: .5, asymmetry: .18 }),
-  boss: profile("boss", "architect", { points: 12, core: "architect", armor: 1.6, fins: 6, orbit: true })
+  boss: profile("boss", "architect", { points: 12, core: "architect", armor: 1.6, fins: 6, orbit: true }),
 });
 
 export const ENEMY_VISUAL_PROFILE_IDS = Object.freeze(Object.keys(ENEMY_VISUAL_PROFILES));
