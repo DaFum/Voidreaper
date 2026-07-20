@@ -9,7 +9,7 @@ import {
   mixColor,
 } from "../forged-abyss/primitives.js";
 import { mergeVisualPalette } from "../forged-abyss/palettes.js";
-import { seededSigned, seededUnit, visualHash } from "../forged-abyss/seeded-visuals.js";
+import { seededSigned, visualHash } from "../forged-abyss/seeded-visuals.js";
 import { resolveEnemyVisualProfile } from "./enemy-visual-profiles.js";
 
 const TAU = Math.PI * 2;
@@ -199,16 +199,31 @@ export function renderForgedEnemy(ctx, enemy, {
   ctx.restore();
 
   // 3) top rim highlight on the light-facing edge only
-  ctx.save();
-  ctx.beginPath();
-  const topPts = pts.filter((p) => p.y < 0);
-  if (topPts.length) {
-    topPts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+  const n = pts.length;
+  let startIndex = -1;
+  for (let i = 0; i < n; i++) {
+    if (pts[i].y < 0 && pts[(i - 1 + n) % n].y >= 0) {
+      startIndex = i;
+      break;
+    }
+  }
+  if (startIndex !== -1) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(pts[startIndex].x, pts[startIndex].y);
+    for (let i = 1; i < n; i++) {
+      const idx = (startIndex + i) % n;
+      if (pts[idx].y < 0) {
+        ctx.lineTo(pts[idx].x, pts[idx].y);
+      } else {
+        break;
+      }
+    }
     ctx.strokeStyle = withAlpha(palette.rim ?? "#ffffff", .55);
     ctx.lineWidth = 1.2;
     ctx.stroke();
+    ctx.restore();
   }
-  ctx.restore();
 
   // 4) rivets at vertices
   ctx.save();
@@ -283,6 +298,6 @@ export function renderForgedEnemy(ctx, enemy, {
 }
 
 // Cheap warm/cool energy hint so tint stays in-mood even for odd base colors.
-function palette_energy_hint(baseColor) {
+function palette_energy_hint() {
   return "#48e5c2";
 }

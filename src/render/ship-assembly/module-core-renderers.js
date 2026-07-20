@@ -7,13 +7,12 @@ import {
   traceShieldRing,
   traceThrusterNozzle,
   traceTaperedPlate,
-} from "./path-primitives.js";
+} from "../../features/ship-assembly/geometry/path-primitives.js";
 import {
   drawArmorHatch,
   drawCracks,
   drawVoidCore,
   traceChamferedPlate,
-  fillSheen,
   withAlpha,
   mixColor,
   drawContactShadow,
@@ -269,12 +268,14 @@ export function createModuleCoreRendererRegistry() {
   });
 
   registry.register("core-void-aperture", (ctx, s) => {
+    ctx.save();
     if (s.lod !== "low") ctx.rotate(Math.sin(s.time * 1.7) * .08);
     ctx.beginPath();
     ctx.arc(0, 0, s.size * .62, 0, TAU);
     ctx.lineWidth = s.size * .22;
     glow(ctx, s, .8);
     drawVoidCore(ctx, { radius: s.size * .31, palette: s.palette, time: s.time, seed: s.variantSeed, reducedMotion: s.lod === "low", intensity: 1 });
+    ctx.restore();
   });
 
   registry.register("core-orbit-bearing", (ctx, s) => {

@@ -6,7 +6,11 @@ const TAU = Math.PI * 2;
 // Convert a #rgb / #rrggbb color to rgba() with a given alpha. Falls back to the
 // original string for named/rgb() colors so callers can pass anything.
 export function withAlpha(color, alpha) {
-  if (typeof color !== "string" || color[0] !== "#") return color;
+  if (typeof color !== "string") return color;
+  if (color.startsWith("rgb(")) {
+    return color.replace("rgb(", "rgba(").replace(")", `,${alpha})`);
+  }
+  if (color[0] !== "#") return color;
   const hex = color.slice(1);
   const full = hex.length === 3 ? hex.split("").map((c) => c + c).join("") : hex;
   const n = parseInt(full, 16);
@@ -19,7 +23,7 @@ function mix(a, b, t) {
   const r = Math.round(((pa >> 16) & 255) * (1 - t) + ((pb >> 16) & 255) * t);
   const g = Math.round(((pa >> 8) & 255) * (1 - t) + ((pb >> 8) & 255) * t);
   const bl = Math.round((pa & 255) * (1 - t) + (pb & 255) * t);
-  return `rgb(${r},${g},${bl})`;
+  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${bl.toString(16).padStart(2, "0")}`;
 }
 export { mix as mixColor };
 
@@ -178,6 +182,7 @@ export function drawVoidCore(ctx, { x = 0, y = 0, radius, palette, time = 0, see
   ctx.scale(pulse, pulse);
 
   // plasma body
+  ctx.save();
   const gradient = ctx.createRadialGradient(-radius * .22, -radius * .26, radius * .05, 0, 0, radius);
   gradient.addColorStop(0, palette.cockpit);
   gradient.addColorStop(.2, palette.energySoft ?? palette.energy);
@@ -199,6 +204,7 @@ export function drawVoidCore(ctx, { x = 0, y = 0, radius, palette, time = 0, see
   }
   ctx.closePath();
   ctx.fill();
+  ctx.restore();
 
   // inner hotspot
   ctx.save();
@@ -224,10 +230,11 @@ export function drawVoidCore(ctx, { x = 0, y = 0, radius, palette, time = 0, see
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
     ctx.fillStyle = palette.cockpit;
+    const sparkAlpha = ctx.globalAlpha * .55;
     for (let i = 0; i < 3; i += 1) {
       const a = time * (1.4 + i * .5) + i * 2.1 + seededUnit(seed, i) * TAU;
       const rr = radius * (1.05 + i * .12);
-      ctx.globalAlpha = .55;
+      ctx.globalAlpha = sparkAlpha;
       ctx.beginPath();
       ctx.arc(Math.cos(a) * rr, Math.sin(a) * rr * .7, radius * .09, 0, TAU);
       ctx.fill();
@@ -238,6 +245,7 @@ export function drawVoidCore(ctx, { x = 0, y = 0, radius, palette, time = 0, see
 }
 
 export function drawCracks(ctx, { x = 0, y = 0, radius, color, seed = 0, count = 4, alpha = .8 }) {
+  const baseAlpha = ctx.globalAlpha;
   ctx.save();
   ctx.translate(x, y);
   ctx.lineCap = "round";
@@ -251,7 +259,7 @@ export function drawCracks(ctx, { x = 0, y = 0, radius, color, seed = 0, count =
     for (const [c, w, a] of [["rgba(0,0,0,.55)", radius * .1, alpha], [color, radius * .045, 1]]) {
       ctx.strokeStyle = c;
       ctx.lineWidth = Math.max(1, w);
-      ctx.globalAlpha = a * alpha;
+      ctx.globalAlpha = baseAlpha * a * alpha;
       ctx.beginPath();
       ctx.moveTo(p0.x, p0.y);
       ctx.lineTo(p1.x, p1.y);
