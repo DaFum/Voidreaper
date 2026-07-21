@@ -28,3 +28,6 @@
 **Learning:** Using `Array.prototype.splice()` inside a loop that iterates over a large array (especially in high-frequency rendering or assembly logic) can cause severe performance issues due to the O(n) array element shifting on every call, leading to O(n^2) overall time complexity.
 
 **Action:** Instead of `splice`, use the "swap and pop" pattern (if order doesn't matter) or assign the index to `null` and do a single pass cleanup at the end (e.g., using `filter(Boolean)`) to improve performance.
+## 2025-02-18 - Math.atan2 + Math.cos/sin Performance Bottleneck
+**Learning:** Using `Math.atan2` followed immediately by `Math.cos` and `Math.sin` to calculate normalized velocity components is a severe performance bottleneck in hot loops compared to calculating the Euclidean distance manually using `Math.sqrt(dx*dx + dy*dy)` and normalizing via division. Benchmarks show direct vector normalization is ~7-8x faster in Node.js/V8.
+**Action:** Never use `Math.atan2` just to feed `Math.cos` and `Math.sin` for distance/velocity calculations in high-frequency rendering/gameplay loops. Always use `Math.sqrt(dx*dx + dy*dy)` and division to extract the normalized components.

@@ -866,8 +866,10 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
           const e = snap[i];
           if (e.dead) continue;
           if (dist2(x, y, e.x, e.y) < R * R) {
-            const a = Math.atan2(e.y - y, e.x - x);
-            e.vx += Math.cos(a) * 380; e.vy += Math.sin(a) * 380;
+            // ⚡ Bolt: Avoid Math.atan2 and cos/sin for vector normalization in hot path
+            const dx = e.x - x, dy = e.y - y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > 0) { e.vx += (dx / dist) * 380; e.vy += (dy / dist) * 380; }
             if (dmg > 0) this.damageEnemy(e, dmg, false);
           }
         }
@@ -950,9 +952,11 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
           if (e.dead) continue;
           if (dist2(p.x, p.y, e.x, e.y) < R * R) {
             this.damageEnemy(e, 14 * p.dmgMul * p.nova, false);
-            const a = Math.atan2(e.y - p.y, e.x - p.x);
+            // ⚡ Bolt: Avoid Math.atan2 and cos/sin for vector normalization in hot path
+            const dx = e.x - p.x, dy = e.y - p.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
             const dir = p.evoSing ? -1 : 1;
-            e.vx += Math.cos(a) * 260 * dir; e.vy += Math.sin(a) * 260 * dir;
+            if (dist > 0) { e.vx += (dx / dist) * 260 * dir; e.vy += (dy / dist) * 260 * dir; }
           }
         }
         releaseArrayToPool(snap);
@@ -1164,8 +1168,10 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
                 e.dotT = (e.dotT || 0) - dt;
                 if (e.dotT <= 0) { e.dotT = 0.35; this.damageEnemy(e, z.dps * 0.35, false); }
                 if (z.pull) {
-                  const a = Math.atan2(z.y - e.y, z.x - e.x);
-                  e.vx += Math.cos(a) * z.pull * dt * 6; e.vy += Math.sin(a) * z.pull * dt * 6;
+                  // ⚡ Bolt: Avoid Math.atan2 and cos/sin for vector normalization in hot path
+                  const dx = z.x - e.x, dy = z.y - e.y;
+                  const dist = Math.sqrt(dx * dx + dy * dy);
+                  if (dist > 0) { e.vx += (dx / dist) * z.pull * dt * 6; e.vy += (dy / dist) * z.pull * dt * 6; }
                 }
               }
             }
@@ -1261,8 +1267,9 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
                 }
               } else if (e.dashT <= 0) {
                 e.dashT = this.grand(2.5, 3.8); e.dashing = 0.55;
-                const a = Math.atan2(dyp, dxp);
-                e.vx = Math.cos(a) * e.spd * 7; e.vy = Math.sin(a) * e.spd * 7;
+                // ⚡ Bolt: Avoid Math.atan2 and cos/sin for vector normalization in hot path
+                const dist = Math.sqrt(dxp * dxp + dyp * dyp);
+                if (dist > 0) { e.vx = (dxp / dist) * e.spd * 7; e.vy = (dyp / dist) * e.spd * 7; }
                 AudioSys.noise(0.25, 0.2, 600);
               }
             }
