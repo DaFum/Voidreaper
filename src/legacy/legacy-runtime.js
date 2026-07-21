@@ -869,7 +869,7 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
             // ⚡ Bolt: Avoid Math.atan2 and cos/sin for vector normalization in hot path
             const dx = e.x - x, dy = e.y - y;
             const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist > 0) { e.vx += (dx / dist) * 380; e.vy += (dy / dist) * 380; }
+            if (dist > 0) { const f = 380 / dist; e.vx += dx * f; e.vy += dy * f; }
             if (dmg > 0) this.damageEnemy(e, dmg, false);
           }
         }
@@ -956,7 +956,7 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
             const dx = e.x - p.x, dy = e.y - p.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
             const dir = p.evoSing ? -1 : 1;
-            if (dist > 0) { e.vx += (dx / dist) * 260 * dir; e.vy += (dy / dist) * 260 * dir; }
+            if (dist > 0) { const f = (260 * dir) / dist; e.vx += dx * f; e.vy += dy * f; }
           }
         }
         releaseArrayToPool(snap);
@@ -1171,7 +1171,7 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
                   // ⚡ Bolt: Avoid Math.atan2 and cos/sin for vector normalization in hot path
                   const dx = z.x - e.x, dy = z.y - e.y;
                   const dist = Math.sqrt(dx * dx + dy * dy);
-                  if (dist > 0) { e.vx += (dx / dist) * z.pull * dt * 6; e.vy += (dy / dist) * z.pull * dt * 6; }
+                  if (dist > 0) { const f = (z.pull * dt * 6) / dist; e.vx += dx * f; e.vy += dy * f; }
                 }
               }
             }
@@ -1269,7 +1269,7 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
                 e.dashT = this.grand(2.5, 3.8); e.dashing = 0.55;
                 // ⚡ Bolt: Avoid Math.atan2 and cos/sin for vector normalization in hot path
                 const dist = Math.sqrt(dxp * dxp + dyp * dyp);
-                if (dist > 0) { e.vx = (dxp / dist) * e.spd * 7; e.vy = (dyp / dist) * e.spd * 7; }
+                if (dist > 0) { const f = (e.spd * 7) / dist; e.vx = dxp * f; e.vy = dyp * f; }
                 AudioSys.noise(0.25, 0.2, 600);
               }
             }
