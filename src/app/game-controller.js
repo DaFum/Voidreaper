@@ -31,65 +31,226 @@ import { rotationForPortDirection } from "../features/ship-assembly/geometry/por
 import { migrateAssemblyPortLayout } from "../features/ship-assembly/model/assembly-layout-migration.js";
 
 const UPGRADE_TAGS = {
-  multi: ["Projectile"], damage: ["Kinetic"], dmg: ["Kinetic"], rate: ["Cooldown"], speed: ["Movement"],
-  pierce: ["Pierce"], crit: ["Critical"], orbit: ["Orbit"], nova: ["Nova"], regen: ["Healing"],
-  bspeed: ["Projectile"], magnet: ["Pickup"]
+  multi: ["Projectile"],
+  damage: ["Kinetic"],
+  dmg: ["Kinetic"],
+  rate: ["Cooldown"],
+  speed: ["Movement"],
+  pierce: ["Pierce"],
+  crit: ["Critical"],
+  orbit: ["Orbit"],
+  nova: ["Nova"],
+  regen: ["Healing"],
+  bspeed: ["Projectile"],
+  magnet: ["Pickup"],
 };
 
 export const shouldSyncLegacyRun = ({ sync = true } = {}) => sync;
-export const resolveRunLoadout = services => services.primaryLoadout?.() ?? createStarterLoadout();
-export const createRootPortPosition = template => ({ x: template.direction.x * 72, y: template.direction.y * 72 });
-export const equippedAssemblyItems = loadout => Object.entries(loadout?.slots ?? {})
-  .filter(([slot]) => slot !== "ship")
-  .flatMap(([, items]) => items)
-  .filter(Boolean);
+export const resolveRunLoadout = (services) =>
+  services.primaryLoadout?.() ?? createStarterLoadout();
+export const createRootPortPosition = (template) => ({
+  x: template.direction.x * 72,
+  y: template.direction.y * 72,
+});
+export const equippedAssemblyItems = (loadout) =>
+  Object.entries(loadout?.slots ?? {})
+    .filter(([slot]) => slot !== "ship")
+    .flatMap(([, items]) => items)
+    .filter(Boolean);
 
 export function createGameController(services) {
   let run = null;
 
   function legacySources(game) {
-    const sources = [{ id: "legacy-railgun", tags: [{ id: "Weapon", value: 1 }, { id: "Projectile", value: 1 }, { id: "Kinetic", value: 1 }], modifiers: [] }];
+    const sources = [
+      {
+        id: "legacy-railgun",
+        tags: [
+          { id: "Weapon", value: 1 },
+          { id: "Projectile", value: 1 },
+          { id: "Kinetic", value: 1 },
+        ],
+        modifiers: [],
+      },
+    ];
     for (const [id, level] of Object.entries(game.upgradeCounts ?? {})) {
       if (!level || id.startsWith("evo_")) continue;
-      sources.push({ id: `upgrade-${id}`, tags: (UPGRADE_TAGS[id] ?? []).map(tagId => ({ id: tagId, value: level })), modifiers: [] });
+      sources.push({
+        id: `upgrade-${id}`,
+        tags: (UPGRADE_TAGS[id] ?? []).map((tagId) => ({
+          id: tagId,
+          value: level,
+        })),
+        modifiers: [],
+      });
     }
     return sources;
   }
 
   return {
-    get run() { return run; },
-    openPendingMount(pendingMount, context) { return services.quickMount?.open(pendingMount, context) ?? { opened:false, reason:"quick-mount-unavailable" }; },
+    get run() {
+      return run;
+    },
+    openPendingMount(pendingMount, context) {
+      return (
+        services.quickMount?.open(pendingMount, context) ?? {
+          opened: false,
+          reason: "quick-mount-unavailable",
+        }
+      );
+    },
     attachLegacy(game, options = {}) {
-      const resumed=services.resumeRun??null;delete services.resumeRun;const mode=game.mode==="tutorial"?"tutorial":game.mode === "daily" ? "daily" : "campaign";run = resumed??createRunState({ seed: game.seed, mode, campaignPathId: game.selectedCampaignPath ?? "architect" });
-      if (!resumed&&run.mode === "daily" && services.daily) services.daily.apply(run, services.daily.config());
+      const resumed = services.resumeRun ?? null;
+      delete services.resumeRun;
+      const mode =
+        game.mode === "tutorial"
+          ? "tutorial"
+          : game.mode === "daily"
+            ? "daily"
+            : "campaign";
+      run =
+        resumed ??
+        createRunState({
+          seed: game.seed,
+          mode,
+          campaignPathId: game.selectedCampaignPath ?? "architect",
+        });
+      if (!resumed && run.mode === "daily" && services.daily) {
+        services.daily.apply(run, services.daily.config());
+      }
       run.services = services;
       run.heat ??= createHeatState();
       run.corruption ??= createCorruptionState(game.corruption ?? 0);
-      if(!resumed&&mode!=="tutorial")services.sectors?.start(run);
-      if(!resumed)services.energy.initialize(run.player, { capacity: 100, reserved: 92, regeneration: 12 });
-      if(!resumed)run.loadout=structuredClone(resolveRunLoadout(services));
-      const shipFrameId = run.assembly?.shipFrameId??run.loadout?.slots?.ship?.[0]?.definitionId??"vesper";
+      if (!resumed && mode !== "tutorial") {
+        services.sectors?.start(run);
+      }
+      if (!resumed) {
+        services.energy.initialize(run.player, {
+          capacity: 100,
+          reserved: 92,
+          regeneration: 12,
+        });
+      }
+      if (!resumed) {
+        run.loadout = structuredClone(resolveRunLoadout(services));
+      }
+      const shipFrameId =
+        run.assembly?.shipFrameId ??
+        run.loadout?.slots?.ship?.[0]?.definitionId ??
+        "vesper";
       const frame = services.assemblyProfiles.getShipFrame(shipFrameId);
-      if(resumed?.assembly)migrateAssemblyPortLayout(resumed.assembly,services.equipment);
-      let rootPorts=[];if(!run.assembly){const rootNodeId = run.ids.create("assembly-root"),rootNode = { nodeId: rootNodeId, parentNodeId: null, moduleInstanceId: null, definitionId: shipFrameId, visualProfileId: frame.coreGeometryId, localPosition: { x: 0, y: 0 }, localRotation: 0, mass: 24, damageState: "intact", childPortIds: [] };rootPorts = frame.initialPorts.map(template => { const portId=run.ids.create("assembly-port"); rootNode.childPortIds.push(portId); return { ...template, portId, parentNodeId: rootNodeId, occupiedByNodeId: null, localPosition: createRootPortPosition(template) }; });run.assembly = createAssemblyState({ shipFrameId, rootNode, rootPorts });run.activeBlueprintId=services.blueprints?.getActiveId?.()??null;run.activeBlueprintVariantId=null;}else rootPorts=Object.values(run.assembly.portsById).filter(port=>port.parentNodeId===run.assembly.rootNodeId);
-      run.pendingAssemblyItems ??=[];const runInventory={values:()=>run.inventory,store:id=>{const item=run.inventory.find(entry=>entry.instanceId===id);if(item)item.stored=true;return item??null;},addPending:entry=>{(run.pendingAssemblyItems??=[]).push(structuredClone(entry));return entry;},updatePending:(id,patch)=>{const entry=(run.pendingAssemblyItems??=[]).find(item=>item.pendingMountId===id);if(entry)Object.assign(entry,patch);return entry??null;},pending:()=>run.pendingAssemblyItems??[]};
-      services.currentAssembly = createAssemblyService({ state: run.assembly, eventBus: services.events, idFactory: run.ids, runInventory });
+      if (resumed?.assembly) {
+        migrateAssemblyPortLayout(resumed.assembly, services.equipment);
+      }
+      let rootPorts = [];
+      if (!run.assembly) {
+        const rootNodeId = run.ids.create("assembly-root");
+        const rootNode = {
+          nodeId: rootNodeId,
+          parentNodeId: null,
+          moduleInstanceId: null,
+          definitionId: shipFrameId,
+          visualProfileId: frame.coreGeometryId,
+          localPosition: { x: 0, y: 0 },
+          localRotation: 0,
+          mass: 24,
+          damageState: "intact",
+          childPortIds: [],
+        };
+        rootPorts = frame.initialPorts.map((template) => {
+          const portId = run.ids.create("assembly-port");
+          rootNode.childPortIds.push(portId);
+          return {
+            ...template,
+            portId,
+            parentNodeId: rootNodeId,
+            occupiedByNodeId: null,
+            localPosition: createRootPortPosition(template),
+          };
+        });
+        run.assembly = createAssemblyState({
+          shipFrameId,
+          rootNode,
+          rootPorts,
+        });
+        run.activeBlueprintId = services.blueprints?.getActiveId?.() ?? null;
+        run.activeBlueprintVariantId = null;
+      } else {
+        rootPorts = Object.values(run.assembly.portsById).filter(
+          (port) => port.parentNodeId === run.assembly.rootNodeId,
+        );
+      }
+      run.pendingAssemblyItems ??= [];
+      const runInventory = {
+        values: () => run.inventory,
+        store: (id) => {
+          const item = run.inventory.find((entry) => entry.instanceId === id);
+          if (item) item.stored = true;
+          return item ?? null;
+        },
+        addPending: (entry) => {
+          (run.pendingAssemblyItems ??= []).push(structuredClone(entry));
+          return entry;
+        },
+        updatePending: (id, patch) => {
+          const entry = (run.pendingAssemblyItems ??= []).find(
+            (item) => item.pendingMountId === id,
+          );
+          if (entry) Object.assign(entry, patch);
+          return entry ?? null;
+        },
+        pending: () => run.pendingAssemblyItems ?? [],
+      };
+      services.currentAssembly = createAssemblyService({
+        state: run.assembly,
+        eventBus: services.events,
+        idFactory: run.ids,
+        runInventory,
+      });
       services.assemblyGeometry?.destroy?.();
-      services.assemblyGeometry = createAssemblyGeometryService({ eventBus: services.events, assemblyService: services.currentAssembly, profileRegistry: services.assemblyProfiles, equipmentRegistry: services.equipment, errorBoundary: services.assemblyErrors });
+      services.assemblyGeometry = createAssemblyGeometryService({
+        eventBus: services.events,
+        assemblyService: services.currentAssembly,
+        profileRegistry: services.assemblyProfiles,
+        equipmentRegistry: services.equipment,
+        errorBoundary: services.assemblyErrors,
+      });
       services.assemblyGeometry.rebuildNow();
-      services.buildAnimations=createBuildAnimationController({reducedMotion:globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches});
-      const equipmentService=createEquipmentService({registry:services.equipment,inventory:()=>run.inventory}),coreExposureService=createCoreExposureService(),compatibilityService=createCompatibilityService({profileRegistry:services.assemblyProfiles,coreExposureService}),stateMachine=createStateMachine("run",services.events),pendingMountService=createPendingMountService({runInventory}),commandService=createAssemblyCommandService({assemblyService:services.currentAssembly,compatibilityService,geometryService:services.assemblyGeometry,equipmentService,buildAnimationController:services.buildAnimations,onError:message=>globalThis.__VOIDREAPER_TOAST__?.(message)});
+      services.buildAnimations = createBuildAnimationController({
+        reducedMotion: globalThis.matchMedia?.(
+          "(prefers-reduced-motion: reduce)",
+        )?.matches,
+      });
+      const equipmentService = createEquipmentService({
+        registry: services.equipment,
+        inventory: () => run.inventory,
+      });
+      const coreExposureService = createCoreExposureService();
+      const compatibilityService = createCompatibilityService({
+        profileRegistry: services.assemblyProfiles,
+        coreExposureService,
+      });
+      const stateMachine = createStateMachine("run", services.events);
+      const pendingMountService = createPendingMountService({ runInventory });
+      const commandService = createAssemblyCommandService({
+        assemblyService: services.currentAssembly,
+        compatibilityService,
+        geometryService: services.assemblyGeometry,
+        equipmentService,
+        buildAnimationController: services.buildAnimations,
+        onError: (message) => globalThis.__VOIDREAPER_TOAST__?.(message),
+      });
       if (!resumed) {
         for (const equipped of equippedAssemblyItems(run.loadout)) {
           const definition = services.equipment.require(equipped.definitionId);
           const item = {
             ...structuredClone(equipped),
-            instanceId: run.ids.create('item'),
-            ownership: 'temporary',
-            rarity: equipped.rarity ?? 'common',
+            instanceId: run.ids.create("item"),
+            ownership: "temporary",
+            rarity: equipped.rarity ?? "common",
             itemPower: equipped.itemPower ?? 100,
             affixes: equipped.affixes ?? [],
-            sockets: equipped.sockets ?? []
+            sockets: equipped.sockets ?? [],
           };
           run.inventory.push(item);
 
@@ -98,16 +259,17 @@ export function createGameController(services) {
           const moduleProfile = {
             ...definition.assembly,
             definitionId: definition.id,
-            tags: definition.tags
+            tags: definition.tags,
           };
 
-          const port = Object.values(state.portsById).find(candidate =>
-            compatibilityService.evaluate({
-              state,
-              moduleProfile,
-              port: candidate,
-              geometrySnapshot
-            }).compatible
+          const port = Object.values(state.portsById).find(
+            (candidate) =>
+              compatibilityService.evaluate({
+                state,
+                moduleProfile,
+                port: candidate,
+                geometrySnapshot,
+              }).compatible,
           );
 
           if (port) {
@@ -118,23 +280,129 @@ export function createGameController(services) {
               assemblyProfile: definition.assembly,
               transform: {
                 position: port.localPosition,
-                rotation: rotationForPortDirection(port.direction)
-              }
+                rotation: rotationForPortDirection(port.direction),
+              },
             });
             services.assemblyGeometry.rebuildNow();
           } else {
             pendingMountService.queue({
               itemInstance: item,
               profile: definition.assembly,
-              source: 'loadout',
-              acquiredAt: run.time
+              source: "loadout",
+              acquiredAt: run.time,
             });
           }
         }
       }
-      services.flightProfile?.destroy?.();services.flightProfile=createFlightProfileService({eventBus:services.events,geometryService:services.assemblyGeometry});services.flightProfile.rebuildNow();const suggestionService=createPlacementSuggestionService({compatibilityService,geometryService:services.assemblyGeometry,flightProfileService:services.flightProfile});
-      const branchFailureService=createBranchFailureService({assemblyService:services.currentAssembly,geometryService:services.assemblyGeometry});services.moduleDamage=createModuleDamageService({assemblyService:services.currentAssembly,eventBus:services.events,branchFailureService});services.moduleFaults?.destroy?.();services.moduleFaults=createModuleFaultAdapter({assemblyService:services.currentAssembly,equipmentService,eventBus:services.events});services.moduleFaults.refresh();services.hitZones=createHitZoneIndex();const refreshHitZones=geometry=>services.hitZones.rebuild(geometry.revision,buildAssemblyHitZones(geometry,frame));refreshHitZones(services.assemblyGeometry.getSnapshot());services.geometryReadyUnsubscribe?.();services.geometryReadyUnsubscribe=services.events.on("assembly:geometry-ready",refreshHitZones);services.damageRouter=createDamageRouter({moduleDamageService:services.moduleDamage,playerDamageService:{applyHullDamage:amount=>{run.player.hull=Math.max(0,run.player.hull-amount);}}});services.assemblyCollision=createCollisionSystem({hitZoneIndex:services.hitZones,damageRouter:services.damageRouter});services.repairs=createRepairService({assemblyService:services.currentAssembly,resources:run.resources,eventBus:services.events,remountDetached:item=>pendingMountService.queue({itemInstance:item,profile:services.equipment.requireAssemblyProfile(item.definitionId),source:"repair",acquiredAt:run.time})});services.recoil=createRecoilService({flightProfileService:services.flightProfile});services.flightSmoother=createFlightProfileSmoother(services.flightProfile.getProfile());services.flightProfileUnsubscribe?.();services.flightProfileUnsubscribe=services.events.on("assembly:flight-profile-changed",profile=>services.flightSmoother.setTarget(profile));services.cameraFit=createCameraFitService({camera:run.camera,viewport:()=>({width:innerWidth,height:innerHeight})});services.cameraFit.fit(services.assemblyGeometry.getSnapshot().totalBounds);
-      services.pendingMounts=pendingMountService;services.assemblyCommands=commandService;services.compatibility=compatibilityService;services.quickMount=createQuickMountController({suggestionService,commandService,pendingMountService,runInventory,assemblyService:services.currentAssembly,stateMachine,timeScaleService:{push:(_id,scale)=>{game.timeScale=scale;},pop:()=>{game.timeScale=1;}}});services.assemblyWorkbench=createConstructionWorkbenchController({commandService,assemblyService:services.currentAssembly,geometryService:services.assemblyGeometry,runInventory,stateMachine});
+      services.flightProfile?.destroy?.();
+      services.flightProfile = createFlightProfileService({
+        eventBus: services.events,
+        geometryService: services.assemblyGeometry,
+      });
+      services.flightProfile.rebuildNow();
+      const suggestionService = createPlacementSuggestionService({
+        compatibilityService,
+        geometryService: services.assemblyGeometry,
+        flightProfileService: services.flightProfile,
+      });
+      const branchFailureService = createBranchFailureService({
+        assemblyService: services.currentAssembly,
+        geometryService: services.assemblyGeometry,
+      });
+      services.moduleDamage = createModuleDamageService({
+        assemblyService: services.currentAssembly,
+        eventBus: services.events,
+        branchFailureService,
+      });
+      services.moduleFaults?.destroy?.();
+      services.moduleFaults = createModuleFaultAdapter({
+        assemblyService: services.currentAssembly,
+        equipmentService,
+        eventBus: services.events,
+      });
+      services.moduleFaults.refresh();
+      services.hitZones = createHitZoneIndex();
+      const refreshHitZones = (geometry) =>
+        services.hitZones.rebuild(
+          geometry.revision,
+          buildAssemblyHitZones(geometry, frame),
+        );
+      refreshHitZones(services.assemblyGeometry.getSnapshot());
+      services.geometryReadyUnsubscribe?.();
+      services.geometryReadyUnsubscribe = services.events.on(
+        "assembly:geometry-ready",
+        refreshHitZones,
+      );
+      services.damageRouter = createDamageRouter({
+        moduleDamageService: services.moduleDamage,
+        playerDamageService: {
+          applyHullDamage: (amount) => {
+            run.player.hull = Math.max(0, run.player.hull - amount);
+          },
+        },
+      });
+      services.assemblyCollision = createCollisionSystem({
+        hitZoneIndex: services.hitZones,
+        damageRouter: services.damageRouter,
+      });
+      services.repairs = createRepairService({
+        assemblyService: services.currentAssembly,
+        resources: run.resources,
+        eventBus: services.events,
+        remountDetached: (item) =>
+          pendingMountService.queue({
+            itemInstance: item,
+            profile: services.equipment.requireAssemblyProfile(
+              item.definitionId,
+            ),
+            source: "repair",
+            acquiredAt: run.time,
+          }),
+      });
+      services.recoil = createRecoilService({
+        flightProfileService: services.flightProfile,
+      });
+      services.flightSmoother = createFlightProfileSmoother(
+        services.flightProfile.getProfile(),
+      );
+      services.flightProfileUnsubscribe?.();
+      services.flightProfileUnsubscribe = services.events.on(
+        "assembly:flight-profile-changed",
+        (profile) => services.flightSmoother.setTarget(profile),
+      );
+      services.cameraFit = createCameraFitService({
+        camera: run.camera,
+        viewport: () => ({ width: innerWidth, height: innerHeight }),
+      });
+      services.cameraFit.fit(
+        services.assemblyGeometry.getSnapshot().totalBounds,
+      );
+      services.pendingMounts = pendingMountService;
+      services.assemblyCommands = commandService;
+      services.compatibility = compatibilityService;
+      services.quickMount = createQuickMountController({
+        suggestionService,
+        commandService,
+        pendingMountService,
+        runInventory,
+        assemblyService: services.currentAssembly,
+        stateMachine,
+        timeScaleService: {
+          push: (_id, scale) => {
+            game.timeScale = scale;
+          },
+          pop: () => {
+            game.timeScale = 1;
+          },
+        },
+      });
+      services.assemblyWorkbench = createConstructionWorkbenchController({
+        commandService,
+        assemblyService: services.currentAssembly,
+        geometryService: services.assemblyGeometry,
+        runInventory,
+        stateMachine,
+      });
       if (shouldSyncLegacyRun(options)) this.syncLegacy(game, 0);
       services.events.emit("run-started", { run });
       return run;
@@ -142,22 +410,36 @@ export function createGameController(services) {
     syncLegacy(game, dt) {
       if (!run || !game.player) return;
       const player = game.player;
-      Object.assign(run.player, { x: player.x, y: player.y, hull: player.hp, maxHull: player.maxHp });
+      Object.assign(run.player, {
+        x: player.x,
+        y: player.y,
+        hull: player.hp,
+        maxHull: player.maxHp,
+      });
       run.time = game.time;
       run.score = game.score;
       run.kills = game.kills;
       run.wave = game.wave;
-      game.visualRegionId = run.campaign?.map?.regions?.[run.campaign.regionIndex]?.id ?? "shattered-approach";
+      game.visualRegionId =
+        run.campaign?.map?.regions?.[run.campaign.regionIndex]?.id ??
+        "shattered-approach";
       run.build.sources = legacySources(game);
       run.build.tags = services.tags.collect(run.build.sources);
       services.energy.update(run.player, dt);
       services.dodge.update(run.player, dt);
       services.heat.update(run.heat, dt, { coolingRate: 10 });
       services.buildAnimations?.update(dt);
-      run.player.flightProfile=services.flightSmoother?.update(dt)??services.flightProfile?.getProfile();
-      services.cameraFit?.update(dt,run.player);
+      run.player.flightProfile =
+        services.flightSmoother?.update(dt) ??
+        services.flightProfile?.getProfile();
+      services.cameraFit?.update(dt, run.player);
       if ((game.corruption ?? 0) !== run.corruption.value) {
-        services.corruption.change(run.corruption, (game.corruption ?? 0) - run.corruption.value, "legacy-run", run.time);
+        services.corruption.change(
+          run.corruption,
+          (game.corruption ?? 0) - run.corruption.value,
+          "legacy-run",
+          run.time,
+        );
       }
       run.player.resources.heat = run.heat.value;
       run.player.resources.corruption = run.corruption.value;
@@ -166,12 +448,17 @@ export function createGameController(services) {
       if (!run || !game.player) return false;
       const direction = axis.x || axis.y ? axis : { x: 1, y: 0 };
       if (!services.dodge.use(run.player, direction)) return false;
-      const distance=120*(run.player.flightProfile?.dodgeDistanceMultiplier??1);game.player.x += direction.x * distance;
+      const distance =
+        120 * (run.player.flightProfile?.dodgeDistanceMultiplier ?? 1);
+      game.player.x += direction.x * distance;
       game.player.y += direction.y * distance;
       return true;
     },
     inspectorModel(game) {
-      const tags = run?.build.tags ?? { totals: new Map(), provenance: new Map() };
+      const tags = run?.build.tags ?? {
+        totals: new Map(),
+        provenance: new Map(),
+      };
       const context = {
         // evolution requirements read context.tags as a Map of totals, while
         // collect() returns { totals, provenance } — pass the totals Map here
@@ -180,7 +467,7 @@ export function createGameController(services) {
         corruption: run?.corruption.value ?? 0,
         loadRatio: run?.player.energy?.ratio ?? 0,
         activeByWeapon: new Map(),
-        sources: run?.build.sources ?? []
+        sources: run?.build.sources ?? [],
       };
       return {
         tags,
@@ -190,8 +477,8 @@ export function createGameController(services) {
         load: run?.player.energy ?? { ratio: 0, tier: "stable" },
         heat: run?.heat.value ?? 0,
         corruption: run?.corruption.value ?? 0,
-        faultPressure: run?.faults?.pressure ?? 0
+        faultPressure: run?.faults?.pressure ?? 0,
       };
-    }
+    },
   };
 }
