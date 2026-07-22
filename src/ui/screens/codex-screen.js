@@ -21,6 +21,6 @@ export function renderCodexScreen(root, { entries, filters = {}, onFilter = () =
 }
 
 export function renderBuildHistory(root, builds, onToggleFavorite = () => {}) {
-  root.innerHTML = `<div class="codex__grid">${builds.map(build => `<article><span>${escapeHtml(build.result)} · SEED ${build.seed}</span><h3>${escapeHtml(build.ship ?? "Unknown")} / ${escapeHtml(build.weapon ?? "Unknown")}</h3><p>${build.modules.map(escapeHtml).join(" · ")}</p><button data-favorite="${escapeHtml(build.id)}">${build.favorite ? "★ Favorit" : "☆ Favorisieren"}</button></article>`).join("")}</div>`;
+  root.innerHTML = `<div class="codex__grid">${builds.map(build => `<article><span>${escapeHtml(build.result)} · SEED ${build.seed}</span><h3>${escapeHtml(build.ship ?? "Unknown")} / ${escapeHtml(build.weapon ?? "Unknown")}</h3><p>${build.modules.map(escapeHtml).join(" · ")}</p><button type="button" data-favorite="${escapeHtml(build.id)}">${build.favorite ? "★ Favorit" : "☆ Favorisieren"}</button></article>`).join("")}</div>`;
   root.onclick = event => { const button = event.target.closest("[data-favorite]"); if (button) onToggleFavorite(button.dataset.favorite); };
 }

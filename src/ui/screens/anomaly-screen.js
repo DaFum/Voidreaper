@@ -5,6 +5,7 @@ export function renderAnomalyScreen(root, { event, onChoose }) {
   const choices = root.querySelector(".anomaly__choices");
   for (const choice of event.choices) {
     const button = document.createElement("button");
+    button.type = "button";
     button.className = "item-card";
     button.innerHTML = `<strong>${escapeHtml(choice.label)}</strong><small><i>KOSTEN</i> ${escapeHtml(choice.cost)}</small><small><i>BEKANNTE BELOHNUNG</i> ${escapeHtml(choice.reward)}</small><small><i>MÖGLICHE FOLGE</i> ${escapeHtml(choice.unknown)}</small>`;
     button.addEventListener("click", () => onChoose(choice.id));

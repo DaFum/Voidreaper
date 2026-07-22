@@ -9,7 +9,7 @@ export function createBuildInspector(container, services) {
   let activeTab = "Übersicht";
   let model = null;
   container.innerHTML = `
-    <nav class="inspector-tabs" aria-label="Build inspector">${TABS.map(tab => `<button data-tab="${escapeHtml(tab)}">${escapeHtml(tab)}</button>`).join("")}</nav>
+    <nav class="inspector-tabs" aria-label="Build inspector">${TABS.map(tab => `<button type="button" data-tab="${escapeHtml(tab)}">${escapeHtml(tab)}</button>`).join("")}</nav>
     <div class="inspector-panel"></div>`;
   const panel = container.querySelector(".inspector-panel");
 
