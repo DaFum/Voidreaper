@@ -760,9 +760,7 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
       },
 
       killEnemy(e) {
-        const i = this.enemies.indexOf(e);
-        if (i < 0) return;
-        this.enemies[i] = this.enemies[this.enemies.length - 1]; this.enemies.pop();
+        if (e.dead) return;
         e.dead = true;
         this.kills++;
 
@@ -829,12 +827,9 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
       },
 
       killEnemyQuiet(e) {
-        const i = this.enemies.indexOf(e);
-        if (i >= 0) {
-          this.enemies[i] = this.enemies[this.enemies.length - 1]; this.enemies.pop();
-          e.dead = true;
-          this.kills++;
-        }
+        if (e.dead) return;
+        e.dead = true;
+        this.kills++;
       },
 
       dropPickup(x, y) {
@@ -861,7 +856,8 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
         this.ring(x, y, R);
         this.shockwave(x, y, R * 1.15, "#ff8f1f", .5);
         this.burst(x, y, 50, "#ff8f1f", 400);
-        const snap = getArrayFromPool(this.enemies);
+        const snap = getArrayFromPool([]);
+        this.hash.query(x, y, R, snap);
         for (let i = snap.length - 1; i >= 0; i--) {
           const e = snap[i];
           if (e.dead) continue;
@@ -946,7 +942,8 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
         this.shake(6); AudioSys.noise(0.35, 0.25, 700);
         this.ring(p.x, p.y, R);
         this.shockwave(p.x, p.y, R * 1.1, p.evoSing ? "#c77dff" : "#4cc9f0", .45);
-        const snap = getArrayFromPool(this.enemies);
+        const snap = getArrayFromPool([]);
+        this.hash.query(p.x, p.y, R, snap);
         for (let i = snap.length - 1; i >= 0; i--) {
           const e = snap[i];
           if (e.dead) continue;
@@ -1150,7 +1147,8 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
             if (z.telegraph) {
               this.bombBlast(z.x, z.y, z.r + 14, 0);
               AudioSys.bomb(); this.shake(7);
-              const snap = getArrayFromPool(this.enemies);
+              const snap = getArrayFromPool([]);
+              this.hash.query(z.x, z.y, z.r + 14, snap);
               for (let i = snap.length - 1; i >= 0; i--) {
                 const e = snap[i];
                 if (e.dead) continue;
@@ -1276,15 +1274,19 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
             UI.bossHp(e.hp / e.maxHp);
           }
 
-          this.hash.query(e.x, e.y, e.r * 2, this.qbuf);
-          let sx = 0, sy = 0;
-          for (const o of this.qbuf) {
-            if (o === e || o.dead) continue;
-            const d2 = dist2(e.x, e.y, o.x, o.y), rr = e.r + o.r;
-            if (d2 < rr * rr && d2 > 0.001) {
-              const d = Math.sqrt(d2), push = (rr - d) / rr;
-              sx += (e.x - o.x) / d * push; sy += (e.y - o.y) / d * push;
+          let sx = e._sx || 0, sy = e._sy || 0;
+          if (((this.time * 60 | 0) + (e.r | 0)) % 2 === 0) {
+            sx = 0; sy = 0;
+            this.hash.query(e.x, e.y, e.r * 2, this.qbuf);
+            for (const o of this.qbuf) {
+              if (o === e || o.dead) continue;
+              const d2 = dist2(e.x, e.y, o.x, o.y), rr = e.r + o.r;
+              if (d2 < rr * rr && d2 > 0.001) {
+                const d = Math.sqrt(d2), push = (rr - d) / rr;
+                sx += (e.x - o.x) / d * push; sy += (e.y - o.y) / d * push;
+              }
             }
+            e._sx = sx; e._sy = sy;
           }
           const dashLock = e.dashing > 0;
           if (!dashLock) {
@@ -1300,6 +1302,14 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
           const cr = e.r + p.r;
           if (dist2(e.x, e.y, p.x, p.y) < cr * cr) this.hurtPlayer(p, e.dmg);
         }
+
+        for (let i = this.enemies.length - 1; i >= 0; i--) {
+          if (this.enemies[i].dead) {
+            this.enemies[i] = this.enemies[this.enemies.length - 1];
+            this.enemies.pop();
+          }
+        }
+
         this.bullets.update(b => {
           b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
           if (b.life <= 0) { b.dead = true; return; }
@@ -1871,15 +1881,24 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
         }
       },
       hud(p, g) {
-        this.el("hp-t").textContent = Math.ceil(p.hp);
-        this.el("hpbar").querySelector("i").style.transform = `scaleX(${clamp(p.hp / p.maxHp, 0, 1)})`;
-        this.el("lvl-t").textContent = p.lvl;
-        this.el("xpbar").firstElementChild.style.transform = `scaleX(${clamp(p.xp / p.xpNext, 0, 1)})`;
-        this.el("wave-t").textContent = g.wave;
-        this.el("score-t").textContent = g.score;
-        this.el("kill-t").textContent = g.kills;
-        this.el("shard-t").textContent = g.shardsRun;
-        this.el("time-t").textContent = fmtTime(g.time);
+        const hp = Math.ceil(p.hp);
+        if (this._lastHp !== hp) { this.el("hp-t").textContent = hp; this._lastHp = hp; }
+
+        const hpPct = clamp(p.hp / p.maxHp, 0, 1);
+        if (this._lastHpPct !== hpPct) { this.el("hpbar").querySelector("i").style.transform = `scaleX(${hpPct})`; this._lastHpPct = hpPct; }
+
+        if (this._lastLvl !== p.lvl) { this.el("lvl-t").textContent = p.lvl; this._lastLvl = p.lvl; }
+
+        const xpPct = clamp(p.xp / p.xpNext, 0, 1);
+        if (this._lastXpPct !== xpPct) { this.el("xpbar").firstElementChild.style.transform = `scaleX(${xpPct})`; this._lastXpPct = xpPct; }
+
+        if (this._lastWave !== g.wave) { this.el("wave-t").textContent = g.wave; this._lastWave = g.wave; }
+        if (this._lastScore !== g.score) { this.el("score-t").textContent = g.score; this._lastScore = g.score; }
+        if (this._lastKills !== g.kills) { this.el("kill-t").textContent = g.kills; this._lastKills = g.kills; }
+        if (this._lastShards !== g.shardsRun) { this.el("shard-t").textContent = g.shardsRun; this._lastShards = g.shardsRun; }
+
+        const tStr = fmtTime(g.time);
+        if (this._lastTime !== tStr) { this.el("time-t").textContent = tStr; this._lastTime = tStr; }
       },
       shield(n) {
         const s = this.el("shieldpip");
