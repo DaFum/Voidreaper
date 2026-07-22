@@ -477,7 +477,7 @@ export function createGameController(services) {
         load: run?.player.energy ?? { ratio: 0, tier: "stable" },
         heat: run?.heat.value ?? 0,
         corruption: run?.corruption.value ?? 0,
-        faultPressure: run?.faults?.pressure ?? 0,
+        faultPressure: run?.faultPressure ?? 0,
       };
     },
   };
