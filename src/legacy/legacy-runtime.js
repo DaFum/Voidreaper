@@ -1303,13 +1303,6 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
           if (dist2(e.x, e.y, p.x, p.y) < cr * cr) this.hurtPlayer(p, e.dmg);
         }
 
-        for (let i = this.enemies.length - 1; i >= 0; i--) {
-          if (this.enemies[i].dead) {
-            this.enemies[i] = this.enemies[this.enemies.length - 1];
-            this.enemies.pop();
-          }
-        }
-
         this.bullets.update(b => {
           b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
           if (b.life <= 0) { b.dead = true; return; }
@@ -1338,6 +1331,13 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
           const rr = b.r + p.r;
           if (dist2(b.x, b.y, p.x, p.y) < rr * rr) { b.dead = true; this.hurtPlayer(p, b.dmg); }
         });
+
+        for (let i = this.enemies.length - 1; i >= 0; i--) {
+          if (this.enemies[i].dead) {
+            this.enemies[i] = this.enemies[this.enemies.length - 1];
+            this.enemies.pop();
+          }
+        }
 
         this.gems.update(g => {
           g.t += dt;
