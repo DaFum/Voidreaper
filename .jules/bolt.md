@@ -35,3 +35,7 @@
 ## 2025-02-18 - Math.atan2 + Math.cos/sin Performance Bottleneck
 **Learning:** Using `Math.atan2` followed immediately by `Math.cos` and `Math.sin` to calculate normalized velocity components is a severe performance bottleneck in hot loops compared to calculating the Euclidean distance manually using `Math.sqrt(dx*dx + dy*dy)` and normalizing via division. Benchmarks show direct vector normalization is ~7-8x faster in Node.js/V8.
 **Action:** Never use `Math.atan2` just to feed `Math.cos` and `Math.sin` for distance/velocity calculations in high-frequency rendering/gameplay loops. Always use `Math.sqrt(dx*dx + dy*dy)` and division to extract the normalized components.
+
+## 2024-11-20 - Deferring Math.sqrt in hot loops
+**Learning:** Using chained array allocations (`.map()`) inside a `Math.min()` call for distance computation allocates massive garbage. Furthermore, calling `Math.sqrt()` per element is unnecessary overhead when we only need to find the minimum distance.
+**Action:** Replace `Math.min(...arr.map(calculateDistance))` with an imperative `for` loop that compares squared distances (`dx*dx + dy*dy`), and only apply `Math.sqrt()` once to the final minimum value. This significantly reduces CPU overhead and avoids intermediate array allocations.
