@@ -617,7 +617,7 @@ describe("prototype vault screen", () => {
     renderPrototypeVault(container, { items, capacity: 20, overflowCount: 1, onFavorite, onDismantle });
     expect(container.innerHTML).toContain("2/20 · OVERFLOW 1");
     const favorite = container.querySelector('[data-favorite="i1"]');
-    expect(favorite.getAttribute("aria-label")).toBe("Favorit");
+    expect(favorite.getAttribute("aria-label")).toBe("Aus Favoriten entfernen");
     expect(favorite.getAttribute("aria-pressed")).toBe("true");
     expect(container.querySelector('[data-dismantle="i1"]').disabled).toBe(true);
     favorite.click();
