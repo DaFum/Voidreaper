@@ -20,7 +20,7 @@ export function renderWorkshopScreen(root, { service, session, target, onAction,
     const preview = service.preview(session, id, target);
     button.disabled = !preview.allowed;
     const disabledReason = workshopDisabledReason(session, preview);
-    if (disabledReason) { button.setAttribute("aria-label", `${label} – ${disabledReason}`); button.title = disabledReason; }
+    if (disabledReason) { button.setAttribute("aria-label", `${label} – ${disabledReason}`); button.title = disabledReason; button.innerHTML = `${label} <small aria-hidden="true">(${disabledReason})</small>`; }
     button.addEventListener("click", async () => {
       root.querySelector("[data-preview]").textContent = `${preview.points} AP · ${preview.consequence}`;
       if (preview.allowed && await uiConfirm(`${preview.consequence}\n\nEndgültig ausführen?`, { title: "COLD FORGE" })) onAction(id, target);
