@@ -17,7 +17,7 @@ export function renderMerchantScreen(root, { offers, resources, onBuy, onReroll,
     const affordable = canAffordOffer(resources, offer);
     button.disabled = !affordable;
     if (!affordable) {
-      button.setAttribute("aria-label", `${escapeHtml(offer.name)} – nicht genügend ${offer.currency === "flux" ? "Flux" : "Scrap"}`);
+      button.setAttribute("aria-label", `${offer.name} – nicht genügend ${offer.currency === "flux" ? "Flux" : "Scrap"}`);
       button.setAttribute("title", `Nicht genügend ${offer.currency === "flux" ? "Flux" : "Scrap"}`);
     }
     button.addEventListener("click", () => onBuy(offer));
