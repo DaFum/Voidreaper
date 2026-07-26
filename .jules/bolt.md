@@ -37,5 +37,6 @@
 **Action:** Never use `Math.atan2` just to feed `Math.cos` and `Math.sin` for distance/velocity calculations in high-frequency rendering/gameplay loops. Always use `Math.sqrt(dx*dx + dy*dy)` and division to extract the normalized components.
 
 ## 2024-05-18 - Optimize Distance Calculation
+
 **Learning:** In hot path functions computing min distance across many bounds, `.map()` paired with math operations (`Math.sqrt(...)`) creates too many intermediate allocations and operations. Comparing squared distances inside a loop, then taking the square root only on the minimum avoids array generation and costly math.
 **Action:** When finding minimum distance across coordinates, compare squared distances (`dx*dx + dy*dy`) first and calculate the `Math.sqrt` on the absolute minimum squared distance only, skipping `.map()`.
