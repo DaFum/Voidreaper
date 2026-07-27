@@ -16,7 +16,11 @@ export function renderMerchantScreen(root, { offers, resources, onBuy, onReroll,
     button.innerHTML = `<span class="item-card__slot">${offer.corrupted ? "CORRUPTED" : escapeHtml(offer.slot ?? "SERVICE")}</span><strong>${escapeHtml(offer.name)}</strong><small>${escapeHtml(offer.description ?? "Einmaliger Sektordienst")}</small><b>${escapeHtml(offer.price)} ${offer.currency === "flux" ? "F" : "S"}</b>`;
     const affordable = canAffordOffer(resources, offer);
     button.disabled = !affordable;
-    if (!affordable) button.setAttribute("aria-label", `${escapeHtml(offer.name)} – nicht genügend ${offer.currency === "flux" ? "Flux" : "Scrap"}`);
+    if (!affordable) {
+      const label = `${escapeHtml(offer.name)} – nicht genügend ${offer.currency === "flux" ? "Flux" : "Scrap"}`;
+      button.setAttribute("aria-label", label);
+      button.title = label;
+    }
     button.addEventListener("click", () => onBuy(offer));
     catalog.append(button);
   }

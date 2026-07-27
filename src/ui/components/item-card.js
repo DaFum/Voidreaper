@@ -17,7 +17,9 @@ export function createItemCard(definition, {
   if (onSelect) {
     card.type = "button";
     card.setAttribute("aria-pressed", String(selected));
-    card.setAttribute("aria-label", `${definition.name ?? definition.id}, ${statusLabel.toLowerCase()}${statusDetail ? `, ${statusDetail}` : ""}`);
+    const label = `${definition.name ?? definition.id}, ${statusLabel.toLowerCase()}${statusDetail ? `, ${statusDetail}` : ""}`;
+    card.setAttribute("aria-label", label);
+    card.title = label;
     card.disabled = locked;
     card.addEventListener("click", () => onSelect(definition));
   } else if (locked) card.setAttribute("aria-disabled", "true");
