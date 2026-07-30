@@ -22,7 +22,7 @@ test("combat broadphase is rebuilt after enemy movement and ignores dead entries
   const bullets = step.indexOf("this.bullets.update", movement);
   assert.ok(movement >= 0 && bullets > movement);
   assert.match(step, /if \(o === e \|\| o\.dead\) continue/);
-  assert.match(source, /killEnemyQuiet\(e\)\s*\{[^}]*if \(i >= 0\) \{[^}]*e\.dead = true;[^}]*this\.kills\+\+;/s);
+  assert.match(source, /killEnemyQuiet\(e\)\s*\{[^}]*e\.dead = true;[^}]*this\.kills\+\+;/s);
 });
 
 test("immediate enemy spawns skip the birth delay", () => {

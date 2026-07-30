@@ -696,10 +696,22 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
       },
 
       enemyFire(e, p) {
-        const a = Math.atan2(p.y - e.y, p.x - e.x) + this.grand(-0.08, 0.08);
+        // ⚡ Bolt: Avoid Math.atan2 and cos/sin for vector normalization in hot path
+        const dx = p.x - e.x, dy = p.y - e.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        let nx = 1, ny = 0;
+        if (dist > 0) { nx = dx / dist; ny = dy / dist; }
+
+        // Small angle approximation for random spread [-0.08, 0.08]
+        const da = this.grand(-0.08, 0.08);
+        const cosDa = 1 - 0.5 * da * da;
+        const sinDa = da;
+
         const b = this.ebullets.get();
         const spd = e.boss ? 260 : 200;
-        b.x = e.x; b.y = e.y; b.vx = Math.cos(a) * spd; b.vy = Math.sin(a) * spd;
+        b.x = e.x; b.y = e.y;
+        b.vx = (nx * cosDa - ny * sinDa) * spd;
+        b.vy = (nx * sinDa + ny * cosDa) * spd;
         b.dmg = e.dmg * 0.8; b.life = 3.2; b.r = e.boss ? 7 : 5; b.hostile = true;
       },
 
