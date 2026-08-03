@@ -40,3 +40,7 @@
 
 **Learning:** Using chained array allocations (`.map()`) inside a `Math.min()` call for distance computation allocates massive garbage. Furthermore, calling `Math.sqrt()` per element is unnecessary overhead when we only need to find the minimum distance.
 **Action:** Replace `Math.min(...arr.map(calculateDistance))` with an imperative `for` loop that compares squared distances (`dx*dx + dy*dy`), and only apply `Math.sqrt()` once to the final minimum value. This significantly reduces CPU overhead and avoids intermediate array allocations.
+
+## 2025-02-18 - Avoiding intermediate array allocations and O(n^2) scaling inside hot loops
+**Learning:** Performing `Array.prototype.map()` during each loop iteration to provide weights, and removing the selection using `Array.prototype.splice()`, created large amounts of garbage and an O(n^2) scaling factor in the `createAffixRoller.roll` method. In highly active loops, this takes seconds of CPU time and triggers severe stuttering.
+**Action:** When filtering array elements by weighted RNG selections, precalculate weights into arrays outside the loop, build the expected format linearly using `new Array(...)` and a `for` loop if absolutely necessary inside the loop, and use "swap and pop" (`arr[idx] = arr[arr.length-1]; arr.pop();`) instead of `splice()` to remove selected candidates in O(1) time.
