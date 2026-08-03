@@ -50,9 +50,9 @@ export function createAffixRoller(pools) {
         }
 
         if (idx !== -1) {
-          // Swap and pop to avoid splice() performance penalty
-          weightedCandidates[idx] = weightedCandidates[weightedCandidates.length - 1];
-          weightedCandidates.pop();
+          // Splice is used instead of swap-and-pop to maintain candidate order,
+          // which is required for deterministic RNG seed sequences in multi-roll tests.
+          weightedCandidates.splice(idx, 1);
         }
         const value = affix.modifier
           ? rng.range(...affix.modifier.range) * (0.85 + itemPower / 500)
