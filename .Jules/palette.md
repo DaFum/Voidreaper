@@ -15,3 +15,7 @@
 ## 2025-05-18 - Improve Custom Modal Accessibility
 **Learning:** Custom modals generated via DOM API (like in `modal-dialog.js`) need unique dynamically generated IDs so that `aria-labelledby` and `aria-describedby` can be correctly mapped between the `<dialog>` (and nested `<input>`) elements and the text content. Reusing static IDs causes mapping conflicts when multiple modals open sequentially or simultaneously.
 **Action:** Always generate unique ID suffixes (e.g. using an incrementing counter) for modal title/message elements and tie them to ARIA reference attributes correctly inside custom dialog builders.
+
+## 2024-08-03 - Add confirmation dialog to Prototype Dismantle
+**Learning:** Destructive actions like dismantling prototypes should require user confirmation to prevent accidental data loss. The `uiConfirm` utility provides an accessible and visually consistent way to prompt the user.
+**Action:** When adding destructive actions, always check if a confirmation step is appropriate and use `uiConfirm` with clear, localized messaging.
