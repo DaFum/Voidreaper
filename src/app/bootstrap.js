@@ -1732,8 +1732,10 @@ export async function bootstrap() {
                 { title: "PROTOTYP ZERLEGEN", confirmLabel: "ZERLEGEN" }
               );
               if (confirmed) {
-                vault.dismantle(id);
-                await services.save.save(metaSave);
+                await services.save.update((save) => {
+                  createPrototypeVault(save).dismantle(id);
+                });
+                metaSave = await services.save.load();
                 hangar.render();
               }
             },

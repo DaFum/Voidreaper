@@ -17,5 +17,10 @@
 **Action:** Always generate unique ID suffixes (e.g. using an incrementing counter) for modal title/message elements and tie them to ARIA reference attributes correctly inside custom dialog builders.
 
 ## 2024-08-03 - Add confirmation dialog to Prototype Dismantle
+
 **Learning:** Destructive actions like dismantling prototypes should require user confirmation to prevent accidental data loss. The `uiConfirm` utility provides an accessible and visually consistent way to prompt the user.
 **Action:** When adding destructive actions, always check if a confirmation step is appropriate and use `uiConfirm` with clear, localized messaging.
+
+## 2024-08-03 - Revalidate Inventory Target
+**Learning:** During UI interactions involving asynchronous operations (like modal confirmation dialogs via `uiConfirm`), the underlying state can change before the operation executes. When performing destructive actions, it's critical to revalidate the target's existence and mutate the state transactionally to avoid data corruption.
+**Action:** When working with long-running confirmations (like `await uiConfirm`), perform the final state mutation inside an atomic update block (e.g. `services.save.update`) and immediately reload any cached representations of the state (like `metaSave`).
