@@ -1725,6 +1725,16 @@ export async function bootstrap() {
               hangar.render();
             },
             onDismantle: async (id) => {
+              const item = metaSave.inventory[id] || metaSave.overflow[id];
+              if (!item) return;
+              if (
+                !(await uiConfirm(`Prototyp "${item.name}" wirklich zerlegen?`, {
+                  title: "PROTOTYP ZERLEGEN",
+                  confirmLabel: "ZERLEGEN",
+                }))
+              )
+                return;
+
               vault.dismantle(id);
               await services.save.save(metaSave);
               hangar.render();
