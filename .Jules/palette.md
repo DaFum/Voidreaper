@@ -17,5 +17,6 @@
 **Action:** Always generate unique ID suffixes (e.g. using an incrementing counter) for modal title/message elements and tie them to ARIA reference attributes correctly inside custom dialog builders.
 
 ## 2024-07-28 - Destructive Action Confirmations
+
 **Learning:** Destructive actions without a confirmation dialog present a significant risk of data loss. Adding a confirmation step utilizing shared dialog infrastructure enhances safety and consistency.
 **Action:** When working on UI that features delete, dismantle, or other irreversible actions, verify if a confirmation dialog is implemented. If missing, use `uiConfirm` to add one, maintaining the local visual language.
