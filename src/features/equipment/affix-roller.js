@@ -17,6 +17,7 @@ export function createAffixRoller(pools) {
       const count = rng.integer(minimum, maximum);
       const family = definition.family ?? definition.slot;
       const tags = new Set((definition.tags ?? []).map((tag) => tag.id));
+      if (count === 0) return [];
       // ⚡ Bolt: Pre-calculate RNG weights outside of loop to avoid intermediate array allocations
       const candidates = all
         .filter(

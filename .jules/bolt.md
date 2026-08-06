@@ -40,6 +40,10 @@
 
 **Learning:** Using chained array allocations (`.map()`) inside a `Math.min()` call for distance computation allocates massive garbage. Furthermore, calling `Math.sqrt()` per element is unnecessary overhead when we only need to find the minimum distance.
 **Action:** Replace `Math.min(...arr.map(calculateDistance))` with an imperative `for` loop that compares squared distances (`dx*dx + dy*dy`), and only apply `Math.sqrt()` once to the final minimum value. This significantly reduces CPU overhead and avoids intermediate array allocations.
+
 ## 2026-08-06 - Pre-calculate RNG weights outside of loop
 **Learning:** Using chained array allocations (`.map()`) inside a `while` loop for RNG weight calculation allocates intermediate objects and arrays on every iteration, causing significant Garbage Collection overhead in hot paths.
 **Action:** Replace `.map()` and dynamic weight calculation inside loops with a pre-calculation step outside the loop. Use `.splice()` with `.findIndex()` inside the loop to maintain seeded sequence determinism while avoiding intermediate allocations.
+## 2026-08-06 - Skip expensive processing when inputs are empty
+**Learning:** Chained array operations like `.filter().map()` still iterate and allocate empty wrappers even if the target processing count or loop condition is effectively zero, burning CPU cycles unnecessarily.
+**Action:** In performance-critical paths, always insert early returns (e.g., `if (count === 0) return [];`) before expensive scanning/mapping operations if the target size dictates that no elements will be needed.
