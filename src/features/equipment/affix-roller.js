@@ -17,25 +17,29 @@ export function createAffixRoller(pools) {
       const count = rng.integer(minimum, maximum);
       const family = definition.family ?? definition.slot;
       const tags = new Set((definition.tags ?? []).map((tag) => tag.id));
-      const candidates = all.filter(
-        (affix) =>
-          (!affix.families?.length ||
-            affix.families.includes(family) ||
-            affix.families.includes(definition.slot)) &&
-          corruption >= (affix.minimumCorruption ?? 0),
-      );
+      // ⚡ Bolt: Pre-calculate RNG weights outside of loop to avoid intermediate array allocations
+      const candidates = all
+        .filter(
+          (affix) =>
+            (!affix.families?.length ||
+              affix.families.includes(family) ||
+              affix.families.includes(definition.slot)) &&
+            corruption >= (affix.minimumCorruption ?? 0),
+        )
+        .map((candidate) => ({
+          value: candidate,
+          weight:
+            candidate.weight *
+            (candidate.tags?.some((tag) => tags.has(tag)) ? 1.8 : 1) *
+            (1 + sector * 0.03),
+        }));
       const selected = [];
       while (selected.length < count && candidates.length) {
-        const affix = rng.weighted(
-          candidates.map((candidate) => ({
-            value: candidate,
-            weight:
-              candidate.weight *
-              (candidate.tags?.some((tag) => tags.has(tag)) ? 1.8 : 1) *
-              (1 + sector * 0.03),
-          })),
+        const affix = rng.weighted(candidates);
+        candidates.splice(
+          candidates.findIndex((c) => c.value === affix),
+          1
         );
-        candidates.splice(candidates.indexOf(affix), 1);
         const value = affix.modifier
           ? rng.range(...affix.modifier.range) * (0.85 + itemPower / 500)
           : null;
