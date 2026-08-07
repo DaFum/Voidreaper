@@ -42,5 +42,6 @@
 **Action:** Replace `Math.min(...arr.map(calculateDistance))` with an imperative `for` loop that compares squared distances (`dx*dx + dy*dy`), and only apply `Math.sqrt()` once to the final minimum value. This significantly reduces CPU overhead and avoids intermediate array allocations.
 
 ## 2025-02-18 - Deferring Math.min/Math.max with arrays in hot loops
+
 **Learning:** Using `Math.min(...arr.map())` or `Math.max(...arr.map())` causes the allocation of intermediate arrays and uses the spread operator which pushes all items onto the call stack. This creates heavy GC overhead in hot paths and can even cause stack overflows on very large arrays.
 **Action:** Replace `Math.min(...arr.map())` or `Math.max(...arr.map())` with an imperative `for` loop to find min/max values manually. This improves performance and avoids temporary object allocations.
