@@ -6,12 +6,15 @@ const layersBySnapshot = new WeakMap();
 function unionBounds(snapshot) {
   const boxes = [snapshot.coreGeometry?.bounds, snapshot.totalBounds].filter(Boolean);
   if (!boxes.length) return null;
-  return {
-    minX: Math.min(...boxes.map(bounds => bounds.minX)),
-    minY: Math.min(...boxes.map(bounds => bounds.minY)),
-    maxX: Math.max(...boxes.map(bounds => bounds.maxX)),
-    maxY: Math.max(...boxes.map(bounds => bounds.maxY))
-  };
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (let i = 0; i < boxes.length; i++) {
+    const b = boxes[i];
+    if (b.minX < minX) minX = b.minX;
+    if (b.minY < minY) minY = b.minY;
+    if (b.maxX > maxX) maxX = b.maxX;
+    if (b.maxY > maxY) maxY = b.maxY;
+  }
+  return { minX, minY, maxX, maxY };
 }
 
 function bakeLayer(width, height, originX, originY, paint) {
