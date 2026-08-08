@@ -19,7 +19,10 @@ import {
   drawBloomDot,
 } from "../forged-abyss/primitives.js";
 
+const PI = Math.PI;
 const TAU = Math.PI * 2;
+
+// (TAU declared above)
 const damaged = (state) => state.damageState === "armor-broken" || state.damageState === "core-disrupted";
 
 // Solid metal body with directional sheen, clipped specular highlight and a rim.
@@ -74,7 +77,7 @@ const glow = (ctx, state, alpha = 1) => {
   ctx.restore();
 };
 
-const seedCount = (state, min, spread) => min + Math.abs(state.variantSeed ?? 0) % spread;
+const seedCount = (state, min, spread) => min + Math.abs(Number(state.variantSeed) || 0) % spread;
 
 export function createModuleCoreRendererRegistry() {
   const renderers = new Map();
@@ -268,14 +271,12 @@ export function createModuleCoreRendererRegistry() {
   });
 
   registry.register("core-void-aperture", (ctx, s) => {
-    ctx.save();
     if (s.lod !== "low") ctx.rotate(Math.sin(s.time * 1.7) * .08);
     ctx.beginPath();
     ctx.arc(0, 0, s.size * .62, 0, TAU);
     ctx.lineWidth = s.size * .22;
     glow(ctx, s, .8);
     drawVoidCore(ctx, { radius: s.size * .31, palette: s.palette, time: s.time, seed: s.variantSeed, reducedMotion: s.lod === "low", intensity: 1 });
-    ctx.restore();
   });
 
   registry.register("core-orbit-bearing", (ctx, s) => {
