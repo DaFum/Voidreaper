@@ -1,23 +1,7 @@
-import {
-  traceCapsule,
-  traceCoil,
-  traceCoolingFin,
-  traceLauncherDoor,
-  traceLens,
-  traceShieldRing,
-  traceThrusterNozzle,
-  traceTaperedPlate,
-} from "../../features/ship-assembly/geometry/path-primitives.js";
-import {
-  drawArmorHatch,
-  drawCracks,
-  drawVoidCore,
-  traceChamferedPlate,
-  withAlpha,
-  mixColor,
-  drawContactShadow,
-  drawBloomDot,
-} from "../forged-abyss/primitives.js";
+import { traceCapsule, traceCoil, traceCoolingFin, traceLauncherDoor, traceLens, traceShieldRing, traceThrusterNozzle, traceTaperedPlate } from "../../features/ship-assembly/geometry/path-primitives.js";
+import { drawArmorHatch, drawCracks, drawVoidCore, drawContactShadow, drawBloomDot, drawPanelSeams, traceChamferedPlate, fillSheen, strokeRim, withAlpha, mixColor } from "../forged-abyss/primitives.js";
+
+
 
 const TAU = Math.PI * 2;
 const damaged = (state) => state.damageState === "armor-broken" || state.damageState === "core-disrupted";

@@ -1,15 +1,7 @@
-import {
-  drawArmorHatch,
-  drawCracks,
-  drawEnergyRail,
-  drawVoidCore,
-  traceChamferedPlate,
-  fillSheen,
-  withAlpha,
-  mixColor,
-  drawBloomDot,
-} from "../forged-abyss/primitives.js";
+import { drawArmorHatch, drawCracks, drawEnergyRail, drawVoidCore, traceChamferedPlate, fillSheen, withAlpha, mixColor, drawBloomDot, drawPanelSeams, strokeRim } from "../forged-abyss/primitives.js";
 import { visualHash } from "../forged-abyss/seeded-visuals.js";
+
+
 
 function tracePath(ctx, path) {
   ctx.beginPath();
