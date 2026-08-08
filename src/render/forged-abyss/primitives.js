@@ -179,6 +179,7 @@ export function drawEnergyRail(ctx, { from, to, color, width = 2, flow = 0, alph
 // bright containment ring -> a couple of orbiting sparks.
 export function drawVoidCore(ctx, { x = 0, y = 0, radius, palette, time = 0, seed = 0, reducedMotion = false, intensity = 1 }) {
   const pulse = reducedMotion ? 1 : 1 + Math.sin(time * 2.1 + seededUnit(seed, 2) * TAU) * .08;
+  const baseAlpha = ctx.globalAlpha;
   ctx.save();
   ctx.translate(x, y);
 
@@ -247,7 +248,7 @@ export function drawVoidCore(ctx, { x = 0, y = 0, radius, palette, time = 0, see
     for (let i = 0; i < 3; i += 1) {
       const a = time * (1.4 + i * .5) + i * 2.1 + seededUnit(seed, i) * TAU;
       const rr = radius * (1.05 + i * .12);
-      ctx.globalAlpha = .55;
+      ctx.globalAlpha = baseAlpha * .55;
       ctx.beginPath();
       ctx.arc(Math.cos(a) * rr, Math.sin(a) * rr * .7, radius * .09, 0, TAU);
       ctx.fill();
@@ -258,6 +259,7 @@ export function drawVoidCore(ctx, { x = 0, y = 0, radius, palette, time = 0, see
 }
 
 export function drawCracks(ctx, { x = 0, y = 0, radius, color, seed = 0, count = 4, alpha = .8 }) {
+  const baseAlpha = ctx.globalAlpha;
   ctx.save();
   ctx.translate(x, y);
   ctx.lineCap = "round";
@@ -271,7 +273,7 @@ export function drawCracks(ctx, { x = 0, y = 0, radius, color, seed = 0, count =
     for (const [c, w, a] of [["rgba(0,0,0,.55)", radius * .1, alpha], [color, radius * .045, 1]]) {
       ctx.strokeStyle = c;
       ctx.lineWidth = Math.max(1, w);
-      ctx.globalAlpha = a * alpha;
+      ctx.globalAlpha = baseAlpha * a * alpha;
       ctx.beginPath();
       ctx.moveTo(p0.x, p0.y);
       ctx.lineTo(p1.x, p1.y);
