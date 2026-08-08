@@ -194,9 +194,24 @@ export function renderForgedEnemy(ctx, enemy, {
   // 3) top rim highlight on the light-facing edge only
   ctx.save();
   ctx.beginPath();
-  const topPts = pts.filter((p) => p.y < 0);
-  if (topPts.length) {
-    topPts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+  const n = pts.length;
+  let startIndex = -1;
+  for (let i = 0; i < n; i++) {
+    if (pts[i].y >= 0 && pts[(i + 1) % n].y < 0) {
+      startIndex = (i + 1) % n;
+      break;
+    }
+  }
+  if (startIndex !== -1) {
+    ctx.moveTo(pts[startIndex].x, pts[startIndex].y);
+    for (let i = 1; i < n; i++) {
+      const idx = (startIndex + i) % n;
+      if (pts[idx].y >= 0) {
+        ctx.lineTo(pts[idx].x, pts[idx].y);
+        break;
+      }
+      ctx.lineTo(pts[idx].x, pts[idx].y);
+    }
     ctx.strokeStyle = withAlpha(palette.rim ?? "#ffffff", .55);
     ctx.lineWidth = 1.2;
     ctx.stroke();
