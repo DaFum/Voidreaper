@@ -167,9 +167,9 @@ export function renderForgedEnemy(ctx, enemy, {
     ctx.fill();
   } else {
     fillSheen(ctx, () => tracePolygon(ctx, pts), {
-      light: mixColor(baseColor, "#ffffff", .45),
+      light: mixColor(shade(baseColor), "#ffffff", .45),
       base: shade(baseColor),
-      dark: mixColor(baseColor, "#000000", .5),
+      dark: mixColor(shade(baseColor), "#000000", .5),
       span: maxD,
     });
   }
@@ -198,31 +198,26 @@ export function renderForgedEnemy(ctx, enemy, {
   ctx.restore();
 
   // 3) top rim highlight on the light-facing edge only
-  const n = pts.length;
-  let startIndex = -1;
-  for (let i = 0; i < n; i++) {
-    if (pts[i].y < 0 && pts[(i - 1 + n) % n].y >= 0) {
-      startIndex = i;
-      break;
-    }
-  }
-  if (startIndex !== -1) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(pts[startIndex].x, pts[startIndex].y);
-    for (let i = 1; i < n; i++) {
-      const idx = (startIndex + i) % n;
-      if (pts[idx].y < 0) {
-        ctx.lineTo(pts[idx].x, pts[idx].y);
+  ctx.save();
+  ctx.beginPath();
+  let drawingRim = false;
+  for (let i = 0; i <= pts.length; i++) {
+    const p = pts[i % pts.length];
+    if (p.y < 0) {
+      if (!drawingRim) {
+        ctx.moveTo(p.x, p.y);
+        drawingRim = true;
       } else {
-        break;
+        ctx.lineTo(p.x, p.y);
       }
+    } else {
+      drawingRim = false;
     }
-    ctx.strokeStyle = withAlpha(palette.rim ?? "#ffffff", .55);
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
-    ctx.restore();
   }
+  ctx.strokeStyle = withAlpha(palette.rim ?? "#ffffff", .55);
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+  ctx.restore();
 
   // 4) rivets at vertices
   ctx.save();
@@ -297,6 +292,6 @@ export function renderForgedEnemy(ctx, enemy, {
 }
 
 // Cheap warm/cool energy hint so tint stays in-mood even for odd base colors.
-function palette_energy_hint() {
+function palette_energy_hint(baseColor) {
   return "#48e5c2";
 }

@@ -19,7 +19,10 @@ import {
   drawBloomDot,
 } from "../forged-abyss/primitives.js";
 
+const PI = Math.PI;
 const TAU = Math.PI * 2;
+
+// (TAU declared above)
 const damaged = (state) => state.damageState === "armor-broken" || state.damageState === "core-disrupted";
 
 // Solid metal body with directional sheen, clipped specular highlight and a rim.
@@ -74,7 +77,8 @@ const glow = (ctx, state, alpha = 1) => {
   ctx.restore();
 };
 
-const seedCount = (state, min, spread) => min + Math.abs(state.variantSeed ?? 0) % spread;
+const normalizeSeed = (seed) => Math.abs(Number(seed) || 0);
+const seedCount = (state, min, spread) => min + normalizeSeed(state.variantSeed) % spread;
 
 export function createModuleCoreRendererRegistry() {
   const renderers = new Map();
@@ -239,10 +243,10 @@ export function createModuleCoreRendererRegistry() {
 
   registry.register("core-sensor-lens", (ctx, s) => {
     paint(ctx, s, () => traceTaperedPlate(ctx, { length: s.size * .85, frontWidth: s.size * .7, rearWidth: s.size * .22, notch: 2 }));
-    traceLens(ctx, s.size * .2, 0, s.size * .32, s.size * (.5 + (s.variantSeed % 3) * .08));
+    traceLens(ctx, s.size * .2, 0, s.size * .32, s.size * (.5 + (normalizeSeed(s.variantSeed) % 3) * .08));
     ctx.fillStyle = withAlpha(s.palette.energy, .18);
     ctx.fill();
-    traceLens(ctx, s.size * .2, 0, s.size * .32, s.size * (.5 + (s.variantSeed % 3) * .08));
+    traceLens(ctx, s.size * .2, 0, s.size * .32, s.size * (.5 + (normalizeSeed(s.variantSeed) % 3) * .08));
     glow(ctx, s, .8);
   });
 
@@ -291,7 +295,7 @@ export function createModuleCoreRendererRegistry() {
     ctx.beginPath();
     for (let i = 0; i < 9; i++) {
       const a = (i / 9) * TAU;
-      const r = s.size * (.48 + Math.sin(i * 4 + s.variantSeed) * .12);
+      const r = s.size * (.48 + Math.sin(i * 4 + normalizeSeed(s.variantSeed)) * .12);
       i ? ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r) : ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
     }
     ctx.closePath();
