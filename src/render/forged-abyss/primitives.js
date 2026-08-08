@@ -6,20 +6,41 @@ const TAU = Math.PI * 2;
 // Convert a #rgb / #rrggbb color to rgba() with a given alpha. Falls back to the
 // original string for named/rgb() colors so callers can pass anything.
 export function withAlpha(color, alpha) {
-  if (typeof color !== "string" || color[0] !== "#") return color;
+  if (typeof color !== "string") return color;
+  if (color.startsWith("rgb(")) {
+    return color.replace("rgb(", "rgba(").replace(")", `,${alpha})`);
+  }
+  if (color.startsWith("rgba(")) {
+    return color.replace(/,[^,]+\)$/, `,${alpha})`);
+  }
+  if (color[0] !== "#") return color;
   const hex = color.slice(1);
   const full = hex.length === 3 ? hex.split("").map((c) => c + c).join("") : hex;
   const n = parseInt(full, 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
 }
 
+function parseColor(c) {
+  if (c.startsWith("rgb")) {
+    const parts = c.match(/\d+/g);
+    if (parts && parts.length >= 3) {
+      return { r: parseInt(parts[0], 10), g: parseInt(parts[1], 10), b: parseInt(parts[2], 10) };
+    }
+  }
+  const hex = c.slice(1);
+  const full = hex.length === 3 ? hex.split("").map(ch => ch + ch).join("") : hex;
+  const n = parseInt(full, 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+
 export function mixColor(a, b, t) {
-  const pa = parseInt(a.slice(1).length === 3 ? a.slice(1).split("").map((c) => c + c).join("") : a.slice(1), 16);
-  const pb = parseInt(b.slice(1).length === 3 ? b.slice(1).split("").map((c) => c + c).join("") : b.slice(1), 16);
-  const r = Math.round(((pa >> 16) & 255) * (1 - t) + ((pb >> 16) & 255) * t);
-  const g = Math.round(((pa >> 8) & 255) * (1 - t) + ((pb >> 8) & 255) * t);
-  const bl = Math.round((pa & 255) * (1 - t) + (pb & 255) * t);
-  return `rgb(${r},${g},${bl})`;
+  const ca = parseColor(a);
+  const cb = parseColor(b);
+  const r = Math.round(ca.r * (1 - t) + cb.r * t);
+  const g = Math.round(ca.g * (1 - t) + cb.g * t);
+  const bl = Math.round(ca.b * (1 - t) + cb.b * t);
+  const toHex = (n) => n.toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(bl)}`;
 }
 
 // --- plating ----------------------------------------------------------------
