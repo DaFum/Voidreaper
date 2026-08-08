@@ -270,7 +270,7 @@ export function drawCracks(ctx, { x = 0, y = 0, radius, color, seed = 0, count =
     const p1 = { x: Math.cos(angle + bend) * radius * .58, y: Math.sin(angle + bend) * radius * .58 };
     const p2 = { x: Math.cos(angle - bend * .4) * radius, y: Math.sin(angle - bend * .4) * radius };
     // dark fracture underneath, bright hairline on top -> reads as depth
-    for (const [c, w, a] of [["rgba(0,0,0,.55)", radius * .1, alpha], [color, radius * .045, 1]]) {
+    for (const [c, w, a] of [["rgba(0,0,0,.55)", radius * .1, 1], [color, radius * .045, 1]]) {
       ctx.strokeStyle = c;
       ctx.lineWidth = Math.max(1, w);
       ctx.globalAlpha = baseAlpha * a * alpha;
