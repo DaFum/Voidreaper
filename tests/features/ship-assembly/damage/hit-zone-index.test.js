@@ -104,3 +104,38 @@ test("createHitZoneIndex computes bounds correctly for different shapes", () => 
   assert.equal(index.query({ minX: 124, minY: 0, maxX: 130, maxY: 5 }).find(z => z.id === "default")?.id, "default");
   assert.equal(index.query({ minX: 125, minY: 0, maxX: 130, maxY: 5 }).find(z => z.id === "default"), undefined);
 });
+
+test("createHitZoneIndex computes bounds correctly for empty or single-point polygon cases", () => {
+  const index = createHitZoneIndex();
+
+  const emptyPolygon = makeZone("empty", 0, 0, { points: [] });
+  // Fallback to radius || 24 since points is empty, so bounds = 24.
+  const singlePointPolygon = makeZone("single", 100, 0, { points: [{ x: 5, y: -5 }] });
+  // Max abs is 5, bounds = 5.
+
+  index.rebuild(1, [emptyPolygon, singlePointPolygon]);
+
+  assert.equal(index.query({ minX: 24, minY: 0, maxX: 30, maxY: 5 }).find(z => z.id === "empty")?.id, "empty");
+  assert.equal(index.query({ minX: 25, minY: 0, maxX: 30, maxY: 5 }).find(z => z.id === "empty"), undefined);
+
+  assert.equal(index.query({ minX: 105, minY: 0, maxX: 110, maxY: 5 }).find(z => z.id === "single")?.id, "single");
+  assert.equal(index.query({ minX: 106, minY: 0, maxX: 110, maxY: 5 }).find(z => z.id === "single"), undefined);
+});
+
+test("createHitZoneIndex computes bounds correctly for large polygon cases", () => {
+  const index = createHitZoneIndex();
+
+  const points = [];
+  for (let i = 0; i < 70000; i++) {
+    points.push({ x: i % 100, y: -(i % 100) });
+  }
+  points.push({ x: 500, y: -500 });
+
+  const largePolygon = makeZone("large", 0, 0, { points });
+  // Max abs is 500.
+
+  index.rebuild(1, [largePolygon]);
+
+  assert.equal(index.query({ minX: 500, minY: 0, maxX: 510, maxY: 5 }).find(z => z.id === "large")?.id, "large");
+  assert.equal(index.query({ minX: 501, minY: 0, maxX: 510, maxY: 5 }).find(z => z.id === "large"), undefined);
+});
