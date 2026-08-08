@@ -1725,9 +1725,19 @@ export async function bootstrap() {
               hangar.render();
             },
             onDismantle: async (id) => {
-              vault.dismantle(id);
-              await services.save.save(metaSave);
-              hangar.render();
+              const item = metaSave.inventory[id];
+              if (!item) return;
+              const confirmed = await uiConfirm(
+                `Möchtest du "${item.name}" wirklich zerlegen? Diese Aktion kann nicht rückgängig gemacht werden.`,
+                { title: "PROTOTYP ZERLEGEN", confirmLabel: "ZERLEGEN" }
+              );
+              if (confirmed) {
+                await services.save.update((save) => {
+                  createPrototypeVault(save).dismantle(id);
+                });
+                metaSave = await services.save.load();
+                hangar.render();
+              }
             },
           });
         show({});
