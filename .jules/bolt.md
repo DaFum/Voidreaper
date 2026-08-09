@@ -45,3 +45,7 @@
 
 **Learning:** Performing `Array.prototype.map()` during each loop iteration to provide weights, and removing the selection using `Array.prototype.splice()`, created large amounts of garbage and an O(n^2) scaling factor in the `createAffixRoller.roll` method. In highly active loops, this takes seconds of CPU time and triggers severe stuttering. Additionally, while "swap and pop" is an O(1) way to remove elements, it changes the cumulative element order, which can break seeded RNG determinism in multi-roll tests that rely on `rng.weighted()`.
 **Action:** When filtering array elements by weighted RNG selections, precalculate weights into arrays outside the loop. Use `splice()` for removal if array order dictates deterministic RNG sequences, otherwise use "swap and pop" (`arr[idx] = arr[arr.length-1]; arr.pop();`) to remove selected candidates in O(1) time.
+
+## 2024-08-09 - Set Operations for Multiple Includes
+**Learning:** `Array.prototype.includes` or `Object.values().includes` evaluated in hot paths like input handling (which runs every keyboard and mouse event) introduces unnecessary O(N) array allocations and linear searches, increasing GC pressure and lowering performance.
+**Action:** Replace dynamic array includes with a static `Set` initialized once, using `Set.prototype.has()` for an O(1) constant-time lookup.
