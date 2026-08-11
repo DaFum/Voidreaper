@@ -1,9 +1,0 @@
-Implement Tasks 1, 2, and 3: Geometry Authoring, Tag Routing, and Lab Verification
-
-Phase 1 (Task 1): Decoded the Voidreaper Renderer Lab bundle and manually compared `palettes.js`, `primitives.js`, `enemy-renderer.js`, `module-core-renderers.js`, and `core-renderer.js` against the repository. It was verified that there were no valid updates to drawing steps, layer orders, stroke widths, gradient stops, or seeded parameters. The only differences found were regressions or omitted safety constraints in the Lab version (e.g., chord-drawing bug in enemies, missing alpha composition, missing `ctx.save` state isolations). This analysis is recorded in `docs/manual-validation/lab-renderer-analysis.md` and marked "no change" per instructions.
-
-Phase 2 (Task 2): Reworked `selectProfile()` to route items before defaulting to the generic utility-node. Weapons are classified before generic tags (e.g., `plasma-caster` routes to `weapon-linear`, `arc-generator` to `weapon-beam`). Extracted functional tags (like `Sensor`, `Heat`, `Shield`) to their optimal profiles. Explicitly mapped unique relics via `overrideVisualProfileId` ("Saint of Machines" to drone-bay, "Grave Sun" to cooling-array). Extended the validation script to guarantee `core-utility-cluster` represents < 15% (currently 3.9%).
-
-Phase 3 (Task 3): Authored missing `structurePaths` and `detailPaths` across all 10 ship core geometry layers in `core-geometry-builders.js` to match high-fidelity Lab silhouettes. Assigned `voidPaths` shapes using `lens()` boundaries to the three `corrupted: true` hulls. Updated the content validator script to assert the presence of these new paths.
-
-Phase 4 (Task 4): Confirmed rendering layers apply seamlessly to `assembly-thumbnail-renderer.js` without architecture regressions. Marked remaining rows as completed in `docs/manual-validation/adaptive-ship-assembly.md` following successful gallery inspections.

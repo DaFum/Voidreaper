@@ -22,10 +22,11 @@ function selectProfile(definition) {
   }
 
   // Weapon classification first
+  const isWeapon = definition.slot === "weapon" || definition.slot === "primary-weapon" || definition.kind === "weapon";
   if (tags.has("Beam")) return "weapon-beam";
   if (tags.has("Mine")) return "weapon-mine";
   if (tags.has("Explosive") || tags.has("Homing")) return "weapon-missile";
-  if (tags.has("Projectile") || tags.has("Critical") || definition.slot === "weapon") return "weapon-linear";
+  if (tags.has("Projectile") || tags.has("Critical") || isWeapon) return "weapon-linear";
 
   // Generic gameplay tags
   if (tags.has("Drone") || tags.has("Summon")) return "drone-bay";
