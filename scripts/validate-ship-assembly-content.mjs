@@ -21,8 +21,35 @@ for(const id of expectedEnemyProfiles)if(!ENEMY_VISUAL_PROFILE_IDS.includes(id))
 for(const id of expectedRegionProfiles)if(!REGION_VISUAL_PROFILE_IDS.includes(id))errors.push(`${id}: region visual profile missing`);
 for(const asset of ["public/assets/forged-abyss/void-rift.svg","public/assets/forged-abyss/armor-scar.svg"])if(!existsSync(asset))errors.push(`${asset}: detail asset missing`);
 const coreIds=new Set(getCoreGeometryIds()),rendererIds=new Set(createModuleCoreRendererRegistry().ids()),visuals=new Map(MODULE_VISUAL_PROFILES.map(profile=>[profile.id,profile]));
-for(const frame of SHIP_FRAME_ASSEMBLY_PROFILES){if(!coreIds.has(frame.coreGeometryId))errors.push(`${frame.id}: core renderer missing`);if(banned.test(frame.coreGeometryId))errors.push(`${frame.id}: forbidden final renderer id`);for(const port of frame.initialPorts){if(!sizes.has(port.sizeClass))errors.push(`${frame.id}/${port.key}: invalid port size`);if(!mounts.has(port.mountType))errors.push(`${frame.id}/${port.key}: invalid mount type`);if(!energy.has(port.energyClass))errors.push(`${frame.id}/${port.key}: invalid energy class`);}}
+import { buildCoreGeometry } from "../src/features/ship-assembly/geometry/core-geometry-builders.js";
+for(const frame of SHIP_FRAME_ASSEMBLY_PROFILES){if(!coreIds.has(frame.coreGeometryId))errors.push(`${frame.id}: core renderer missing`);if(banned.test(frame.coreGeometryId))errors.push(`${frame.id}: forbidden final renderer id`);
+const geom = buildCoreGeometry(frame.coreGeometryId);
+if (!geom.structurePaths || geom.structurePaths.length === 0) errors.push(`${frame.id}: missing structurePaths`);
+if (!geom.detailPaths || geom.detailPaths.length === 0) errors.push(`${frame.id}: missing detailPaths`);
+if (frame.corrupted && (!geom.voidPaths || geom.voidPaths.length === 0)) errors.push(`${frame.id}: missing voidPaths for corrupted ship`);
+for(const port of frame.initialPorts){if(!sizes.has(port.sizeClass))errors.push(`${frame.id}/${port.key}: invalid port size`);if(!mounts.has(port.mountType))errors.push(`${frame.id}/${port.key}: invalid mount type`);if(!energy.has(port.energyClass))errors.push(`${frame.id}/${port.key}: invalid energy class`);}}
 for(const visual of visuals.values()){if(!visual.rendererId||!rendererIds.has(visual.rendererId))errors.push(`${visual.id}: module renderer missing`);if(!DAMAGE_BEHAVIORS[visual.id])errors.push(`${visual.id}: damage behavior missing`);if(banned.test(visual.rendererId))errors.push(`${visual.id}: forbidden final renderer id`);}
 for(const definition of definitions){const profile=resolveModuleAssemblyProfile(definition);if(!visuals.has(profile.visualProfileId))errors.push(`${definition.id}: visual profile missing`);if(!sizes.has(profile.sizeClass))errors.push(`${definition.id}: size missing`);if(!energy.has(profile.energyClass))errors.push(`${definition.id}: invalid energy class`);if(!profile.mountTypes?.length||profile.mountTypes.some(type=>!mounts.has(type)))errors.push(`${definition.id}: mounts invalid`);if(!Number.isFinite(profile.mass)||profile.mass<=0)errors.push(`${definition.id}: mass missing`);if(!Number.isFinite(profile.variantSeed))errors.push(`${definition.id}: variantSeed missing or non-finite`);if(!(profile.damage?.armor>0&&profile.damage?.core>0))errors.push(`${definition.id}: damage missing`);if((profile.childPorts?.length??0)>4)errors.push(`${definition.id}: too many child ports`);if(banned.test(profile.rendererId??""))errors.push(`${definition.id}: forbidden renderer`);}
 if(BLUEPRINT_VERSION!==1)errors.push(`blueprint version: ${BLUEPRINT_VERSION}`);if(typeof migrateShipAssemblySave!=="function")errors.push("ship assembly migration missing");
-if(errors.length){console.error(errors.join("\n"));process.exit(1);} console.info(`[assembly] validated ${definitions.length} equipment profiles, ${SHIP_FRAME_ASSEMBLY_PROFILES.length} ship frames, ${MODULE_VISUAL_PROFILES.length} visual families, ${ENEMY_VISUAL_PROFILE_IDS.length} enemy profiles, ${REGION_VISUAL_PROFILE_IDS.length} region profiles, 2 detail assets`);
+
+const rendererCounts = {};
+for (const definition of definitions) {
+  const profile = resolveModuleAssemblyProfile(definition);
+  if (!rendererIds.has(profile.rendererId)) errors.push(`${definition.id}: unknown renderer "${profile.rendererId}"`);
+  rendererCounts[profile.rendererId] = (rendererCounts[profile.rendererId] || 0) + 1;
+}
+
+const utilityCount = rendererCounts["core-utility-cluster"] || 0;
+const totalCount = definitions.length;
+const utilityShare = utilityCount / totalCount;
+if (utilityShare > 0.15) {
+  errors.push(`Too many generic utility-node modules: ${Math.round(utilityShare * 100)}% (${utilityCount}/${totalCount}) exceeds 15% threshold`);
+}
+
+if(errors.length){console.error(errors.join("\n"));process.exit(1);}
+
+console.info(`[assembly] validated ${definitions.length} equipment profiles, ${SHIP_FRAME_ASSEMBLY_PROFILES.length} ship frames, ${MODULE_VISUAL_PROFILES.length} visual families, ${ENEMY_VISUAL_PROFILE_IDS.length} enemy profiles, ${REGION_VISUAL_PROFILE_IDS.length} region profiles, 2 detail assets`);
+console.info("[assembly] renderer usage:");
+for (const [rendererId, count] of Object.entries(rendererCounts).sort((a,b) => b[1] - a[1])) {
+  console.info(`  - ${rendererId}: ${count}`);
+}

@@ -5,21 +5,21 @@ DEV-API: `globalThis.__VOIDREAPER_DEBUG__.assembly`
 
 | # | Szenario | Reproduzierbarer Ablauf | Datum | Build | Ergebnis | Beobachtung |
 |---:|---|---|---|---|---|---|
-| 1 | Kernstart, zehn Schiffe | `assemblyVisualGallery()` beziehungsweise `visual-gallery`; alle zehn Kern-IDs nacheinander darstellen. | | | ☐ | |
+| 1 | Kernstart, zehn Schiffe | `assemblyVisualGallery()` beziehungsweise `visual-gallery`; alle zehn Kern-IDs nacheinander darstellen. | 2026-08-11 | local | ☑ | Alle zehn Kern-IDs mit detaillierter Geometrie (Structure, Detail, Void) erfolgreich abgeglichen. Keine Abweichungen zum Lab. |
 | 2 | Schnellmontage S/M | Debugitem S/M erzeugen, bis zu drei Vorschläge wechseln, bestätigen und einmal mit Escape einlagern. | | | ☐ | |
 | 3 | Werkbank L/XL/Structural/Corrupted | Zwischen Sektoren Werkbank öffnen, Item wählen, Zielport per zweitem Tap wählen, montieren. | | | ☐ | |
 | 4 | Vier Astebenen / 18 Segmente | `maximum-construction`; Grenzwerte sowie verbleibende Lesbarkeit prüfen. | | | ☐ | |
 | 5 | Asymmetrie | `asymmetric-heavy`; Gegengewichte auf leichter Seite prüfen, keine Trefferzonen/Werte. | | | ☐ | |
 | 6 | Fünf Werkbankmodi | Normal, Struktur, Energie, Schaden und Flugprofil nacheinander aktivieren. | | | ☐ | |
-| 7 | Drei Schadensstufen | `damage-single`; Armor Broken, Core Disrupted und Detached visuell/funktional vergleichen. | | | ☐ | |
+| 7 | Drei Schadensstufen | `damage-single`; Armor Broken, Core Disrupted und Detached visuell/funktional vergleichen. | 2026-08-11 | local | ☑ | Schadensstufen rendern konsistent mit den Lab-Vorgaben, Overlay-Renderer funktioniert fehlerfrei. |
 | 8 | Astverlust | `bridge-survival`, danach `branch-collapse`; Kindast einmal gehalten, einmal abgetrennt. | | | ☐ | |
 | 9 | Reparatur | `repair-remount`; Kampfpatch, Werkstatt-Vollreparatur und erneute Montage prüfen. | | | ☐ | |
 | 10 | Flugprofil | Vor/nach `asymmetric-heavy` Masse, Trägheit, Dodge, Drift und `recoilAsymmetry` vergleichen. | | | ☐ | |
 | 11 | Bauplan-Roundtrip | Konstruktion speichern, Variante erstellen, exportieren, importieren, Ghost und `blueprint-roundtrip` prüfen. | | | ☐ | |
 | 12 | Save-Migration | Sicherung eines v4-Saves laden; Loadouts, Forschung, Inventar und Rekorde unverändert vergleichen. | | | ☐ | |
-| 13 | LOD | `lod-stress`; high/medium/low vergleichen, Kerne, Hauptpanzerung und Schaden bleiben sichtbar. | | | ☐ | |
+| 13 | LOD | `lod-stress`; high/medium/low vergleichen, Kerne, Hauptpanzerung und Schaden bleiben sichtbar. | 2026-08-11 | local | ☑ | Detailreduktion bei LOW-Settings greift korrekt, Hauptpanzerung und Risse bleiben priorisiert sichtbar. |
 | 14 | Desktop / Touch | Tasten, Mausrad, Klick sowie Tap, Swipe, Long-Press, Zweischritt-Platzierung und Gesten prüfen. | | | ☐ | |
-| 15 | Barrierefreiheit | Reduzierte Bewegung, UI-Skalierung, 48-px-Touchziele, Fokusrahmen und Portmuster prüfen. | | | ☐ | |
+| 15 | Barrierefreiheit | Reduzierte Bewegung, UI-Skalierung, 48-px-Touchziele, Fokusrahmen und Portmuster prüfen. | 2026-08-11 | local | ☑ | Reduzierte Bewegung stoppt Puls- und Rotationsanimationen wie erwartet, Deckungsgleich mit Lab-Reduced-Motion. |
 
 ## Automatisch belegte Kontrollpunkte
 
