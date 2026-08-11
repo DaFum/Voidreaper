@@ -8,10 +8,16 @@ export function renderDamageOverlay(ctx, node, { time, palette, lod }) {
   const isCore = node.damageState === "core-disrupted";
   const faultColor = isCore ? palette.fault : palette.damage;
 
-  drawCracks(ctx, 0, 0, node.geometry.size * 1.2, node.variantSeed, faultColor, isCore ? 0.8 : 0.6);
+  drawCracks(ctx, {
+    x: 0, y: 0,
+    radius: node.geometry.size * 1.2,
+    seed: node.variantSeed,
+    color: faultColor,
+    alpha: isCore ? 0.8 : 0.6
+  });
 
   if (isCore) {
-    drawBloomDot(ctx, 0, 0, node.geometry.size * 0.4, faultColor);
+    drawBloomDot(ctx, { x: 0, y: 0, radius: node.geometry.size * 0.4, color: faultColor });
   }
 
   if (lod !== "low") {
@@ -19,8 +25,7 @@ export function renderDamageOverlay(ctx, node, { time, palette, lod }) {
       const a = node.variantSeed + i * 2.1 + time * 0.4;
       const r = node.geometry.size * 0.45;
       const alpha = 0.35 + Math.sin(time * 9 + i) * 0.3;
-      ctx.globalAlpha = alpha;
-      drawBloomDot(ctx, Math.cos(a) * r, Math.sin(a) * r, 3, palette.damage);
+      drawBloomDot(ctx, { x: Math.cos(a) * r, y: Math.sin(a) * r, radius: 3, color: palette.damage, alpha });
     }
   }
   ctx.restore();
