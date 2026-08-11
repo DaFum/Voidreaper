@@ -13,6 +13,8 @@ import { migrateShipAssemblySave } from "../src/persistence/migrations/ship-asse
 import { ENEMY_VISUAL_PROFILE_IDS } from "../src/render/enemies/enemy-visual-profiles.js";
 import { REGION_VISUAL_PROFILE_IDS } from "../src/render/regions/region-visual-profiles.js";
 import { existsSync } from "node:fs";
+import { FORGED_ABYSS_PALETTE } from "../src/render/forged-abyss/palettes.js";
+
 const definitions=[...SHIPS,...WEAPONS,...REACTORS,...MODULES],errors=[],sizes=new Set(["S","M","L","XL"]),mounts=new Set(["axial","lateral","dorsal","ventral","structural","radial"]),energy=new Set(["standard","precision","heavy","thermal","void"]),banned=/placeholder|generic-final/i;
 if(SHIP_FRAME_ASSEMBLY_PROFILES.length!==10)errors.push(`ship profiles: ${SHIP_FRAME_ASSEMBLY_PROFILES.length}`);
 const expectedEnemyProfiles=["swarm","chaser","orbiter","spitter","tank","splitter","bomber","shield","warper","leech","boss"];
@@ -50,6 +52,25 @@ const totalCount = definitions.length;
 const utilityShare = utilityCount / totalCount;
 if (utilityShare > 0.15) {
   errors.push(`Too many generic utility-node modules: ${Math.round(utilityShare * 100)}% (${utilityCount}/${totalCount}) exceeds 15% threshold`);
+}
+
+
+for (const [key, value] of Object.entries(FORGED_ABYSS_PALETTE)) {
+  if (typeof value !== "string" || value.trim() === "") {
+    errors.push(`FORGED_ABYSS_PALETTE key "${key}" is empty or invalid`);
+  }
+}
+const requiredPaletteKeys = ["hullDeep", "hullLight", "metalLight", "plateLight", "armorLight"];
+for (const key of requiredPaletteKeys) {
+  if (!FORGED_ABYSS_PALETTE[key]) errors.push(`FORGED_ABYSS_PALETTE missing key: ${key}`);
+}
+
+for (const weapon of WEAPONS) {
+  if (weapon.overrideVisualProfileId) {
+    const profile = MODULE_VISUAL_PROFILES.find(p => p.id === weapon.overrideVisualProfileId);
+    if (!profile) errors.push(`${weapon.id}: overrideVisualProfileId "${weapon.overrideVisualProfileId}" is not a registered profile`);
+    else if (!rendererIds.has(profile.rendererId)) errors.push(`${weapon.id}: resolved rendererId "${profile.rendererId}" is not registered`);
+  }
 }
 
 if(errors.length){console.error(errors.join("\n"));process.exit(1);}
