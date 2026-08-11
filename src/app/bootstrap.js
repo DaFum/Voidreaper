@@ -690,7 +690,7 @@ export async function bootstrap() {
     events.emit(TUTORIAL_EVENTS.SHOT_FIRED, { source: "legacy", shots }),
   );
   const getAssemblyLod = () =>
-    metaSave.assemblyVisualPreferences?.lod === "auto"
+    metaSave.assemblyVisualPreferences?.lod === "auto" || !metaSave.assemblyVisualPreferences?.lod
       ? "ultra"
       : metaSave.assemblyVisualPreferences?.lod;
   // weight region-typical enemies (content catalog) into the legacy wave roster;
