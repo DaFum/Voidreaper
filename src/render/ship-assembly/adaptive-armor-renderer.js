@@ -13,37 +13,51 @@ export function renderAdaptiveArmor(ctx, plates, palette, { lod="high" }={}) {
     const c = { x: plate.end.x - n.x * w * .7, y: plate.end.y - n.y * w * .7 };
     const d = { x: plate.start.x - n.x * w, y: plate.start.y - n.y * w };
 
-    ctx.beginPath();
-    ctx.moveTo(a.x, a.y);
-    if(plate.family === "reaper-curve" || plate.family === "void-organic") {
-      ctx.quadraticCurveTo((a.x + b.x) / 2 + n.x * w * .35, (a.y + b.y) / 2 + n.y * w * .35, b.x, b.y);
-    } else {
-      ctx.lineTo(b.x, b.y);
-    }
-    ctx.lineTo(c.x, c.y);
-    if(plate.family === "null-fracture" && plate.index % 2) {
-      ctx.lineTo((a.x + d.x) / 2 - n.x * w * .25, (a.y + d.y) / 2 - n.y * w * .25);
-    }
-    ctx.lineTo(d.x, d.y);
-    ctx.closePath();
+    // Traced twice: the contact shadow below starts its own path, so the plate
+    // outline has to be re-laid before it is filled, clipped and stroked.
+    const tracePlate = () => {
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      if(plate.family === "reaper-curve" || plate.family === "void-organic") {
+        ctx.quadraticCurveTo((a.x + b.x) / 2 + n.x * w * .35, (a.y + b.y) / 2 + n.y * w * .35, b.x, b.y);
+      } else {
+        ctx.lineTo(b.x, b.y);
+      }
+      ctx.lineTo(c.x, c.y);
+      if(plate.family === "null-fracture" && plate.index % 2) {
+        ctx.lineTo((a.x + d.x) / 2 - n.x * w * .25, (a.y + d.y) / 2 - n.y * w * .25);
+      }
+      ctx.lineTo(d.x, d.y);
+      ctx.closePath();
+    };
 
     if (lod !== "low") {
-      drawContactShadow(ctx, () => {
-        ctx.fill();
-      }, 3, 0.4);
+      // drawContactShadow draws around its own origin, so move to the plate centre first.
+      ctx.save();
+      ctx.translate((a.x + b.x + c.x + d.x) / 4, (a.y + b.y + c.y + d.y) / 4);
+      drawContactShadow(ctx, { radius: w * 1.6, alpha: .3 });
+      ctx.restore();
     }
 
     const baseColor = plate.family === "void-organic" || plate.family === "null-fracture" ? palette.void : palette.armor;
 
-    if (lod !== "low") {
-      ctx.fillStyle = fillSheen(ctx, baseColor, mixColor(baseColor, "#ffffff", 0.15), {x: a.x, y: Math.min(a.y, b.y, c.y, d.y) - 5, w: 0, h: Math.abs(a.y - d.y) + 10});
-    } else {
-      ctx.fillStyle = baseColor;
-    }
-
+    tracePlate();
     ctx.strokeStyle = plate.family === "thermal-open" ? palette.thruster : palette.edge;
     ctx.lineWidth = plate.family === "heavy-block" ? 2.2 : 1.2;
-    ctx.fill();
+    if (lod !== "low") {
+      const top = Math.min(a.y, b.y, c.y, d.y);
+      const bottom = Math.max(a.y, b.y, c.y, d.y);
+      fillSheen(ctx, null, {
+        light: mixColor(baseColor, "#ffffff", .15),
+        base: baseColor,
+        dark: mixColor(baseColor, "#000000", .35),
+        top,
+        bottom: bottom > top ? bottom : top + 1,
+      });
+    } else {
+      ctx.fillStyle = baseColor;
+      ctx.fill();
+    }
     ctx.stroke();
 
     if (lod !== "low") {

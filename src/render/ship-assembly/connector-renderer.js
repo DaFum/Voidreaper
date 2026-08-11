@@ -1,4 +1,26 @@
-import { drawEnergyRail, fillSheen, mixColor, withAlpha } from "../forged-abyss/primitives.js";
+import { drawEnergyRail, mixColor, withAlpha } from "../forged-abyss/primitives.js";
+
+// Top-lit tube shading across a segment: the gradient runs along the segment's
+// own perpendicular, anchored on its midpoint, so connectors away from the
+// ship origin get the same shading as ones sitting on the centreline.
+function tubeGradient(ctx, segment, halfWidth, light, base, dark) {
+  const dx = segment.to.x - segment.from.x;
+  const dy = segment.to.y - segment.from.y;
+  const length = Math.hypot(dx, dy) || 1;
+  // perpendicular, flipped so it always points "up" (towards the light)
+  let nx = dy / length, ny = -dx / length;
+  if (ny > 0) { nx = -nx; ny = -ny; }
+  const mx = (segment.from.x + segment.to.x) / 2;
+  const my = (segment.from.y + segment.to.y) / 2;
+  const g = ctx.createLinearGradient(
+    mx + nx * halfWidth, my + ny * halfWidth,
+    mx - nx * halfWidth, my - ny * halfWidth,
+  );
+  g.addColorStop(0, light);
+  g.addColorStop(0.5, base);
+  g.addColorStop(1, dark);
+  return g;
+}
 
 export function renderConnector(ctx, connector, palette, { lod="high", energyFlow=0, layer="all" }={}) {
   ctx.save();
@@ -8,13 +30,7 @@ export function renderConnector(ctx, connector, palette, { lod="high", energyFlo
 
     // Spine
     const baseSt = palette.structure;
-    const lightSt = mixColor(baseSt, "#ffffff", 0.1);
-    const darkSt = mixColor(baseSt, "#000000", 0.3);
-    const gSt = ctx.createLinearGradient(0, -sw, 0, sw);
-    gSt.addColorStop(0, lightSt);
-    gSt.addColorStop(0.5, baseSt);
-    gSt.addColorStop(1, darkSt);
-    ctx.strokeStyle = gSt;
+    ctx.strokeStyle = tubeGradient(ctx, connector.spine, Math.max(1, sw / 2), mixColor(baseSt, "#ffffff", 0.1), baseSt, mixColor(baseSt, "#000000", 0.3));
     ctx.lineWidth = sw;
     ctx.beginPath();
     ctx.moveTo(connector.spine.from.x, connector.spine.from.y);
@@ -27,16 +43,13 @@ export function renderConnector(ctx, connector, palette, { lod="high", energyFlo
     ctx.stroke();
 
     // Rails
-    ctx.lineWidth = Math.max(1, sw * 0.18);
+    const railWidth = Math.max(1, sw * 0.18);
+    ctx.lineWidth = railWidth;
     const baseR = palette.edge;
     const lightR = mixColor(baseR, "#ffffff", 0.15);
     const darkR = mixColor(baseR, "#000000", 0.2);
-    const gR = ctx.createLinearGradient(0, -sw/2, 0, sw/2);
-    gR.addColorStop(0, lightR);
-    gR.addColorStop(0.5, baseR);
-    gR.addColorStop(1, darkR);
-    ctx.strokeStyle = gR;
     for(const rail of [connector.leftRail, connector.rightRail]) {
+      ctx.strokeStyle = tubeGradient(ctx, rail, Math.max(1, railWidth / 2), lightR, baseR, darkR);
       ctx.beginPath();
       ctx.moveTo(rail.from.x, rail.from.y);
       ctx.lineTo(rail.to.x, rail.to.y);

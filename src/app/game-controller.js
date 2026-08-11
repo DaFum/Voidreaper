@@ -429,10 +429,6 @@ export function createGameController(services) {
       services.dodge.update(run.player, dt);
       services.heat.update(run.heat, dt, { coolingRate: 10 });
       services.buildAnimations?.update(dt);
-
-      if (services.weapons) {
-        legacyRuntime.setWeaponTelemetry(services.weapons.telemetry());
-      }
       run.player.flightProfile =
         services.flightSmoother?.update(dt) ??
         services.flightProfile?.getProfile();

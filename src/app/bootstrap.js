@@ -689,10 +689,12 @@ export async function bootstrap() {
   legacyRuntime.configureShotFiredReporter(({ shots }) =>
     events.emit(TUTORIAL_EVENTS.SHOT_FIRED, { source: "legacy", shots }),
   );
-  const getAssemblyLod = () =>
-    metaSave.assemblyVisualPreferences?.lod === "auto" || !metaSave.assemblyVisualPreferences?.lod
-      ? "ultra"
-      : metaSave.assemblyVisualPreferences?.lod;
+  // An unset preference means "auto", which the adaptive LOD policy resolves
+  // downwards on its own (zoom, visible segments, particle pressure).
+  const getAssemblyLod = () => {
+    const lod = metaSave.assemblyVisualPreferences?.lod;
+    return !lod || lod === "auto" ? "ultra" : lod;
+  };
   // weight region-typical enemies (content catalog) into the legacy wave roster;
   // game.visualRegionId is kept current by game-controller.syncLegacy
   legacyRuntime.configureRegionRoster(

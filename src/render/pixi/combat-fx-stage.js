@@ -57,10 +57,11 @@ function bakeRingTexture(size = 256) {
   ctx.shadowBlur = 12;
   ctx.lineWidth = 9;
   ctx.beginPath(); ctx.arc(half, half, radius, 0, TAU); ctx.stroke();
-  ctx.globalAlpha = 1.0;
+  // faint inner echo at 0.68R, like the legacy double ring
+  ctx.globalAlpha = 0.38;
   ctx.strokeStyle = "rgba(255,255,255,1)";
   ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.arc(half, half, radius, 0, TAU); ctx.stroke();
+  ctx.beginPath(); ctx.arc(half, half, radius * 0.68, 0, TAU); ctx.stroke();
   return { texture: Texture.from(canvas, true), radius };
 }
 

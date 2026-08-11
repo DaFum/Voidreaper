@@ -12,16 +12,12 @@ import {
   drawArmorHatch,
   drawContactShadow,
   drawCracks,
-  drawEnergyRail,
   drawVoidCore,
-  fillSheen,
   traceChamferedPlate,
   withAlpha,
   drawBloomDot,
   mixColor,
 } from "../forged-abyss/primitives.js";
-import { visualHash } from "../forged-abyss/seeded-visuals.js";
-
 
 const TAU = Math.PI * 2;
 const damaged = (state) => state.damageState === "armor-broken" || state.damageState === "core-disrupted";
@@ -78,7 +74,8 @@ const glow = (ctx, state, alpha = 1) => {
   ctx.restore();
 };
 
-const seedCount = (state, min, spread) => min + Math.abs(state.variantSeed ?? 0) % spread;
+const normalizeSeed = (seed) => Math.abs(Number(seed) || 0);
+const seedCount = (state, min, spread) => min + normalizeSeed(state.variantSeed) % spread;
 
 export function createModuleCoreRendererRegistry() {
   const renderers = new Map();
@@ -243,10 +240,10 @@ export function createModuleCoreRendererRegistry() {
 
   registry.register("core-sensor-lens", (ctx, s) => {
     paint(ctx, s, () => traceTaperedPlate(ctx, { length: s.size * .85, frontWidth: s.size * .7, rearWidth: s.size * .22, notch: 2 }));
-    traceLens(ctx, s.size * .2, 0, s.size * .32, s.size * (.5 + (s.variantSeed % 3) * .08));
+    traceLens(ctx, s.size * .2, 0, s.size * .32, s.size * (.5 + (normalizeSeed(s.variantSeed) % 3) * .08));
     ctx.fillStyle = withAlpha(s.palette.energy, .18);
     ctx.fill();
-    traceLens(ctx, s.size * .2, 0, s.size * .32, s.size * (.5 + (s.variantSeed % 3) * .08));
+    traceLens(ctx, s.size * .2, 0, s.size * .32, s.size * (.5 + (normalizeSeed(s.variantSeed) % 3) * .08));
     glow(ctx, s, .8);
   });
 
@@ -272,12 +269,14 @@ export function createModuleCoreRendererRegistry() {
   });
 
   registry.register("core-void-aperture", (ctx, s) => {
+    ctx.save();
     if (s.lod !== "low") ctx.rotate(Math.sin(s.time * 1.7) * .08);
     ctx.beginPath();
     ctx.arc(0, 0, s.size * .62, 0, TAU);
     ctx.lineWidth = s.size * .22;
     glow(ctx, s, .8);
     drawVoidCore(ctx, { radius: s.size * .31, palette: s.palette, time: s.time, seed: s.variantSeed, reducedMotion: s.lod === "low", intensity: 1 });
+    ctx.restore();
   });
 
   registry.register("core-orbit-bearing", (ctx, s) => {
@@ -293,7 +292,7 @@ export function createModuleCoreRendererRegistry() {
     ctx.beginPath();
     for (let i = 0; i < 9; i++) {
       const a = (i / 9) * TAU;
-      const r = s.size * (.48 + Math.sin(i * 4 + s.variantSeed) * .12);
+      const r = s.size * (.48 + Math.sin(i * 4 + normalizeSeed(s.variantSeed)) * .12);
       i ? ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r) : ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
     }
     ctx.closePath();

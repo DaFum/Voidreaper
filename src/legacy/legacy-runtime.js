@@ -1,7 +1,6 @@
 import { escapeHtml } from "../ui/escape-html.js";
 import { uiConfirm } from "../ui/components/modal-dialog.js";
 import { getRegionRules } from "../features/sectors/region-rules.js";
-import { WEAPONS } from "../content/weapons/index.js";
 import { FORGED_ABYSS_PALETTE } from "../render/forged-abyss/palettes.js";
 import { withAlpha, mixColor } from "../render/forged-abyss/primitives.js";
 
@@ -11,14 +10,13 @@ import { renderRegionWorld } from "../render/regions/region-world-renderer.js";
 import { createBloomPass } from "../render/post/bloom-pass.js";
 import { createLightMask } from "../render/post/light-mask.js";
 
-"use strict";
-/* =====================================================================
-   VOIDREAPER: ETERNAL REDUX — full art & feel overhaul
-   New rendering stack: pre-baked nebula layer + twinkling parallax
-   starfield + hexagonal arena floor, enemy spawn telegraphs and
-   scale-in births, velocity-stretched bullet trails, redesigned
-   multi-part ship with live thruster flame, cinematic in-world wave
-titles, killstreak callouts, ghosted HP damage bar, low-HP
+    /* =====================================================================
+       VOIDREAPER: ETERNAL REDUX — full art & feel overhaul
+       New rendering stack: pre-baked nebula layer + twinkling parallax
+       starfield + hexagonal arena floor, enemy spawn telegraphs and
+       scale-in births, velocity-stretched bullet trails, redesigned
+       multi-part ship with live thruster flame, cinematic in-world wave
+       titles, killstreak callouts, ghosted HP damage bar, low-HP
        heartbeat, rarity-staged upgrade cards, animated hangar pips.
        Gameplay: meta-progression, 5 evolutions, 11 enemy types + elites,
        3 rotating bosses, world events, pickups, combo, daily seed.
@@ -26,16 +24,17 @@ titles, killstreak callouts, ghosted HP damage bar, low-HP
 
     /* ---------- utilities ---------- */
     const TAU = Math.PI * 2;
-  function drawBloomDot(cx, x, y, r, color, coreR = r * 0.3) {
-    const g = cx.createRadialGradient(x, y, 0, x, y, r);
-    g.addColorStop(0, "#ffffff");
-    g.addColorStop(coreR / r, color);
-    g.addColorStop(1, withAlpha(color, 0));
-    cx.fillStyle = g;
-    cx.beginPath();
-    cx.arc(x, y, r, 0, TAU);
-    cx.fill();
-  }
+    function drawBloomDot(cx, x, y, r, color, coreR = r * 0.3) {
+      if (!(r > 0)) return;
+      const g = cx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, "#ffffff");
+      g.addColorStop(Math.min(1, Math.max(0, coreR / r)), color);
+      g.addColorStop(1, withAlpha(color, 0));
+      cx.fillStyle = g;
+      cx.beginPath();
+      cx.arc(x, y, r, 0, TAU);
+      cx.fill();
+    }
     const ARRAY_POOL = [];
     function getArrayFromPool(source) {
       const arr = ARRAY_POOL.length > 0 ? ARRAY_POOL.pop() : [];
@@ -432,7 +431,6 @@ titles, killstreak callouts, ghosted HP damage bar, low-HP
 
     /* ---------- game core ---------- */
     const Game = {
-      weaponTelemetry: null,
       state: "menu", mode: "standard",
       player: null, enemies: [],
       bullets: new Pool(mkBullet, 340),
@@ -1654,38 +1652,7 @@ titles, killstreak callouts, ghosted HP damage bar, low-HP
         }
 
 
-        // void-beam draw path
-        if (this.weaponTelemetry && this.weaponTelemetry.weaponId === "void-beam" && this.weaponTelemetry.targetId && this.weaponTelemetry.intensity > 0) {
-            const target = this.enemies.find(e => e.id === this.weaponTelemetry.targetId);
-            if (target) {
-                 const intensity = this.weaponTelemetry.intensity / 3;
-                 const weaponDef = WEAPONS.find(w => w.id === "void-beam");
-                 const visual = weaponDef?.visual || { glow: FORGED_ABYSS_PALETTE.fault, color: "#ffffff", width: 2 };
-                 const glow = visual.glow;
-                 const color = visual.color;
-                 const width = visual.width;
-
-                 cx.save();
-                 cx.lineWidth = (width + 8) * intensity;
-                 cx.globalAlpha = 0.8 * intensity;
-                 cx.strokeStyle = glow;
-                 cx.lineCap = "round";
-                 cx.beginPath();
-                 cx.moveTo(p.x, p.y);
-                 cx.lineTo(target.x, target.y);
-                 cx.stroke();
-
-                 cx.lineWidth = (width) * intensity;
-                 cx.globalAlpha = 1.0 * intensity;
-                 cx.strokeStyle = color;
-                 cx.beginPath();
-                 cx.moveTo(p.x, p.y);
-                 cx.lineTo(target.x, target.y);
-                 cx.stroke();
-                 cx.restore();
-            }
-        }
-// orbitals
+        // orbitals
         if (p.orbitals > 0) {
           const oR = p.evoHalo ? 78 : 62;
           cx.strokeStyle = p.evoHalo ? "rgba(255,45,120,.3)" : "rgba(76,201,240,.25)"; cx.lineWidth = 1;
@@ -2061,9 +2028,6 @@ titles, killstreak callouts, ghosted HP damage bar, low-HP
       input: Input,
       audio: AudioSys,
       persistence: Persist,
-      setWeaponTelemetry(data) {
-        Game.weaponTelemetry = data;
-      },
       configureEvolutionEffects(runner) {
         evolutionEffectRunner = runner;
       },
