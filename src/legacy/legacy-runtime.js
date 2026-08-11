@@ -1027,7 +1027,7 @@ import { createLightMask } from "../render/post/light-mask.js";
           pt.life = pt.maxLife = 0.16; pt.size = 2; pt.color = color; pt.drag = 1;
         }
       },
-      shockwave(x, y, maxR, color = "#4cc9f0", duration = .5) {
+      shockwave(x, y, maxR, color = FORGED_ABYSS_PALETTE.energy, duration = .5) {
         const s = this.shocks.get();
         s.x = x; s.y = y; s.maxR = maxR; s.color = color; s.life = s.maxLife = duration;
       },
@@ -1621,14 +1621,19 @@ import { createLightMask } from "../render/post/light-mask.js";
         cx.shadowBlur = 0; cx.textBaseline = "alphabetic";
 
         // enemy bullets (comet-tailed orbs)
+        const bloom = this.bloomOn !== false;
+        cx.save();
         for (const b of this.ebullets.live) {
           const col = frozen ? "#8ecae6" : FORGED_ABYSS_PALETTE.fault;
           cx.strokeStyle = col; cx.globalAlpha = 0.4; cx.lineWidth = b.r;
           cx.lineCap = "round";
           cx.beginPath(); cx.moveTo(b.x - b.vx * 0.05, b.y - b.vy * 0.05); cx.lineTo(b.x, b.y); cx.stroke();
           cx.globalAlpha = 1;
-          drawBloomDot(cx, b.x, b.y, b.r * 1.5, col, b.r * 0.6);
+          // the frame-cost gate drops bloom; fall back to the flat orb
+          if (bloom) drawBloomDot(cx, b.x, b.y, b.r * 1.5, col, b.r * 0.6);
+          else { cx.fillStyle = col; cx.beginPath(); cx.arc(b.x, b.y, b.r, 0, TAU); cx.fill(); }
         }
+        cx.restore();
 
         // player bullets (velocity-stretched tracers)
         for (const b of this.bullets.live) {
@@ -1714,8 +1719,12 @@ import { createLightMask } from "../render/post/light-mask.js";
               cx.strokeStyle = pt.color;
               cx.lineWidth = pt.size;
               cx.beginPath(); cx.moveTo(pt.x - pt.vx * 0.035, pt.y - pt.vy * 0.035); cx.lineTo(pt.x, pt.y); cx.stroke();
-            } else {
+            } else if (sparks) {
               drawBloomDot(cx, pt.x, pt.y, pt.size * 2, pt.color, pt.size * 0.5);
+            } else {
+              // bloom is off because the frame is over budget — no gradient per particle
+              cx.fillStyle = pt.color;
+              cx.fillRect(pt.x - pt.size / 2, pt.y - pt.size / 2, pt.size, pt.size);
             }
           }
           cx.globalCompositeOperation = "source-over";

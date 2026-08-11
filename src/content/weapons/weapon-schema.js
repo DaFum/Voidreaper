@@ -6,6 +6,5 @@ export function assertWeaponAdapter(adapter, id = "weapon") {
 }
 
 export function createWeaponDefinition(data, adapter) {
-  const visual = Object.freeze({ color: "#4fead0", glow: "#7ff0ff", width: 2, particleStyle: "spark", ...data.visual });
-  return Object.freeze({ slot: "primary-weapon", energyCost: 20, faultProfileId: "weapon-projectile", effects: [], ...data, visual, adapter: assertWeaponAdapter(adapter, data.id) });
+  return Object.freeze({ slot: "primary-weapon", energyCost: 20, faultProfileId: "weapon-projectile", effects: [], ...data, adapter: assertWeaponAdapter(adapter, data.id) });
 }

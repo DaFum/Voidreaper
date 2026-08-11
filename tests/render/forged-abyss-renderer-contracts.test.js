@@ -119,7 +119,9 @@ const ENEMY_POINTS = {
 };
 
 test("the enemy rim highlight only traces silhouette edges, never chords", () => {
+  let total = 0;
   for (const [type, points] of Object.entries(ENEMY_POINTS)) {
+    let drawn = 0;
     for (let offset = 0; offset < 12; offset += 1) {
       const segments = [];
       let path = [], cursor = null, strokeStyle = "", lineWidth = 0;
@@ -136,6 +138,7 @@ test("the enemy rim highlight only traces silhouette edges, never chords", () =>
         wobble: 1.1, hitT: 0, birth: 0, color: "#ff6d9d", elite: null, boss: type === "boss",
       }, { time: 1 });
 
+      drawn += segments.length;
       for (const [[ax, ay], [bx, by]] of segments) {
         const outerRadius = Math.max(Math.hypot(ax, ay), Math.hypot(bx, by));
         // any segment longer than the widest possible edge has skipped vertices
@@ -146,5 +149,11 @@ test("the enemy rim highlight only traces silhouette edges, never chords", () =>
         );
       }
     }
+    // Silhouettes start at -PI/2, so profiles with 5+ points always have at
+    // least two adjacent light-facing vertices. Coarser ones (3-4 points) can
+    // legitimately have a single top vertex and draw nothing.
+    if (points >= 5) assert.ok(drawn > 0, `${type}: expected rim segments, captured none`);
+    total += drawn;
   }
+  assert.ok(total > 0, "captured no rim segments at all — the capture hook is broken");
 });
