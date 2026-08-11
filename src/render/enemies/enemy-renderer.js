@@ -200,23 +200,30 @@ export function renderForgedEnemy(ctx, enemy, {
   // 3) top rim highlight on the light-facing edge only
   ctx.save();
   ctx.beginPath();
+  // The light-facing run wraps around index 0 (silhouettes start at -PI/2), so
+  // trace contiguous runs instead of joining every top point — joining them
+  // would draw a chord straight through the silhouette.
   let drawingRim = false;
-  for (let i = 0; i <= pts.length; i++) {
+  let hasRim = false;
+  for (let i = 0; i <= pts.length; i += 1) {
     const p = pts[i % pts.length];
-    if (p.y < 0) {
-      if (!drawingRim) {
-        ctx.moveTo(p.x, p.y);
-        drawingRim = true;
-      } else {
-        ctx.lineTo(p.x, p.y);
-      }
-    } else {
+    if (p.y >= 0) {
       drawingRim = false;
+      continue;
+    }
+    if (drawingRim) {
+      ctx.lineTo(p.x, p.y);
+      hasRim = true;
+    } else {
+      ctx.moveTo(p.x, p.y);
+      drawingRim = true;
     }
   }
-  ctx.strokeStyle = withAlpha(palette.rim ?? "#ffffff", .55);
-  ctx.lineWidth = 1.2;
-  ctx.stroke();
+  if (hasRim) {
+    ctx.strokeStyle = withAlpha(palette.rim ?? "#ffffff", .55);
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+  }
   ctx.restore();
 
   // 4) rivets at vertices

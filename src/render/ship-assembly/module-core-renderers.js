@@ -10,19 +10,16 @@ import {
 } from "../../features/ship-assembly/geometry/path-primitives.js";
 import {
   drawArmorHatch,
+  drawContactShadow,
   drawCracks,
   drawVoidCore,
   traceChamferedPlate,
   withAlpha,
-  mixColor,
-  drawContactShadow,
   drawBloomDot,
+  mixColor,
 } from "../forged-abyss/primitives.js";
 
-const PI = Math.PI;
 const TAU = Math.PI * 2;
-
-// (TAU declared above)
 const damaged = (state) => state.damageState === "armor-broken" || state.damageState === "core-disrupted";
 
 // Solid metal body with directional sheen, clipped specular highlight and a rim.

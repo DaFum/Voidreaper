@@ -1,15 +1,15 @@
 import { escapeHtml } from "../ui/escape-html.js";
 import { uiConfirm } from "../ui/components/modal-dialog.js";
+import { getRegionRules } from "../features/sectors/region-rules.js";
+import { FORGED_ABYSS_PALETTE } from "../render/forged-abyss/palettes.js";
+import { withAlpha, mixColor } from "../render/forged-abyss/primitives.js";
 
+import { LEGACY_EVOLUTIONS } from "../content/evolutions/legacy-evolutions.js";
+import { renderForgedEnemy } from "../render/enemies/enemy-renderer.js";
+import { renderRegionWorld } from "../render/regions/region-world-renderer.js";
+import { createBloomPass } from "../render/post/bloom-pass.js";
+import { createLightMask } from "../render/post/light-mask.js";
 
-    import { LEGACY_EVOLUTIONS } from "../content/evolutions/legacy-evolutions.js";
-    import { renderForgedEnemy } from "../render/enemies/enemy-renderer.js";
-    import { renderRegionWorld } from "../render/regions/region-world-renderer.js";
-    import { createBloomPass } from "../render/post/bloom-pass.js";
-    import { createLightMask } from "../render/post/light-mask.js";
-    import { getRegionRules } from "../features/sectors/region-rules.js";
-
-    "use strict";
     /* =====================================================================
        VOIDREAPER: ETERNAL REDUX — full art & feel overhaul
        New rendering stack: pre-baked nebula layer + twinkling parallax
@@ -24,6 +24,17 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
 
     /* ---------- utilities ---------- */
     const TAU = Math.PI * 2;
+    function drawBloomDot(cx, x, y, r, color, coreR = r * 0.3) {
+      if (!(r > 0)) return;
+      const g = cx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, "#ffffff");
+      g.addColorStop(Math.min(1, Math.max(0, coreR / r)), color);
+      g.addColorStop(1, withAlpha(color, 0));
+      cx.fillStyle = g;
+      cx.beginPath();
+      cx.arc(x, y, r, 0, TAU);
+      cx.fill();
+    }
     const ARRAY_POOL = [];
     function getArrayFromPool(source) {
       const arr = ARRAY_POOL.length > 0 ? ARRAY_POOL.pop() : [];
@@ -415,7 +426,7 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
     const mkText = () => ({ x: 0, y: 0, vy: 0, txt: "", color: "#fff", life: 0, maxLife: 0.9, dead: true, size: 12, heavy: false });
     const mkPickup = () => ({ x: 0, y: 0, type: null, t: 0, dead: true, life: 18 });
     const mkZone = () => ({ x: 0, y: 0, r: 0, life: 0, maxLife: 1, dead: true, dps: 0, color: "#c77dff", pull: 0, telegraph: false });
-    const mkShock = () => ({ x: 0, y: 0, maxR: 120, life: 0, maxLife: .5, color: "#4cc9f0", dead: true });
+    const mkShock = () => ({ x: 0, y: 0, maxR: 120, life: 0, maxLife: .5, color: FORGED_ABYSS_PALETTE.energy, dead: true });
     const mkSpawn = () => ({ x: 0, y: 0, t: 0, type: "", dead: true });
 
     /* ---------- game core ---------- */
@@ -1016,7 +1027,7 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
           pt.life = pt.maxLife = 0.16; pt.size = 2; pt.color = color; pt.drag = 1;
         }
       },
-      shockwave(x, y, maxR, color = "#4cc9f0", duration = .5) {
+      shockwave(x, y, maxR, color = FORGED_ABYSS_PALETTE.energy, duration = .5) {
         const s = this.shocks.get();
         s.x = x; s.y = y; s.maxR = maxR; s.color = color; s.life = s.maxLife = duration;
       },
@@ -1025,7 +1036,7 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
           const pt = this.parts.get(); const a = i / 36 * TAU;
           pt.x = x + Math.cos(a) * 20; pt.y = y + Math.sin(a) * 20;
           pt.vx = Math.cos(a) * R * 2.4; pt.vy = Math.sin(a) * R * 2.4;
-          pt.life = pt.maxLife = 0.4; pt.size = 3; pt.color = "#4cc9f0"; pt.drag = 0.88;
+          pt.life = pt.maxLife = 0.4; pt.size = 3; pt.color = FORGED_ABYSS_PALETTE.glow; pt.drag = 0.88;
         }
       },
       floatText(x, y, txt, color, size, heavy) {
@@ -1109,7 +1120,7 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
             const pt = this.parts.get();
             pt.x = p.x + this.grand(-14, 14); pt.y = p.y + this.grand(-14, 14);
             pt.vx = this.grand(-120, 120); pt.vy = this.grand(-120, 120);
-            pt.life = pt.maxLife = 0.2; pt.size = 2; pt.color = "#ffd60a"; pt.drag = 0.85;
+            pt.life = pt.maxLife = 0.2; pt.size = 2; pt.color = FORGED_ABYSS_PALETTE.energySoft; pt.drag = 0.85;
           }
         }
 
@@ -1610,23 +1621,28 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
         cx.shadowBlur = 0; cx.textBaseline = "alphabetic";
 
         // enemy bullets (comet-tailed orbs)
+        const bloom = this.bloomOn !== false;
+        cx.save();
         for (const b of this.ebullets.live) {
-          const col = frozen ? "#8ecae6" : "#ff6d9d";
+          const col = frozen ? "#8ecae6" : FORGED_ABYSS_PALETTE.fault;
           cx.strokeStyle = col; cx.globalAlpha = 0.4; cx.lineWidth = b.r;
           cx.lineCap = "round";
           cx.beginPath(); cx.moveTo(b.x - b.vx * 0.05, b.y - b.vy * 0.05); cx.lineTo(b.x, b.y); cx.stroke();
           cx.globalAlpha = 1;
-          cx.fillStyle = col;
-          cx.beginPath(); cx.arc(b.x, b.y, b.r, 0, TAU); cx.fill();
+          // the frame-cost gate drops bloom; fall back to the flat orb
+          if (bloom) drawBloomDot(cx, b.x, b.y, b.r * 1.5, col, b.r * 0.6);
+          else { cx.fillStyle = col; cx.beginPath(); cx.arc(b.x, b.y, b.r, 0, TAU); cx.fill(); }
         }
+        cx.restore();
 
         // player bullets (velocity-stretched tracers)
         for (const b of this.bullets.live) {
+          const c = b.prism ? FORGED_ABYSS_PALETTE.energySoft : FORGED_ABYSS_PALETTE.energy;
           cx.save(); cx.translate(b.x, b.y); cx.rotate(Math.atan2(b.vy, b.vx));
           const L = b.prism ? 26 : 15;
           const g = cx.createLinearGradient(-L, 0, 6, 0);
-          if (b.prism) { g.addColorStop(0, "rgba(255,207,63,0)"); g.addColorStop(1, "#fff6c9"); }
-          else { g.addColorStop(0, "rgba(6,255,165,0)"); g.addColorStop(1, "#e8fff6"); }
+          g.addColorStop(0, withAlpha(c, 0));
+          g.addColorStop(1, mixColor(c, "#ffffff", 0.7));
           cx.fillStyle = g;
           cx.fillRect(-L, b.prism ? -1.5 : -2, L + 6, b.prism ? 3 : 4);
           cx.restore();
@@ -1639,6 +1655,7 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
             this.drawEnemy(e, frozen);
           }
         }
+
 
         // orbitals
         if (p.orbitals > 0) {
@@ -1702,7 +1719,10 @@ import { uiConfirm } from "../ui/components/modal-dialog.js";
               cx.strokeStyle = pt.color;
               cx.lineWidth = pt.size;
               cx.beginPath(); cx.moveTo(pt.x - pt.vx * 0.035, pt.y - pt.vy * 0.035); cx.lineTo(pt.x, pt.y); cx.stroke();
+            } else if (sparks) {
+              drawBloomDot(cx, pt.x, pt.y, pt.size * 2, pt.color, pt.size * 0.5);
             } else {
+              // bloom is off because the frame is over budget — no gradient per particle
               cx.fillStyle = pt.color;
               cx.fillRect(pt.x - pt.size / 2, pt.y - pt.size / 2, pt.size, pt.size);
             }

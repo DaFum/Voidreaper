@@ -2,7 +2,7 @@
 // Same mood; adds tonal steps so renderers can do real top-lit shading,
 // panel-line grooves and rim highlights. All original keys are preserved,
 // so existing overrides (shipStyle.palette) keep working.
-const FORGED_ABYSS_PALETTE = Object.freeze({
+export const FORGED_ABYSS_PALETTE = Object.freeze({
   // hull tones (dark -> light), used for directional sheen fills
   hullDeep: "#05090f",
   hull: "#0b131c",

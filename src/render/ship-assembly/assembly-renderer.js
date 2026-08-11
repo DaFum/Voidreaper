@@ -80,7 +80,7 @@ export function createAssemblyRenderer() {
           });
         },
         armor: (layerCtx) =>
-          renderAdaptiveArmor(layerCtx, geometrySnapshot.armor, palette),
+          renderAdaptiveArmor(layerCtx, geometrySnapshot.armor, palette, { lod }),
       });
       if (staticLayers)
         ctx.drawImage(
@@ -138,7 +138,7 @@ export function createAssemblyRenderer() {
           staticLayers.width,
           staticLayers.height,
         );
-      else renderAdaptiveArmor(ctx, geometrySnapshot.armor, palette);
+      else renderAdaptiveArmor(ctx, geometrySnapshot.armor, palette, { lod });
       renderActivityAnimations(ctx, geometrySnapshot, {
         time,
         lod,
