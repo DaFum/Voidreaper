@@ -2,6 +2,7 @@ import { createWeaponDefinition } from "./weapon-schema.js";
 import { createBasicWeaponAdapter } from "../../features/combat/weapon-controller.js";
 
 export default createWeaponDefinition({
+  overrideVisualProfileId: "weapon-missile",
   id: "missile-battery", name: "MISSILE BATTERY", energyCost: 34, heat: 9,
   tags: [{ id: "Weapon", value: 1 }, { id: "Projectile", value: 2 }, { id: "Homing", value: 2 }, { id: "Explosive", value: 2 }, { id: "Heat", value: 1 }],
   effects: [{ id: "spawn-projectile" }, { id: "spawn-zone" }], faultProfileId: "weapon-projectile", unlockSource: "research"

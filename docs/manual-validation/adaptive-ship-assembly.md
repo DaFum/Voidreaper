@@ -42,3 +42,4 @@ Build: Branch `design`, Forged-Abyss-Implementierung nach `9d07368`
 | Werkbank Mobil, 390 × 844 | ☑ | Schiff, Ports, Modi und Inspektor bleiben erreichbar; die Bühne ist innerhalb des vorhandenen Scrollbereichs bedienbar. |
 | Browserkonsole | ☑ | Keine neuen Warnungen oder Fehler während Karte, Kampf und Werkbank. |
 | Visuelle Profilabdeckung | ☑ | Validator bestätigt 10 Schiffskerne, 14 Modulfamilien, 11 Gegnerprofile, 5 Regionsprofile und 2 Detailassets. |
+| Lab Renderer Integration | ☑ | Ship hulls, enemies, mounted modules, and mounted weapons show refined shading and distinct weapon looks. No new console warnings from renderer fallback. |
