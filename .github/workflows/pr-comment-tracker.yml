@@ -29,7 +29,7 @@ jobs:
         with:
           script: |
             // 1. PR-Nummer aus dem Trigger-Event ermitteln
-            const prNumber = context.payload.pull_request.number;
+            const prNumber = context.payload.pull_request?.number || context.issue.number;
             const { owner, repo } = context.repo;
 
             // Unsichtbarer Marker, um den Kommentar des Bots später wiederzufinden

@@ -49,3 +49,7 @@
 ## 2024-08-09 - Set Operations for Multiple Includes
 **Learning:** `Array.prototype.includes` or `Object.values().includes` evaluated in hot paths like input handling (which runs every keyboard and mouse event) introduces unnecessary O(N) array allocations and linear searches, increasing GC pressure and lowering performance.
 **Action:** Replace dynamic array includes with a static `Set` initialized once, using `Set.prototype.has()` for an O(1) constant-time lookup.
+
+## 2024-05-18 - [Blueprint Matcher Sorting Optimization]
+**Learning:** In `blueprint-matcher.js`, finding the best blueprint match involved sorting candidates using an inline array creation (`["exact", "compatible", ...]`) and multiple `indexOf` calls inside the `.sort()` comparator loop. This caused significant `O(N log N)` array allocations and string searches, creating heavy garbage collection overhead in a potentially hot path.
+**Action:** When prioritizing or sorting based on categorical strings, always extract the mapping to a static dictionary/object (e.g., `const MATCH_PRIORITY = { exact: 0, compatible: 1, ... }`) outside the sorting loop to guarantee `O(1)` property lookups and prevent intermediate array allocations per element comparison.
