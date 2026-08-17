@@ -2002,9 +2002,17 @@ import { createLightMask } from "../render/post/light-mask.js";
         }
         this.el("reroll-n").textContent = Game.rerolls;
         this.el("banish-n").textContent = Game.banishes;
-        this.el("rerollbtn").style.opacity = Game.rerolls > 0 ? "1" : ".35";
-        this.el("banishbtn").style.opacity = Game.banishes > 0 ? "1" : ".35";
-        this.el("banishbtn").style.background = Game.banishMode ? "rgba(255,45,120,.15)" : "";
+
+        const rerollBtn = this.el("rerollbtn");
+        rerollBtn.disabled = Game.rerolls <= 0;
+        rerollBtn.title = Game.rerolls <= 0 ? "No rerolls remaining" : "Reroll mutation choices";
+        rerollBtn.style.opacity = "";
+
+        const banishBtn = this.el("banishbtn");
+        banishBtn.disabled = Game.banishes <= 0;
+        banishBtn.title = Game.banishes <= 0 ? "No banishes remaining" : "Permanently remove a mutation";
+        banishBtn.style.opacity = "";
+        banishBtn.style.background = Game.banishMode ? "rgba(255,45,120,.15)" : "";
         this.show("levelup");
         const first = wrap.querySelector(".card");
         if (first) first.focus();
