@@ -2005,12 +2005,12 @@ import { createLightMask } from "../render/post/light-mask.js";
 
         const rerollBtn = this.el("rerollbtn");
         rerollBtn.disabled = Game.rerolls <= 0;
-        rerollBtn.title = Game.rerolls <= 0 ? "No rerolls remaining" : "Reroll mutation choices";
+        rerollBtn.parentElement.title = Game.rerolls <= 0 ? "No rerolls remaining" : "Reroll mutation choices";
         rerollBtn.style.opacity = "";
 
         const banishBtn = this.el("banishbtn");
         banishBtn.disabled = Game.banishes <= 0;
-        banishBtn.title = Game.banishes <= 0 ? "No banishes remaining" : "Permanently remove a mutation";
+        banishBtn.parentElement.title = Game.banishes <= 0 ? "No banishes remaining" : "Permanently remove a mutation";
         banishBtn.style.opacity = "";
         banishBtn.style.background = Game.banishMode ? "rgba(255,45,120,.15)" : "";
         this.show("levelup");
