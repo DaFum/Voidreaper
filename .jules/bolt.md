@@ -53,3 +53,7 @@
 ## 2024-05-18 - [Blueprint Matcher Sorting Optimization]
 **Learning:** In `blueprint-matcher.js`, finding the best blueprint match involved sorting candidates using an inline array creation (`["exact", "compatible", ...]`) and multiple `indexOf` calls inside the `.sort()` comparator loop. This caused significant `O(N log N)` array allocations and string searches, creating heavy garbage collection overhead in a potentially hot path.
 **Action:** When prioritizing or sorting based on categorical strings, always extract the mapping to a static dictionary/object (e.g., `const MATCH_PRIORITY = { exact: 0, compatible: 1, ... }`) outside the sorting loop to guarantee `O(1)` property lookups and prevent intermediate array allocations per element comparison.
+
+## 2024-05-19 - Fast array short-circuiting in geometry construction
+**Learning:** Chaining `.filter().slice(0, n).map()` forces an O(N) traversal of the entire array to produce intermediate filtered results, even if we only need a handful of matching items, leading to heavy GC allocations on repeated hot-path function calls like `buildBalanceDecorators`.
+**Action:** Always replace this pattern with an imperative `for` loop that gathers items manually and uses `break` once the required count limit is reached, entirely eliminating intermediate allocation overhead and saving significant CPU time.
