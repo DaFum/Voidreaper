@@ -53,3 +53,11 @@
 ## 2024-05-18 - [Blueprint Matcher Sorting Optimization]
 **Learning:** In `blueprint-matcher.js`, finding the best blueprint match involved sorting candidates using an inline array creation (`["exact", "compatible", ...]`) and multiple `indexOf` calls inside the `.sort()` comparator loop. This caused significant `O(N log N)` array allocations and string searches, creating heavy garbage collection overhead in a potentially hot path.
 **Action:** When prioritizing or sorting based on categorical strings, always extract the mapping to a static dictionary/object (e.g., `const MATCH_PRIORITY = { exact: 0, compatible: 1, ... }`) outside the sorting loop to guarantee `O(1)` property lookups and prevent intermediate array allocations per element comparison.
+
+## 2025-02-18 - Math.atan2(Math.sin, Math.cos) Performance Bottleneck
+**Learning:** Using `Math.atan2(Math.sin(value), Math.cos(value))` to normalize an angle is extremely slow (observed 5x slower than basic math) due to the overhead of three trigonometric function calls.
+**Action:** Replace it with modulo arithmetic (e.g. `let v = value % (Math.PI * 2);`) whenever an angle needs to be wrapped or normalized, particularly in high-frequency operations like placement checks or loops.
+
+## 2025-02-18 - Nested some/filter array allocations in hot paths
+**Learning:** Checking multi-dimensional data by chaining `.filter()` and nesting `.some()` calls (like `open.some(a=>open.some(b=>...))`) creates a combinatorial explosion of function closures and intermediate array allocations. This severely degrades performance in hot paths (like assembly geometry placement checks) due to GC pressure.
+**Action:** Replace nested `.some()` and `.filter()` operations with imperative `for` loops, pre-allocating or manually `.push()`ing to arrays where needed, and manually breaking out of inner loops as early as possible.
