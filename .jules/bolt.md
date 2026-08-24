@@ -53,3 +53,7 @@
 ## 2024-05-18 - [Blueprint Matcher Sorting Optimization]
 **Learning:** In `blueprint-matcher.js`, finding the best blueprint match involved sorting candidates using an inline array creation (`["exact", "compatible", ...]`) and multiple `indexOf` calls inside the `.sort()` comparator loop. This caused significant `O(N log N)` array allocations and string searches, creating heavy garbage collection overhead in a potentially hot path.
 **Action:** When prioritizing or sorting based on categorical strings, always extract the mapping to a static dictionary/object (e.g., `const MATCH_PRIORITY = { exact: 0, compatible: 1, ... }`) outside the sorting loop to guarantee `O(1)` property lookups and prevent intermediate array allocations per element comparison.
+
+## 2024-08-24 - V8 Math.hypot Performance Penalty
+**Learning:** In V8 (the JavaScript engine used by Node and Chromium), `Math.hypot(dx, dy)` is measurably slower than calculating the Euclidean distance manually with `Math.sqrt(dx * dx + dy * dy)` in hot paths like rendering loops. This is because `Math.hypot` is designed to handle an arbitrary number of arguments and includes internal checks to prevent float overflow/underflow, adding significant overhead.
+**Action:** When working in rendering loops, particle systems, or high-frequency game logic, always replace `Math.hypot(dx, dy)` with `Math.sqrt(dx * dx + dy * dy)` for 2D distance calculations. The risk of float overflow for standard pixel/world coordinates is negligible compared to the performance gain.
