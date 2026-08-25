@@ -53,3 +53,7 @@
 ## 2024-05-18 - [Blueprint Matcher Sorting Optimization]
 **Learning:** In `blueprint-matcher.js`, finding the best blueprint match involved sorting candidates using an inline array creation (`["exact", "compatible", ...]`) and multiple `indexOf` calls inside the `.sort()` comparator loop. This caused significant `O(N log N)` array allocations and string searches, creating heavy garbage collection overhead in a potentially hot path.
 **Action:** When prioritizing or sorting based on categorical strings, always extract the mapping to a static dictionary/object (e.g., `const MATCH_PRIORITY = { exact: 0, compatible: 1, ... }`) outside the sorting loop to guarantee `O(1)` property lookups and prevent intermediate array allocations per element comparison.
+
+## 2024-08-25 - Avoid chained array methods for early exits
+**Learning:** Using chained array methods like `.filter().slice(0, 3).map()` forces a full traversal of the array and creates multiple intermediate array allocations. When searching for a limited number of items, this creates an O(N) penalty that could have been skipped once the limit was reached.
+**Action:** Replace chained array methods with an imperative `for` loop that includes an early `break` or loop condition (e.g., `decorators.length < 3`) when searching for a subset of items, eliminating intermediate allocations and reducing the number of iterations to O(K) where K is the limit.
