@@ -137,7 +137,7 @@ describe("codex screen", () => {
   test("build history toggles favorites per build id", () => {
     const container = root(), onToggleFavorite = vi.fn();
     renderBuildHistory(container, [{ id: "b1", result: "victory", seed: 7, ship: "S", weapon: "W", modules: ["m1"], favorite: false }], onToggleFavorite);
-    expect(container.innerHTML).toContain("☆ Favorisieren");
+    expect(container.innerHTML).toContain("<span>☆</span> <small aria-hidden=\"true\">Favorisieren</small>");
     container.querySelector('[data-favorite="b1"]').click();
     expect(onToggleFavorite).toHaveBeenCalledWith("b1");
   });
