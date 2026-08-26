@@ -10,3 +10,6 @@
 ## 2024-08-18 - Avoid replacing visible button labels with aria-label
 **Learning:** Using `aria-label` to provide the disabled reason entirely replaces the visible button text ("FORSCHEN") for screen reader users, violating WCAG 2.5.3 (Label in Name).
 **Action:** Provide additional context alongside the button text (e.g. visible text within the button like `<small>(Reason)</small>`) instead of overwriting the element's accessible name with `aria-label`. Keep `title` for supplementary hover context.
+## 2024-05-19 - Assembly Port Button Fallback Titles
+**Learning:** In the ship assembly workbench, `assembly-port` buttons only displayed a `title` tooltip when they were invalid (via `reasonText`). Sighted users hovering over valid ports did not receive the context (e.g., "MEDIUM PORT, Modul auswählen") that screen readers received via `aria-label`.
+**Action:** Always ensure that icon-only interactive elements (like the port buttons) provide a `title` attribute matching the `aria-label` when a more specific error or reason title is not present, ensuring equal context for sighted users.
