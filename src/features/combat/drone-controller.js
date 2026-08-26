@@ -11,9 +11,14 @@ export function createDroneController({ budget = 4 } = {}) {
     update(context, dt) {
       // Summons can be removed externally (e.g. sacrifice cost splices run.summons);
       // drop those drones here so both lists stay in sync.
-      for (let i = drones.length - 1; i >= 0; i--) {
-        if (!context.run.summons.includes(drones[i])) drones.splice(i, 1);
+      const summonsSet = new Set(context.run.summons);
+      let aliveCount = 0;
+      for (let i = 0; i < drones.length; i++) {
+        if (summonsSet.has(drones[i])) {
+          drones[aliveCount++] = drones[i];
+        }
       }
+      drones.length = aliveCount;
       for (const drone of drones) {
         drone.angle += dt * 0.9;
         drone.x = context.player.x + Math.cos(drone.angle) * 72;
