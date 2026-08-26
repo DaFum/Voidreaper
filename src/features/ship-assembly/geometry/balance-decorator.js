@@ -7,4 +7,25 @@ export function calculateVisualImbalance(nodes) {
   return sum;
 }
 function chooseDecoratorKind(id,style){if(id?.includes("cooling")||style?.armorFamily==="thermal-open")return"cooling-ribs";if(style?.armorFamily==="industrial-truss"||style?.armorFamily==="heavy-block")return"counterweight";return"brace-plate";}
-export function buildBalanceDecorators({nodes,shipStyle}){const imbalance=calculateVisualImbalance(nodes);if(Math.abs(imbalance)<40)return[];const heavySide=Math.sign(imbalance);return nodes.filter(node=>Math.sign(node.worldPosition.x)===heavySide).slice(0,3).map((node,index)=>Object.freeze({decoratorId:`balance-${node.nodeId}-${index}`,kind:chooseDecoratorKind(node.visualProfileId,shipStyle),position:{x:-node.worldPosition.x*.72,y:node.worldPosition.y*.86},rotation:-node.worldRotation,scale:Math.min(.7,.35+node.visualMass/40),gameplayRelevant:false}));}
+export function buildBalanceDecorators({nodes, shipStyle}) {
+  const imbalance = calculateVisualImbalance(nodes);
+  if (Math.abs(imbalance) < 40) return [];
+  const heavySide = Math.sign(imbalance);
+  const results = [];
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+    if (Math.sign(node.worldPosition.x) === heavySide) {
+      const index = results.length;
+      results.push(Object.freeze({
+        decoratorId: `balance-${node.nodeId}-${index}`,
+        kind: chooseDecoratorKind(node.visualProfileId, shipStyle),
+        position: { x: -node.worldPosition.x * 0.72, y: node.worldPosition.y * 0.86 },
+        rotation: -node.worldRotation,
+        scale: Math.min(0.7, 0.35 + node.visualMass / 40),
+        gameplayRelevant: false
+      }));
+      if (results.length === 3) break;
+    }
+  }
+  return results;
+}

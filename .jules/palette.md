@@ -6,3 +6,13 @@
 ## 2024-08-22 - Stateful Toggle Button Accessibility
 **Learning:** For stateful toggle buttons (like favorites or bookmarks), `aria-pressed` is crucial to communicate the current state to screen reader users. Simply changing text visually isn't enough. Separating the visual icon and hiding the visible text using `aria-hidden="true"` while providing a robust `aria-label` prevents duplicate screen reader announcements while ensuring full clarity.
 **Action:** Always include `aria-pressed`, `aria-label`, and a visible tooltip (`title`) when implementing toggle buttons. Use `aria-hidden="true"` on visible text nodes if they are redundant to the `aria-label`.
+## 2024-08-18 - Added descriptive attributes to disabled state
+**Learning:** In the research tree grid, disabling buttons natively (`disabled` attribute) communicates state to standard controls, but fails to provide context as to *why* an action is unavailable. Using both an `aria-label` and `title` tooltip allows screen-reader users and mouse-hover users to understand why (e.g. "Bereits erforscht" vs "Voraussetzungen nicht erfüllt").
+**Action:** When adding or maintaining interactive elements that can be disabled due to specific conditions, ensure that native `title` and `aria-label` attributes provide descriptive, context-aware reasoning for the disabled state, matching the app's German localization.
+
+## 2024-08-18 - Avoid replacing visible button labels with aria-label
+**Learning:** Using `aria-label` to provide the disabled reason entirely replaces the visible button text ("FORSCHEN") for screen reader users, violating WCAG 2.5.3 (Label in Name).
+**Action:** Provide additional context alongside the button text (e.g. visible text within the button like `<small>(Reason)</small>`) instead of overwriting the element's accessible name with `aria-label`. Keep `title` for supplementary hover context.
+## 2024-05-19 - Assembly Port Button Fallback Titles
+**Learning:** In the ship assembly workbench, `assembly-port` buttons only displayed a `title` tooltip when they were invalid (via `reasonText`). Sighted users hovering over valid ports did not receive the context (e.g., "MEDIUM PORT, Modul auswählen") that screen readers received via `aria-label`.
+**Action:** Always ensure that icon-only interactive elements (like the port buttons) provide a `title` attribute matching the `aria-label` when a more specific error or reason title is not present, ensuring equal context for sighted users.
