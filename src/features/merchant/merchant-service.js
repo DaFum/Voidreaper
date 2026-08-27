@@ -53,6 +53,7 @@ export function createMerchantService({ modules = [], weapons = [], reactors = [
     },
     sell(run, item) { if (!item || !Array.isArray(run?.inventory)) return false; const before = run.inventory.length; run.inventory = run.inventory.filter(entry => entry !== item); if (run.inventory.length === before) return false; currencyService.award(run, "sale", Math.max(1, Math.floor(merchantPrice(item) / 4))); return true; },
     reserve(offer) { offer.reserved = true; return offer; },
+    canReroll(run) { return (run?.resources?.scrap ?? 0) >= 5; },
     // each paid reroll must produce a fresh offer set, so the derived seed
     // carries a per-node reroll counter instead of a fixed offset
     reroll(run, seed, regionIndex, tier) { if (!currencyService.spend(run, { scrap: 5 })) return null; const key = `${seed}:${regionIndex}:${tier}`; const count = (rerollCounts.get(key) ?? 0) + 1; rerollCounts.set(key, count); return roll(run, typeof seed === "number" ? seed + 0x9e3779b9 * count : `${seed}:rerolled:${count}`, regionIndex, tier); },

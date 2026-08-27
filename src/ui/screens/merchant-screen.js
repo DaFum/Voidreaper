@@ -5,9 +5,14 @@ export function canAffordOffer(resources, offer) {
   return (balance ?? 0) >= offer.price;
 }
 
-export function renderMerchantScreen(root, { offers, resources, onBuy, onReroll, onLeave }) {
+export function renderMerchantScreen(root, { offers, resources, canReroll = true, rerollCost = { scrap: 5 }, onBuy, onReroll, onLeave }) {
   if (!root) return;
-  root.innerHTML = `<section class="service-screen"><header>VOID BROKER <b>${escapeHtml(resources.scrap)} SCRAP · ${escapeHtml(resources.flux)} FLUX</b></header><div class="item-catalog" data-tutorial-id="merchant-offers"></div><div class="service-screen__actions"><button type="button" class="btn small" data-reroll>⟲ Angebote neu würfeln</button><button type="button" class="btn small" data-leave>ZURÜCK ZUR KARTE</button></div></section>`;
+  const rerollDisabled = !canReroll ? ' disabled' : '';
+  const costLabel = rerollCost.scrap ? `${rerollCost.scrap} S` : rerollCost.flux ? `${rerollCost.flux} F` : 'Kostenlos';
+  const shortCurrency = rerollCost.scrap ? 'Scrap' : rerollCost.flux ? 'Flux' : '';
+  const rerollAriaTitle = !canReroll ? ` aria-label="Angebote neu würfeln (${costLabel}) – nicht genügend ${shortCurrency}" title="Angebote neu würfeln (${costLabel}) – nicht genügend ${shortCurrency}"` : ` aria-label="Angebote neu würfeln (${costLabel})"`;
+  const rerollReason = !canReroll ? ` <small aria-hidden="true">(nicht genügend ${shortCurrency})</small>` : '';
+  root.innerHTML = `<section class="service-screen"><header>VOID BROKER <b>${escapeHtml(resources.scrap)} SCRAP · ${escapeHtml(resources.flux)} FLUX</b></header><div class="item-catalog" data-tutorial-id="merchant-offers"></div><div class="service-screen__actions"><button type="button" class="btn small" data-reroll${rerollDisabled}${rerollAriaTitle}>⟲ Angebote neu würfeln (${costLabel})${rerollReason}</button><button type="button" class="btn small" data-leave>ZURÜCK ZUR KARTE</button></div></section>`;
   const catalog = root.querySelector(".item-catalog");
   for (const offer of offers) {
     const button = document.createElement("button");
