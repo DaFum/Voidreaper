@@ -1324,6 +1324,8 @@ export async function bootstrap() {
             renderMerchantScreen(stage, {
               offers,
               resources: previewRun.resources,
+              canReroll: merchant.canReroll(previewRun),
+              rerollCost: { scrap: 5 },
               onBuy: (offer) =>
                 attemptMerchantPurchase({
                   merchant,
