@@ -1,0 +1,6 @@
+⚡ Bolt: optimize hit zone query
+
+💡 What: Replaced chained `.filter().map()` calls with an imperative `for` loop in `hit-zone-index.js`.
+🎯 Why: The `query` method is part of a spatial index query in a hot path. Chained array methods allocate intermediate arrays and force multiple traversals, causing unnecessary GC overhead and slowing down execution.
+📊 Impact: Eliminates multiple intermediate array allocations per collision query, significantly reducing GC pressure.
+🔬 Measurement: Verified correct behavior by running `pnpm test` and `pnpm test:frontend`.

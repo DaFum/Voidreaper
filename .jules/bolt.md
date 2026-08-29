@@ -64,3 +64,7 @@
 ## $(date +%Y-%m-%d) - Optimize Array Removal in Drone Controller
 **Learning:** When optimizing array removals in performance-critical paths where the array cannot be reassigned (e.g., referenced externally or accessed via getters), avoid using `splice()` in a loop as it causes O(N²) time complexity.
 **Action:** Use an O(N) in-place two-pointer filtering approach (e.g., `arr[writeIdx++] = arr[i]`) combined with an O(1) lookup structure (like a `Set`) and truncate the array afterwards (`arr.length = writeIdx`) to preserve the original array reference while drastically improving performance.
+
+## $(date +%Y-%m-%d) - Optimize Hit Zone Query
+**Learning:** In performance-critical hot paths like collision queries, chained array methods (e.g., `.filter().map()`) allocate multiple intermediate arrays and force multiple traversals, increasing GC overhead.
+**Action:** Replace chained array methods with a single-pass imperative `for` loop to prevent intermediate array allocations and reduce GC pressure.

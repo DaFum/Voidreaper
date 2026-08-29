@@ -20,4 +20,15 @@ const boundsFor = zone => {
   }
   return { minX: p.x - s, minY: p.y - s, maxX: p.x + s, maxY: p.y + s };
 };
-export function createHitZoneIndex(){let revision=-1,zones=[];return{rebuild(nextRevision,nextZones){if(revision===nextRevision)return false;revision=nextRevision;zones=nextZones.map(zone=>({zone,bounds:boundsFor(zone)}));return true;},query(bounds){return zones.filter(entry=>!(entry.bounds.maxX<bounds.minX||entry.bounds.minX>bounds.maxX||entry.bounds.maxY<bounds.minY||entry.bounds.minY>bounds.maxY)).map(entry=>entry.zone);},all:()=>zones.map(entry=>entry.zone),get revision(){return revision;}};}
+export function createHitZoneIndex(){let revision=-1,zones=[];return{rebuild(nextRevision,nextZones){if(revision===nextRevision)return false;revision=nextRevision;zones=nextZones.map(zone=>({zone,bounds:boundsFor(zone)}));return true;},// ⚡ Bolt: Removed chained array methods (.filter().map()) in hit zone query
+// to prevent allocating multiple intermediate arrays and closures on every collision check
+query(bounds){
+  const result = [];
+  for (let i = 0; i < zones.length; i++) {
+    const entry = zones[i];
+    if (!(entry.bounds.maxX < bounds.minX || entry.bounds.minX > bounds.maxX || entry.bounds.maxY < bounds.minY || entry.bounds.minY > bounds.maxY)) {
+      result.push(entry.zone);
+    }
+  }
+  return result;
+},all:()=>zones.map(entry=>entry.zone),get revision(){return revision;}};}
