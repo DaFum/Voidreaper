@@ -5,7 +5,8 @@ export function createWeaponController(services) {
   let equipped = null;
   return {
     equip(definition, run) {
-      if (equipped) equipped.definition.adapter.onUnequip(equipped.context, equipped.state);
+      if (equipped)
+        equipped.definition.adapter.onUnequip(equipped.context, equipped.state);
       assertWeaponAdapter(definition.adapter, definition.id);
       const context = createWeaponContext(run, services);
       const state = definition.adapter.createState(context);
@@ -19,22 +20,51 @@ export function createWeaponController(services) {
     },
     fire(target) {
       if (!equipped) return false;
-      const fired = equipped.definition.adapter.fire(equipped.context, equipped.state, target);
-      if (fired) { const weaponClass=equipped.definition.recoilClass??(equipped.definition.id.includes("rail")?"rail":equipped.definition.tags?.includes?.("Beam")?"beam":"default");equipped.shots += 1; services.recoil?.apply?.(equipped.context.run.player,{weaponClass,worldPosition:equipped.context.mountPosition,direction:equipped.context.aimDirection}); }
+      const fired = equipped.definition.adapter.fire(
+        equipped.context,
+        equipped.state,
+        target,
+      );
+      if (fired) {
+        const weaponClass =
+          equipped.definition.recoilClass ??
+          (equipped.definition.id.includes("rail")
+            ? "rail"
+            : equipped.definition.tags?.includes?.("Beam")
+              ? "beam"
+              : "default");
+        equipped.shots += 1;
+        services.recoil?.apply?.(equipped.context.run.player, {
+          weaponClass,
+          worldPosition: equipped.context.mountPosition,
+          direction: equipped.context.aimDirection,
+        });
+      }
       return fired;
     },
     telemetry() {
       if (!equipped) return null;
-      return { weaponId: equipped.definition.id, shots: equipped.shots, ...equipped.definition.adapter.getTelemetry(equipped.context, equipped.state) };
+      return {
+        weaponId: equipped.definition.id,
+        shots: equipped.shots,
+        ...equipped.definition.adapter.getTelemetry(
+          equipped.context,
+          equipped.state,
+        ),
+      };
     },
-    get equipped() { return equipped; }
+    get equipped() {
+      return equipped;
+    },
   };
 }
 
 export function createBasicWeaponAdapter({ cooldown = 0.45, effect }) {
   return {
     createState: () => ({ cooldown: 0 }),
-    update: (_context, state, dt) => { state.cooldown = Math.max(0, state.cooldown - dt); },
+    update: (_context, state, dt) => {
+      state.cooldown = Math.max(0, state.cooldown - dt);
+    },
     fire(context, state, target) {
       if (state.cooldown > 0) return false;
       const resolvedTarget = target ?? context.findTarget();
@@ -46,6 +76,6 @@ export function createBasicWeaponAdapter({ cooldown = 0.45, effect }) {
     },
     onEquip: () => {},
     onUnequip: () => {},
-    getTelemetry: (_context, state) => ({ readyIn: state.cooldown })
+    getTelemetry: (_context, state) => ({ readyIn: state.cooldown }),
   };
 }

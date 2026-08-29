@@ -1,9 +1,9 @@
-import { performance } from 'node:perf_hooks';
+import { performance } from "node:perf_hooks";
 
 // Mock state
 const state = {
   nodesById: {},
-  nodeIdByModuleInstanceId: {}
+  nodeIdByModuleInstanceId: {},
 };
 
 for (let i = 0; i < 10000; i++) {
@@ -13,13 +13,20 @@ for (let i = 0; i < 10000; i++) {
   state.nodeIdByModuleInstanceId[moduleInstanceId] = nodeId;
 }
 
-const selectModuleOwnerOld = (state, moduleInstanceId) => Object.values(state.nodesById).find(node => node.moduleInstanceId === moduleInstanceId) ?? null;
+const selectModuleOwnerOld = (state, moduleInstanceId) =>
+  Object.values(state.nodesById).find(
+    (node) => node.moduleInstanceId === moduleInstanceId,
+  ) ?? null;
 const selectModuleOwnerNew = (state, moduleInstanceId) => {
   if (state.nodeIdByModuleInstanceId) {
     const nodeId = state.nodeIdByModuleInstanceId[moduleInstanceId];
-    return nodeId ? state.nodesById[nodeId] ?? null : null;
+    return nodeId ? (state.nodesById[nodeId] ?? null) : null;
   }
-  return Object.values(state.nodesById).find(node => node.moduleInstanceId === moduleInstanceId) ?? null;
+  return (
+    Object.values(state.nodesById).find(
+      (node) => node.moduleInstanceId === moduleInstanceId,
+    ) ?? null
+  );
 };
 
 // Warmup

@@ -13,7 +13,7 @@ export function createChallengeService(saveStore, challenges) {
         maximumLoad: result.maximumLoad ?? run.player?.energy?.ratio ?? 0,
         damageTaken: result.damageTaken ?? 0,
         abyssDepth: run.campaign?.abyssDepth ?? 0,
-        faults: run.telemetry?.faults?.length ?? 0
+        faults: run.telemetry?.faults?.length ?? 0,
       });
     },
     evaluate(summary, metaFlags = {}) {
@@ -37,16 +37,17 @@ export function createChallengeService(saveStore, challenges) {
         if (save.challenges[challenge.id]?.claimed) {
           return save;
         }
-        for (const [currency, amount] of Object.entries(challenge.reward ?? {})) {
-          save.currencies[currency] =
-            (save.currencies[currency] ?? 0) + amount;
+        for (const [currency, amount] of Object.entries(
+          challenge.reward ?? {},
+        )) {
+          save.currencies[currency] = (save.currencies[currency] ?? 0) + amount;
         }
         save.challenges[challenge.id] = {
           claimed: true,
-          claimedAt: new Date().toISOString()
+          claimedAt: new Date().toISOString(),
         };
         return save;
       });
-    }
+    },
   };
 }

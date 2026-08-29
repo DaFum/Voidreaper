@@ -10,13 +10,16 @@ test("assertWreckSignal", async (t) => {
     corruption: 50,
     deathCause: "destroyed",
     createdAtRun: 10,
-    expiresAfterRun: 15
+    expiresAfterRun: 15,
   };
 
-  await t.test("returns the signal unmodified if all required fields are present", () => {
-    const result = assertWreckSignal(validSignal);
-    assert.equal(result, validSignal);
-  });
+  await t.test(
+    "returns the signal unmodified if all required fields are present",
+    () => {
+      const result = assertWreckSignal(validSignal);
+      assert.equal(result, validSignal);
+    },
+  );
 
   const requiredFields = [
     "id",
@@ -25,7 +28,7 @@ test("assertWreckSignal", async (t) => {
     "corruption",
     "deathCause",
     "createdAtRun",
-    "expiresAfterRun"
+    "expiresAfterRun",
   ];
 
   for (const field of requiredFields) {
@@ -33,20 +36,18 @@ test("assertWreckSignal", async (t) => {
       const invalidSignal = { ...validSignal };
       delete invalidSignal[field];
 
-      assert.throws(
-        () => assertWreckSignal(invalidSignal),
-        { message: `Invalid wreck signal: ${field}` }
-      );
+      assert.throws(() => assertWreckSignal(invalidSignal), {
+        message: `Invalid wreck signal: ${field}`,
+      });
     });
 
     await t.test(`throws an error if ${field} is null`, () => {
       const invalidSignal = { ...validSignal };
       invalidSignal[field] = null;
 
-      assert.throws(
-        () => assertWreckSignal(invalidSignal),
-        { message: `Invalid wreck signal: ${field}` }
-      );
+      assert.throws(() => assertWreckSignal(invalidSignal), {
+        message: `Invalid wreck signal: ${field}`,
+      });
     });
   }
 });

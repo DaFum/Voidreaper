@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { resolveEnemyVisualProfile, ENEMY_VISUAL_PROFILE_IDS } from "../../../src/render/enemies/enemy-visual-profiles.js";
+import {
+  resolveEnemyVisualProfile,
+  ENEMY_VISUAL_PROFILE_IDS,
+} from "../../../src/render/enemies/enemy-visual-profiles.js";
 import { renderForgedEnemy } from "../../../src/render/enemies/enemy-renderer.js";
 
 test("resolveEnemyVisualProfile resolves known profiles", () => {
@@ -36,10 +39,10 @@ test("renderForgedEnemy renders all built-in profiles without throwing", () => {
     scale: test.mock.fn(),
     setLineDash: test.mock.fn(),
     createRadialGradient: test.mock.fn(() => ({
-      addColorStop: test.mock.fn()
+      addColorStop: test.mock.fn(),
     })),
     createLinearGradient: test.mock.fn(() => ({
-      addColorStop: test.mock.fn()
+      addColorStop: test.mock.fn(),
     })),
     clip: test.mock.fn(),
     rect: test.mock.fn(),

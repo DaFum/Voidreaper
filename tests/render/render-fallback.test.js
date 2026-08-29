@@ -3,21 +3,33 @@ import assert from "node:assert/strict";
 import { createAssemblyRenderer } from "../../src/render/ship-assembly/assembly-renderer.js";
 import { renderRegionWorld } from "../../src/render/regions/region-world-renderer.js";
 import { createBloomPass } from "../../src/render/post/bloom-pass.js";
-import { renderRegionParallaxBackdrop, renderRegionParallaxDust } from "../../src/render/regions/region-parallax-renderer.js";
+import {
+  renderRegionParallaxBackdrop,
+  renderRegionParallaxDust,
+} from "../../src/render/regions/region-parallax-renderer.js";
 import { createLightMask } from "../../src/render/post/light-mask.js";
 import { buildCoreGeometry } from "../../src/features/ship-assembly/geometry/core-geometry-builders.js";
 import { SHIP_FRAME_ASSEMBLY_PROFILES } from "../../src/features/ship-assembly/content/ship-frame-assembly-profiles.js";
 
 function createStubContext() {
   const gradient = { addColorStop() {} };
-  const state = { canvas: { width: 320, height: 240 }, globalAlpha: 1, lineWidth: 1, shadowBlur: 0 };
+  const state = {
+    canvas: { width: 320, height: 240 },
+    globalAlpha: 1,
+    lineWidth: 1,
+    shadowBlur: 0,
+  };
   return new Proxy(state, {
     get(target, key) {
       if (key in target) return target[key];
-      if (key === "createLinearGradient" || key === "createRadialGradient") return () => gradient;
+      if (key === "createLinearGradient" || key === "createRadialGradient")
+        return () => gradient;
       return () => {};
     },
-    set(target, key, value) { target[key] = value; return true; }
+    set(target, key, value) {
+      target[key] = value;
+      return true;
+    },
   });
 }
 
@@ -31,27 +43,29 @@ test("renderPlayerShip falls back to live drawing without DOM", () => {
     connections: [],
     armor: [],
     decorators: [],
-    totalBounds: null
+    totalBounds: null,
   };
   const renderer = createAssemblyRenderer();
   const rendered = renderer.renderPlayerShip(createStubContext(), {
     geometrySnapshot: snapshot,
     position: { x: 0, y: 0 },
     time: 1.5,
-    movement: { x: 1, y: 0, dodging: true }
+    movement: { x: 1, y: 0, dodging: true },
   });
   assert.equal(rendered, true);
 });
 
 test("renderRegionWorld draws motifs without DOM sprite cache", () => {
-  assert.doesNotThrow(() => renderRegionWorld(createStubContext(), {
-    regionId: "null-cathedral",
-    camera: { x: 0, y: 0 },
-    viewport: { width: 640, height: 360 },
-    arena: 700,
-    time: 2,
-    seed: 7
-  }));
+  assert.doesNotThrow(() =>
+    renderRegionWorld(createStubContext(), {
+      regionId: "null-cathedral",
+      camera: { x: 0, y: 0 },
+      viewport: { width: 640, height: 360 },
+      arena: 700,
+      time: 2,
+      seed: 7,
+    }),
+  );
 });
 
 test("bloom pass is a no-op without DOM", () => {
@@ -60,11 +74,27 @@ test("bloom pass is a no-op without DOM", () => {
 
 test("light mask is a no-op without DOM", () => {
   const mask = createLightMask();
-  assert.doesNotThrow(() => mask.apply(createStubContext(), { darkness: .5, lights: [{ x: 0, y: 0, radius: 100 }], viewport: { width: 640, height: 360 } }));
+  assert.doesNotThrow(() =>
+    mask.apply(createStubContext(), {
+      darkness: 0.5,
+      lights: [{ x: 0, y: 0, radius: 100 }],
+      viewport: { width: 640, height: 360 },
+    }),
+  );
 });
 
 test("region parallax layers degrade gracefully without DOM", () => {
-  const options = { regionId: "furnace-expanse", camera: { x: 120, y: -60 }, viewport: { width: 640, height: 360 }, time: 3, seed: 11 };
-  assert.doesNotThrow(() => renderRegionParallaxBackdrop(createStubContext(), options));
-  assert.doesNotThrow(() => renderRegionParallaxDust(createStubContext(), options));
+  const options = {
+    regionId: "furnace-expanse",
+    camera: { x: 120, y: -60 },
+    viewport: { width: 640, height: 360 },
+    time: 3,
+    seed: 11,
+  };
+  assert.doesNotThrow(() =>
+    renderRegionParallaxBackdrop(createStubContext(), options),
+  );
+  assert.doesNotThrow(() =>
+    renderRegionParallaxDust(createStubContext(), options),
+  );
 });

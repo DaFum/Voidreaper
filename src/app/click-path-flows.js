@@ -1,14 +1,31 @@
-export function attemptMerchantPurchase({ merchant, run, offer, finish, onRejected = () => {}, onApplied = () => {} }) {
+export function attemptMerchantPurchase({
+  merchant,
+  run,
+  offer,
+  finish,
+  onRejected = () => {},
+  onApplied = () => {},
+}) {
   const bought = merchant.buy(run, offer);
   if (!bought) {
     onRejected(offer);
     return false;
   }
-  onApplied(offer); finish();
+  onApplied(offer);
+  finish();
   return true;
 }
 
-export function attemptWorkshopAction({ workshop, session, action, target, payload, finish, onContinue = () => {}, onApplied = () => {} }) {
+export function attemptWorkshopAction({
+  workshop,
+  session,
+  action,
+  target,
+  payload,
+  finish,
+  onContinue = () => {},
+  onApplied = () => {},
+}) {
   const applied = workshop.apply(session, action, target, payload);
   if (!applied) return false;
   onApplied({ action, target });
@@ -18,10 +35,12 @@ export function attemptWorkshopAction({ workshop, session, action, target, paylo
 }
 
 export function canResumeCampaignCombat(game) {
-  return game?.state === "sector-map"
-    && game.mode === "standard"
-    && game.wave > 0
-    && game.player?.hp > 0;
+  return (
+    game?.state === "sector-map" &&
+    game.mode === "standard" &&
+    game.wave > 0 &&
+    game.player?.hp > 0
+  );
 }
 
 export function prepareCheckpointResume({ services, controller, game, run }) {
@@ -43,13 +62,17 @@ export function syncMetaFromLegacy(metaSave, legacyData) {
   if (!metaSave || !legacyData) return metaSave;
   metaSave.currencies ??= {};
   metaSave.profile ??= {};
-  if (legacyData.shards !== undefined) metaSave.currencies.voidShards = legacyData.shards;
-  if (legacyData.totalKills !== undefined) metaSave.profile.totalKills = legacyData.totalKills;
-  if (legacyData.totalRuns !== undefined) metaSave.profile.totalRuns = legacyData.totalRuns;
+  if (legacyData.shards !== undefined)
+    metaSave.currencies.voidShards = legacyData.shards;
+  if (legacyData.totalKills !== undefined)
+    metaSave.profile.totalKills = legacyData.totalKills;
+  if (legacyData.totalRuns !== undefined)
+    metaSave.profile.totalRuns = legacyData.totalRuns;
   return metaSave;
 }
 
-export const canUseWorkbenchPort = port => Boolean(port && !port.occupiedByNodeId);
+export const canUseWorkbenchPort = (port) =>
+  Boolean(port && !port.occupiedByNodeId);
 
 export function openReplacingQuickMount({ active, close, open }) {
   if (active) close();
@@ -86,7 +109,11 @@ export function adoptCombatRunState(previewRun, combatRun) {
   previewRun.rewardedNodeIds = combatRun.rewardedNodeIds ?? [];
   previewRun.heat = combatRun.heat ?? previewRun.heat;
   previewRun.corruption = combatRun.corruption ?? previewRun.corruption;
-  previewRun.activeBlueprintId = combatRun.activeBlueprintId ?? previewRun.activeBlueprintId ?? null;
-  previewRun.activeBlueprintVariantId = combatRun.activeBlueprintVariantId ?? previewRun.activeBlueprintVariantId ?? null;
+  previewRun.activeBlueprintId =
+    combatRun.activeBlueprintId ?? previewRun.activeBlueprintId ?? null;
+  previewRun.activeBlueprintVariantId =
+    combatRun.activeBlueprintVariantId ??
+    previewRun.activeBlueprintVariantId ??
+    null;
   return previewRun;
 }

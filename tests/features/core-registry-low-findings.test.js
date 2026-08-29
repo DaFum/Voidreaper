@@ -17,7 +17,7 @@ test("registry preserves Map, Set, and Date content types", () => {
     id: "rich",
     map: new Map([["key", { value: 1 }]]),
     set: new Set([{ value: 2 }]),
-    date: new Date("2026-07-14T00:00:00.000Z")
+    date: new Date("2026-07-14T00:00:00.000Z"),
   });
 
   assert.equal(registered.map instanceof Map, true);
@@ -33,7 +33,7 @@ test("registry prevents mutation through preserved built-in collection APIs", ()
     id: "immutable-rich",
     map: new Map([["key", 1]]),
     set: new Set([1]),
-    date: new Date("2026-07-14T00:00:00.000Z")
+    date: new Date("2026-07-14T00:00:00.000Z"),
   });
 
   assert.throws(() => registered.map.set("other", 2), /read-only/);

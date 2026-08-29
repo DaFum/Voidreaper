@@ -9,7 +9,12 @@
 //   it renders the GPU overlay and returns true when it also handled the
 //   bloom pass (the runtime then skips its canvas bloom).
 import { Application, BlurFilter, Container, Sprite, Texture } from "pixi.js";
-import { isSpark, parseTint, shockEase, sparkTransform } from "./combat-fx-scene.js";
+import {
+  isSpark,
+  parseTint,
+  shockEase,
+  sparkTransform,
+} from "./combat-fx-scene.js";
 
 const TAU = Math.PI * 2;
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -51,17 +56,22 @@ function bakeRingTexture(size = 256) {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext("2d");
-  const half = size / 2, radius = half - 16;
+  const half = size / 2,
+    radius = half - 16;
   ctx.strokeStyle = "rgba(255,255,255,0.8)";
   ctx.shadowColor = "rgba(255,255,255,1)";
   ctx.shadowBlur = 12;
   ctx.lineWidth = 9;
-  ctx.beginPath(); ctx.arc(half, half, radius, 0, TAU); ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(half, half, radius, 0, TAU);
+  ctx.stroke();
   // faint inner echo at 0.68R, like the legacy double ring
   ctx.globalAlpha = 0.38;
   ctx.strokeStyle = "rgba(255,255,255,1)";
   ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.arc(half, half, radius * 0.68, 0, TAU); ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(half, half, radius * 0.68, 0, TAU);
+  ctx.stroke();
   return { texture: Texture.from(canvas, true), radius };
 }
 
@@ -76,7 +86,7 @@ export async function createCombatFxStage({ canvas, gameCanvas } = {}) {
     antialias: true,
     backgroundAlpha: 0,
     autoStart: false,
-    sharedTicker: false
+    sharedTicker: false,
   });
 
   let destroyed = false;
@@ -96,7 +106,8 @@ export async function createCombatFxStage({ canvas, gameCanvas } = {}) {
   const refreshBloomTexture = () => {
     // a 0×0 canvas (before the legacy first layout pass) would throw on
     // texture creation — present() retries lazily once it has valid dimensions
-    if (!gameCanvas || gameCanvas.width === 0 || gameCanvas.height === 0) return;
+    if (!gameCanvas || gameCanvas.width === 0 || gameCanvas.height === 0)
+      return;
     const previous = bloomTexture;
     bloomTexture = Texture.from(gameCanvas, true);
     bloomSprite.texture = bloomTexture;
@@ -114,17 +125,19 @@ export async function createCombatFxStage({ canvas, gameCanvas } = {}) {
   // lazily grown sprite pools (legacy caps: 850 particles, 32 shocks)
   const particleSprites = [];
   const shockSprites = [];
-  const spriteFrom = (pool, layer, texture, anchorX = 0.5) => index => {
-    while (pool.length <= index) {
-      const sprite = new Sprite(texture);
-      sprite.anchor.set(anchorX, 0.5);
-      sprite.blendMode = "add";
-      sprite.visible = false;
-      layer.addChild(sprite);
-      pool.push(sprite);
-    }
-    return pool[index];
-  };
+  const spriteFrom =
+    (pool, layer, texture, anchorX = 0.5) =>
+    (index) => {
+      while (pool.length <= index) {
+        const sprite = new Sprite(texture);
+        sprite.anchor.set(anchorX, 0.5);
+        sprite.blendMode = "add";
+        sprite.visible = false;
+        layer.addChild(sprite);
+        pool.push(sprite);
+      }
+      return pool[index];
+    };
   const particleSprite = spriteFrom(particleSprites, particleLayer, dotTexture);
   const shockSprite = spriteFrom(shockSprites, shockLayer, ring.texture);
 
@@ -136,10 +149,11 @@ export async function createCombatFxStage({ canvas, gameCanvas } = {}) {
   window.addEventListener("resize", resize, { passive: true });
 
   const hideFrom = (pool, count) => {
-    for (let index = count; index < pool.length; index++) pool[index].visible = false;
+    for (let index = count; index < pool.length; index++)
+      pool[index].visible = false;
   };
 
-  const capture = frame => {
+  const capture = (frame) => {
     if (destroyed) return false;
     captured = frame;
     return true;
@@ -152,7 +166,17 @@ export async function createCombatFxStage({ canvas, gameCanvas } = {}) {
 
     let bloomHandled = false;
     if (frame) {
-      const { parts = [], shocks = [], camX = 0, camY = 0, shakeX = 0, shakeY = 0, width, height, darkness = 0 } = frame;
+      const {
+        parts = [],
+        shocks = [],
+        camX = 0,
+        camY = 0,
+        shakeX = 0,
+        shakeY = 0,
+        width,
+        height,
+        darkness = 0,
+      } = frame;
       world.position.set(width / 2 - camX + shakeX, height / 2 - camY + shakeY);
       // the darkness veil lives on the 2D canvas below this overlay — dim the
       // FX layer with it so effects don't punch through the visibility mechanic
@@ -172,7 +196,10 @@ export async function createCombatFxStage({ canvas, gameCanvas } = {}) {
           sprite.texture = sparkTexture;
           sprite.anchor.set(1, 0.5);
           sprite.rotation = rotation;
-          sprite.scale.set(Math.max(length, particle.size) / 64, particle.size / 5);
+          sprite.scale.set(
+            Math.max(length, particle.size) / 64,
+            particle.size / 5,
+          );
         } else {
           sprite.texture = dotTexture;
           sprite.anchor.set(0.5);
@@ -197,7 +224,12 @@ export async function createCombatFxStage({ canvas, gameCanvas } = {}) {
 
       if (bloomOn && gameCanvas?.width > 0 && gameCanvas?.height > 0) {
         // lazy init after a 0×0 start, and re-sync after canvas/DPR resizes
-        if (!bloomTexture || bloomTexture.source.pixelWidth !== gameCanvas.width || bloomTexture.source.pixelHeight !== gameCanvas.height) refreshBloomTexture();
+        if (
+          !bloomTexture ||
+          bloomTexture.source.pixelWidth !== gameCanvas.width ||
+          bloomTexture.source.pixelHeight !== gameCanvas.height
+        )
+          refreshBloomTexture();
         bloomTexture.source.update();
         bloomSprite.width = width;
         bloomSprite.height = height;
@@ -221,7 +253,10 @@ export async function createCombatFxStage({ canvas, gameCanvas } = {}) {
     destroyed = true;
     window.removeEventListener("resize", resize);
     // v8 signature: destroy(rendererDestroyOptions, stageDestroyOptions)
-    app.destroy({ removeView: false }, { children: true, texture: true, textureSource: true });
+    app.destroy(
+      { removeView: false },
+      { children: true, texture: true, textureSource: true },
+    );
   };
 
   resize();

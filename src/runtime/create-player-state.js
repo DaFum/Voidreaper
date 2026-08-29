@@ -14,7 +14,7 @@ export function createPlayerState(base = {}) {
       energy: base.energy ?? 100,
       maxEnergy: base.maxEnergy ?? 100,
       heat: base.heat ?? 0,
-      corruption: base.corruption ?? 0
+      corruption: base.corruption ?? 0,
     },
     activeModules: [null, null],
     loadout: base.loadout ?? null,
@@ -25,7 +25,7 @@ export function createPlayerState(base = {}) {
       duration: 0.18,
       activeRemaining: 0,
       invulnerability: 0.22,
-      invulnerableRemaining: 0
-    }
+      invulnerableRemaining: 0,
+    },
   };
 }

@@ -9,4 +9,15 @@ import vector from "./vector.js";
 import gravewright from "./gravewright.js";
 import nullChoir from "./null-choir.js";
 
-export const SHIPS = Object.freeze([vesper, bastion, specter, furnace, reliquary, shepherd, harrow, vector, gravewright, nullChoir]);
+export const SHIPS = Object.freeze([
+  vesper,
+  bastion,
+  specter,
+  furnace,
+  reliquary,
+  shepherd,
+  harrow,
+  vector,
+  gravewright,
+  nullChoir,
+]);

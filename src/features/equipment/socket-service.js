@@ -1,11 +1,17 @@
 export function createSocketService(chipDefinitions) {
-  const chips = new Map(chipDefinitions.map(chip => [chip.id, chip]));
+  const chips = new Map(chipDefinitions.map((chip) => [chip.id, chip]));
   return {
     insert(item, socketIndex, chipId) {
       if (!chips.has(chipId)) throw new Error(`Unknown socket chip: ${chipId}`);
-      if (!item.sockets?.[socketIndex]) throw new Error(`Item has no socket ${socketIndex}`);
-      if (item.sockets[socketIndex].chipId) throw new Error(`Socket ${socketIndex} is occupied`);
-      item.sockets[socketIndex] = { ...item.sockets[socketIndex], chipId, insertedAt: new Date().toISOString() };
+      if (!item.sockets?.[socketIndex])
+        throw new Error(`Item has no socket ${socketIndex}`);
+      if (item.sockets[socketIndex].chipId)
+        throw new Error(`Socket ${socketIndex} is occupied`);
+      item.sockets[socketIndex] = {
+        ...item.sockets[socketIndex],
+        chipId,
+        insertedAt: new Date().toISOString(),
+      };
       return item;
     },
     remove(item, socketIndex, { safe = false } = {}) {
@@ -19,6 +25,10 @@ export function createSocketService(chipDefinitions) {
       const result = this.remove(item, socketIndex);
       return Boolean(result);
     },
-    behaviors(item) { return (item.sockets ?? []).filter(socket => socket.chipId).map(socket => chips.get(socket.chipId)); }
+    behaviors(item) {
+      return (item.sockets ?? [])
+        .filter((socket) => socket.chipId)
+        .map((socket) => chips.get(socket.chipId));
+    },
   };
 }

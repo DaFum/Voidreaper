@@ -4,8 +4,14 @@ import { canAffordOffer } from "../../src/ui/screens/merchant-screen.js";
 import { isSectorNodeInteractive } from "../../src/ui/components/sector-node.js";
 
 test("flux offers require enough flux", () => {
-  assert.equal(canAffordOffer({ scrap: 99, flux: 6 }, { currency: "flux", price: 36 }), false);
-  assert.equal(canAffordOffer({ scrap: 0, flux: 36 }, { currency: "flux", price: 36 }), true);
+  assert.equal(
+    canAffordOffer({ scrap: 99, flux: 6 }, { currency: "flux", price: 36 }),
+    false,
+  );
+  assert.equal(
+    canAffordOffer({ scrap: 0, flux: 36 }, { currency: "flux", price: 36 }),
+    true,
+  );
 });
 
 test("scrap offers require enough scrap", () => {
@@ -14,7 +20,10 @@ test("scrap offers require enough scrap", () => {
 });
 
 test("corrupted offers remain available because they cost corruption instead of currency", () => {
-  assert.equal(canAffordOffer({ scrap: 0, flux: 0 }, { corrupted: true, price: 999 }), true);
+  assert.equal(
+    canAffordOffer({ scrap: 0, flux: 0 }, { corrupted: true, price: 999 }),
+    true,
+  );
 });
 
 test("only reachable sector nodes are interactive", () => {

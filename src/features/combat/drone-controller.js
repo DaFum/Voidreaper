@@ -3,7 +3,14 @@ export function createDroneController({ budget = 4 } = {}) {
   return {
     spawn(context, sourceId) {
       if (drones.length >= budget) return null;
-      const drone = { id: context.run.ids.create("drone"), sourceId, angle: drones.length * Math.PI * 2 / budget, hull: 20, hostileUntil: 0, affixes: [] };
+      const drone = {
+        id: context.run.ids.create("drone"),
+        sourceId,
+        angle: (drones.length * Math.PI * 2) / budget,
+        hull: 20,
+        hostileUntil: 0,
+        affixes: [],
+      };
       drones.push(drone);
       context.run.summons.push(drone);
       return drone;
@@ -27,7 +34,7 @@ export function createDroneController({ budget = 4 } = {}) {
       }
     },
     destroy(context, id) {
-      const index = drones.findIndex(drone => drone.id === id);
+      const index = drones.findIndex((drone) => drone.id === id);
       if (index < 0) return null;
       const [drone] = drones.splice(index, 1);
       const summons = context?.run?.summons;
@@ -35,7 +42,11 @@ export function createDroneController({ budget = 4 } = {}) {
       if (summonIndex >= 0) summons.splice(summonIndex, 1);
       return drone;
     },
-    setBudget(value) { budget = Math.max(0, value); },
-    get drones() { return drones; }
+    setBudget(value) {
+      budget = Math.max(0, value);
+    },
+    get drones() {
+      return drones;
+    },
   };
 }

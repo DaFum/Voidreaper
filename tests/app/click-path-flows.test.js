@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createRunState } from "../../src/runtime/create-run-state.js";
-import { serializeCheckpointRun, hydrateCheckpointRun } from "../../src/features/checkpoints/checkpoint-service.js";
+import {
+  serializeCheckpointRun,
+  hydrateCheckpointRun,
+} from "../../src/features/checkpoints/checkpoint-service.js";
 import {
   adoptCombatRunState,
   attemptMerchantPurchase,
@@ -14,7 +17,7 @@ import {
   startFreshCampaign,
   subscribeWorkbenchGeometry,
   syncMetaFromLegacy,
-  syncLegacyVoidShards
+  syncLegacyVoidShards,
 } from "../../src/app/click-path-flows.js";
 
 test("only a standing campaign combat run may continue from the sector map", () => {
@@ -22,14 +25,20 @@ test("only a standing campaign combat run may continue from the sector map", () 
     state: "sector-map",
     mode: "standard",
     wave: 2,
-    player: { hp: 50 }
+    player: { hp: 50 },
   };
 
   assert.equal(canResumeCampaignCombat(standing), true);
   assert.equal(canResumeCampaignCombat({ ...standing, state: "start" }), false);
-  assert.equal(canResumeCampaignCombat({ ...standing, mode: "tutorial" }), false);
+  assert.equal(
+    canResumeCampaignCombat({ ...standing, mode: "tutorial" }),
+    false,
+  );
   assert.equal(canResumeCampaignCombat({ ...standing, wave: 0 }), false);
-  assert.equal(canResumeCampaignCombat({ ...standing, player: { hp: 0 } }), false);
+  assert.equal(
+    canResumeCampaignCombat({ ...standing, player: { hp: 0 } }),
+    false,
+  );
   assert.equal(canResumeCampaignCombat({ ...standing, player: null }), false);
 });
 
@@ -49,8 +58,12 @@ test("merchant rejection keeps the service open and reports the shortage", () =>
     merchant: { buy: () => false },
     run: {},
     offer: {},
-    finish: () => { finished = true; },
-    onRejected: () => { rejected = true; }
+    finish: () => {
+      finished = true;
+    },
+    onRejected: () => {
+      rejected = true;
+    },
   });
 
   assert.equal(bought, false);
@@ -64,7 +77,9 @@ test("merchant success finishes the node", () => {
     merchant: { buy: () => true },
     run: {},
     offer: {},
-    finish: () => { finished = true; }
+    finish: () => {
+      finished = true;
+    },
   });
 
   assert.equal(bought, true);
@@ -76,13 +91,22 @@ test("successful workshop action with remaining AP keeps the workshop open", () 
   let continued = false;
   const session = { actionPoints: 3, used: 0 };
   const applied = attemptWorkshopAction({
-    workshop: { apply: () => { session.used = 1; return true; } },
+    workshop: {
+      apply: () => {
+        session.used = 1;
+        return true;
+      },
+    },
     session,
     action: "overclock",
     target: {},
     payload: {},
-    finish: () => { finished = true; },
-    onContinue: () => { continued = true; }
+    finish: () => {
+      finished = true;
+    },
+    onContinue: () => {
+      continued = true;
+    },
   });
 
   assert.equal(applied, true);
@@ -95,13 +119,22 @@ test("successful workshop action finishes when AP are exhausted", () => {
   let continued = false;
   const session = { actionPoints: 3, used: 1 };
   const applied = attemptWorkshopAction({
-    workshop: { apply: () => { session.used = 3; return true; } },
+    workshop: {
+      apply: () => {
+        session.used = 3;
+        return true;
+      },
+    },
     session,
     action: "overclock",
     target: {},
     payload: {},
-    finish: () => { finished = true; },
-    onContinue: () => { continued = true; }
+    finish: () => {
+      finished = true;
+    },
+    onContinue: () => {
+      continued = true;
+    },
   });
 
   assert.equal(applied, true);
@@ -117,7 +150,9 @@ test("rejected workshop action stays open", () => {
     action: "overclock",
     target: {},
     payload: {},
-    finish: () => { finished = true; }
+    finish: () => {
+      finished = true;
+    },
   });
 
   assert.equal(applied, false);
@@ -133,7 +168,7 @@ test("checkpoint preparation initializes assembly without consuming the resumed 
     services,
     controller: { attachLegacy: (_game, options) => calls.push(options) },
     game: {},
-    run
+    run,
   });
 
   assert.deepEqual(calls, [{ sync: false }]);
@@ -143,7 +178,9 @@ test("checkpoint preparation initializes assembly without consuming the resumed 
 test("void shard synchronization updates legacy state and its visible counter", () => {
   const persistence = { data: { shards: 90 } };
   const counter = { textContent: "90" };
-  const root = { querySelector: selector => selector === "#shards0" ? counter : null };
+  const root = {
+    querySelector: (selector) => (selector === "#shards0" ? counter : null),
+  };
 
   syncLegacyVoidShards({ persistence, root, currencies: { voidShards: 45 } });
 
@@ -154,17 +191,20 @@ test("void shard synchronization updates legacy state and its visible counter", 
 test("live legacy progress refreshes stale Hangar meta without dropping other currencies", () => {
   const metaSave = {
     currencies: { voidShards: 10, bossCores: 2 },
-    profile: { totalKills: 15, totalRuns: 1 }
+    profile: { totalKills: 15, totalRuns: 1 },
   };
 
-  assert.equal(syncMetaFromLegacy(metaSave, {
-    shards: 11,
-    totalKills: 42,
-    totalRuns: 3
-  }), metaSave);
+  assert.equal(
+    syncMetaFromLegacy(metaSave, {
+      shards: 11,
+      totalKills: 42,
+      totalRuns: 3,
+    }),
+    metaSave,
+  );
   assert.deepEqual(metaSave, {
     currencies: { voidShards: 11, bossCores: 2 },
-    profile: { totalKills: 42, totalRuns: 3 }
+    profile: { totalKills: 42, totalRuns: 3 },
   });
 });
 
@@ -177,7 +217,13 @@ test("workbench port selection rejects missing and occupied ports", () => {
 test("combat run build state is adopted into the preview run before checkpointing", () => {
   const previewRun = createRunState({ seed: 1 });
   const combatRun = createRunState({ seed: 2 });
-  combatRun.assembly = { version: 1, shipFrameId: "vesper", rootNodeId: "root", nodesById: { root: { nodeId: "root" } }, portsById: {} };
+  combatRun.assembly = {
+    version: 1,
+    shipFrameId: "vesper",
+    rootNodeId: "root",
+    nodesById: { root: { nodeId: "root" } },
+    portsById: {},
+  };
   combatRun.inventory = [{ instanceId: "item-1", definitionId: "railgun" }];
   combatRun.pendingAssemblyItems = [{ pendingMountId: "pending-1" }];
   combatRun.activeBlueprintId = "blueprint-1";
@@ -189,7 +235,9 @@ test("combat run build state is adopted into the preview run before checkpointin
   assert.equal(adopted, previewRun);
   assert.equal(previewRun.assembly, combatRun.assembly);
   assert.equal(previewRun.inventory, combatRun.inventory);
-  assert.deepEqual(previewRun.pendingAssemblyItems, [{ pendingMountId: "pending-1" }]);
+  assert.deepEqual(previewRun.pendingAssemblyItems, [
+    { pendingMountId: "pending-1" },
+  ]);
   assert.equal(previewRun.activeBlueprintId, "blueprint-1");
   assert.equal(previewRun.resources, combatRun.resources);
   assert.deepEqual(previewRun.rewardedNodeIds, ["combat-1"]);
@@ -207,12 +255,23 @@ test("adopted combat build survives a checkpoint serialize/hydrate round-trip", 
   const previewRun = createRunState({ seed: 3 });
   const combatRun = createRunState({ seed: 4 });
   previewRun.consumedOfferIds.push("merchant-offer-1");
-  combatRun.assembly = { version: 1, shipFrameId: "vesper", rootNodeId: "root", nodesById: { root: { nodeId: "root", childPortIds: [] } }, portsById: {} };
-  combatRun.inventory = [{ instanceId: "item-1", definitionId: "railgun", affixes: [], sockets: [] }];
+  combatRun.assembly = {
+    version: 1,
+    shipFrameId: "vesper",
+    rootNodeId: "root",
+    nodesById: { root: { nodeId: "root", childPortIds: [] } },
+    portsById: {},
+  };
+  combatRun.inventory = [
+    { instanceId: "item-1", definitionId: "railgun", affixes: [], sockets: [] },
+  ];
   adoptCombatRunState(previewRun, combatRun);
 
   const services = { marker: true };
-  const hydrated = hydrateCheckpointRun(serializeCheckpointRun(previewRun), services);
+  const hydrated = hydrateCheckpointRun(
+    serializeCheckpointRun(previewRun),
+    services,
+  );
 
   assert.equal(hydrated.assembly.shipFrameId, "vesper");
   assert.equal(hydrated.assembly.nodesById.root.nodeId, "root");
@@ -232,7 +291,10 @@ test("opening a replacement quick mount releases the existing overlay first", ()
   const opened = openReplacingQuickMount({
     active: true,
     close: () => calls.push("close"),
-    open: () => { calls.push("open"); return { opened: true }; }
+    open: () => {
+      calls.push("open");
+      return { opened: true };
+    },
   });
 
   assert.deepEqual(calls, ["close", "open"]);
@@ -243,8 +305,10 @@ test("opening the first quick mount needs no cleanup", () => {
   let closed = false;
   openReplacingQuickMount({
     active: false,
-    close: () => { closed = true; },
-    open: () => ({ opened: true })
+    close: () => {
+      closed = true;
+    },
+    open: () => ({ opened: true }),
   });
 
   assert.equal(closed, false);
@@ -260,11 +324,15 @@ test("workbench refreshes only while active and unsubscribes cleanly", () => {
       on(eventName, callback) {
         assert.equal(eventName, "assembly:geometry-ready");
         listener = callback;
-        return () => { unsubscribed = true; };
-      }
+        return () => {
+          unsubscribed = true;
+        };
+      },
     },
     isActive: () => active,
-    render: () => { renders += 1; }
+    render: () => {
+      renders += 1;
+    },
   });
 
   listener();

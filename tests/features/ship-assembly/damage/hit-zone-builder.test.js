@@ -9,7 +9,7 @@ test("createHitZone factory maps inputs and sets enabled: true", () => {
     ownerId: "mod-abc",
     shape: { kind: "circle", radius: 5 },
     transform: { position: { x: 0, y: 0 }, rotation: 0 },
-    priority: 10
+    priority: 10,
   };
 
   const hitZone = createHitZone(inputs);
@@ -30,7 +30,7 @@ test("createHitZone result is frozen", () => {
     ownerId: "core-1",
     shape: { kind: "circle", radius: 1 },
     transform: { position: { x: 0, y: 0 }, rotation: 0 },
-    priority: 1
+    priority: 1,
   });
 
   assert.ok(Object.isFrozen(hitZone), "The returned hit zone should be frozen");

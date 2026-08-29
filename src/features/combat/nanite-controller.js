@@ -2,7 +2,10 @@ export function createNaniteController({ budget = 24 } = {}) {
   const infections = new Map();
   return {
     infect(target, stacks = 1) {
-      const nextStacks = Math.min(budget, (infections.get(target.id) ?? 0) + stacks);
+      const nextStacks = Math.min(
+        budget,
+        (infections.get(target.id) ?? 0) + stacks,
+      );
       infections.set(target.id, nextStacks);
       target.naniteStacks = nextStacks;
     },
@@ -33,13 +36,21 @@ export function createNaniteController({ budget = 24 } = {}) {
         power += value;
       }
       infections.clear();
-      context.emitEffect({ id: "spawn-zone", payload: { x: context.player.x, y: context.player.y, damage: power * 3, radius: 80 } });
+      context.emitEffect({
+        id: "spawn-zone",
+        payload: {
+          x: context.player.x,
+          y: context.player.y,
+          damage: power * 3,
+          radius: 80,
+        },
+      });
       return power;
     },
     telemetry: () => {
       let totalStacks = 0;
       for (const value of infections.values()) totalStacks += value;
       return { infected: infections.size, totalStacks };
-    }
+    },
   };
 }

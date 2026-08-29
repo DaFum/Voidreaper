@@ -2,18 +2,21 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   createUnlockService,
-  unlockFlagsFromSave
+  unlockFlagsFromSave,
 } from "../../src/features/research/unlock-service.js";
 
 test("save unlock flags include persisted component blueprints", () => {
-  assert.deepEqual(unlockFlagsFromSave({
-    unlocks: { bastion: true, ignored: false },
-    blueprints: { "shield-pulse": { source: "campaign-extraction" } }
-  }), {
-    bastion: true,
-    ignored: false,
-    "shield-pulse": true
-  });
+  assert.deepEqual(
+    unlockFlagsFromSave({
+      unlocks: { bastion: true, ignored: false },
+      blueprints: { "shield-pulse": { source: "campaign-extraction" } },
+    }),
+    {
+      bastion: true,
+      ignored: false,
+      "shield-pulse": true,
+    },
+  );
   assert.deepEqual(unlockFlagsFromSave(), {});
 });
 

@@ -9,7 +9,7 @@ export function createDefaultSave() {
     profile: {
       createdAt: new Date().toISOString(),
       totalRuns: 0,
-      totalKills: 0
+      totalKills: 0,
     },
     currencies: meta.currencies,
     currencyHistory: meta.currencyHistory,
@@ -17,18 +17,18 @@ export function createDefaultSave() {
       best: 0,
       dailyBest: {},
       meta: {},
-      achievements: []
+      achievements: [],
     },
     loadouts: {
       primary: null,
-      saved: {}
+      saved: {},
     },
     research: meta.research,
     unlocks: {
       ...meta.unlocks,
       vesper: true,
       railgun: true,
-      "standard-core": true
+      "standard-core": true,
     },
     inventory: meta.inventory,
     overflow: meta.overflow,
@@ -55,9 +55,9 @@ export function createDefaultSave() {
       uiScale: 1,
       largeTouchControls: false,
       colorPatterns: true,
-      bindings: {}
+      bindings: {},
     },
     migrationHistory: [],
-    migrationBackups: {}
+    migrationBackups: {},
   };
 }

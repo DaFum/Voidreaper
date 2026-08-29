@@ -26,20 +26,30 @@ const readonlyBuiltin = (target, mutators) => {
   let proxy;
   proxy = new Proxy(target, {
     get(value, property) {
-      if (mutators.has(property)) return () => { throw new TypeError("Registered content is read-only"); };
+      if (mutators.has(property))
+        return () => {
+          throw new TypeError("Registered content is read-only");
+        };
       if (property === "forEach" && typeof value.forEach === "function") {
-        return (callback, thisArg) => value.forEach((item, key) => callback.call(thisArg, item, key, proxy));
+        return (callback, thisArg) =>
+          value.forEach((item, key) =>
+            callback.call(thisArg, item, key, proxy),
+          );
       }
       const member = Reflect.get(value, property, value);
       return typeof member === "function" ? member.bind(value) : member;
-    }
+    },
   });
   return proxy;
 };
 
 const MAP_MUTATORS = new Set(["clear", "delete", "set"]);
 const SET_MUTATORS = new Set(["add", "clear", "delete"]);
-const DATE_MUTATORS = new Set(Object.getOwnPropertyNames(Date.prototype).filter(name => name.startsWith("set")));
+const DATE_MUTATORS = new Set(
+  Object.getOwnPropertyNames(Date.prototype).filter((name) =>
+    name.startsWith("set"),
+  ),
+);
 
 function deepClone(obj, visited = new WeakMap()) {
   if (obj === null || typeof obj !== "object") return obj;
@@ -49,19 +59,30 @@ function deepClone(obj, visited = new WeakMap()) {
     visited.set(obj, clone);
     return clone;
   }
-  const target = Array.isArray(obj) ? [] : obj instanceof Map ? new Map() : obj instanceof Set ? new Set() : {};
-  const clone = obj instanceof Map ? readonlyBuiltin(target, MAP_MUTATORS)
-    : obj instanceof Set ? readonlyBuiltin(target, SET_MUTATORS)
-      : target;
+  const target = Array.isArray(obj)
+    ? []
+    : obj instanceof Map
+      ? new Map()
+      : obj instanceof Set
+        ? new Set()
+        : {};
+  const clone =
+    obj instanceof Map
+      ? readonlyBuiltin(target, MAP_MUTATORS)
+      : obj instanceof Set
+        ? readonlyBuiltin(target, SET_MUTATORS)
+        : target;
   visited.set(obj, clone);
   if (Array.isArray(obj)) {
     for (const item of obj) clone.push(deepClone(item, visited));
   } else if (obj instanceof Map) {
-    for (const [key, value] of obj) target.set(deepClone(key, visited), deepClone(value, visited));
+    for (const [key, value] of obj)
+      target.set(deepClone(key, visited), deepClone(value, visited));
   } else if (obj instanceof Set) {
     for (const value of obj) target.add(deepClone(value, visited));
   } else {
-    for (const key of Object.keys(obj)) clone[key] = deepClone(obj[key], visited);
+    for (const key of Object.keys(obj))
+      clone[key] = deepClone(obj[key], visited);
   }
   return clone;
 }
@@ -73,13 +94,14 @@ export function createRegistry(kind) {
     kind,
     register(definition) {
       if (!definition?.id) throw new Error(`${kind} definition requires id`);
-      if (entries.has(definition.id)) throw new Error(`Duplicate ${kind} id: ${definition.id}`);
+      if (entries.has(definition.id))
+        throw new Error(`Duplicate ${kind} id: ${definition.id}`);
       const frozen = deepFreeze(deepClone(definition));
       entries.set(definition.id, frozen);
       return frozen;
     },
     registerMany(definitions) {
-      return definitions.map(definition => this.register(definition));
+      return definitions.map((definition) => this.register(definition));
     },
     get(id) {
       return entries.get(id) ?? null;
@@ -97,6 +119,6 @@ export function createRegistry(kind) {
     },
     get size() {
       return entries.size;
-    }
+    },
   };
 }

@@ -1,7 +1,7 @@
 // Conservative AABB half-extent: a capsule spans length/2 + radius along its
 // axis (orientation is unknown here, so both axes use the full extent), a
 // polygon spans its farthest vertex, circles/rings their (outer) radius.
-const boundsFor = zone => {
+const boundsFor = (zone) => {
   const p = zone.transform.position;
   const shape = zone.shape;
   const radius = shape.radius ?? shape.outerRadius ?? 0;
@@ -39,7 +39,14 @@ export function createHitZoneIndex() {
       const result = [];
       for (let i = 0; i < entries.length; i++) {
         const entry = entries[i];
-        if (!(entry.bounds.maxX < bounds.minX || entry.bounds.minX > bounds.maxX || entry.bounds.maxY < bounds.minY || entry.bounds.minY > bounds.maxY)) {
+        if (
+          !(
+            entry.bounds.maxX < bounds.minX ||
+            entry.bounds.minX > bounds.maxX ||
+            entry.bounds.maxY < bounds.minY ||
+            entry.bounds.minY > bounds.maxY
+          )
+        ) {
           result.push(entry.zone);
         }
       }
@@ -52,6 +59,8 @@ export function createHitZoneIndex() {
       }
       return result;
     },
-    get revision() { return revision; }
+    get revision() {
+      return revision;
+    },
   };
 }

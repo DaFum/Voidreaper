@@ -1,5 +1,21 @@
-const stat = (id, name, baseValue, minimum = 0, maximum = Infinity, displayFormat = "number") => ({
-  id, name, displayName: name, category: "combat", baseValue, minimum, maximum, rounding: "none", displayFormat, stackingRule: "ordered"
+const stat = (
+  id,
+  name,
+  baseValue,
+  minimum = 0,
+  maximum = Infinity,
+  displayFormat = "number",
+) => ({
+  id,
+  name,
+  displayName: name,
+  category: "combat",
+  baseValue,
+  minimum,
+  maximum,
+  rounding: "none",
+  displayFormat,
+  stackingRule: "ordered",
 });
 
 export const STAT_DEFINITIONS = Object.freeze([
@@ -19,5 +35,5 @@ export const STAT_DEFINITIONS = Object.freeze([
   stat("cooling-rate", "Kühlung", 10, 0, 200, "per-second"),
   stat("corruption-gain", "Korruptionsgewinn", 1, 0, 10, "multiplier"),
   stat("dodge-cooldown", "Ausweich-Cooldown", 1.2, 0.25, 8, "seconds"),
-  stat("fault-resistance", "Fehlerresistenz", 0, 0, 0.9, "percent")
+  stat("fault-resistance", "Fehlerresistenz", 0, 0, 0.9, "percent"),
 ]);

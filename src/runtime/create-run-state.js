@@ -3,7 +3,13 @@ import { createRunRng } from "../core/rng.js";
 import { createPlayerState } from "./create-player-state.js";
 import { createCampaignState } from "../features/sectors/campaign-state.js";
 
-export function createRunState({ seed = Date.now(), mode = "campaign", difficulty = "standard", player = {}, campaignPathId = "architect" } = {}) {
+export function createRunState({
+  seed = Date.now(),
+  mode = "campaign",
+  difficulty = "standard",
+  player = {},
+  campaignPathId = "architect",
+} = {}) {
   const runId = createRuntimeId("run");
   return {
     id: runId,
@@ -35,11 +41,11 @@ export function createRunState({ seed = Date.now(), mode = "campaign", difficult
       tags: new Map(),
       synergies: [],
       evolutions: [],
-      sources: []
+      sources: [],
     },
     resources: {
       scrap: 0,
-      flux: 0
+      flux: 0,
     },
     inventory: [],
     consumedOfferIds: [],
@@ -47,7 +53,7 @@ export function createRunState({ seed = Date.now(), mode = "campaign", difficult
       damageBySource: {},
       heatPeaks: [],
       faults: [],
-      triggerCount: 0
-    }
+      triggerCount: 0,
+    },
   };
 }
