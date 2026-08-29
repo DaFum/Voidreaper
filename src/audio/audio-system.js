@@ -8,7 +8,7 @@ const SOUND_CONFIG = {
   [SOUND_EVENTS.PICKUP]: [1200, 0.1, "sine", 0.08, 2000],
   [SOUND_EVENTS.LEVEL_UP]: [660, 0.25, "triangle", 0.12, 1046],
   [SOUND_EVENTS.EVOLUTION]: [392, 0.5, "triangle", 0.14, 1318],
-  [SOUND_EVENTS.WARNING]: [330, 0.45, "square", 0.09, 660]
+  [SOUND_EVENTS.WARNING]: [330, 0.45, "square", 0.09, 660],
 };
 
 export function createAudioSystem({ volume = 0.5 } = {}) {
@@ -28,7 +28,9 @@ export function createAudioSystem({ volume = 0.5 } = {}) {
       master.gain.value = currentVolume;
       master.connect(context.destination);
     },
-    resume() { context?.resume(); },
+    resume() {
+      context?.resume();
+    },
     setVolume(value) {
       currentVolume = value;
       if (master) master.gain.value = value;
@@ -41,13 +43,16 @@ export function createAudioSystem({ volume = 0.5 } = {}) {
       const envelope = context.createGain();
       oscillator.type = type;
       oscillator.frequency.setValueAtTime(frequency, now);
-      oscillator.frequency.exponentialRampToValueAtTime(Math.max(20, slide), now + duration);
+      oscillator.frequency.exponentialRampToValueAtTime(
+        Math.max(20, slide),
+        now + duration,
+      );
       envelope.gain.setValueAtTime(gain, now);
       envelope.gain.exponentialRampToValueAtTime(0.0001, now + duration);
       oscillator.connect(envelope);
       envelope.connect(master);
       oscillator.start(now);
       oscillator.stop(now + duration + 0.02);
-    }
+    },
   };
 }

@@ -8,13 +8,14 @@ const STATIC_TUTORIAL_TARGETS = {
   resumebtn: "pause-resume",
   dodgebtn: "hud-dodge",
   "combat-actions": "hud-active-modules",
-  cards: "levelup-options"
+  cards: "levelup-options",
 };
 
-const TARGET_NOT_VISIBLE_MESSAGE = "Ziel ist nicht sichtbar. Öffne den zugehörigen Bereich.";
+const TARGET_NOT_VISIBLE_MESSAGE =
+  "Ziel ist nicht sichtbar. Öffne den zugehörigen Bereich.";
 
 const IN_RUN_HINT = "Starte einen Run, um dieses Element zu sehen.";
-const hangarTabHint = tab => `Öffne im Hangar den Tab »${tab}«.`;
+const hangarTabHint = (tab) => `Öffne im Hangar den Tab »${tab}«.`;
 const TARGET_LOCATION_HINTS = {
   "game-canvas": IN_RUN_HINT,
   "hud-dodge": IN_RUN_HINT,
@@ -28,13 +29,15 @@ const TARGET_LOCATION_HINTS = {
   "levelup-options": "Erscheint im Run, sobald genug Beute gesammelt ist.",
   "fault-log": IN_RUN_HINT,
   "boss-health": "Erscheint im Run, sobald ein Boss aktiv ist.",
-  "extraction-options": "Erscheint im Run, wenn ein Extraktionsfenster verfügbar ist.",
+  "extraction-options":
+    "Erscheint im Run, wenn ein Extraktionsfenster verfügbar ist.",
   "run-summary": "Erscheint nach dem Ende eines Runs.",
   "sector-map": "Starte über »Run starten« die Standard-Kampagne.",
   "sector-detail": "Wähle auf der Sektorkarte einen erreichbaren Knoten.",
   "merchant-offers": "Wähle auf der Sektorkarte einen Händler-Knoten.",
   "workshop-actions": "Wähle auf der Sektorkarte einen Werkstatt-Knoten.",
-  "checkpoint-resume": "Erscheint auf der Sektorkarte, sobald ein Checkpoint existiert.",
+  "checkpoint-resume":
+    "Erscheint auf der Sektorkarte, sobald ein Checkpoint existiert.",
   "anomaly-choices": "Wähle auf der Sektorkarte einen Anomalie-Knoten.",
   "quick-mount-preview": "Erscheint im Run, wenn du ein neues Modul erbeutest.",
   "quick-mount-actions": "Erscheint im Run, wenn du ein neues Modul erbeutest.",
@@ -57,9 +60,9 @@ const TARGET_LOCATION_HINTS = {
   "settings-reduced-motion": hangarTabHint("Einstellungen"),
   "settings-color-patterns": hangarTabHint("Einstellungen"),
   "touch-controls": "Sichtbar auf Touch-Geräten während eines Runs.",
-  "hangar-tab-tutorials": "Kehre über »Hangar« zum Trainingsarchiv zurück."
+  "hangar-tab-tutorials": "Kehre über »Hangar« zum Trainingsarchiv zurück.",
 };
-const targetNotVisibleMessage = targetId => {
+const targetNotVisibleMessage = (targetId) => {
   const hint = TARGET_LOCATION_HINTS[targetId];
   return hint ? `Ziel ist nicht sichtbar. ${hint}` : TARGET_NOT_VISIBLE_MESSAGE;
 };
@@ -70,7 +73,11 @@ export function applyTutorialTargets(root = document) {
   }
 }
 
-export function createTutorialOverlay({ root, resolveTarget, onAction = () => {} }) {
+export function createTutorialOverlay({
+  root,
+  resolveTarget,
+  onAction = () => {},
+}) {
   let model = null;
   let target = null;
   let targetId = null;
@@ -84,19 +91,37 @@ export function createTutorialOverlay({ root, resolveTarget, onAction = () => {}
     const card = root.querySelector(".tutorial-card");
     const status = root.querySelector('[data-role="status"]');
     if (!ring || !card) return;
-    const statusText = target || !targetId ? "" : targetNotVisibleMessage(targetId);
-    if (status && status.textContent !== statusText) status.textContent = statusText;
+    const statusText =
+      target || !targetId ? "" : targetNotVisibleMessage(targetId);
+    if (status && status.textContent !== statusText)
+      status.textContent = statusText;
     ring.hidden = !target;
     if (!target) return;
     const rect = target.getBoundingClientRect();
-    const size = { width: Math.min(360, card.offsetWidth || 360), height: card.offsetHeight || 240 };
-    const pos = placeTutorialCard(rect, size, { width: innerWidth, height: innerHeight });
-    Object.assign(ring.style, { left: `${rect.left - 6}px`, top: `${rect.top - 6}px`, width: `${rect.width + 12}px`, height: `${rect.height + 12}px` });
-    Object.assign(card.style, { left: `${pos.left}px`, top: `${pos.top}px`, right: "auto", bottom: "auto" });
+    const size = {
+      width: Math.min(360, card.offsetWidth || 360),
+      height: card.offsetHeight || 240,
+    };
+    const pos = placeTutorialCard(rect, size, {
+      width: innerWidth,
+      height: innerHeight,
+    });
+    Object.assign(ring.style, {
+      left: `${rect.left - 6}px`,
+      top: `${rect.top - 6}px`,
+      width: `${rect.width + 12}px`,
+      height: `${rect.height + 12}px`,
+    });
+    Object.assign(card.style, {
+      left: `${pos.left}px`,
+      top: `${pos.top}px`,
+      right: "auto",
+      bottom: "auto",
+    });
     card.dataset.side = pos.side;
   };
 
-  const render = next => {
+  const render = (next) => {
     model = next;
     setObserving(Boolean(next?.active));
     root.hidden = !next?.active;
@@ -108,7 +133,7 @@ export function createTutorialOverlay({ root, resolveTarget, onAction = () => {}
     targetId = step.target ?? null;
     target = targetId ? resolveTarget(targetId) : null;
     root.innerHTML = `<div class="tutorial-veil" aria-hidden="true"></div><div class="tutorial-focus" aria-hidden="true"></div><section class="tutorial-card" role="dialog" aria-labelledby="tutorial-title"><span>${escapeHtml(chapter.title)} · ${escapeHtml(stepIndex + 1)}/${escapeHtml(stepCount)}</span><h2 id="tutorial-title">${escapeHtml(step.title)}</h2><p>${escapeHtml(step.body)}</p>${step.hint ? `<small>${escapeHtml(step.hint)}</small>` : ""}<p data-role="status" aria-live="polite">${target || !step.target ? "" : escapeHtml(targetNotVisibleMessage(step.target))}</p><footer><button type="button" data-action="back">ZURÜCK</button><button type="button" data-action="${paused ? "resume" : "pause"}">${paused ? "FORTSETZEN" : "PAUSIEREN"}</button><button type="button" data-action="skip">ÜBERSPRINGEN</button><button type="button" data-action="stop">BEENDEN</button>${(step.kind === "explanation" || step.optional) && !paused ? '<button type="button" data-action="next">WEITER</button>' : ""}</footer></section>`;
-    root.onclick = event => {
+    root.onclick = (event) => {
       const action = event.target.closest("[data-action]")?.dataset.action;
       if (action) onAction(action);
     };
@@ -124,10 +149,11 @@ export function createTutorialOverlay({ root, resolveTarget, onAction = () => {}
       refresh();
     });
   });
-  const setObserving = active => {
+  const setObserving = (active) => {
     if (active === observing) return;
     observing = active;
-    if (active) observer.observe(document.body, { childList: true, subtree: true });
+    if (active)
+      observer.observe(document.body, { childList: true, subtree: true });
     else observer.disconnect();
   };
   return {
@@ -144,6 +170,6 @@ export function createTutorialOverlay({ root, resolveTarget, onAction = () => {}
       if (refreshFrame != null) cancelAnimationFrame(refreshFrame);
       root.onclick = null;
       root.replaceChildren();
-    }
+    },
   };
 }

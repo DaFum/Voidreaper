@@ -17,7 +17,11 @@ const rayIntersects = (origin, angle, bounds) => {
   } else {
     let a = (bounds.minX - origin.x) / dx;
     let b = (bounds.maxX - origin.x) / dx;
-    if (a > b) { let tmp = a; a = b; b = tmp; }
+    if (a > b) {
+      let tmp = a;
+      a = b;
+      b = tmp;
+    }
     if (a > near) near = a;
     if (b < far) far = b;
     if (near > far) return false;
@@ -28,7 +32,11 @@ const rayIntersects = (origin, angle, bounds) => {
   } else {
     let a = (bounds.minY - origin.y) / dy;
     let b = (bounds.maxY - origin.y) / dy;
-    if (a > b) { let tmp = a; a = b; b = tmp; }
+    if (a > b) {
+      let tmp = a;
+      a = b;
+      b = tmp;
+    }
     if (a > near) near = a;
     if (b < far) far = b;
     if (near > far) return false;
@@ -46,7 +54,7 @@ export function hasRequiredCoreExposure({ coreBounds, occupiedBounds }) {
   const open = [];
 
   for (let i = 0; i < 8; i++) {
-    const angle = i * Math.PI / 4;
+    const angle = (i * Math.PI) / 4;
     let intersects = false;
     for (let j = 0; j < occupiedBounds.length; j++) {
       if (rayIntersects(center, angle, occupiedBounds[j])) {
@@ -71,4 +79,26 @@ export function hasRequiredCoreExposure({ coreBounds, occupiedBounds }) {
   return false;
 }
 
-export function createCoreExposureService(){return{accepts({coreGeometry,occupiedBounds=[],candidate}){const bounds=coreGeometry?.bounds,coreBounds={...bounds,center:{x:0,y:0}},coreOwner=occupiedBounds.find(item=>item.minX===bounds?.minX&&item.minY===bounds?.minY&&item.maxX===bounds?.maxX&&item.maxY===bounds?.maxY);return hasRequiredCoreExposure({coreBounds,occupiedBounds:[...occupiedBounds.filter(item=>item!==coreOwner),candidate]});},structuralAbsorption:hitCount=>Math.max(.25,1-hitCount*.18)};}
+export function createCoreExposureService() {
+  return {
+    accepts({ coreGeometry, occupiedBounds = [], candidate }) {
+      const bounds = coreGeometry?.bounds,
+        coreBounds = { ...bounds, center: { x: 0, y: 0 } },
+        coreOwner = occupiedBounds.find(
+          (item) =>
+            item.minX === bounds?.minX &&
+            item.minY === bounds?.minY &&
+            item.maxX === bounds?.maxX &&
+            item.maxY === bounds?.maxY,
+        );
+      return hasRequiredCoreExposure({
+        coreBounds,
+        occupiedBounds: [
+          ...occupiedBounds.filter((item) => item !== coreOwner),
+          candidate,
+        ],
+      });
+    },
+    structuralAbsorption: (hitCount) => Math.max(0.25, 1 - hitCount * 0.18),
+  };
+}

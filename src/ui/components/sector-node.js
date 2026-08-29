@@ -1,8 +1,7 @@
 import { NODE_TYPES } from "../../content/sectors/node-types.js";
 import { escapeHtml } from "../escape-html.js";
 
-
-export const isSectorNodeInteractive = status => status === "reachable";
+export const isSectorNodeInteractive = (status) => status === "reachable";
 
 export function createSectorNode(node, { status, selected, onSelect }) {
   const definition = NODE_TYPES[node.type] ?? NODE_TYPES.combat;

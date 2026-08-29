@@ -153,8 +153,7 @@ import {
 } from "../features/ship-assembly/geometry/port-world-transform.js";
 
 const prefersReducedMotion = () =>
-  globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ??
-  false;
+  globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
 // German inspector labels for the assembly node damage states
 // (see DAMAGE_STATE in features/ship-assembly/model/assembly-constants.js).
@@ -510,7 +509,10 @@ export async function bootstrap() {
           return blueprint ? encodeBlueprint(blueprint) : null;
         },
         importCode: (code) =>
-          validateBlueprint(decodeBlueprint(code), blueprintValidationContext()),
+          validateBlueprint(
+            decodeBlueprint(code),
+            blueprintValidationContext(),
+          ),
       };
     services.assemblyDebug = createAssemblyDebugService({
       inventory: {
@@ -1144,8 +1146,7 @@ export async function bootstrap() {
         );
       }
       ctx.restore();
-      screen.portsLayer.style.transform =
-        `scale(${camera.zoom}) translate(${camera.offset.x}px, ${camera.offset.y}px)`;
+      screen.portsLayer.style.transform = `scale(${camera.zoom}) translate(${camera.offset.x}px, ${camera.offset.y}px)`;
     };
     screen = createAssemblyWorkbenchScreen(stage, {
       onAction: (action, data) => {
@@ -1733,7 +1734,7 @@ export async function bootstrap() {
               if (!item) return;
               const confirmed = await uiConfirm(
                 `Möchtest du "${item.name}" wirklich zerlegen? Diese Aktion kann nicht rückgängig gemacht werden.`,
-                { title: "PROTOTYP ZERLEGEN", confirmLabel: "ZERLEGEN" }
+                { title: "PROTOTYP ZERLEGEN", confirmLabel: "ZERLEGEN" },
               );
               if (confirmed) {
                 await services.save.update((save) => {

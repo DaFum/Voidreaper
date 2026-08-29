@@ -7,24 +7,28 @@ test("createLightMask exits early if document is undefined", () => {
 
   const ctx = {
     save: test.mock.fn(),
-    restore: test.mock.fn()
+    restore: test.mock.fn(),
   };
 
   mask.apply(ctx, { darkness: 1, viewport: { width: 100, height: 100 } });
 
-  assert.equal(ctx.save.mock.calls.length, 0, "Does not apply mask if no DOM available");
+  assert.equal(
+    ctx.save.mock.calls.length,
+    0,
+    "Does not apply mask if no DOM available",
+  );
 });
 
 test("createLightMask exits early if viewport or darkness is invalid", () => {
   const originalDocument = global.document;
   global.document = {
-    createElement: () => ({ getContext: () => null })
+    createElement: () => ({ getContext: () => null }),
   };
 
   try {
     const mask = createLightMask();
     const ctx = {
-      save: test.mock.fn()
+      save: test.mock.fn(),
     };
 
     mask.apply(ctx, { darkness: 0, viewport: { width: 100, height: 100 } });

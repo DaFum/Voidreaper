@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createHeatState, createHeatSystem } from "../../../src/features/heat/heat-system.js";
+import {
+  createHeatState,
+  createHeatSystem,
+} from "../../../src/features/heat/heat-system.js";
 
 test("Heat System", async (t) => {
   await t.test("createHeatState initializes default state", () => {
@@ -86,7 +89,7 @@ test("Heat System", async (t) => {
     const eventBus = {
       emit(event, payload) {
         events.push({ event, payload });
-      }
+      },
     };
     const system = createHeatSystem({ eventBus });
     const state = createHeatState();
@@ -98,28 +101,32 @@ test("Heat System", async (t) => {
     assert.equal(state.lastThreshold, "warm");
     assert.equal(events.length, 1);
     assert.equal(events[0].event, "heat-threshold");
-    assert.deepEqual(events[0].payload, { threshold: "warm", value: 65, previous: 65 });
+    assert.deepEqual(events[0].payload, {
+      threshold: "warm",
+      value: 65,
+      previous: 65,
+    });
 
     // Unstable threshold is 85
     events.length = 0; // reset
     state.value = 90;
     system.update(state, 0, { coolingRate: 0 });
     assert.equal(state.lastThreshold, "unstable");
-    assert.ok(events.find(e => e.event === "heat-threshold"));
+    assert.ok(events.find((e) => e.event === "heat-threshold"));
 
     // Overheated threshold is 100
     events.length = 0; // reset
     state.value = 100;
     system.update(state, 0, { coolingRate: 0 });
     assert.equal(state.lastThreshold, "overheated");
-    assert.ok(events.find(e => e.event === "heat-threshold"));
+    assert.ok(events.find((e) => e.event === "heat-threshold"));
 
     // Cool down to cold (0-59)
     events.length = 0; // reset
     state.value = 50;
     system.update(state, 0, { coolingRate: 0 });
     assert.equal(state.lastThreshold, "cold");
-    assert.ok(events.find(e => e.event === "heat-threshold"));
+    assert.ok(events.find((e) => e.event === "heat-threshold"));
   });
 
   await t.test("update() manages heat warnings", () => {
@@ -127,7 +134,7 @@ test("Heat System", async (t) => {
     const eventBus = {
       emit(event, payload) {
         events.push({ event, payload });
-      }
+      },
     };
     const system = createHeatSystem({ eventBus });
     const state = createHeatState();
@@ -137,14 +144,17 @@ test("Heat System", async (t) => {
     assert.equal(state.warningIssued, true);
 
     // Check if heat-warning was emitted
-    const warningEvent = events.find(e => e.event === "heat-warning");
+    const warningEvent = events.find((e) => e.event === "heat-warning");
     assert.ok(warningEvent);
     assert.deepEqual(warningEvent.payload, { seconds: 1.0 });
 
     // Update again shouldn't emit warning again
     events.length = 0;
     system.update(state, 0, { coolingRate: 0 });
-    assert.equal(events.find(e => e.event === "heat-warning"), undefined);
+    assert.equal(
+      events.find((e) => e.event === "heat-warning"),
+      undefined,
+    );
 
     // Cooling down below 80 resets the warning flag
     state.value = 79;
@@ -156,7 +166,9 @@ test("Heat System", async (t) => {
     let overheatCalled = false;
     const system = createHeatSystem();
     // Intercept overheat method for testing
-    system.overheat = () => { overheatCalled = true; };
+    system.overheat = () => {
+      overheatCalled = true;
+    };
     const state = createHeatState();
 
     state.crossedOverheat = true;
@@ -171,7 +183,7 @@ test("Heat System", async (t) => {
     const eventBus = {
       emit(event, payload) {
         events.push({ event, payload });
-      }
+      },
     };
     let disabledModule = null;
     let disableDuration = 0;
@@ -179,7 +191,7 @@ test("Heat System", async (t) => {
       disable(id, duration) {
         disabledModule = id;
         disableDuration = duration;
-      }
+      },
     };
     const system = createHeatSystem({ eventBus, modules });
     const state = createHeatState();
@@ -198,9 +210,13 @@ test("Heat System", async (t) => {
     assert.equal(state.disableCounts.get("weapon-2"), 1);
 
     // Overheat event emitted
-    const overheatEvent = events.find(e => e.event === "overheated");
+    const overheatEvent = events.find((e) => e.event === "overheated");
     assert.ok(overheatEvent);
-    assert.deepEqual(overheatEvent.payload, { sourceId: "weapon-2", duration: 3, value: 100 });
+    assert.deepEqual(overheatEvent.payload, {
+      sourceId: "weapon-2",
+      duration: 3,
+      value: 100,
+    });
 
     // sourceHeat map should be cleared
     assert.equal(state.sourceHeat.size, 0);
@@ -226,7 +242,7 @@ test("Heat System", async (t) => {
     const eventBus = {
       emit(event, payload) {
         events.push({ event, payload });
-      }
+      },
     };
     const system = createHeatSystem({ eventBus });
     const state = createHeatState();
@@ -234,8 +250,12 @@ test("Heat System", async (t) => {
     state.value = 100;
     system.overheat(state);
 
-    const overheatEvent = events.find(e => e.event === "overheated");
+    const overheatEvent = events.find((e) => e.event === "overheated");
     assert.ok(overheatEvent);
-    assert.deepEqual(overheatEvent.payload, { sourceId: null, duration: 0, value: 100 });
+    assert.deepEqual(overheatEvent.payload, {
+      sourceId: null,
+      duration: 0,
+      value: 100,
+    });
   });
 });

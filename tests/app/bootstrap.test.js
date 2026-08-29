@@ -24,14 +24,19 @@ test("foundations waits on the start screen for an explicit continue action", ()
     "// During the foundations training",
     overlayActionStart,
   );
-  const overlayActionSource = source.slice(overlayActionStart, overlayActionEnd);
+  const overlayActionSource = source.slice(
+    overlayActionStart,
+    overlayActionEnd,
+  );
   assert.match(
     overlayActionSource,
     /game\.start\("tutorial"\)/,
     "expected an explicit tutorial-overlay action to start the foundations run",
   );
 
-  const startupSource = source.slice(source.lastIndexOf("await legacyRuntime.start();"));
+  const startupSource = source.slice(
+    source.lastIndexOf("await legacyRuntime.start();"),
+  );
   assert.match(
     startupSource,
     /services\.tutorial\s*\.start\("foundations"\)/,
@@ -60,7 +65,10 @@ test("foundations resume does not restart an existing paused run", () => {
     -1,
     'expected bootstrap.js to contain the "// During the foundations training" anchor',
   );
-  const overlayActionSource = source.slice(overlayActionStart, overlayActionEnd);
+  const overlayActionSource = source.slice(
+    overlayActionStart,
+    overlayActionEnd,
+  );
 
   assert.match(
     overlayActionSource,
@@ -71,7 +79,10 @@ test("foundations resume does not restart an existing paused run", () => {
 
 test("the modern pause action toggles the live runtime", () => {
   const actionStart = source.indexOf('events.on("action"');
-  const actionHandler = source.slice(actionStart, source.indexOf("applyTutorialTargets", actionStart));
+  const actionHandler = source.slice(
+    actionStart,
+    source.indexOf("applyTutorialTargets", actionStart),
+  );
   assert.match(actionHandler, /action === "pause"/);
   assert.match(actionHandler, /game\.pause\(\)/);
   assert.match(actionHandler, /game\.resume\(\)/);
@@ -79,25 +90,49 @@ test("the modern pause action toggles the live runtime", () => {
 
 test("hangar catalogs receive the live loadout and shared equip persistence path", () => {
   const hangarStart = source.indexOf("const hangar = createHangarScreen");
-  const hangarEnd = source.indexOf("renderTab: (tab, content) => {", hangarStart);
+  const hangarEnd = source.indexOf(
+    "renderTab: (tab, content) => {",
+    hangarStart,
+  );
   const hangarOptions = source.slice(hangarStart, hangarEnd);
   const persistStart = source.indexOf("const persistLoadout = async");
 
   assert.notEqual(hangarStart, -1, "expected createHangarScreen wiring");
-  assert.ok(persistStart >= 0 && persistStart < hangarStart, "expected shared persistence before hangar creation");
-  assert.match(hangarOptions, /loadout:\s*\(\) => resolvePrimaryLoadout\(metaSave\)/);
-  assert.match(hangarOptions, /onEquip:\s*\(slot, index, definitionId\) =>\s*persistLoadout/);
+  assert.ok(
+    persistStart >= 0 && persistStart < hangarStart,
+    "expected shared persistence before hangar creation",
+  );
+  assert.match(
+    hangarOptions,
+    /loadout:\s*\(\) => resolvePrimaryLoadout\(metaSave\)/,
+  );
+  assert.match(
+    hangarOptions,
+    /onEquip:\s*\(slot, index, definitionId\) =>\s*persistLoadout/,
+  );
   assert.equal(source.match(/const persistLoadout = async/g)?.length, 1);
 });
 
 test("loadout persistence mutates the queued save and keeps successful writes successful", () => {
   const persistStart = source.indexOf("const persistLoadout = async");
-  const persistEnd = source.indexOf("const hangar = createHangarScreen", persistStart);
+  const persistEnd = source.indexOf(
+    "const hangar = createHangarScreen",
+    persistStart,
+  );
   const persistSource = source.slice(persistStart, persistEnd);
 
-  assert.match(persistSource, /services\.save\.update\(\(save\) => \{[\s\S]*resolvePrimaryLoadout\(save\)/);
+  assert.match(
+    persistSource,
+    /services\.save\.update\(\(save\) => \{[\s\S]*resolvePrimaryLoadout\(save\)/,
+  );
   assert.doesNotMatch(persistSource, /resolvePrimaryLoadout\(metaSave\)/);
   assert.match(persistSource, /metaSave = saved;/);
-  assert.match(persistSource, /try \{\s*metaSave = await services\.save\.load\(\);\s*\} catch/);
-  assert.match(persistSource, /catch[\s\S]*hangar\.render\(\);\s*return \{ ok: true \};/);
+  assert.match(
+    persistSource,
+    /try \{\s*metaSave = await services\.save\.load\(\);\s*\} catch/,
+  );
+  assert.match(
+    persistSource,
+    /catch[\s\S]*hangar\.render\(\);\s*return \{ ok: true \};/,
+  );
 });

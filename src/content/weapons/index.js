@@ -9,4 +9,15 @@ import reaperBlades from "./reaper-blades.js";
 import naniteSwarm from "./nanite-swarm.js";
 import anomalyEngine from "./anomaly-engine.js";
 
-export const WEAPONS = Object.freeze([railgun, plasmaCaster, missileBattery, droneCore, arcGenerator, voidBeam, mineLayer, reaperBlades, naniteSwarm, anomalyEngine]);
+export const WEAPONS = Object.freeze([
+  railgun,
+  plasmaCaster,
+  missileBattery,
+  droneCore,
+  arcGenerator,
+  voidBeam,
+  mineLayer,
+  reaperBlades,
+  naniteSwarm,
+  anomalyEngine,
+]);

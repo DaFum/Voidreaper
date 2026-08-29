@@ -5,9 +5,22 @@ export const EQUIPMENT_SLOT = Object.freeze({
   PASSIVE: "passive",
   ACTIVE: "active",
   UTILITY: "utility",
-  RELIC: "relic"
+  RELIC: "relic",
 });
 
-const ITEM_RARITY = Object.freeze(["common", "uncommon", "rare", "epic", "legendary", "unique"]);
+const ITEM_RARITY = Object.freeze([
+  "common",
+  "uncommon",
+  "rare",
+  "epic",
+  "legendary",
+  "unique",
+]);
 
-export const EQUIPMENT_REQUIRED_FIELDS = Object.freeze(["slot", "energyCost", "tags", "effects", "faultProfileId"]);
+export const EQUIPMENT_REQUIRED_FIELDS = Object.freeze([
+  "slot",
+  "energyCost",
+  "tags",
+  "effects",
+  "faultProfileId",
+]);

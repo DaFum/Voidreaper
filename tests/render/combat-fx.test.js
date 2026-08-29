@@ -5,7 +5,7 @@ import {
   isSpark,
   parseTint,
   shockEase,
-  sparkTransform
+  sparkTransform,
 } from "../../src/render/pixi/combat-fx-scene.js";
 
 test("parseTint converts the legacy hex particle colors", () => {
@@ -33,7 +33,9 @@ test("sparkTransform mirrors the legacy velocity tail", () => {
   const { length, rotation } = sparkTransform({ vx: 100, vy: 0 });
   assert.ok(Math.abs(length - 3.5) < 1e-9);
   assert.equal(rotation, 0);
-  assert.ok(Math.abs(sparkTransform({ vx: 0, vy: 100 }).rotation - Math.PI / 2) < 1e-9);
+  assert.ok(
+    Math.abs(sparkTransform({ vx: 0, vy: 100 }).rotation - Math.PI / 2) < 1e-9,
+  );
 });
 
 test("shockEase is a cubic ease-out over [0,1]", () => {

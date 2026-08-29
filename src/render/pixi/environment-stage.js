@@ -12,13 +12,13 @@ import {
   createStarSpecs,
   createStreakSpecs,
   environmentThemeIdFor,
-  resolveEnvironmentTheme
+  resolveEnvironmentTheme,
 } from "./environment-scene.js";
 
 const TAU = Math.PI * 2;
 const FIELD = 4096; // virtual star-field size before screen wrapping
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
-const hexToInt = hex => parseInt(hex.slice(1), 16);
+const hexToInt = (hex) => parseInt(hex.slice(1), 16);
 
 function bakeSkyTexture(colors) {
   const canvas = document.createElement("canvas");
@@ -46,10 +46,22 @@ function bakeNebulaTexture({ seed, colors, size = 1024 }) {
     const color = colors[blob.colorIndex % colors.length];
     for (let dx = -1; dx <= 1; dx++) {
       for (let dy = -1; dy <= 1; dy++) {
-        const x = blob.x + dx * size, y = blob.y + dy * size;
-        if (x + blob.radius < 0 || x - blob.radius > size || y + blob.radius < 0 || y - blob.radius > size) continue;
+        const x = blob.x + dx * size,
+          y = blob.y + dy * size;
+        if (
+          x + blob.radius < 0 ||
+          x - blob.radius > size ||
+          y + blob.radius < 0 ||
+          y - blob.radius > size
+        )
+          continue;
         const gradient = ctx.createRadialGradient(x, y, 0, x, y, blob.radius);
-        gradient.addColorStop(0, `${color}${Math.round(blob.alpha * 255).toString(16).padStart(2, "0")}`);
+        gradient.addColorStop(
+          0,
+          `${color}${Math.round(blob.alpha * 255)
+            .toString(16)
+            .padStart(2, "0")}`,
+        );
         gradient.addColorStop(1, `${color}00`);
         ctx.fillStyle = gradient;
         ctx.beginPath();
@@ -91,7 +103,11 @@ function bakeStreakTexture() {
   return Texture.from(canvas, true);
 }
 
-export async function createEnvironmentStage({ canvas, seed = 7, reducedMotion = false } = {}) {
+export async function createEnvironmentStage({
+  canvas,
+  seed = 7,
+  reducedMotion = false,
+} = {}) {
   const app = new Application();
   await app.init({
     canvas,
@@ -103,7 +119,7 @@ export async function createEnvironmentStage({ canvas, seed = 7, reducedMotion =
     backgroundAlpha: 1,
     background: 0x04010a,
     autoStart: false,
-    sharedTicker: false
+    sharedTicker: false,
   });
 
   let width = window.innerWidth;
@@ -121,7 +137,11 @@ export async function createEnvironmentStage({ canvas, seed = 7, reducedMotion =
   const sky = new Sprite();
   const nebulaFar = new TilingSprite({ texture: Texture.EMPTY, width, height });
   nebulaFar.alpha = 0.95;
-  const nebulaNear = new TilingSprite({ texture: Texture.EMPTY, width, height });
+  const nebulaNear = new TilingSprite({
+    texture: Texture.EMPTY,
+    width,
+    height,
+  });
   nebulaNear.alpha = 0.55;
   nebulaNear.blendMode = "add";
   nebulaNear.tileScale.set(1.6, 1.6);
@@ -135,7 +155,7 @@ export async function createEnvironmentStage({ canvas, seed = 7, reducedMotion =
   app.stage.addChild(sky, nebulaFar, nebulaNear, shakeLayer);
 
   const starSpecs = createStarSpecs({ seed });
-  const stars = starSpecs.map(spec => {
+  const stars = starSpecs.map((spec) => {
     const sprite = new Sprite(spec.glow ? starHaloTexture : starCoreTexture);
     sprite.anchor.set(0.5);
     sprite.scale.set((spec.glow ? 0.28 : 0.13) * spec.size);
@@ -145,7 +165,7 @@ export async function createEnvironmentStage({ canvas, seed = 7, reducedMotion =
   });
 
   const dustSpecs = createDustSpecs({ seed });
-  const dust = dustSpecs.map(spec => {
+  const dust = dustSpecs.map((spec) => {
     const sprite = new Sprite(dustTexture);
     sprite.anchor.set(0.5);
     sprite.scale.set(spec.size / 34);
@@ -154,7 +174,7 @@ export async function createEnvironmentStage({ canvas, seed = 7, reducedMotion =
   });
 
   const streakSpecs = createStreakSpecs({ seed });
-  const streaks = streakSpecs.map(spec => {
+  const streaks = streakSpecs.map((spec) => {
     const sprite = new Sprite(streakTexture);
     sprite.anchor.set(1, 0.5);
     sprite.scale.set(spec.length / 128, 1);
@@ -170,15 +190,28 @@ export async function createEnvironmentStage({ canvas, seed = 7, reducedMotion =
     target.texture = texture;
     if (previous && previous !== Texture.EMPTY) previous.destroy(true);
   };
-  const applyTheme = regionId => {
+  const applyTheme = (regionId) => {
     const nextId = environmentThemeIdFor(regionId);
     if (nextId === themeId) return;
     themeId = nextId;
     const theme = resolveEnvironmentTheme(nextId);
     swapTexture(sky, bakeSkyTexture(theme.sky));
-    swapTexture(nebulaFar, bakeNebulaTexture({ seed: `${seed}:${nextId}:far`, colors: theme.nebula }));
-    swapTexture(nebulaNear, bakeNebulaTexture({ seed: `${seed}:${nextId}:near`, colors: theme.nebula }));
-    for (const { spec, sprite } of stars) sprite.tint = hexToInt(theme.stars[spec.colorIndex % theme.stars.length]);
+    swapTexture(
+      nebulaFar,
+      bakeNebulaTexture({
+        seed: `${seed}:${nextId}:far`,
+        colors: theme.nebula,
+      }),
+    );
+    swapTexture(
+      nebulaNear,
+      bakeNebulaTexture({
+        seed: `${seed}:${nextId}:near`,
+        colors: theme.nebula,
+      }),
+    );
+    for (const { spec, sprite } of stars)
+      sprite.tint = hexToInt(theme.stars[spec.colorIndex % theme.stars.length]);
     const dustTint = hexToInt(theme.dust);
     for (const { sprite } of dust) sprite.tint = dustTint;
     resizeSky();
@@ -195,8 +228,10 @@ export async function createEnvironmentStage({ canvas, seed = 7, reducedMotion =
     height = window.innerHeight;
     app.renderer.resolution = clamp(window.devicePixelRatio || 1, 1, 2.5);
     app.renderer.resize(width, height);
-    nebulaFar.width = width; nebulaFar.height = height;
-    nebulaNear.width = width; nebulaNear.height = height;
+    nebulaFar.width = width;
+    nebulaFar.height = height;
+    nebulaNear.width = width;
+    nebulaNear.height = height;
     resizeSky();
   };
   window.addEventListener("resize", resize, { passive: true });
@@ -204,42 +239,74 @@ export async function createEnvironmentStage({ canvas, seed = 7, reducedMotion =
   // wrap a virtual field coordinate onto the screen with a hidden margin
   const wrap = (value, span, margin) => {
     const total = span + margin * 2;
-    return ((value % total) + total) % total - margin;
+    return (((value % total) + total) % total) - margin;
   };
 
   // --- per-frame update --------------------------------------------------------
-  const render = frame => {
+  const render = (frame) => {
     if (destroyed) return false;
-    const { time = 0, camX = 0, camY = 0, shakeX = 0, shakeY = 0, regionId, lowDetail = false } = frame ?? {};
+    const {
+      time = 0,
+      camX = 0,
+      camY = 0,
+      shakeX = 0,
+      shakeY = 0,
+      regionId,
+      lowDetail = false,
+    } = frame ?? {};
     applyTheme(regionId);
     shakeLayer.position.set(shakeX * 0.6, shakeY * 0.6);
 
     const drift = reducedMotion ? 0 : time * 3;
-    nebulaFar.tilePosition.set(-camX * 0.12 + drift, -camY * 0.12 + drift * 0.6);
-    nebulaNear.tilePosition.set(-camX * 0.22 - drift * 0.8, -camY * 0.22 - drift * 0.5);
+    nebulaFar.tilePosition.set(
+      -camX * 0.12 + drift,
+      -camY * 0.12 + drift * 0.6,
+    );
+    nebulaNear.tilePosition.set(
+      -camX * 0.22 - drift * 0.8,
+      -camY * 0.22 - drift * 0.5,
+    );
 
     for (const { spec, sprite } of stars) {
       const parallax = 0.15 + spec.depth * 0.6;
       sprite.x = wrap(spec.x * FIELD - camX * parallax, width, 48);
       sprite.y = wrap(spec.y * FIELD - camY * parallax, height, 48);
-      const twinkle = reducedMotion ? 0.85 : 0.55 + Math.sin(time * spec.twinkleSpeed + spec.twinklePhase) * 0.45;
+      const twinkle = reducedMotion
+        ? 0.85
+        : 0.55 + Math.sin(time * spec.twinkleSpeed + spec.twinklePhase) * 0.45;
       sprite.alpha = (0.25 + spec.depth * 0.6) * twinkle;
     }
 
     dustLayer.visible = !lowDetail;
     if (!lowDetail) {
       for (const { spec, sprite } of dust) {
-        sprite.x = wrap(spec.x * FIELD - camX * 0.45 + spec.driftX * time, width, 32);
-        sprite.y = wrap(spec.y * FIELD - camY * 0.45 + spec.driftY * time, height, 32);
-        sprite.alpha = spec.alpha * (reducedMotion ? 1 : 0.6 + Math.sin(time * spec.pulseSpeed + spec.pulsePhase) * 0.4);
+        sprite.x = wrap(
+          spec.x * FIELD - camX * 0.45 + spec.driftX * time,
+          width,
+          32,
+        );
+        sprite.y = wrap(
+          spec.y * FIELD - camY * 0.45 + spec.driftY * time,
+          height,
+          32,
+        );
+        sprite.alpha =
+          spec.alpha *
+          (reducedMotion
+            ? 1
+            : 0.6 + Math.sin(time * spec.pulseSpeed + spec.pulsePhase) * 0.4);
       }
     }
 
     streakLayer.visible = !reducedMotion && !lowDetail;
     if (streakLayer.visible) {
       for (const { spec, sprite } of streaks) {
-        const phase = ((time + spec.offset) % spec.period + spec.period) % spec.period;
-        if (phase >= spec.duration) { sprite.visible = false; continue; }
+        const phase =
+          (((time + spec.offset) % spec.period) + spec.period) % spec.period;
+        if (phase >= spec.duration) {
+          sprite.visible = false;
+          continue;
+        }
         const progress = phase / spec.duration;
         const startX = spec.fromLeft ? -spec.length : width + spec.length;
         const endX = spec.fromLeft ? width + spec.length : -spec.length;
@@ -262,10 +329,20 @@ export async function createEnvironmentStage({ canvas, seed = 7, reducedMotion =
     destroyed = true;
     window.removeEventListener("resize", resize);
     // v8 signature: destroy(rendererDestroyOptions, stageDestroyOptions)
-    app.destroy({ removeView: false }, { children: true, texture: true, textureSource: true });
+    app.destroy(
+      { removeView: false },
+      { children: true, texture: true, textureSource: true },
+    );
   };
 
   applyTheme(null);
   resize();
-  return { render, resize, destroy, get themeId() { return themeId; } };
+  return {
+    render,
+    resize,
+    destroy,
+    get themeId() {
+      return themeId;
+    },
+  };
 }

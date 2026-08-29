@@ -7,15 +7,22 @@ const equipment = {
   definitions: [
     { id: "ship", slot: "ship" },
     { id: "phase-shield", slot: "passive" },
-    { id: "repair-drone", slot: "active" }
+    { id: "repair-drone", slot: "active" },
   ],
-  values() { return this.definitions; },
-  get(id) { return this.definitions.find(definition => definition.id === id) ?? null; }
+  values() {
+    return this.definitions;
+  },
+  get(id) {
+    return this.definitions.find((definition) => definition.id === id) ?? null;
+  },
 };
 
 test("combat grants scrap and one item exactly once", () => {
   const events = [];
-  const service = createCampaignRewardService({ equipment, eventBus: { emit: (...args) => events.push(args) } });
+  const service = createCampaignRewardService({
+    equipment,
+    eventBus: { emit: (...args) => events.push(args) },
+  });
   const run = createRunState({ seed: 1 });
   const node = { id: "combat-1", type: "combat", seed: 42, danger: 2 };
   const first = service.apply(run, node);
@@ -30,9 +37,17 @@ test("combat grants scrap and one item exactly once", () => {
 });
 
 test("elite grants flux and a rare item", () => {
-  const service = createCampaignRewardService({ equipment, eventBus: { emit() {} } });
+  const service = createCampaignRewardService({
+    equipment,
+    eventBus: { emit() {} },
+  });
   const run = createRunState({ seed: 2 });
-  const result = service.apply(run, { id: "elite-1", type: "elite", seed: 7, danger: 3 });
+  const result = service.apply(run, {
+    id: "elite-1",
+    type: "elite",
+    seed: 7,
+    danger: 3,
+  });
 
   assert.equal(result.item.rarity, "rare");
   assert.equal(run.resources.flux, 4);
@@ -45,7 +60,12 @@ test("extraction persists each discovered module blueprint exactly once", async 
   const service = createCampaignRewardService({
     equipment,
     eventBus: { emit: (...args) => events.push(args) },
-    saveStore: { update: async mutate => { await mutate(save); return save; } }
+    saveStore: {
+      update: async (mutate) => {
+        await mutate(save);
+        return save;
+      },
+    },
   });
   const run = createRunState({ seed: 3 });
   run.inventory = [
@@ -53,21 +73,24 @@ test("extraction persists each discovered module blueprint exactly once", async 
     { definitionId: "phase-shield" },
     { definitionId: "repair-drone" },
     { definitionId: "ship" },
-    { definitionId: "missing" }
+    { definitionId: "missing" },
   ];
 
   const result = await service.extractBlueprints(run);
 
   assert.deepEqual(result, {
     applied: true,
-    definitionIds: ["phase-shield", "repair-drone"]
+    definitionIds: ["phase-shield", "repair-drone"],
   });
   assert.equal(save.blueprints["phase-shield"], existing);
   assert.deepEqual(save.blueprints["repair-drone"], {
-    source: "campaign-extraction"
+    source: "campaign-extraction",
   });
   assert.equal(events[0][0], "campaign-blueprints-extracted");
-  assert.deepEqual(events[0][1].definitionIds, ["phase-shield", "repair-drone"]);
+  assert.deepEqual(events[0][1].definitionIds, [
+    "phase-shield",
+    "repair-drone",
+  ]);
 });
 
 test("extraction without modules writes nothing", async () => {
@@ -75,14 +98,18 @@ test("extraction without modules writes nothing", async () => {
   const service = createCampaignRewardService({
     equipment,
     eventBus: { emit() {} },
-    saveStore: { update: async () => { writes += 1; } }
+    saveStore: {
+      update: async () => {
+        writes += 1;
+      },
+    },
   });
   const run = createRunState({ seed: 4 });
   run.inventory = [{ definitionId: "ship" }];
 
   assert.deepEqual(await service.extractBlueprints(run), {
     applied: false,
-    definitionIds: []
+    definitionIds: [],
   });
   assert.equal(writes, 0);
 });
@@ -93,13 +120,24 @@ test("defeating a boss node awards one permanent boss core exactly once", async 
   const service = createCampaignRewardService({
     equipment,
     eventBus: { emit: (...args) => events.push(args) },
-    saveStore: { update: async mutate => { await mutate(save); return save; } }
+    saveStore: {
+      update: async (mutate) => {
+        await mutate(save);
+        return save;
+      },
+    },
   });
   const run = createRunState({ seed: 5 });
   const node = { id: "mid-boss-1", type: "mid-boss" };
 
-  assert.deepEqual(await service.extractBossCore(run, node), { applied: true, amount: 1 });
-  assert.deepEqual(await service.extractBossCore(run, node), { applied: false, amount: 0 });
+  assert.deepEqual(await service.extractBossCore(run, node), {
+    applied: true,
+    amount: 1,
+  });
+  assert.deepEqual(await service.extractBossCore(run, node), {
+    applied: false,
+    amount: 0,
+  });
   assert.equal(save.currencies.bossCores, 1);
   assert.equal(events[0][0], "campaign-boss-core-extracted");
 });

@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { resolveCheckpoint, resolveCurrencies } from "../../src/ui/screens/hangar-screen.js";
+import {
+  resolveCheckpoint,
+  resolveCurrencies,
+} from "../../src/ui/screens/hangar-screen.js";
 
 test("currency getters are resolved on every render", () => {
   let voidShards = 90;

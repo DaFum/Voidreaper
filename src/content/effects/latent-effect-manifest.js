@@ -15,7 +15,7 @@ export const SHIP_EFFECT_IDS = Object.freeze([
   "ship-harrow-harvest",
   "ship-shepherd-network",
   "ship-specter-phase",
-  "ship-reliquary-threshold"
+  "ship-reliquary-threshold",
 ]);
 
 export const REACTOR_EFFECT_IDS = Object.freeze([
@@ -29,5 +29,5 @@ export const REACTOR_EFFECT_IDS = Object.freeze([
   "reactor-entropy",
   "reactor-mirror",
   "reactor-null",
-  "reactor-abyssal-growth"
+  "reactor-abyssal-growth",
 ]);

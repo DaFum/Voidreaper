@@ -9,15 +9,25 @@ export function migrateAssemblyPortLayout(state, equipment) {
     let direction = port.direction;
     let localPosition;
     if (port.parentNodeId === state.rootNodeId) {
-      localPosition = { x: (direction?.x ?? 0) * 72, y: (direction?.y ?? 0) * 72 };
+      localPosition = {
+        x: (direction?.x ?? 0) * 72,
+        y: (direction?.y ?? 0) * 72,
+      };
     } else {
       const parent = state.nodesById?.[port.parentNodeId];
-      const template = parent ? equipment.requireAssemblyProfile(parent.definitionId)?.childPorts?.find(item => item.key === port.key) : null;
+      const template = parent
+        ? equipment
+            .requireAssemblyProfile(parent.definitionId)
+            ?.childPorts?.find((item) => item.key === port.key)
+        : null;
       if (!template) continue;
       direction = template.direction;
       localPosition = template.localPosition;
     }
-    if (!sameVector(port.direction, direction) || !sameVector(port.localPosition, localPosition)) {
+    if (
+      !sameVector(port.direction, direction) ||
+      !sameVector(port.localPosition, localPosition)
+    ) {
       port.direction = { ...direction };
       port.localPosition = { ...localPosition };
       const child = state.nodesById?.[port.occupiedByNodeId];

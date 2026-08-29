@@ -1,4 +1,9 @@
-const SOURCES = Object.freeze({ enemy: [2, 0], objective: [20, 2], salvage: [8, 1], sale: [1, 0] });
+const SOURCES = Object.freeze({
+  enemy: [2, 0],
+  objective: [20, 2],
+  salvage: [8, 1],
+  sale: [1, 0],
+});
 
 export function createRunCurrencyService(eventBus) {
   return {
@@ -10,12 +15,20 @@ export function createRunCurrencyService(eventBus) {
       return { ...run.resources };
     },
     spend(run, cost = {}) {
-      if ((cost.voidShards ?? 0) > 0) throw new Error("Void Shards cannot be spent during a run");
-      if (run.resources.scrap < (cost.scrap ?? 0) || run.resources.flux < (cost.flux ?? 0)) return false;
+      if ((cost.voidShards ?? 0) > 0)
+        throw new Error("Void Shards cannot be spent during a run");
+      if (
+        run.resources.scrap < (cost.scrap ?? 0) ||
+        run.resources.flux < (cost.flux ?? 0)
+      )
+        return false;
       run.resources.scrap -= cost.scrap ?? 0;
       run.resources.flux -= cost.flux ?? 0;
-      eventBus?.emit("run-currency-changed", { source: "spend", ...run.resources });
+      eventBus?.emit("run-currency-changed", {
+        source: "spend",
+        ...run.resources,
+      });
       return true;
-    }
+    },
   };
 }

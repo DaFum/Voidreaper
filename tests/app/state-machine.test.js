@@ -7,10 +7,20 @@ test("createStateMachine initializes with valid state and validates transitions"
   const machine = createStateMachine("menu", eventBus);
 
   assert.equal(machine.state, "menu", "Initial state is menu");
-  assert.equal(machine.can("hangar"), true, "Can transition from menu to hangar");
-  assert.equal(machine.can("gameover"), false, "Cannot transition from menu to gameover directly");
+  assert.equal(
+    machine.can("hangar"),
+    true,
+    "Can transition from menu to hangar",
+  );
+  assert.equal(
+    machine.can("gameover"),
+    false,
+    "Cannot transition from menu to gameover directly",
+  );
 
-  assert.throws(() => createStateMachine("invalid_state"), { message: "Unknown initial state: invalid_state" });
+  assert.throws(() => createStateMachine("invalid_state"), {
+    message: "Unknown initial state: invalid_state",
+  });
 });
 
 test("createStateMachine handles transitions and emits events", () => {
@@ -22,9 +32,14 @@ test("createStateMachine handles transitions and emits events", () => {
   assert.equal(machine.state, "hangar");
 
   assert.equal(eventBus.emit.mock.calls.length, 1);
-  assert.deepEqual(eventBus.emit.mock.calls[0].arguments, ["state-changed", { previousState: "menu", state: "hangar", detail: { some: "data" } }]);
+  assert.deepEqual(eventBus.emit.mock.calls[0].arguments, [
+    "state-changed",
+    { previousState: "menu", state: "hangar", detail: { some: "data" } },
+  ]);
 
-  assert.throws(() => machine.transition("invalid_target"), { message: "Invalid state transition: hangar -> invalid_target" });
+  assert.throws(() => machine.transition("invalid_target"), {
+    message: "Invalid state transition: hangar -> invalid_target",
+  });
 });
 
 test("createStateMachine handles returnToPrevious", () => {

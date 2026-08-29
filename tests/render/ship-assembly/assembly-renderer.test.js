@@ -8,13 +8,23 @@ test("createAssemblyRenderer initializes and handles empty/missing geometry", ()
     save: test.mock.fn(),
     restore: test.mock.fn(),
     translate: test.mock.fn(),
-    rotate: test.mock.fn()
+    rotate: test.mock.fn(),
   };
 
-  const result = renderer.renderPlayerShip(ctx, { geometrySnapshot: null, position: { x: 0, y: 0 } });
-  assert.equal(result, false, "Returns false if no coreGeometry is provided in snapshot");
+  const result = renderer.renderPlayerShip(ctx, {
+    geometrySnapshot: null,
+    position: { x: 0, y: 0 },
+  });
+  assert.equal(
+    result,
+    false,
+    "Returns false if no coreGeometry is provided in snapshot",
+  );
 
-  const resultEmpty = renderer.renderPlayerShip(ctx, { geometrySnapshot: {}, position: { x: 0, y: 0 } });
+  const resultEmpty = renderer.renderPlayerShip(ctx, {
+    geometrySnapshot: {},
+    position: { x: 0, y: 0 },
+  });
   assert.equal(resultEmpty, false, "Returns false if coreGeometry is missing");
 });
 
@@ -34,36 +44,51 @@ test("createAssemblyRenderer renders successfully with basic geometry", () => {
     stroke: test.mock.fn(),
     ellipse: test.mock.fn(),
     arc: test.mock.fn(),
-    createLinearGradient: test.mock.fn(() => ({ addColorStop: test.mock.fn() })),
-    createRadialGradient: test.mock.fn(() => ({ addColorStop: test.mock.fn() })),
+    createLinearGradient: test.mock.fn(() => ({
+      addColorStop: test.mock.fn(),
+    })),
+    createRadialGradient: test.mock.fn(() => ({
+      addColorStop: test.mock.fn(),
+    })),
     fillRect: test.mock.fn(),
     clip: test.mock.fn(),
-    scale: test.mock.fn()
+    scale: test.mock.fn(),
   };
 
   const snapshot = {
     coreGeometry: {
-        bounds: { minX: -10, maxX: 10, minY: -10, maxY: 10 },
-        hullPaths: [],
-        armorPaths: [],
-        structurePaths: [],
-        detailPaths: [],
-        cockpitPath: { kind: "line", from: {x:0, y:0}, to: {x:0, y:0} },
-        reactorPath: { kind: "line", from: {x:0, y:0}, to: {x:0, y:0} },
-        voidPaths: [],
-        lightPaths: [],
-        thrusterAnchors: []
+      bounds: { minX: -10, maxX: 10, minY: -10, maxY: 10 },
+      hullPaths: [],
+      armorPaths: [],
+      structurePaths: [],
+      detailPaths: [],
+      cockpitPath: { kind: "line", from: { x: 0, y: 0 }, to: { x: 0, y: 0 } },
+      reactorPath: { kind: "line", from: { x: 0, y: 0 }, to: { x: 0, y: 0 } },
+      voidPaths: [],
+      lightPaths: [],
+      thrusterAnchors: [],
     },
     connections: [],
     decorators: [],
     armor: [],
     nodes: [],
     shipFrameId: 1,
-    shipStyle: { palette: {} }
+    shipStyle: { palette: {} },
   };
 
-  const result = renderer.renderPlayerShip(ctx, { geometrySnapshot: snapshot, position: { x: 0, y: 0 } });
+  const result = renderer.renderPlayerShip(ctx, {
+    geometrySnapshot: snapshot,
+    position: { x: 0, y: 0 },
+  });
   assert.equal(result, true, "Returns true when successfully rendering");
-  assert.equal(ctx.save.mock.calls.length >= 1, true, "Context save should be called");
-  assert.equal(ctx.restore.mock.calls.length >= 1, true, "Context restore should be called");
+  assert.equal(
+    ctx.save.mock.calls.length >= 1,
+    true,
+    "Context save should be called",
+  );
+  assert.equal(
+    ctx.restore.mock.calls.length >= 1,
+    true,
+    "Context restore should be called",
+  );
 });

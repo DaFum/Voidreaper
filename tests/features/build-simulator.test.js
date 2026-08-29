@@ -4,7 +4,12 @@ import { createBuildSimulator } from "../../src/features/simulator/build-simulat
 
 test("configured simulations are deterministic and meaningful", () => {
   const simulator = createBuildSimulator();
-  const config = { seed: 42, enemyId: "boss-dummy", density: 2.5, duration: 45 };
+  const config = {
+    seed: 42,
+    enemyId: "boss-dummy",
+    density: 2.5,
+    duration: 45,
+  };
   const first = simulator.create(config);
   const second = simulator.create(config);
 

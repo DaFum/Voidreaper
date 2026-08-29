@@ -6,7 +6,12 @@ export function createWeaponContext(run, services) {
     effects: services.effects,
     stats: services.stats,
     events: services.events,
-    findTarget: options => services.targeting?.find(run, options) ?? run.enemies.find(enemy => !enemy.dead) ?? null,
-    emitEffect(effect, extra = {}) { return services.effects.execute(effect, { run, ...this, ...extra }); }
+    findTarget: (options) =>
+      services.targeting?.find(run, options) ??
+      run.enemies.find((enemy) => !enemy.dead) ??
+      null,
+    emitEffect(effect, extra = {}) {
+      return services.effects.execute(effect, { run, ...this, ...extra });
+    },
   };
 }

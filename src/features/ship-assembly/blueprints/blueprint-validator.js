@@ -100,7 +100,8 @@ export function validateBlueprint(
   if (!root) issues.push({ type: "missing-root" });
   // An unknown frame must fail validation: geometry lookup throws downstream,
   // so an imported blueprint with a bogus shipFrameId is unusable.
-  const unknownFrame = Boolean(source.shipFrameId) && !knownShipFrameIds.has(source.shipFrameId);
+  const unknownFrame =
+    Boolean(source.shipFrameId) && !knownShipFrameIds.has(source.shipFrameId);
   if (unknownFrame)
     issues.push({ type: "unknown-frame", shipFrameId: source.shipFrameId });
   return {

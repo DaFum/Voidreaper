@@ -1,14 +1,22 @@
 import { escapeHtml } from "../escape-html.js";
 export function renderStatBreakdown(container, breakdowns) {
-  container.innerHTML = breakdowns.map(({ definition, result }) => `
+  container.innerHTML = breakdowns
+    .map(
+      ({ definition, result }) => `
     <section class="inspector-stat">
       <header><span>${escapeHtml(definition.displayName)}</span><b>${formatValue(result.value, definition.displayFormat)}</b></header>
       <div class="inspector-source"><span>BASE</span><span>${formatValue(result.baseValue, definition.displayFormat)}</span></div>
-      ${result.contributions.map(contribution => `
+      ${result.contributions
+        .map(
+          (contribution) => `
         <div class="inspector-source"><span>${escapeHtml(contribution.sourceId)}</span><span>${formatDelta(contribution)}</span></div>
-      `).join("")}
+      `,
+        )
+        .join("")}
     </section>
-  `).join("");
+  `,
+    )
+    .join("");
 }
 
 function formatValue(value, format) {
@@ -19,7 +27,9 @@ function formatValue(value, format) {
 }
 
 function formatDelta(contribution) {
-  if (contribution.operation === "multiply") return `×${Number(contribution.value).toFixed(2)}`;
-  if (contribution.operation === "clamp") return `${contribution.value[0]}…${contribution.value[1]}`;
+  if (contribution.operation === "multiply")
+    return `×${Number(contribution.value).toFixed(2)}`;
+  if (contribution.operation === "clamp")
+    return `${contribution.value[0]}…${contribution.value[1]}`;
   return `${contribution.operation === "add" && contribution.value >= 0 ? "+" : ""}${contribution.value}`;
 }
