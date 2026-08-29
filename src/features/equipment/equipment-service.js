@@ -13,7 +13,7 @@ export function createEquipmentService({ registry, inventory }) {
       for (let i = 0; i < current.length; i++) {
         const item = current[i];
         if (item && item.instanceId) {
-          instanceMap.set(item.instanceId, item);
+          instanceMap.set(item.instanceId, { item, index: i });
         }
       }
     }
@@ -22,12 +22,15 @@ export function createEquipmentService({ registry, inventory }) {
 
   return {
     requireInstance(id) {
-      let item = getInstanceMap().get(id);
-      if (!item || item.instanceId !== id) {
-        // Fallback in case inventory array was modified without changing reference or length
+      const current = inventory() ?? [];
+      let entry = getInstanceMap().get(id);
+      // Validate that the cached item is still at its expected index in current inventory.
+      // If it was swapped or replaced, invalidate cache and rebuild.
+      if (!entry || current[entry.index] !== entry.item) {
         cachedInventoryRef = null;
-        item = getInstanceMap().get(id);
+        entry = getInstanceMap().get(id);
       }
+      const item = (entry && current[entry.index] === entry.item) ? entry.item : null;
       if (!item) throw new Error(`Unknown equipment instance: ${id}`);
       return item;
     },

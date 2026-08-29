@@ -193,7 +193,7 @@ export function createGameController(services) {
           for (let i = 0; i < current.length; i++) {
             const entry = current[i];
             if (entry && entry.instanceId) {
-              inventoryMap.set(entry.instanceId, entry);
+              inventoryMap.set(entry.instanceId, { item: entry, index: i });
             }
           }
         }
@@ -203,12 +203,15 @@ export function createGameController(services) {
       const runInventory = {
         values: () => run.inventory,
         store: (id) => {
-          let item = getInventoryMap().get(id);
-          if (!item || item.instanceId !== id) {
-            // Fallback rebuild in case inventory was mutated without length/reference change
+          const current = run.inventory ?? [];
+          let cached = getInventoryMap().get(id);
+          // Validate that the cached item is still at its expected index in current inventory.
+          // If it was swapped or replaced in-place, invalidate cache and rebuild.
+          if (!cached || current[cached.index] !== cached.item) {
             cachedInventoryRef = null;
-            item = getInventoryMap().get(id);
+            cached = getInventoryMap().get(id);
           }
+          const item = (cached && current[cached.index] === cached.item) ? cached.item : null;
           if (item) item.stored = true;
           return item ?? null;
         },
