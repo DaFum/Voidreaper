@@ -24,7 +24,7 @@ import { createLightMask } from "../render/post/light-mask.js";
 
 /* ---------- utilities ---------- */
 const TAU = Math.PI * 2;
-function drawBloomDot(cx, x, y, r, color, coreR = r * 0.3) {
+function drawBloomDot(cx, { x, y, r, color, coreR = r * 0.3 }) {
   if (!(r > 0)) return;
   const g = cx.createRadialGradient(x, y, 0, x, y, r);
   g.addColorStop(0, "#ffffff");
@@ -2933,7 +2933,14 @@ const Game = {
       cx.stroke();
       cx.globalAlpha = 1;
       // the frame-cost gate drops bloom; fall back to the flat orb
-      if (bloom) drawBloomDot(cx, b.x, b.y, b.r * 1.5, col, b.r * 0.6);
+      if (bloom)
+        drawBloomDot(cx, {
+          x: b.x,
+          y: b.y,
+          r: b.r * 1.5,
+          color: col,
+          coreR: b.r * 0.6,
+        });
       else {
         cx.fillStyle = col;
         cx.beginPath();
@@ -3069,7 +3076,13 @@ const Game = {
           cx.lineTo(pt.x, pt.y);
           cx.stroke();
         } else if (sparks) {
-          drawBloomDot(cx, pt.x, pt.y, pt.size * 2, pt.color, pt.size * 0.5);
+          drawBloomDot(cx, {
+            x: pt.x,
+            y: pt.y,
+            r: pt.size * 2,
+            color: pt.color,
+            coreR: pt.size * 0.5,
+          });
         } else {
           // bloom is off because the frame is over budget — no gradient per particle
           cx.fillStyle = pt.color;

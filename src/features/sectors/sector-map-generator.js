@@ -22,7 +22,7 @@ const TYPE_ROTATION = [
   "recovery",
 ];
 
-function node(rng, regionIndex, layer, index, type, contentVersion) {
+function node(rng, { regionIndex, layer, index, type, contentVersion }) {
   const safeType = normalizeNodeType(type);
   const definition = NODE_TYPES[safeType];
   const danger = Math.min(
@@ -75,18 +75,23 @@ export function generateSectorMap({
         if (layer === 1 && regionIndex % 2 === 0 && index === 0)
           type = "workshop";
         if (layer === 2) type = index === 0 ? "mid-boss" : "extraction";
-        return node(rng, regionIndex, layer, index, type, contentVersion);
+        return node(rng, {
+          regionIndex,
+          layer,
+          index,
+          type,
+          contentVersion,
+        });
       });
       layers.push(nodes);
     }
-    const boss = node(
-      rng,
+    const boss = node(rng, {
       regionIndex,
-      3,
-      0,
-      regionIndex === 4 ? "boss" : "mid-boss",
+      layer: 3,
+      index: 0,
+      type: regionIndex === 4 ? "boss" : "mid-boss",
       contentVersion,
-    );
+    });
     layers.push([boss]);
     for (let layer = 0; layer < layers.length - 1; layer += 1) {
       for (const current of layers[layer]) {
