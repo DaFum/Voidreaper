@@ -9,7 +9,11 @@ export function parseTint(color) {
   const cached = tintCache.get(color);
   if (cached !== undefined) return cached;
   let hex = color.slice(1);
-  if (hex.length === 3) hex = hex.split("").map(char => char + char).join("");
+  if (hex.length === 3)
+    hex = hex
+      .split("")
+      .map((char) => char + char)
+      .join("");
   const value = Number.parseInt(hex.slice(0, 6), 16);
   const tint = Number.isNaN(value) ? 0xffffff : value;
   tintCache.set(color, tint);
@@ -26,8 +30,9 @@ export function isSpark(particle) {
 /** Length/rotation of a spark streak — matches the legacy 0.035s velocity tail. */
 export function sparkTransform(particle) {
   return {
-    length: Math.sqrt((particle.vx)*(particle.vx) + (particle.vy)*(particle.vy)) * 0.035,
-    rotation: Math.atan2(particle.vy, particle.vx)
+    length:
+      Math.sqrt(particle.vx * particle.vx + particle.vy * particle.vy) * 0.035,
+    rotation: Math.atan2(particle.vy, particle.vx),
   };
 }
 

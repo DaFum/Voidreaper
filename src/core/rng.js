@@ -7,7 +7,9 @@ export function mulberry32(seed) {
     return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
   };
   next.getState = () => state >>> 0;
-  next.setState = value => { state = value | 0; };
+  next.setState = (value) => {
+    state = value | 0;
+  };
   return next;
 }
 
@@ -26,10 +28,14 @@ export function createRunRng(seed, restoredState) {
     seed: seed >>> 0,
     next,
     range: (min, max) => min + next() * (max - min),
-    integer: (min, maxInclusive) => Math.floor(min + next() * (maxInclusive - min + 1)),
-    pick: values => values[Math.floor(next() * values.length)],
+    integer: (min, maxInclusive) =>
+      Math.floor(min + next() * (maxInclusive - min + 1)),
+    pick: (values) => values[Math.floor(next() * values.length)],
     weighted(entries) {
-      const total = entries.reduce((sum, entry) => sum + Math.max(0, entry.weight), 0);
+      const total = entries.reduce(
+        (sum, entry) => sum + Math.max(0, entry.weight),
+        0,
+      );
       if (total <= 0) return entries[0]?.value ?? null;
       let roll = next() * total;
       for (const entry of entries) {
@@ -38,6 +44,6 @@ export function createRunRng(seed, restoredState) {
       }
       return entries.at(-1)?.value ?? null;
     },
-    snapshot: () => next.getState()
+    snapshot: () => next.getState(),
   };
 }

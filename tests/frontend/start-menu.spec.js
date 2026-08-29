@@ -8,7 +8,12 @@ const setup = () => {
   const startScreen = document.createElement("div");
   const openButton = document.createElement("button");
   const closeButton = document.createElement("button");
-  return { startScreen, openButton, closeButton, toggle: attachStartMenuToggle(startScreen, { openButton, closeButton }) };
+  return {
+    startScreen,
+    openButton,
+    closeButton,
+    toggle: attachStartMenuToggle(startScreen, { openButton, closeButton }),
+  };
 };
 
 describe("start menu toggle", () => {
@@ -52,15 +57,25 @@ describe("start menu toggle", () => {
   });
 
   test("hangar stylesheet exposes desktop overflow and mobile picker contracts", () => {
-    expect(hangarCss).toContain('.hangar-tabs-shell[data-overflow-start="true"]');
+    expect(hangarCss).toContain(
+      '.hangar-tabs-shell[data-overflow-start="true"]',
+    );
     expect(hangarCss).toContain('.hangar-tabs-shell[data-overflow-end="true"]');
     expect(hangarCss).toContain(".hangar-area-toggle");
-    expect(hangarCss).toMatch(/@media \(max-width: 700px\)[\s\S]*\.hangar-tabs-shell[\s\S]*display: none/);
-    expect(hangarCss).not.toMatch(/\.hangar-tabs\s*\{[^}]*scroll-behavior:\s*smooth/);
+    expect(hangarCss).toMatch(
+      /@media \(max-width: 700px\)[\s\S]*\.hangar-tabs-shell[\s\S]*display: none/,
+    );
+    expect(hangarCss).not.toMatch(
+      /\.hangar-tabs\s*\{[^}]*scroll-behavior:\s*smooth/,
+    );
   });
 
   test("selected clipped catalog cards draw their marker inside the clipped area", () => {
-    expect(hangarCss).toMatch(/\.item-card\[data-selected\]\s*\{[^}]*box-shadow:\s*inset/);
-    expect(hangarCss).not.toMatch(/\.item-card\[data-selected\]\s*\{[^}]*outline-offset:\s*[1-9]/);
+    expect(hangarCss).toMatch(
+      /\.item-card\[data-selected\]\s*\{[^}]*box-shadow:\s*inset/,
+    );
+    expect(hangarCss).not.toMatch(
+      /\.item-card\[data-selected\]\s*\{[^}]*outline-offset:\s*[1-9]/,
+    );
   });
 });

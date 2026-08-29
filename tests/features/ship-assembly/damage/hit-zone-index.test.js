@@ -7,7 +7,7 @@ function makeZone(id, x, y, shape) {
   return {
     id,
     transform: { position: { x, y } },
-    shape
+    shape,
   };
 }
 
@@ -42,19 +42,46 @@ test("createHitZoneIndex query bounding box overlap logic", () => {
 
   // Partially overlapping
   assert.equal(index.query({ minX: 5, minY: 5, maxX: 15, maxY: 15 }).length, 1);
-  assert.equal(index.query({ minX: -15, minY: -15, maxX: -5, maxY: -5 }).length, 1);
+  assert.equal(
+    index.query({ minX: -15, minY: -15, maxX: -5, maxY: -5 }).length,
+    1,
+  );
 
   // Exactly touching edges (inclusive)
-  assert.equal(index.query({ minX: 10, minY: 0, maxX: 20, maxY: 10 }).length, 1); // touching right edge
-  assert.equal(index.query({ minX: 0, minY: 10, maxX: 10, maxY: 20 }).length, 1); // touching top edge
-  assert.equal(index.query({ minX: -20, minY: 0, maxX: -10, maxY: 10 }).length, 1); // touching left edge
-  assert.equal(index.query({ minX: 0, minY: -20, maxX: 10, maxY: -10 }).length, 1); // touching bottom edge
+  assert.equal(
+    index.query({ minX: 10, minY: 0, maxX: 20, maxY: 10 }).length,
+    1,
+  ); // touching right edge
+  assert.equal(
+    index.query({ minX: 0, minY: 10, maxX: 10, maxY: 20 }).length,
+    1,
+  ); // touching top edge
+  assert.equal(
+    index.query({ minX: -20, minY: 0, maxX: -10, maxY: 10 }).length,
+    1,
+  ); // touching left edge
+  assert.equal(
+    index.query({ minX: 0, minY: -20, maxX: 10, maxY: -10 }).length,
+    1,
+  ); // touching bottom edge
 
   // Non-overlapping (just outside)
-  assert.equal(index.query({ minX: 11, minY: 0, maxX: 20, maxY: 10 }).length, 0); // outside right
-  assert.equal(index.query({ minX: 0, minY: 11, maxX: 10, maxY: 20 }).length, 0); // outside top
-  assert.equal(index.query({ minX: -20, minY: 0, maxX: -11, maxY: 10 }).length, 0); // outside left
-  assert.equal(index.query({ minX: 0, minY: -20, maxX: 10, maxY: -11 }).length, 0); // outside bottom
+  assert.equal(
+    index.query({ minX: 11, minY: 0, maxX: 20, maxY: 10 }).length,
+    0,
+  ); // outside right
+  assert.equal(
+    index.query({ minX: 0, minY: 11, maxX: 10, maxY: 20 }).length,
+    0,
+  ); // outside top
+  assert.equal(
+    index.query({ minX: -20, minY: 0, maxX: -11, maxY: 10 }).length,
+    0,
+  ); // outside left
+  assert.equal(
+    index.query({ minX: 0, minY: -20, maxX: 10, maxY: -11 }).length,
+    0,
+  ); // outside bottom
 });
 
 test("createHitZoneIndex computes bounds correctly for different shapes", () => {
@@ -74,7 +101,12 @@ test("createHitZoneIndex computes bounds correctly for different shapes", () => 
   // Bounds: 28 to 52 (x), -12 to 12 (y)
 
   // 4. Polygon (uses max absolute point coordinates)
-  const polygon = makeZone("polygon", 60, 0, { points: [{ x: 3, y: -4 }, { x: -8, y: 2 }] });
+  const polygon = makeZone("polygon", 60, 0, {
+    points: [
+      { x: 3, y: -4 },
+      { x: -8, y: 2 },
+    ],
+  });
   // Max abs is 8.
   // Bounds: 52 to 68 (x), -8 to 8 (y)
 
@@ -85,22 +117,72 @@ test("createHitZoneIndex computes bounds correctly for different shapes", () => 
   index.rebuild(1, [circle, ring, capsule, polygon, def]);
 
   // Test Circle
-  assert.equal(index.query({ minX: 5, minY: 0, maxX: 10, maxY: 5 }).find(z => z.id === "circle")?.id, "circle");
-  assert.equal(index.query({ minX: 6, minY: 0, maxX: 10, maxY: 5 }).find(z => z.id === "circle"), undefined);
+  assert.equal(
+    index
+      .query({ minX: 5, minY: 0, maxX: 10, maxY: 5 })
+      .find((z) => z.id === "circle")?.id,
+    "circle",
+  );
+  assert.equal(
+    index
+      .query({ minX: 6, minY: 0, maxX: 10, maxY: 5 })
+      .find((z) => z.id === "circle"),
+    undefined,
+  );
 
   // Test Ring
-  assert.equal(index.query({ minX: 26, minY: 0, maxX: 30, maxY: 5 }).find(z => z.id === "ring")?.id, "ring");
-  assert.equal(index.query({ minX: 27, minY: 0, maxX: 30, maxY: 5 }).find(z => z.id === "ring"), undefined);
+  assert.equal(
+    index
+      .query({ minX: 26, minY: 0, maxX: 30, maxY: 5 })
+      .find((z) => z.id === "ring")?.id,
+    "ring",
+  );
+  assert.equal(
+    index
+      .query({ minX: 27, minY: 0, maxX: 30, maxY: 5 })
+      .find((z) => z.id === "ring"),
+    undefined,
+  );
 
   // Test Capsule
-  assert.equal(index.query({ minX: 52, minY: 0, maxX: 60, maxY: 5 }).find(z => z.id === "capsule")?.id, "capsule");
-  assert.equal(index.query({ minX: 53, minY: 0, maxX: 60, maxY: 5 }).find(z => z.id === "capsule"), undefined);
+  assert.equal(
+    index
+      .query({ minX: 52, minY: 0, maxX: 60, maxY: 5 })
+      .find((z) => z.id === "capsule")?.id,
+    "capsule",
+  );
+  assert.equal(
+    index
+      .query({ minX: 53, minY: 0, maxX: 60, maxY: 5 })
+      .find((z) => z.id === "capsule"),
+    undefined,
+  );
 
   // Test Polygon
-  assert.equal(index.query({ minX: 68, minY: 0, maxX: 70, maxY: 5 }).find(z => z.id === "polygon")?.id, "polygon");
-  assert.equal(index.query({ minX: 69, minY: 0, maxX: 70, maxY: 5 }).find(z => z.id === "polygon"), undefined);
+  assert.equal(
+    index
+      .query({ minX: 68, minY: 0, maxX: 70, maxY: 5 })
+      .find((z) => z.id === "polygon")?.id,
+    "polygon",
+  );
+  assert.equal(
+    index
+      .query({ minX: 69, minY: 0, maxX: 70, maxY: 5 })
+      .find((z) => z.id === "polygon"),
+    undefined,
+  );
 
   // Test Default
-  assert.equal(index.query({ minX: 124, minY: 0, maxX: 130, maxY: 5 }).find(z => z.id === "default")?.id, "default");
-  assert.equal(index.query({ minX: 125, minY: 0, maxX: 130, maxY: 5 }).find(z => z.id === "default"), undefined);
+  assert.equal(
+    index
+      .query({ minX: 124, minY: 0, maxX: 130, maxY: 5 })
+      .find((z) => z.id === "default")?.id,
+    "default",
+  );
+  assert.equal(
+    index
+      .query({ minX: 125, minY: 0, maxX: 130, maxY: 5 })
+      .find((z) => z.id === "default"),
+    undefined,
+  );
 });

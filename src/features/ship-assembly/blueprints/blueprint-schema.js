@@ -1,5 +1,46 @@
-export const BLUEPRINT_VERSION=1;
-export function createBlueprint({id,name,shipFrameId,nodes,connections,variants=[]}){const now=new Date().toISOString();return{blueprintVersion:BLUEPRINT_VERSION,blueprintId:id,name,shipFrameId,createdAt:now,updatedAt:now,nodes,connections,visualVariants:variants,favorite:false,usage:{lastUsedAt:null,highestAbyssDepth:0},thumbnailDataUrl:null};}
+export const BLUEPRINT_VERSION = 1;
+export function createBlueprint({
+  id,
+  name,
+  shipFrameId,
+  nodes,
+  connections,
+  variants = [],
+}) {
+  const now = new Date().toISOString();
+  return {
+    blueprintVersion: BLUEPRINT_VERSION,
+    blueprintId: id,
+    name,
+    shipFrameId,
+    createdAt: now,
+    updatedAt: now,
+    nodes,
+    connections,
+    visualVariants: variants,
+    favorite: false,
+    usage: { lastUsedAt: null, highestAbyssDepth: 0 },
+    thumbnailDataUrl: null,
+  };
+}
 // portsById is needed to record the frame-stable parent port key: node ids are
 // run-local, so cross-run matching (blueprint-matcher) relies on parentPortKey.
-export function toBlueprintNode(node,portsById={}){return{blueprintNodeId:node.nodeId,parentBlueprintNodeId:node.parentNodeId,parentPortKey:portsById[node.parentPortId]?.key??null,preferredModuleDefinitionId:node.moduleInstanceId?node.definitionId:null,rootFrameId:node.moduleInstanceId?null:node.definitionId,allowedRoles:node.allowedRoles??[],allowedTags:node.allowedTags??[],sizeClass:node.sizeClass??null,mountType:node.mountType??null,localPosition:node.localPosition,localRotation:node.localRotation,mirrorBehavior:node.mirrorBehavior??"none",childPortLayout:node.childPortLayout??[]};}
+export function toBlueprintNode(node, portsById = {}) {
+  return {
+    blueprintNodeId: node.nodeId,
+    parentBlueprintNodeId: node.parentNodeId,
+    parentPortKey: portsById[node.parentPortId]?.key ?? null,
+    preferredModuleDefinitionId: node.moduleInstanceId
+      ? node.definitionId
+      : null,
+    rootFrameId: node.moduleInstanceId ? null : node.definitionId,
+    allowedRoles: node.allowedRoles ?? [],
+    allowedTags: node.allowedTags ?? [],
+    sizeClass: node.sizeClass ?? null,
+    mountType: node.mountType ?? null,
+    localPosition: node.localPosition,
+    localRotation: node.localRotation,
+    mirrorBehavior: node.mirrorBehavior ?? "none",
+    childPortLayout: node.childPortLayout ?? [],
+  };
+}

@@ -21,6 +21,6 @@ export function createEventBus() {
     },
     clear() {
       listeners.clear();
-    }
+    },
   };
 }

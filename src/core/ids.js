@@ -1,4 +1,6 @@
-const loadId = Math.floor(Math.random() * 1679616).toString(36).padStart(4, "0");
+const loadId = Math.floor(Math.random() * 1679616)
+  .toString(36)
+  .padStart(4, "0");
 let counter = 0;
 
 export function createRuntimeId(prefix = "runtime") {
@@ -13,8 +15,15 @@ export function createIdService(runId = "run", restoredCounter = 0) {
       runCounter += 1;
       return `${runId}-${prefix}-${runCounter.toString(36)}`;
     },
-    snapshot() { return runCounter; },
-    restore(value) { const next = Math.max(0, Math.floor(Number(value) || 0)); if (next > runCounter) runCounter = next; },
-    get prefix() { return runId; }
+    snapshot() {
+      return runCounter;
+    },
+    restore(value) {
+      const next = Math.max(0, Math.floor(Number(value) || 0));
+      if (next > runCounter) runCounter = next;
+    },
+    get prefix() {
+      return runId;
+    },
   };
 }

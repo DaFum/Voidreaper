@@ -10,13 +10,25 @@ describe("describeStability", () => {
   });
 
   it("prioritizes corruption over a legacy string stability", () => {
-    assert.equal(describeStability({ corruptionLevel: 75, stability: "stable" }), "corrupted");
-    assert.equal(describeStability({ corruptionLevel: 75, stability: "damaged" }), "corrupted");
+    assert.equal(
+      describeStability({ corruptionLevel: 75, stability: "stable" }),
+      "corrupted",
+    );
+    assert.equal(
+      describeStability({ corruptionLevel: 75, stability: "damaged" }),
+      "corrupted",
+    );
   });
 
   it("returns legacy string stability if corruption is below 75", () => {
-    assert.equal(describeStability({ corruptionLevel: 0, stability: "stable" }), "stable");
-    assert.equal(describeStability({ corruptionLevel: 50, stability: "damaged" }), "damaged");
+    assert.equal(
+      describeStability({ corruptionLevel: 0, stability: "stable" }),
+      "stable",
+    );
+    assert.equal(
+      describeStability({ corruptionLevel: 50, stability: "damaged" }),
+      "damaged",
+    );
   });
 
   it("returns 'damaged' if numeric stability is below 75", () => {

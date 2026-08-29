@@ -4,10 +4,13 @@ export const createTutorialState = ({ autoOffer = true } = {}) => ({
   active: null,
   completedChapters: {},
   skippedChapters: {},
-  seenSteps: {}
+  seenSteps: {},
 });
 
-export function migrateTutorialSave(save, { fromVersion = 0, legacyOnboarding, existingTutorial } = {}) {
+export function migrateTutorialSave(
+  save,
+  { fromVersion = 0, legacyOnboarding, existingTutorial } = {},
+) {
   if (fromVersion < 6) {
     const existing = existingTutorial ?? {};
     const tutorial = {
@@ -15,9 +18,11 @@ export function migrateTutorialSave(save, { fromVersion = 0, legacyOnboarding, e
       ...existing,
       completedChapters: { ...(existing.completedChapters ?? {}) },
       skippedChapters: { ...(existing.skippedChapters ?? {}) },
-      seenSteps: { ...(existing.seenSteps ?? {}) }
+      seenSteps: { ...(existing.seenSteps ?? {}) },
     };
-    for (const [run, completed] of Object.entries(legacyOnboarding?.completed ?? {})) {
+    for (const [run, completed] of Object.entries(
+      legacyOnboarding?.completed ?? {},
+    )) {
       if (completed) tutorial.seenSteps[`legacy-run-${run}`] = true;
     }
     save.tutorial = tutorial;

@@ -12,10 +12,24 @@ test("codex select filters have explicit accessible names", () => {
 
 test("codex filters persist in rendered controls", () => {
   const root = { innerHTML: "", querySelectorAll: () => [] };
-  renderCodexScreen(root, { entries: [], filters: { category: "weapons", status: "analyzed", tag: "Void", source: "boss" } });
+  renderCodexScreen(root, {
+    entries: [],
+    filters: {
+      category: "weapons",
+      status: "analyzed",
+      tag: "Void",
+      source: "boss",
+    },
+  });
 
-  assert.match(root.innerHTML, /<option value="weapons" selected>weapons<\/option>/);
-  assert.match(root.innerHTML, /<option value="analyzed" selected>analyzed<\/option>/);
+  assert.match(
+    root.innerHTML,
+    /<option value="weapons" selected>weapons<\/option>/,
+  );
+  assert.match(
+    root.innerHTML,
+    /<option value="analyzed" selected>analyzed<\/option>/,
+  );
   assert.match(root.innerHTML, /data-tag[^>]*value="Void"/);
   assert.match(root.innerHTML, /data-source[^>]*value="boss"/);
 });

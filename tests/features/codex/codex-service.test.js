@@ -11,23 +11,30 @@ test("codex service handles empty registries", () => {
 test("codex service maps definition registries to entries", () => {
   const registries = {
     ships: [
-      { id: "ship-a", name: "Ship A", description: "A ship", unlockSource: "found", tags: ["small"] },
-      { id: "ship-b", name: "Ship B", reward: "B reward", tags: [{id: "large"}] },
-      { id: "ship-c", name: "Ship C" }
+      {
+        id: "ship-a",
+        name: "Ship A",
+        description: "A ship",
+        unlockSource: "found",
+        tags: ["small"],
+      },
+      {
+        id: "ship-b",
+        name: "Ship B",
+        reward: "B reward",
+        tags: [{ id: "large" }],
+      },
+      { id: "ship-c", name: "Ship C" },
     ],
-    forbidden: [
-      { id: "secret-1", name: "Secret 1" }
-    ],
-    weapons: [
-      { id: "wep-1", name: "Wep 1", forbidden: true }
-    ]
+    forbidden: [{ id: "secret-1", name: "Secret 1" }],
+    weapons: [{ id: "wep-1", name: "Wep 1", forbidden: true }],
   };
 
   const service = createCodexService(registries);
 
   assert.equal(service.entries.length, 5);
 
-  const shipA = service.entries.find(e => e.id === "ships:ship-a");
+  const shipA = service.entries.find((e) => e.id === "ships:ship-a");
   assert.deepEqual(shipA, {
     id: "ships:ship-a",
     contentId: "ship-a",
@@ -36,22 +43,22 @@ test("codex service maps definition registries to entries", () => {
     description: "A ship",
     tags: ["small"],
     source: "found",
-    forbidden: undefined
+    forbidden: undefined,
   });
 
-  const shipB = service.entries.find(e => e.id === "ships:ship-b");
+  const shipB = service.entries.find((e) => e.id === "ships:ship-b");
   assert.equal(shipB.description, "B reward");
   assert.deepEqual(shipB.tags, ["large"]);
   assert.equal(shipB.source, "ships");
 
-  const shipC = service.entries.find(e => e.id === "ships:ship-c");
+  const shipC = service.entries.find((e) => e.id === "ships:ship-c");
   assert.equal(shipC.description, CODEX_STRINGS.FALLBACK_DESCRIPTION);
   assert.deepEqual(shipC.tags, []);
 
-  const secret1 = service.entries.find(e => e.id === "forbidden:secret-1");
+  const secret1 = service.entries.find((e) => e.id === "forbidden:secret-1");
   assert.equal(secret1.forbidden, true);
 
-  const wep1 = service.entries.find(e => e.id === "weapons:wep-1");
+  const wep1 = service.entries.find((e) => e.id === "weapons:wep-1");
   assert.equal(wep1.forbidden, true);
 });
 
@@ -63,7 +70,10 @@ test("codex service discovers entries and updates levels", () => {
   let result = service.discover(save, "ships:ship-a");
   assert.equal(result.evidence, 1);
   assert.equal(result.level, "observed");
-  assert.deepEqual(save.codex["ships:ship-a"], { evidence: 1, level: "observed" });
+  assert.deepEqual(save.codex["ships:ship-a"], {
+    evidence: 1,
+    level: "observed",
+  });
 
   // Discover with evidence = 2 (total 3)
   result = service.discover(save, "ships:ship-a", 2);
@@ -88,28 +98,28 @@ test("codex service views entries based on state", () => {
     id: "ships:ship-a",
     name: "Ship A",
     description: "A normal ship",
-    forbidden: false
+    forbidden: false,
   };
 
   const forbiddenEntry = {
     id: "forbidden:secret-1",
     name: "Secret 1",
     description: "A secret thing",
-    forbidden: true
+    forbidden: true,
   };
 
   // Normal entry, unknown state
   assert.deepEqual(service.view(normalEntry, null), {
     ...normalEntry,
     level: "unknown",
-    description: CODEX_STRINGS.UNKNOWN_SIGNATURE
+    description: CODEX_STRINGS.UNKNOWN_SIGNATURE,
   });
 
   // Normal entry, known state
   assert.deepEqual(service.view(normalEntry, { level: "observed" }), {
     ...normalEntry,
     level: "observed",
-    description: "A normal ship"
+    description: "A normal ship",
   });
 
   // Forbidden entry, unknown state
@@ -117,14 +127,14 @@ test("codex service views entries based on state", () => {
     ...forbiddenEntry,
     level: "unknown",
     name: CODEX_STRINGS.FORBIDDEN_NAME,
-    description: CODEX_STRINGS.FORBIDDEN_DESCRIPTION
+    description: CODEX_STRINGS.FORBIDDEN_DESCRIPTION,
   });
 
   // Forbidden entry, known state
   assert.deepEqual(service.view(forbiddenEntry, { level: "analyzed" }), {
     ...forbiddenEntry,
     level: "analyzed",
-    description: "A secret thing"
+    description: "A secret thing",
   });
 });
 
@@ -132,11 +142,9 @@ test("codex service filters entries correctly", () => {
   const registries = {
     ships: [
       { id: "ship-a", name: "Ship A", tags: ["fast"], unlockSource: "found" },
-      { id: "ship-b", name: "Ship B", tags: ["slow"], unlockSource: "bought" }
+      { id: "ship-b", name: "Ship B", tags: ["slow"], unlockSource: "bought" },
     ],
-    weapons: [
-      { id: "wep-1", name: "Wep 1", tags: ["fast"] }
-    ]
+    weapons: [{ id: "wep-1", name: "Wep 1", tags: ["fast"] }],
   };
 
   const service = createCodexService(registries);
@@ -145,8 +153,8 @@ test("codex service filters entries correctly", () => {
     codex: {
       "ships:ship-a": { level: "observed" },
       "ships:ship-b": { level: "unknown" },
-      "weapons:wep-1": { level: "observed" }
-    }
+      "weapons:wep-1": { level: "observed" },
+    },
   };
 
   // No filters
@@ -176,7 +184,11 @@ test("codex service filters entries correctly", () => {
   assert.equal(fast[1].id, "weapons:wep-1");
 
   // Filter by multiple criteria
-  const fastObservedShips = service.filter(save, { category: "ships", status: "observed", tag: "fast" });
+  const fastObservedShips = service.filter(save, {
+    category: "ships",
+    status: "observed",
+    tag: "fast",
+  });
   assert.equal(fastObservedShips.length, 1);
   assert.equal(fastObservedShips[0].id, "ships:ship-a");
 });

@@ -80,7 +80,9 @@ export function createAssemblyRenderer() {
           });
         },
         armor: (layerCtx) =>
-          renderAdaptiveArmor(layerCtx, geometrySnapshot.armor, palette, { lod }),
+          renderAdaptiveArmor(layerCtx, geometrySnapshot.armor, palette, {
+            lod,
+          }),
       });
       if (staticLayers)
         ctx.drawImage(
@@ -107,7 +109,9 @@ export function createAssemblyRenderer() {
       for (const node of geometrySnapshot.nodes) {
         if (node.isRoot) continue;
         const activity = telemetryByNodeId[node.nodeId] ?? DEFAULT_ACTIVITY,
-          build = buildAnimationByNodeId ? buildAnimationByNodeId.get(node.nodeId) : buildAnimations?.find((b) => b.nodeId === node.nodeId);
+          build = buildAnimationByNodeId
+            ? buildAnimationByNodeId.get(node.nodeId)
+            : buildAnimations?.find((b) => b.nodeId === node.nodeId);
         ctx.save();
         ctx.translate(node.worldPosition.x, node.worldPosition.y);
         ctx.rotate(node.worldRotation);

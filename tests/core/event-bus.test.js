@@ -13,11 +13,19 @@ test("createEventBus supports pub/sub and unsubscribe", () => {
   assert.deepEqual(handler.mock.calls[0].arguments, [{ data: 1 }]);
 
   bus.emit("other-event", { data: 2 });
-  assert.equal(handler.mock.calls.length, 1, "Should not be called for other events");
+  assert.equal(
+    handler.mock.calls.length,
+    1,
+    "Should not be called for other events",
+  );
 
   unsubscribe();
   bus.emit("test-event", { data: 3 });
-  assert.equal(handler.mock.calls.length, 1, "Should not be called after unsubscribe");
+  assert.equal(
+    handler.mock.calls.length,
+    1,
+    "Should not be called after unsubscribe",
+  );
 });
 
 test("createEventBus clear removes all listeners", () => {
@@ -29,5 +37,9 @@ test("createEventBus clear removes all listeners", () => {
   bus.clear();
 
   bus.emit("test-event", { data: 1 });
-  assert.equal(handler.mock.calls.length, 0, "Should not be called after clear");
+  assert.equal(
+    handler.mock.calls.length,
+    0,
+    "Should not be called after clear",
+  );
 });

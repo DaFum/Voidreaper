@@ -22,11 +22,17 @@ test("createRunRng provides utility methods", () => {
   const rng = createRunRng(12345);
 
   const rangeVal = rng.range(5, 10);
-  assert.ok(rangeVal >= 5 && rangeVal < 10, "range() returns value between min and max");
+  assert.ok(
+    rangeVal >= 5 && rangeVal < 10,
+    "range() returns value between min and max",
+  );
 
   const intVal = rng.integer(5, 10);
   assert.ok(Number.isInteger(intVal), "integer() returns an integer");
-  assert.ok(intVal >= 5 && intVal <= 10, "integer() returns value between min and maxInclusive");
+  assert.ok(
+    intVal >= 5 && intVal <= 10,
+    "integer() returns value between min and maxInclusive",
+  );
 
   const arr = ["a", "b", "c"];
   const picked = rng.pick(arr);
@@ -38,7 +44,7 @@ test("createRunRng weighted picking", () => {
 
   const entries = [
     { value: "rare", weight: 1 },
-    { value: "common", weight: 99 }
+    { value: "common", weight: 99 },
   ];
 
   const results = { rare: 0, common: 0 };
@@ -49,7 +55,11 @@ test("createRunRng weighted picking", () => {
   assert.ok(results.common > 900, "Weighted picking honors weights");
 
   assert.equal(rng.weighted([]), null, "Returns null for empty array");
-  assert.equal(rng.weighted([{ value: "a", weight: -1 }]), "a", "Handles negative weights by treating them as 0");
+  assert.equal(
+    rng.weighted([{ value: "a", weight: -1 }]),
+    "a",
+    "Handles negative weights by treating them as 0",
+  );
 });
 
 test("createRunRng supports snapshot and restore", () => {

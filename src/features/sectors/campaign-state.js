@@ -7,6 +7,6 @@ export function createCampaignState() {
     elapsedCampaignTime: 0,
     bossProgress: 0,
     extractionWindowsUsed: 0,
-    abyssDepth: 0
+    abyssDepth: 0,
   };
 }

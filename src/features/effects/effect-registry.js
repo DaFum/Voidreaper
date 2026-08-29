@@ -36,7 +36,11 @@ export function createEffectRegistry() {
         return null;
       }
     },
-    has(id) { return handlers.has(id); },
-    ids() { return [...handlers.keys()]; }
+    has(id) {
+      return handlers.has(id);
+    },
+    ids() {
+      return [...handlers.keys()];
+    },
   };
 }

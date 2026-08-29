@@ -1,28 +1,65 @@
-import { ACTIONS, ASSEMBLY_ACTIONS, DEFAULT_BINDINGS, QUICK_MOUNT_BINDINGS } from "./action-bindings.js";
+import {
+  ACTIONS,
+  ASSEMBLY_ACTIONS,
+  DEFAULT_BINDINGS,
+  QUICK_MOUNT_BINDINGS,
+} from "./action-bindings.js";
 import { createTouchStick } from "./touch-stick.js";
 import { TUTORIAL_EVENTS } from "../features/tutorial/tutorial-events.js";
 
-const VALID_ACTIONS = new Set([...Object.values(ACTIONS), ...Object.values(ASSEMBLY_ACTIONS)]);
-const IGNORED_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON']);
+const VALID_ACTIONS = new Set([
+  ...Object.values(ACTIONS),
+  ...Object.values(ASSEMBLY_ACTIONS),
+]);
+const IGNORED_TAGS = new Set(["INPUT", "TEXTAREA", "SELECT", "BUTTON"]);
 
-export function createInputController({ eventBus, bindings = {}, stickElement, stickKnob, isQuickMount = () => false } = {}) {
+export function createInputController({
+  eventBus,
+  bindings = {},
+  stickElement,
+  stickKnob,
+  isQuickMount = () => false,
+} = {}) {
   const resolvedBindings = { ...DEFAULT_BINDINGS, ...bindings };
   const held = new Set();
-  const stick = createTouchStick(stickElement, stickKnob, 56, movement => {
-    if (movement.magnitude > .25) eventBus?.emit(TUTORIAL_EVENTS.MOVEMENT_USED, movement);
+  const stick = createTouchStick(stickElement, stickKnob, 56, (movement) => {
+    if (movement.magnitude > 0.25)
+      eventBus?.emit(TUTORIAL_EVENTS.MOVEMENT_USED, movement);
   });
 
-  const onKeyDown = event => {
-    if (event.target && (IGNORED_TAGS.has(event.target.tagName) || event.target.isContentEditable)) return;
-    if(isQuickMount()){const assemblyAction=QUICK_MOUNT_BINDINGS[event.code];if(assemblyAction){if(!event.repeat)eventBus?.emit("action",{action:assemblyAction,source:"keyboard"});event.preventDefault();event.stopImmediatePropagation();return;}}
+  const onKeyDown = (event) => {
+    if (
+      event.target &&
+      (IGNORED_TAGS.has(event.target.tagName) || event.target.isContentEditable)
+    )
+      return;
+    if (isQuickMount()) {
+      const assemblyAction = QUICK_MOUNT_BINDINGS[event.code];
+      if (assemblyAction) {
+        if (!event.repeat)
+          eventBus?.emit("action", {
+            action: assemblyAction,
+            source: "keyboard",
+          });
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
+    }
     const action = resolvedBindings[event.code];
     if (!action) return;
-    if (!event.repeat && action.startsWith("move-")) eventBus?.emit(TUTORIAL_EVENTS.MOVEMENT_USED, { source: "keyboard", action, magnitude: 1 });
-    if (!event.repeat && (VALID_ACTIONS.has(action))) eventBus?.emit("action", { action, source: "keyboard" });
+    if (!event.repeat && action.startsWith("move-"))
+      eventBus?.emit(TUTORIAL_EVENTS.MOVEMENT_USED, {
+        source: "keyboard",
+        action,
+        magnitude: 1,
+      });
+    if (!event.repeat && VALID_ACTIONS.has(action))
+      eventBus?.emit("action", { action, source: "keyboard" });
     held.add(action);
     event.preventDefault();
   };
-  const onKeyUp = event => {
+  const onKeyUp = (event) => {
     const action = resolvedBindings[event.code];
     if (action) held.delete(action);
   };
@@ -45,17 +82,24 @@ export function createInputController({ eventBus, bindings = {}, stickElement, s
       stick.reset();
     },
     axis() {
-      const keyboardX = Number(held.has("move-right")) - Number(held.has("move-left"));
-      const keyboardY = Number(held.has("move-down")) - Number(held.has("move-up"));
+      const keyboardX =
+        Number(held.has("move-right")) - Number(held.has("move-left"));
+      const keyboardY =
+        Number(held.has("move-down")) - Number(held.has("move-up"));
       const x = keyboardX || stick.state.x;
       const y = keyboardY || stick.state.y;
-      const magnitude = Math.sqrt((x)*(x) + (y)*(y));
+      const magnitude = Math.sqrt(x * x + y * y);
       return magnitude > 1 ? { x: x / magnitude, y: y / magnitude } : { x, y };
     },
     trigger(action, source = "touch") {
       eventBus?.emit("action", { action, source });
     },
-    rebind(action, code) { for (const [key, bound] of Object.entries(resolvedBindings)) if (bound === action) delete resolvedBindings[key]; resolvedBindings[code] = action; return { ...resolvedBindings }; },
-    bindings: resolvedBindings
+    rebind(action, code) {
+      for (const [key, bound] of Object.entries(resolvedBindings))
+        if (bound === action) delete resolvedBindings[key];
+      resolvedBindings[code] = action;
+      return { ...resolvedBindings };
+    },
+    bindings: resolvedBindings,
   };
 }

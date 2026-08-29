@@ -6,5 +6,5 @@ export const SOUND_EVENTS = Object.freeze({
   PICKUP: "pickup",
   LEVEL_UP: "level-up",
   EVOLUTION: "evolution",
-  WARNING: "warning"
+  WARNING: "warning",
 });

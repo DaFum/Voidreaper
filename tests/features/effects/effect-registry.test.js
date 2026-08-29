@@ -15,7 +15,10 @@ describe("createEffectRegistry", () => {
     const registry = createEffectRegistry();
     const handler = () => {};
     registry.register("test-effect", handler);
-    assert.throws(() => registry.register("test-effect", handler), /Duplicate effect id/);
+    assert.throws(
+      () => registry.register("test-effect", handler),
+      /Duplicate effect id/,
+    );
   });
 
   it("executes a registered effect with correct context", () => {
@@ -41,7 +44,10 @@ describe("createEffectRegistry", () => {
 
     assert.equal(result, null);
     assert.equal(consoleWarn.mock.calls.length, 1);
-    assert.equal(consoleWarn.mock.calls[0].arguments[0], "Attempted to execute an effect without an id");
+    assert.equal(
+      consoleWarn.mock.calls[0].arguments[0],
+      "Attempted to execute an effect without an id",
+    );
     consoleWarn.mock.restore();
   });
 
@@ -53,7 +59,10 @@ describe("createEffectRegistry", () => {
 
     assert.equal(result, null);
     assert.equal(consoleWarn.mock.calls.length, 1);
-    assert.equal(consoleWarn.mock.calls[0].arguments[0], "Unknown effect id: unknown-effect");
+    assert.equal(
+      consoleWarn.mock.calls[0].arguments[0],
+      "Unknown effect id: unknown-effect",
+    );
     consoleWarn.mock.restore();
   });
 
@@ -66,7 +75,10 @@ describe("createEffectRegistry", () => {
     const result1 = registry.execute({ id: "latent-effect" }, {});
     assert.equal(result1, null);
     assert.equal(consoleDebug.mock.calls.length, 1);
-    assert.equal(consoleDebug.mock.calls[0].arguments[0], "Latent effect without handler: latent-effect");
+    assert.equal(
+      consoleDebug.mock.calls[0].arguments[0],
+      "Latent effect without handler: latent-effect",
+    );
 
     const result2 = registry.execute({ id: "latent-effect" }, {});
     assert.equal(result2, null);
@@ -89,7 +101,10 @@ describe("createEffectRegistry", () => {
 
     assert.equal(result, null);
     assert.equal(consoleError.mock.calls.length, 1);
-    assert.equal(consoleError.mock.calls[0].arguments[0], "[effect:error-effect]");
+    assert.equal(
+      consoleError.mock.calls[0].arguments[0],
+      "[effect:error-effect]",
+    );
 
     consoleError.mock.restore();
   });

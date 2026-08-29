@@ -3,9 +3,10 @@ import { convertLegacyMeta } from "../content/migrations/legacy-meta-conversion.
 import { migrateShipAssemblySave } from "./migrations/ship-assembly-migration.js";
 import { migrateTutorialSave } from "./migrations/tutorial-migration.js";
 
-const clone = value => JSON.parse(JSON.stringify(value));
+const clone = (value) => JSON.parse(JSON.stringify(value));
 
-const isPlainObject = value => value !== null && typeof value === "object" && !Array.isArray(value);
+const isPlainObject = (value) =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
 
 // Keys that must never be copied from (possibly hand-edited or imported) save
 // JSON, or a crafted value would pollute Object.prototype during the merge.
@@ -29,7 +30,7 @@ function mergeDefaults(defaults, value) {
 // Tolerate null/sparse elements (a single bad entry must not throw and abort
 // the whole migration into a default-profile reset) and preserve entries that
 // collide on id by suffixing the index instead of silently dropping them.
-const byId = value => {
+const byId = (value) => {
   if (!Array.isArray(value)) return value ?? {};
   // Build via Object.fromEntries so a persisted id of "__proto__" (or other
   // prototype key) becomes an own enumerable property instead of triggering the
@@ -54,9 +55,20 @@ function migrateLegacySave(legacy = {}) {
   save.legacy.best = Number(legacy.best) || 0;
   save.legacy.dailyBest = clone(legacy.dailyBest ?? {});
   save.legacy.meta = clone(legacy.meta ?? {});
-  save.legacy.achievements = [...new Set(legacy.ach ?? legacy.achievements ?? [])];
-  save.migrationHistory.push({ from: "voidreaper-eternal", to: CURRENT_SAVE_VERSION, at: new Date().toISOString() });
-  return convertLegacyMeta(migrateTutorialSave(migrateShipAssemblySave(save,{fromVersion:0}), { fromVersion: 0, legacyOnboarding: legacy.onboarding }));
+  save.legacy.achievements = [
+    ...new Set(legacy.ach ?? legacy.achievements ?? []),
+  ];
+  save.migrationHistory.push({
+    from: "voidreaper-eternal",
+    to: CURRENT_SAVE_VERSION,
+    at: new Date().toISOString(),
+  });
+  return convertLegacyMeta(
+    migrateTutorialSave(migrateShipAssemblySave(save, { fromVersion: 0 }), {
+      fromVersion: 0,
+      legacyOnboarding: legacy.onboarding,
+    }),
+  );
 }
 
 export function migrateSave(input) {
@@ -74,7 +86,9 @@ export function migrateSave(input) {
 
   let save = mergeDefaults(createDefaultSave(), processedInput);
   if (save.saveVersion > CURRENT_SAVE_VERSION) {
-    console.warn(`Save version ${save.saveVersion} is newer than supported version ${CURRENT_SAVE_VERSION}.`);
+    console.warn(
+      `Save version ${save.saveVersion} is newer than supported version ${CURRENT_SAVE_VERSION}.`,
+    );
     return save;
   }
   if (originalVersion < CURRENT_SAVE_VERSION) {
@@ -89,9 +103,23 @@ export function migrateSave(input) {
     }
     save.migrationBackups[`v${originalVersion}-${Date.now()}`] = backup;
     const backupKeys = Object.keys(save.migrationBackups);
-    for (const key of backupKeys.slice(0, -MAX_MIGRATION_BACKUPS)) delete save.migrationBackups[key];
-    save.migrationHistory.push({ from: originalVersion, to: CURRENT_SAVE_VERSION, at: new Date().toISOString() });
+    for (const key of backupKeys.slice(0, -MAX_MIGRATION_BACKUPS))
+      delete save.migrationBackups[key];
+    save.migrationHistory.push({
+      from: originalVersion,
+      to: CURRENT_SAVE_VERSION,
+      at: new Date().toISOString(),
+    });
   }
   save.saveVersion = CURRENT_SAVE_VERSION;
-  return convertLegacyMeta(migrateTutorialSave(migrateShipAssemblySave(save,{fromVersion:originalVersion}), { fromVersion: originalVersion, legacyOnboarding, existingTutorial: processedInput.tutorial }));
+  return convertLegacyMeta(
+    migrateTutorialSave(
+      migrateShipAssemblySave(save, { fromVersion: originalVersion }),
+      {
+        fromVersion: originalVersion,
+        legacyOnboarding,
+        existingTutorial: processedInput.tutorial,
+      },
+    ),
+  );
 }

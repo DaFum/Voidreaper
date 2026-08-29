@@ -10,7 +10,15 @@ describe("legacy runtime combat reporting", () => {
   test("reports each valid firing action once, including volleys", () => {
     const game = legacyRuntime.game;
     const reportShotFired = vi.fn();
-    const player = { x: 0, y: 0, shots: 3, bulletSpeed: 500, dmgMul: 1, pierce: 0, evoPrism: false };
+    const player = {
+      x: 0,
+      y: 0,
+      shots: 3,
+      bulletSpeed: 500,
+      dmgMul: 1,
+      pierce: 0,
+      evoPrism: false,
+    };
     const bullet = {};
     const particle = {};
     game.enemies = [{ x: 10, y: 0, birth: 0 }];

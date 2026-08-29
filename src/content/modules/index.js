@@ -15,8 +15,8 @@ export const MODULES = Object.freeze([
   ...ACTIVE_DEFENSIVE_MODULES,
   ...ACTIVE_CONTROL_MODULES,
   ...CORRUPTED_MODULES,
-  ...UNIQUE_RELIC_MODULES
+  ...UNIQUE_RELIC_MODULES,
 ]);
 
-if (MODULES.length !== 120) throw new Error(`Expected 120 modules, got ${MODULES.length}`);
-
+if (MODULES.length !== 120)
+  throw new Error(`Expected 120 modules, got ${MODULES.length}`);

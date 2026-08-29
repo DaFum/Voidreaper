@@ -6,10 +6,13 @@ test("Wreck Signal Service - create() modifiers logic", async (t) => {
   const service = createWreckSignalService();
   const mockItem = { instanceId: "test-item-123" };
 
-  await t.test("default fallback values (corruption < 75, deathCause not overheat)", () => {
-    const signal = service.create(mockItem);
-    assert.deepEqual(signal.modifiers, ["echo-affixes", "wreck-field"]);
-  });
+  await t.test(
+    "default fallback values (corruption < 75, deathCause not overheat)",
+    () => {
+      const signal = service.create(mockItem);
+      assert.deepEqual(signal.modifiers, ["echo-affixes", "wreck-field"]);
+    },
+  );
 
   await t.test("corruption exactly at the boundary - 74", () => {
     const run = { corruption: 74, deathCause: "hull-collapse" };

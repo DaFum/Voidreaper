@@ -42,7 +42,9 @@ export function renderActivityAnimations(
       continue;
     }
     const activity = telemetryByNodeId[node.nodeId],
-      build = providedAnimationMap ? providedAnimationMap.get(node.nodeId) : buildAnimations?.find((b) => b.nodeId === node.nodeId);
+      build = providedAnimationMap
+        ? providedAnimationMap.get(node.nodeId)
+        : buildAnimations?.find((b) => b.nodeId === node.nodeId);
     if (!activity?.firing && !(activity?.energyFlow > 0) && !build) continue;
     const pulse = 0.45 + Math.sin(time * 7 + node.variantSeed) * 0.25;
     ctx.globalAlpha =

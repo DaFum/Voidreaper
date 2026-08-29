@@ -41,7 +41,7 @@ describe("createAbyssController", () => {
       extraction: false, // 5 % 3 !== 0
       boss: true, // 5 % 5 === 0
       forbiddenTier: 1, // Math.floor(5 / 4)
-      modifiers: ABYSS_MODIFIERS
+      modifiers: ABYSS_MODIFIERS,
     });
   });
 
@@ -57,9 +57,9 @@ describe("createAbyssController", () => {
       corruption: { value: 0, pending: 0, highest: 0 },
       services: {
         corruption: {
-          change: changeMock
-        }
-      }
+          change: changeMock,
+        },
+      },
     };
 
     const profile = controller.advance(run);
@@ -72,7 +72,11 @@ describe("createAbyssController", () => {
     assert.equal(changeMock.mock.calls.length, 1);
     // run.corruption, amount = 4 + 3 = 7, sourceId = "abyss-depth", time = 100, options = { allowAbyss: true }
     assert.deepEqual(changeMock.mock.calls[0].arguments, [
-      run.corruption, 7, "abyss-depth", 100, { allowAbyss: true }
+      run.corruption,
+      7,
+      "abyss-depth",
+      100,
+      { allowAbyss: true },
     ]);
   });
 
@@ -83,7 +87,7 @@ describe("createAbyssController", () => {
       score: 1000,
       kills: 50,
       time: 100,
-      corruption: { value: 20 }
+      corruption: { value: 20 },
     };
 
     const score = controller.score(run);
@@ -100,7 +104,7 @@ describe("createAbyssController", () => {
       score: 500,
       kills: 10,
       time: 50,
-      corruption: {}
+      corruption: {},
     };
 
     const score = controller.score(run);

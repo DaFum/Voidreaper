@@ -4,7 +4,9 @@ const MAX_DIMENSION = 4096;
 const layersBySnapshot = new WeakMap();
 
 function unionBounds(snapshot) {
-  const boxes = [snapshot.coreGeometry?.bounds, snapshot.totalBounds].filter(Boolean);
+  const boxes = [snapshot.coreGeometry?.bounds, snapshot.totalBounds].filter(
+    Boolean,
+  );
   if (!boxes.length) return null;
   let minX = Infinity;
   let minY = Infinity;
@@ -26,7 +28,14 @@ function bakeLayer(width, height, originX, originY, paint) {
   canvas.height = Math.ceil(height * BAKE_SCALE);
   const layerCtx = canvas.getContext("2d");
   if (!layerCtx) return null;
-  layerCtx.setTransform(BAKE_SCALE, 0, 0, BAKE_SCALE, -originX * BAKE_SCALE, -originY * BAKE_SCALE);
+  layerCtx.setTransform(
+    BAKE_SCALE,
+    0,
+    0,
+    BAKE_SCALE,
+    -originX * BAKE_SCALE,
+    -originY * BAKE_SCALE,
+  );
   paint(layerCtx);
   return canvas;
 }
@@ -41,14 +50,21 @@ export function getShipStaticLayers(snapshot, lod, painters) {
   const palette = snapshot.shipStyle?.palette;
   if (layersBySnapshot.has(cacheKey)) {
     const cached = layersBySnapshot.get(cacheKey);
-    if (cached === null || (cached.lod === lod && cached.palette === palette)) return cached;
+    if (cached === null || (cached.lod === lod && cached.palette === palette))
+      return cached;
   }
   const bounds = unionBounds(snapshot);
   if (!bounds) return null;
-  const x = bounds.minX - PADDING, y = bounds.minY - PADDING;
+  const x = bounds.minX - PADDING,
+    y = bounds.minY - PADDING;
   const width = bounds.maxX - bounds.minX + PADDING * 2;
   const height = bounds.maxY - bounds.minY + PADDING * 2;
-  if (width <= 0 || height <= 0 || width * BAKE_SCALE > MAX_DIMENSION || height * BAKE_SCALE > MAX_DIMENSION) {
+  if (
+    width <= 0 ||
+    height <= 0 ||
+    width * BAKE_SCALE > MAX_DIMENSION ||
+    height * BAKE_SCALE > MAX_DIMENSION
+  ) {
     layersBySnapshot.set(cacheKey, null);
     return null;
   }

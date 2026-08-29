@@ -9,10 +9,15 @@ test("createWeaponDefinition correctly merges default data and validates adapter
     fire: () => {},
     onEquip: () => {},
     onUnequip: () => {},
-    getTelemetry: () => {}
+    getTelemetry: () => {},
   };
 
-  const data = { id: "test-weapon", name: "Test Weapon", slot: "special", energyCost: 50 };
+  const data = {
+    id: "test-weapon",
+    name: "Test Weapon",
+    slot: "special",
+    energyCost: 50,
+  };
 
   const def = createWeaponDefinition(data, adapter);
 
@@ -20,7 +25,11 @@ test("createWeaponDefinition correctly merges default data and validates adapter
   assert.equal(def.name, "Test Weapon");
   assert.equal(def.slot, "special", "Allows overriding default slot");
   assert.equal(def.energyCost, 50, "Allows overriding default energyCost");
-  assert.equal(def.faultProfileId, "weapon-projectile", "Provides default faultProfileId");
+  assert.equal(
+    def.faultProfileId,
+    "weapon-projectile",
+    "Provides default faultProfileId",
+  );
   assert.deepEqual(def.effects, [], "Provides default effects");
   assert.equal(def.adapter, adapter, "Assigns validated adapter");
 });
@@ -28,8 +37,11 @@ test("createWeaponDefinition correctly merges default data and validates adapter
 test("createWeaponDefinition throws on invalid adapter", () => {
   const invalidAdapter = {
     createState: () => {},
-    update: () => {}
+    update: () => {},
   };
 
-  assert.throws(() => createWeaponDefinition({ id: "test-weapon" }, invalidAdapter), { message: "test-weapon missing fire()" });
+  assert.throws(
+    () => createWeaponDefinition({ id: "test-weapon" }, invalidAdapter),
+    { message: "test-weapon missing fire()" },
+  );
 });

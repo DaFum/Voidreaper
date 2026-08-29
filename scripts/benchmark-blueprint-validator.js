@@ -17,6 +17,8 @@ const blueprint = {
 };
 
 console.time("validateBlueprint");
-const result = validateBlueprint(blueprint, { knownShipFrameIds: new Set(["frame_1"]) });
+const result = validateBlueprint(blueprint, {
+  knownShipFrameIds: new Set(["frame_1"]),
+});
 console.timeEnd("validateBlueprint");
 // console.log("Result:", result.issues.length, "issues");

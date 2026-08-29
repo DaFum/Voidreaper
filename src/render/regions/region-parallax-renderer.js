@@ -9,32 +9,42 @@ const layerCache = new Map();
 
 function hexToRgba(hex, alpha) {
   if (typeof hex !== "string" || !hex.startsWith("#")) return hex;
-  const digits = hex.length === 4 ? [...hex.slice(1)].map(digit => digit + digit).join("") : hex.slice(1);
+  const digits =
+    hex.length === 4
+      ? [...hex.slice(1)].map((digit) => digit + digit).join("")
+      : hex.slice(1);
   const value = parseInt(digits, 16);
-  return Number.isNaN(value) ? hex : `rgba(${(value >> 16) & 255},${(value >> 8) & 255},${value & 255},${alpha})`;
+  return Number.isNaN(value)
+    ? hex
+    : `rgba(${(value >> 16) & 255},${(value >> 8) & 255},${value & 255},${alpha})`;
 }
 
 // bake each element at all nine wrap offsets so the tile repeats seamlessly
 function wrapped(ctx, size, paint) {
-  for (const offsetX of [-size, 0, size]) for (const offsetY of [-size, 0, size]) {
-    ctx.save();
-    ctx.translate(offsetX, offsetY);
-    paint();
-    ctx.restore();
-  }
+  for (const offsetX of [-size, 0, size])
+    for (const offsetY of [-size, 0, size]) {
+      ctx.save();
+      ctx.translate(offsetX, offsetY);
+      paint();
+      ctx.restore();
+    }
 }
 
 function bakeNebula(profile, seed) {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = NEBULA_SIZE;
   const bakeCtx = canvas.getContext("2d");
-  const colors = [profile.palette.void, profile.palette.accent, profile.palette.grid];
+  const colors = [
+    profile.palette.void,
+    profile.palette.accent,
+    profile.palette.grid,
+  ];
   for (let index = 0; index < 9; index += 1) {
     const x = seededUnit(seed, index * 4) * NEBULA_SIZE;
     const y = seededUnit(seed, index * 4 + 1) * NEBULA_SIZE;
     const radius = 110 + seededUnit(seed, index * 4 + 2) * 210;
     const color = colors[index % colors.length];
-    const alpha = .06 + seededUnit(seed, index * 4 + 3) * .08;
+    const alpha = 0.06 + seededUnit(seed, index * 4 + 3) * 0.08;
     wrapped(bakeCtx, NEBULA_SIZE, () => {
       const gradient = bakeCtx.createRadialGradient(x, y, 0, x, y, radius);
       gradient.addColorStop(0, hexToRgba(color, alpha));
@@ -49,18 +59,36 @@ function bakeNebula(profile, seed) {
 function traceSilhouette(ctx, profileId, size, variant) {
   ctx.beginPath();
   if (profileId === "shattered-approach") {
-    ctx.moveTo(0, -size); ctx.lineTo(size * .5, size * .15); ctx.lineTo(-size * .1, size); ctx.lineTo(-size * .6, size * .05); ctx.closePath();
+    ctx.moveTo(0, -size);
+    ctx.lineTo(size * 0.5, size * 0.15);
+    ctx.lineTo(-size * 0.1, size);
+    ctx.lineTo(-size * 0.6, size * 0.05);
+    ctx.closePath();
   } else if (profileId === "furnace-expanse") {
-    const cut = size * .22;
-    ctx.moveTo(-size + cut, -size * .4); ctx.lineTo(size - cut, -size * .4); ctx.lineTo(size, -size * .4 + cut); ctx.lineTo(size, size * .4 - cut); ctx.lineTo(size - cut, size * .4); ctx.lineTo(-size + cut, size * .4); ctx.lineTo(-size, size * .4 - cut); ctx.lineTo(-size, -size * .4 + cut); ctx.closePath();
+    const cut = size * 0.22;
+    ctx.moveTo(-size + cut, -size * 0.4);
+    ctx.lineTo(size - cut, -size * 0.4);
+    ctx.lineTo(size, -size * 0.4 + cut);
+    ctx.lineTo(size, size * 0.4 - cut);
+    ctx.lineTo(size - cut, size * 0.4);
+    ctx.lineTo(-size + cut, size * 0.4);
+    ctx.lineTo(-size, size * 0.4 - cut);
+    ctx.lineTo(-size, -size * 0.4 + cut);
+    ctx.closePath();
   } else if (profileId === "grave-circuit") {
-    ctx.rect(-size, -size * .35, size * 2, size * .7);
-    ctx.moveTo(-size, -size * .35); ctx.lineTo(0, size * .35); ctx.lineTo(size, -size * .35);
+    ctx.rect(-size, -size * 0.35, size * 2, size * 0.7);
+    ctx.moveTo(-size, -size * 0.35);
+    ctx.lineTo(0, size * 0.35);
+    ctx.lineTo(size, -size * 0.35);
   } else if (profileId === "null-cathedral") {
-    ctx.moveTo(-size * .7, size); ctx.lineTo(-size * .7, 0); ctx.arc(0, 0, size * .7, Math.PI, 0); ctx.lineTo(size * .7, size);
+    ctx.moveTo(-size * 0.7, size);
+    ctx.lineTo(-size * 0.7, 0);
+    ctx.arc(0, 0, size * 0.7, Math.PI, 0);
+    ctx.lineTo(size * 0.7, size);
   } else {
-    ctx.arc(0, 0, size, variant * .8, variant * .8 + Math.PI * 1.4);
-    ctx.moveTo(size * .55, 0); ctx.arc(0, 0, size * .55, 0, Math.PI * 2);
+    ctx.arc(0, 0, size, variant * 0.8, variant * 0.8 + Math.PI * 1.4);
+    ctx.moveTo(size * 0.55, 0);
+    ctx.arc(0, 0, size * 0.55, 0, Math.PI * 2);
   }
 }
 
@@ -68,7 +96,8 @@ function bakeSilhouettes(profile, seed) {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = SILHOUETTE_SIZE;
   const bakeCtx = canvas.getContext("2d");
-  const filled = profile.id === "shattered-approach" || profile.id === "furnace-expanse";
+  const filled =
+    profile.id === "shattered-approach" || profile.id === "furnace-expanse";
   bakeCtx.lineJoin = "round";
   for (let index = 0; index < 10; index += 1) {
     const x = seededUnit(seed, 40 + index * 5) * SILHOUETTE_SIZE;
@@ -81,8 +110,11 @@ function bakeSilhouettes(profile, seed) {
       bakeCtx.translate(x, y);
       bakeCtx.rotate(rotation);
       traceSilhouette(bakeCtx, profile.id, size, variant);
-      if (filled) { bakeCtx.fillStyle = hexToRgba(profile.palette.void, .14); bakeCtx.fill(); }
-      bakeCtx.strokeStyle = hexToRgba(profile.palette.grid, .22);
+      if (filled) {
+        bakeCtx.fillStyle = hexToRgba(profile.palette.void, 0.14);
+        bakeCtx.fill();
+      }
+      bakeCtx.strokeStyle = hexToRgba(profile.palette.grid, 0.22);
       bakeCtx.lineWidth = 2;
       bakeCtx.stroke();
       bakeCtx.restore();
@@ -96,7 +128,10 @@ function getLayers(regionId, profile) {
   let layers = layerCache.get(regionId);
   if (!layers) {
     const seed = visualHash(`parallax:${regionId}`);
-    layers = { nebula: bakeNebula(profile, seed), silhouettes: bakeSilhouettes(profile, seed) };
+    layers = {
+      nebula: bakeNebula(profile, seed),
+      silhouettes: bakeSilhouettes(profile, seed),
+    };
     layerCache.set(regionId, layers);
   }
   return layers;
@@ -104,12 +139,22 @@ function getLayers(regionId, profile) {
 
 // world-space tiling: a layer at parallax factor f sits at camera*(1-f), so it
 // slides against the world as the camera moves
-function drawTiledLayer(ctx, tile, camera, viewport, factor, driftX, driftY, alpha) {
+function drawTiledLayer(
+  ctx,
+  tile,
+  camera,
+  viewport,
+  factor,
+  driftX,
+  driftY,
+  alpha,
+) {
   const size = tile.width;
   if (size <= 0) return;
   const anchorX = camera.x * (1 - factor) + driftX;
   const anchorY = camera.y * (1 - factor) + driftY;
-  const left = camera.x - viewport.width / 2, top = camera.y - viewport.height / 2;
+  const left = camera.x - viewport.width / 2,
+    top = camera.y - viewport.height / 2;
   const startX = anchorX + Math.floor((left - anchorX) / size) * size;
   const startY = anchorY + Math.floor((top - anchorY) / size) * size;
   ctx.save();
@@ -120,36 +165,89 @@ function drawTiledLayer(ctx, tile, camera, viewport, factor, driftX, driftY, alp
   ctx.restore();
 }
 
-export function renderRegionParallaxBackdrop(ctx, { regionId = "shattered-approach", camera = { x: 0, y: 0 }, viewport = { width: 1280, height: 720 }, time = 0, reducedMotion = false } = {}) {
+export function renderRegionParallaxBackdrop(
+  ctx,
+  {
+    regionId = "shattered-approach",
+    camera = { x: 0, y: 0 },
+    viewport = { width: 1280, height: 720 },
+    time = 0,
+    reducedMotion = false,
+  } = {},
+) {
   const profile = resolveRegionVisualProfile(regionId);
   const layers = getLayers(regionId, profile);
   if (!layers) return;
   const drift = reducedMotion ? 0 : time;
-  drawTiledLayer(ctx, layers.nebula, camera, viewport, .12, drift * 2.4, drift * 1.1, 1);
-  drawTiledLayer(ctx, layers.nebula, camera, viewport, .22, NEBULA_SIZE * .5 - drift * 1.6, NEBULA_SIZE * .3 + drift * .8, .6);
-  drawTiledLayer(ctx, layers.silhouettes, camera, viewport, .45, drift * .9, 0, 1);
+  drawTiledLayer(
+    ctx,
+    layers.nebula,
+    camera,
+    viewport,
+    0.12,
+    drift * 2.4,
+    drift * 1.1,
+    1,
+  );
+  drawTiledLayer(
+    ctx,
+    layers.nebula,
+    camera,
+    viewport,
+    0.22,
+    NEBULA_SIZE * 0.5 - drift * 1.6,
+    NEBULA_SIZE * 0.3 + drift * 0.8,
+    0.6,
+  );
+  drawTiledLayer(
+    ctx,
+    layers.silhouettes,
+    camera,
+    viewport,
+    0.45,
+    drift * 0.9,
+    0,
+    1,
+  );
 }
 
-const wrapCoord = (value, min, span) => ((value - min) % span + span) % span + min;
+const wrapCoord = (value, min, span) =>
+  ((((value - min) % span) + span) % span) + min;
 
-export function renderRegionParallaxDust(ctx, { regionId = "shattered-approach", camera = { x: 0, y: 0 }, viewport = { width: 1280, height: 720 }, time = 0, seed = 0, reducedMotion = false } = {}) {
+export function renderRegionParallaxDust(
+  ctx,
+  {
+    regionId = "shattered-approach",
+    camera = { x: 0, y: 0 },
+    viewport = { width: 1280, height: 720 },
+    time = 0,
+    seed = 0,
+    reducedMotion = false,
+  } = {},
+) {
   const profile = resolveRegionVisualProfile(regionId);
   const dustSeed = visualHash(`dust:${regionId}:${seed}`);
-  const left = camera.x - viewport.width / 2 - 40, top = camera.y - viewport.height / 2 - 40;
-  const spanX = viewport.width + 80, spanY = viewport.height + 80;
+  const left = camera.x - viewport.width / 2 - 40,
+    top = camera.y - viewport.height / 2 - 40;
+  const spanX = viewport.width + 80,
+    spanY = viewport.height + 80;
   ctx.save();
   ctx.fillStyle = profile.palette.accent;
   for (let index = 0; index < DUST_COUNT; index += 1) {
-    const depth = .65 + seededUnit(dustSeed, index * 3 + 2) * .3;
-    const originX = seededUnit(dustSeed, index * 3) * DUST_CELL + camera.x * (1 - depth);
-    const originY = seededUnit(dustSeed, index * 3 + 1) * DUST_CELL + camera.y * (1 - depth);
+    const depth = 0.65 + seededUnit(dustSeed, index * 3 + 2) * 0.3;
+    const originX =
+      seededUnit(dustSeed, index * 3) * DUST_CELL + camera.x * (1 - depth);
+    const originY =
+      seededUnit(dustSeed, index * 3 + 1) * DUST_CELL + camera.y * (1 - depth);
     const driftX = reducedMotion ? 0 : time * (4 + depth * 9);
-    const bobY = reducedMotion ? 0 : Math.sin(time * .7 + index) * 6;
+    const bobY = reducedMotion ? 0 : Math.sin(time * 0.7 + index) * 6;
     const x = wrapCoord(originX + driftX, left, spanX);
     const y = wrapCoord(originY + bobY, top, spanY);
-    const twinkle = reducedMotion ? 1 : .7 + .3 * Math.sin(time * 2 + index * 1.7);
-    ctx.globalAlpha = (.06 + .16 * depth) * twinkle;
-    const size = depth > .85 ? 2 : 1;
+    const twinkle = reducedMotion
+      ? 1
+      : 0.7 + 0.3 * Math.sin(time * 2 + index * 1.7);
+    ctx.globalAlpha = (0.06 + 0.16 * depth) * twinkle;
+    const size = depth > 0.85 ? 2 : 1;
     ctx.fillRect(x, y, size, size);
   }
   ctx.restore();

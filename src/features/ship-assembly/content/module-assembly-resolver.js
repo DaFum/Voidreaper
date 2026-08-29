@@ -8,7 +8,8 @@ const tagsOf = (definition) =>
   );
 function selectProfile(definition) {
   const tags = tagsOf(definition);
-  if (definition.overrideVisualProfileId) return definition.overrideVisualProfileId;
+  if (definition.overrideVisualProfileId)
+    return definition.overrideVisualProfileId;
   if (definition.slot === "reactor") return "reactor-aux";
 
   if (definition.unique) {
@@ -17,26 +18,86 @@ function selectProfile(definition) {
     if (tags.has("Shield")) return "shield-emitter";
     if (tags.has("Cooling") || tags.has("Heat")) return "cooling-array";
     if (tags.has("Orbit")) return "orbit-hub";
-    if (tags.has("Beam") || tags.has("Mine") || tags.has("Explosive") || tags.has("Homing") || tags.has("Projectile") || tags.has("Critical")) return "weapon-linear";
+    if (
+      tags.has("Beam") ||
+      tags.has("Mine") ||
+      tags.has("Explosive") ||
+      tags.has("Homing") ||
+      tags.has("Projectile") ||
+      tags.has("Critical")
+    )
+      return "weapon-linear";
     return "structure-spine";
   }
 
   // Weapon classification first
-  const isWeapon = definition.slot === "weapon" || definition.slot === "primary-weapon" || definition.kind === "weapon";
+  const isWeapon =
+    definition.slot === "weapon" ||
+    definition.slot === "primary-weapon" ||
+    definition.kind === "weapon";
   if (tags.has("Beam")) return "weapon-beam";
   if (tags.has("Mine")) return "weapon-mine";
   if (tags.has("Explosive") || tags.has("Homing")) return "weapon-missile";
-  if (tags.has("Projectile") || tags.has("Critical") || isWeapon) return "weapon-linear";
+  if (tags.has("Projectile") || tags.has("Critical") || isWeapon)
+    return "weapon-linear";
 
   // Generic gameplay tags
   if (tags.has("Drone") || tags.has("Summon")) return "drone-bay";
-  if (tags.has("Shield") || tags.has("Hull") || tags.has("Armor") || tags.has("Healing") || tags.has("Revive") || tags.has("Dodge") || tags.has("Stability")) return "shield-emitter";
-  if (tags.has("Cooling") || tags.has("Heat") || tags.has("Burn")) return "cooling-array";
-  if (tags.has("Orbit") || tags.has("Control") || tags.has("Movement") || tags.has("Pickup") || tags.has("Extraction")) return "orbit-hub";
-  if (tags.has("Void") || tags.has("Anomaly") || tags.has("Corruption") || tags.has("Fault") || tags.has("Sacrifice")) return "void-anomaly";
-  if (tags.has("Structure") || tags.has("Adapter") || tags.has("Loadout") || tags.has("Socket") || tags.has("Crafting") || tags.has("Affix") || tags.has("Prototype")) return "structure-spine";
-  if (tags.has("Sensor") || tags.has("Targeting") || tags.has("Loot") || tags.has("Navigation") || tags.has("Merchant") || tags.has("Codex") || tags.has("Elite")) return "sensor-array";
-  if (tags.has("Energy") || tags.has("Charge") || tags.has("Cooldown") || tags.has("Currency")) return "reactor-aux";
+  if (
+    tags.has("Shield") ||
+    tags.has("Hull") ||
+    tags.has("Armor") ||
+    tags.has("Healing") ||
+    tags.has("Revive") ||
+    tags.has("Dodge") ||
+    tags.has("Stability")
+  )
+    return "shield-emitter";
+  if (tags.has("Cooling") || tags.has("Heat") || tags.has("Burn"))
+    return "cooling-array";
+  if (
+    tags.has("Orbit") ||
+    tags.has("Control") ||
+    tags.has("Movement") ||
+    tags.has("Pickup") ||
+    tags.has("Extraction")
+  )
+    return "orbit-hub";
+  if (
+    tags.has("Void") ||
+    tags.has("Anomaly") ||
+    tags.has("Corruption") ||
+    tags.has("Fault") ||
+    tags.has("Sacrifice")
+  )
+    return "void-anomaly";
+  if (
+    tags.has("Structure") ||
+    tags.has("Adapter") ||
+    tags.has("Loadout") ||
+    tags.has("Socket") ||
+    tags.has("Crafting") ||
+    tags.has("Affix") ||
+    tags.has("Prototype")
+  )
+    return "structure-spine";
+  if (
+    tags.has("Sensor") ||
+    tags.has("Targeting") ||
+    tags.has("Loot") ||
+    tags.has("Navigation") ||
+    tags.has("Merchant") ||
+    tags.has("Codex") ||
+    tags.has("Elite")
+  )
+    return "sensor-array";
+  if (
+    tags.has("Energy") ||
+    tags.has("Charge") ||
+    tags.has("Cooldown") ||
+    tags.has("Currency")
+  )
+    return "reactor-aux";
 
   return "utility-node";
 }

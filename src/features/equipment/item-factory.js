@@ -10,6 +10,6 @@ export function createItemInstance(definition, rollContext) {
     stability: rollContext.stability ?? 100,
     prototypeStatus: rollContext.prototypeStatus ?? "temporary",
     boundRunId: rollContext.runId ?? null,
-    discoveredAt: new Date().toISOString()
+    discoveredAt: new Date().toISOString(),
   };
 }

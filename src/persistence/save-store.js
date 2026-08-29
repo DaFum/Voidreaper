@@ -17,18 +17,27 @@ function createStorageAdapter(storage) {
       async remove(key) {
         if (storage.delete) await storage.delete(key);
         else await storage.set(key, "");
-      }
+      },
     };
   }
   const local = storage ?? globalThis.localStorage;
   return {
-    async get(key) { return local?.getItem(key) ?? null; },
-    async set(key, value) { local?.setItem(key, value); },
-    async remove(key) { local?.removeItem(key); }
+    async get(key) {
+      return local?.getItem(key) ?? null;
+    },
+    async set(key, value) {
+      local?.setItem(key, value);
+    },
+    async remove(key) {
+      local?.removeItem(key);
+    },
   };
 }
 
-export function createSaveStore(storage = globalThis.storage ?? globalThis.localStorage, { onWarning } = {}) {
+export function createSaveStore(
+  storage = globalThis.storage ?? globalThis.localStorage,
+  { onWarning } = {},
+) {
   const adapter = createStorageAdapter(storage);
   let queue = Promise.resolve();
 
@@ -55,7 +64,10 @@ export function createSaveStore(storage = globalThis.storage ?? globalThis.local
     try {
       return await write(data);
     } catch (error) {
-      onWarning?.("Speichern fehlgeschlagen – Fortschritt wurde nicht gesichert.", error);
+      onWarning?.(
+        "Speichern fehlgeschlagen – Fortschritt wurde nicht gesichert.",
+        error,
+      );
       throw error;
     }
   }
@@ -64,7 +76,10 @@ export function createSaveStore(storage = globalThis.storage ?? globalThis.local
     try {
       return migrateSave(data);
     } catch (error) {
-      onWarning?.("Speichern fehlgeschlagen – Fortschritt wurde nicht gesichert.", error);
+      onWarning?.(
+        "Speichern fehlgeschlagen – Fortschritt wurde nicht gesichert.",
+        error,
+      );
       throw error;
     }
   }
@@ -123,9 +138,16 @@ export function createSaveStore(storage = globalThis.storage ?? globalThis.local
           const migrated = migrateSave(pending);
           // Keep the pending copy until the recovery write lands — if the write
           // fails (quota, private mode) it stays the only persisted save.
-          try { await write(migrated); await discardPending(); } catch { /* retried on next load */ }
+          try {
+            await write(migrated);
+            await discardPending();
+          } catch {
+            /* retried on next load */
+          }
           return migrated;
-        } catch { await discardPending().catch(() => {}); }
+        } catch {
+          await discardPending().catch(() => {});
+        }
       }
       try {
         const legacy = await readRaw(LEGACY_KEY);
@@ -134,7 +156,9 @@ export function createSaveStore(storage = globalThis.storage ?? globalThis.local
           await write(migrated).catch(() => {});
           return migrated;
         }
-      } catch { /* unreadable legacy save — fall through to defaults */ }
+      } catch {
+        /* unreadable legacy save — fall through to defaults */
+      }
       return createDefaultSave();
     },
     async save(data) {
@@ -148,8 +172,18 @@ export function createSaveStore(storage = globalThis.storage ?? globalThis.local
         return persist(migrateForWrite(result ?? draft));
       });
     },
-    async getCheckpoint() { return (await this.load()).checkpoint ?? null; },
-    async setCheckpoint(checkpoint) { return this.update(save => { save.checkpoint = checkpoint; }); },
-    async clearCheckpoint() { return this.update(save => { save.checkpoint = null; }); }
+    async getCheckpoint() {
+      return (await this.load()).checkpoint ?? null;
+    },
+    async setCheckpoint(checkpoint) {
+      return this.update((save) => {
+        save.checkpoint = checkpoint;
+      });
+    },
+    async clearCheckpoint() {
+      return this.update((save) => {
+        save.checkpoint = null;
+      });
+    },
   };
 }

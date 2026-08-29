@@ -10,7 +10,7 @@ const createValidDef = () => ({
   energyCost: 1,
   tags: ["tag1"],
   effects: [{ id: "effect1" }],
-  faultProfileId: "fault1"
+  faultProfileId: "fault1",
 });
 
 test("equipment registry registers valid definition", () => {

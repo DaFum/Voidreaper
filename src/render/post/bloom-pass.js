@@ -1,16 +1,29 @@
-export function createBloomPass({ strength = .42, blur = 4 } = {}) {
-  let half = null, quarter = null;
+export function createBloomPass({ strength = 0.42, blur = 4 } = {}) {
+  let half = null,
+    quarter = null;
   return {
     apply(ctx) {
       if (typeof document === "undefined") return;
       const source = ctx.canvas;
       if (!source?.width || !source?.height) return;
-      if (!half) { half = document.createElement("canvas"); quarter = document.createElement("canvas"); }
-      const halfWidth = Math.max(1, source.width >> 1), halfHeight = Math.max(1, source.height >> 1);
-      const quarterWidth = Math.max(1, source.width >> 2), quarterHeight = Math.max(1, source.height >> 2);
-      if (half.width !== halfWidth || half.height !== halfHeight) { half.width = halfWidth; half.height = halfHeight; }
-      if (quarter.width !== quarterWidth || quarter.height !== quarterHeight) { quarter.width = quarterWidth; quarter.height = quarterHeight; }
-      const halfCtx = half.getContext("2d"), quarterCtx = quarter.getContext("2d");
+      if (!half) {
+        half = document.createElement("canvas");
+        quarter = document.createElement("canvas");
+      }
+      const halfWidth = Math.max(1, source.width >> 1),
+        halfHeight = Math.max(1, source.height >> 1);
+      const quarterWidth = Math.max(1, source.width >> 2),
+        quarterHeight = Math.max(1, source.height >> 2);
+      if (half.width !== halfWidth || half.height !== halfHeight) {
+        half.width = halfWidth;
+        half.height = halfHeight;
+      }
+      if (quarter.width !== quarterWidth || quarter.height !== quarterHeight) {
+        quarter.width = quarterWidth;
+        quarter.height = quarterHeight;
+      }
+      const halfCtx = half.getContext("2d"),
+        quarterCtx = quarter.getContext("2d");
       if (!halfCtx || !quarterCtx) return;
       halfCtx.globalCompositeOperation = "copy";
       halfCtx.drawImage(source, 0, 0, halfWidth, halfHeight);
@@ -24,6 +37,6 @@ export function createBloomPass({ strength = .42, blur = 4 } = {}) {
       if (blur && "filter" in ctx) ctx.filter = `blur(${blur}px)`;
       ctx.drawImage(quarter, 0, 0, source.width, source.height);
       ctx.restore();
-    }
+    },
   };
 }
