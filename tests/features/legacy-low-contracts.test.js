@@ -10,13 +10,15 @@ const source = readFileSync(
 test("legacy pause suspends audio and resume restarts it", () => {
   assert.match(
     source,
-    /suspend\(\) \{ if \(this\.ctx && this\.ctx\.state === "running"\) this\.ctx\.suspend\(\); \}/,
+    /suspend\(\)\s*\{\s*if\s*\(this\.ctx\s*&&\s*this\.ctx\.state\s*===\s*"running"\)\s*this\.ctx\.suspend\(\);\s*\}/,
   );
   assert.match(source, /pause\(\).*AudioSys\.suspend\(\)/s);
 });
 
 test("glitch refresh clears the previous timeout", () => {
-  const glitchStart = source.indexOf("\n      glitch() {");
+  const glitchMatch = source.match(/glitch\(\)\s*\{/);
+  assert.ok(glitchMatch, "glitch method found in source");
+  const glitchStart = glitchMatch.index;
   const glitch = source.slice(
     glitchStart,
     source.indexOf("gameOver()", glitchStart),
@@ -43,6 +45,6 @@ test("combat broadphase is rebuilt after enemy movement and ignores dead entries
 test("immediate enemy spawns skip the birth delay", () => {
   assert.match(
     source,
-    /birth: immediate \? 0 : 0\.35, fusing: false, dead: false/,
+    /birth:\s*immediate\s*\?\s*0\s*:\s*0\.35,\s*fusing:\s*false,\s*dead:\s*false/,
   );
 });
