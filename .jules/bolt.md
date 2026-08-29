@@ -64,3 +64,7 @@
 ## $(date +%Y-%m-%d) - Optimize Array Removal in Drone Controller
 **Learning:** When optimizing array removals in performance-critical paths where the array cannot be reassigned (e.g., referenced externally or accessed via getters), avoid using `splice()` in a loop as it causes O(N²) time complexity.
 **Action:** Use an O(N) in-place two-pointer filtering approach (e.g., `arr[writeIdx++] = arr[i]`) combined with an O(1) lookup structure (like a `Set`) and truncate the array afterwards (`arr.length = writeIdx`) to preserve the original array reference while drastically improving performance.
+
+## 2025-02-18 - Replacing map/filter in Hot Paths
+**Learning:** In highly frequent spatial queries, such as updating and querying the ship assembly hit-zone index (`hit-zone-index.js`), using `.filter(..).map(..)` chaining causes continuous dynamic array allocations. The Garbage Collection (GC) overhead compounds drastically under load and can negatively impact framerates.
+**Action:** Replace all `.filter().map()` array manipulation chains inside high-frequency collision or indexing paths with pre-allocated arrays (or re-used arrays where possible) and imperative single-pass `for` loops.

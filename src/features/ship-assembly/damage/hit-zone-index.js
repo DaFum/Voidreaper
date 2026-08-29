@@ -20,4 +20,38 @@ const boundsFor = zone => {
   }
   return { minX: p.x - s, minY: p.y - s, maxX: p.x + s, maxY: p.y + s };
 };
-export function createHitZoneIndex(){let revision=-1,zones=[];return{rebuild(nextRevision,nextZones){if(revision===nextRevision)return false;revision=nextRevision;zones=nextZones.map(zone=>({zone,bounds:boundsFor(zone)}));return true;},query(bounds){return zones.filter(entry=>!(entry.bounds.maxX<bounds.minX||entry.bounds.minX>bounds.maxX||entry.bounds.maxY<bounds.minY||entry.bounds.minY>bounds.maxY)).map(entry=>entry.zone);},all:()=>zones.map(entry=>entry.zone),get revision(){return revision;}};}
+export function createHitZoneIndex() {
+  let revision = -1;
+  let entries = [];
+  return {
+    rebuild(nextRevision, nextZones) {
+      if (revision === nextRevision) return false;
+      revision = nextRevision;
+      // ⚡ Bolt: Avoid intermediate arrays from filter/map/spread. Use a single pass loop.
+      entries.length = nextZones.length;
+      for (let i = 0; i < nextZones.length; i++) {
+        entries[i] = { zone: nextZones[i], bounds: boundsFor(nextZones[i]) };
+      }
+      return true;
+    },
+    query(bounds) {
+      // ⚡ Bolt: Use imperative loops to avoid intermediate arrays from filter/map chained calls
+      const result = [];
+      for (let i = 0; i < entries.length; i++) {
+        const entry = entries[i];
+        if (!(entry.bounds.maxX < bounds.minX || entry.bounds.minX > bounds.maxX || entry.bounds.maxY < bounds.minY || entry.bounds.minY > bounds.maxY)) {
+          result.push(entry.zone);
+        }
+      }
+      return result;
+    },
+    all: () => {
+      const result = new Array(entries.length);
+      for (let i = 0; i < entries.length; i++) {
+        result[i] = entries[i].zone;
+      }
+      return result;
+    },
+    get revision() { return revision; }
+  };
+}
