@@ -68,3 +68,7 @@
 ## 2025-02-18 - Replacing map/filter in Hot Paths
 **Learning:** In highly frequent spatial queries, such as updating and querying the ship assembly hit-zone index (`hit-zone-index.js`), using `.filter(..).map(..)` chaining causes continuous dynamic array allocations. The Garbage Collection (GC) overhead compounds drastically under load and can negatively impact framerates.
 **Action:** Replace all `.filter().map()` array manipulation chains inside high-frequency collision or indexing paths with pre-allocated arrays (or re-used arrays where possible) and imperative single-pass `for` loops.
+
+## 2025-02-18 - Replacing Object.values().find() and O(N) Array.find in Assembly and Inventory Lookups
+**Learning:** Using `Object.values().find()` in fallback selectors, port resolution loops, or debug scenarios creates intermediate array allocations on every call. Similarly, using `Array.prototype.find()` on inventory arrays scales linearly O(N) and creates CPU bottlenecks in frequently called service methods like `requireInstance` or `store`.
+**Action:** Replace `Object.values().find()` with direct `for...in` loops over the dictionary object to eliminate intermediate array allocations and allow early termination. For inventory instance lookups, maintain a cached `Map` index keyed by `instanceId` to turn O(N) array scans into O(1) constant-time lookups.
