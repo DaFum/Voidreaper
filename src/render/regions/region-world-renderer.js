@@ -108,7 +108,7 @@ function motifSprite(profile, seed) {
   return sprite;
 }
 
-function drawMotif(ctx, profile, x, y, seed, time, reducedMotion) {
+function drawMotif(ctx, profile, { x, y, seed, time, reducedMotion }) {
   const sprite = motifSprite(profile, seed);
   if (sprite) {
     ctx.drawImage(
@@ -262,15 +262,13 @@ export function renderRegionWorld(
     for (let y = startY; y <= bounds.maxY; y += TILE) {
       const cellSeed = visualHash(`${seed}:${regionId}:${x}:${y}`);
       if (seededUnit(cellSeed, 0) > profile.density) continue;
-      drawMotif(
-        ctx,
-        profile,
-        x + seededSigned(cellSeed, 4) * 38,
-        y + seededSigned(cellSeed, 5) * 38,
-        cellSeed,
+      drawMotif(ctx, profile, {
+        x: x + seededSigned(cellSeed, 4) * 38,
+        y: y + seededSigned(cellSeed, 5) * 38,
+        seed: cellSeed,
         time,
         reducedMotion,
-      );
+      });
     }
   renderRegionParallaxDust(ctx, {
     regionId,

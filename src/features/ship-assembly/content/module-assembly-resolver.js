@@ -102,7 +102,14 @@ function selectProfile(definition) {
   return "utility-node";
 }
 export function defaultChildPorts(visual, sizeClass) {
-  const make = (key, size, mount, x, y, load, distance = 34) => ({
+  const make = ({
+    key,
+    sizeClass: size,
+    mountType: mount,
+    direction: { x, y },
+    loadCapacity: load,
+    distance = 34,
+  }) => ({
     key,
     sizeClass: size,
     mountType: mount,
@@ -120,15 +127,61 @@ export function defaultChildPorts(visual, sizeClass) {
   });
   if (visual.id === "structure-spine")
     return [
-      make("branch-forward", "L", "structural", 0, 1, 14, 56),
-      make("branch-port", "M", "lateral", -1, 0.2, 8, 72),
-      make("branch-starboard", "M", "lateral", 1, 0.2, 8, 72),
-      make("branch-dorsal", "S", "dorsal", 0, -1, 4, 48),
+      make({
+        key: "branch-forward",
+        sizeClass: "L",
+        mountType: "structural",
+        direction: { x: 0, y: 1 },
+        loadCapacity: 14,
+        distance: 56,
+      }),
+      make({
+        key: "branch-port",
+        sizeClass: "M",
+        mountType: "lateral",
+        direction: { x: -1, y: 0.2 },
+        loadCapacity: 8,
+        distance: 72,
+      }),
+      make({
+        key: "branch-starboard",
+        sizeClass: "M",
+        mountType: "lateral",
+        direction: { x: 1, y: 0.2 },
+        loadCapacity: 8,
+        distance: 72,
+      }),
+      make({
+        key: "branch-dorsal",
+        sizeClass: "S",
+        mountType: "dorsal",
+        direction: { x: 0, y: -1 },
+        loadCapacity: 4,
+        distance: 48,
+      }),
     ];
   if (["L", "XL"].includes(sizeClass))
-    return [make("utility-branch", "M", "lateral", 1, 0.25, 8, 60)];
+    return [
+      make({
+        key: "utility-branch",
+        sizeClass: "M",
+        mountType: "lateral",
+        direction: { x: 1, y: 0.25 },
+        loadCapacity: 8,
+        distance: 60,
+      }),
+    ];
   if (sizeClass === "M")
-    return [make("micro-port", "S", "dorsal", 0, 1, 4, 42)];
+    return [
+      make({
+        key: "micro-port",
+        sizeClass: "S",
+        mountType: "dorsal",
+        direction: { x: 0, y: 1 },
+        loadCapacity: 4,
+        distance: 42,
+      }),
+    ];
   return [];
 }
 const requiresWorkbench = (definition, profile) =>
