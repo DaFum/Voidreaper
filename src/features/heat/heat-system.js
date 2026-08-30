@@ -63,9 +63,16 @@ export function createHeatSystem({ eventBus, modules } = {}) {
     },
     overheat(state) {
       state.overheatedAt = Date.now();
-      const hottest = [...state.sourceHeat.entries()].sort(
-        (a, b) => b[1] - a[1],
-      )[0];
+      // ⚡ Bolt: Use an imperative loop instead of [...entries()].sort() to avoid allocating arrays and sorting overhead
+      let hottest = null;
+      let maxHeat = -Infinity;
+      for (const entry of state.sourceHeat.entries()) {
+        if (entry[1] > maxHeat) {
+          maxHeat = entry[1];
+          hottest = entry;
+        }
+      }
+
       if (hottest) {
         const count = state.disableCounts.get(hottest[0]) ?? 0;
         const duration = Math.max(0.75, 3 * Math.pow(0.7, count));
