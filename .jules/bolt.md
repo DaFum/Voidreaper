@@ -71,3 +71,7 @@
 ## 2024-05-18 - Avoid spreading Map iterators into arrays for sorting
 **Learning:** Spreading Map iterators into arrays (e.g., `[...map.entries()]`) to perform `.sort()` operations just to find a maximum or minimum value is highly inefficient. It allocates intermediate arrays and performs O(N log N) sorting when an O(N) imperative loop could find the max/min value without array allocations.
 **Action:** In performance-critical paths, use an imperative `for...of` loop to iterate over `map.entries()` and track the maximum/minimum value manually to avoid unnecessary allocations and overhead.
+
+## 2025-02-18 - Replacing Object.values().find() and O(N) Array.find in Assembly and Inventory Lookups
+**Learning:** Using `Object.values().find()` in fallback selectors, port resolution loops, or debug scenarios creates intermediate array allocations on every call. Similarly, using `Array.prototype.find()` on inventory arrays scales linearly O(N) and creates CPU bottlenecks in frequently called service methods like `requireInstance` or `store`.
+**Action:** Replace `Object.values().find()` with direct `for...in` loops over the dictionary object to eliminate intermediate array allocations and allow early termination. For inventory instance lookups, maintain a cached `Map` index keyed by `instanceId` to turn O(N) array scans into O(1) constant-time lookups.

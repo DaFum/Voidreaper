@@ -12,9 +12,17 @@ export const selectModuleOwner = (state, moduleInstanceId) => {
     const nodeId = state.nodeIdByModuleInstanceId[moduleInstanceId];
     return nodeId ? (state.nodesById[nodeId] ?? null) : null;
   }
-  return (
-    Object.values(state.nodesById).find(
-      (node) => node.moduleInstanceId === moduleInstanceId,
-    ) ?? null
-  );
+  // Performance optimization: Use a for-in loop over state.nodesById instead of
+  // Object.values().find() to eliminate intermediate array allocations and allow early exit.
+  if (state.nodesById) {
+    for (const key in state.nodesById) {
+      if (Object.hasOwn(state.nodesById, key)) {
+        const node = state.nodesById[key];
+        if (node && node.moduleInstanceId === moduleInstanceId) {
+          return node;
+        }
+      }
+    }
+  }
+  return null;
 };
