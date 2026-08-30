@@ -2289,7 +2289,7 @@ const Game = {
     }
 
 
-    this.updateProjectilesAndFX(dt);
+    this.updateProjectilesAndFX(dt, frozen);
     UI.hud(p, this);
   },
 
@@ -2315,8 +2315,6 @@ const Game = {
         this.burst(s.x, s.y, 8, ETYPES[s.type].color, 160);
       }
     });
-
-    this.updateEvent(dt);
 
     if (this.combo > 0) {
       this.comboT -= dt;
@@ -2480,7 +2478,7 @@ const Game = {
 
   },
 
-  updateProjectilesAndFX(dt) {
+  updateProjectilesAndFX(dt, frozen) {
     const p = this.player;
     this.bullets.update((b) => {
       b.x += b.vx * dt;
@@ -2741,13 +2739,14 @@ const Game = {
     const eclipse = this.event && this.event.id === "eclipse";
     const frozen = this.freezeT > 0;
 
-    this.drawWorldBackdrop(camX, camY, t, W, H, shakeX, shakeY);
-    this.drawWorldEntities(p, camX, camY, t);
+    this.drawWorldBackdrop(p, camX, camY, t, W, H, shakeX, shakeY);
+    if (!p) return;
+    this.drawWorldEntities(p, camX, camY, t, frozen);
     const darkness = this.drawParticlesAndFX(p, camX, camY, shakeX, shakeY, W, H, eclipse);
     this.drawHUDOverlaysAndPostFX(p, camX, camY, W, H, darkness, frozen);
   },
 
-  drawWorldBackdrop(camX, camY, t, W, H, shakeX, shakeY) {
+  drawWorldBackdrop(p, camX, camY, t, W, H, shakeX, shakeY) {
 
     // GPU environment stage (Pixi) can take over the backdrop; the game
     // canvas then stays transparent so the layer below shines through.
@@ -2869,7 +2868,7 @@ const Game = {
 
   },
 
-  drawWorldEntities(p, camX, camY, t) {
+  drawWorldEntities(p, camX, camY, t, frozen) {
     // zones
     for (const z of this.zones.live) {
       const f = z.life / z.maxLife;
