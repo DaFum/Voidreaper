@@ -181,10 +181,37 @@ export function createGameController(services) {
         );
       }
       run.pendingAssemblyItems ??= [];
+      // Performance optimization: Maintain a cached Map index of run.inventory by instanceId
+      // to provide O(1) store lookups instead of O(N) Array.find calls.
+      let cachedInventoryRef = null;
+      let inventoryMap = null;
+      const getInventoryMap = () => {
+        const current = run.inventory ?? [];
+        if (cachedInventoryRef !== current || !inventoryMap || inventoryMap.size !== current.length) {
+          cachedInventoryRef = current;
+          inventoryMap = new Map();
+          for (let i = 0; i < current.length; i++) {
+            const entry = current[i];
+            if (entry && entry.instanceId) {
+              inventoryMap.set(entry.instanceId, { item: entry, index: i });
+            }
+          }
+        }
+        return inventoryMap;
+      };
+
       const runInventory = {
         values: () => run.inventory,
         store: (id) => {
-          const item = run.inventory.find((entry) => entry.instanceId === id);
+          const current = run.inventory ?? [];
+          let cached = getInventoryMap().get(id);
+          // Validate that the cached item is still at its expected index in current inventory.
+          // If it was swapped or replaced in-place, invalidate cache and rebuild.
+          if (!cached || current[cached.index] !== cached.item) {
+            cachedInventoryRef = null;
+            cached = getInventoryMap().get(id);
+          }
+          const item = (cached && current[cached.index] === cached.item) ? cached.item : null;
           if (item) item.stored = true;
           return item ?? null;
         },
@@ -262,15 +289,28 @@ export function createGameController(services) {
             tags: definition.tags,
           };
 
-          const port = Object.values(state.portsById).find(
-            (candidate) =>
-              compatibilityService.evaluate({
-                state,
-                moduleProfile,
-                port: candidate,
-                geometrySnapshot,
-              }).compatible,
-          );
+          // Performance optimization: Iterate state.portsById with a for-in loop instead of
+          // Object.values().find() to eliminate array allocations per item loop iteration.
+          let port = null;
+          if (state.portsById) {
+            for (const key in state.portsById) {
+              if (Object.hasOwn(state.portsById, key)) {
+                const candidate = state.portsById[key];
+                if (
+                  candidate &&
+                  compatibilityService.evaluate({
+                    state,
+                    moduleProfile,
+                    port: candidate,
+                    geometrySnapshot,
+                  }).compatible
+                ) {
+                  port = candidate;
+                  break;
+                }
+              }
+            }
+          }
 
           if (port) {
             services.currentAssembly.mountModule({

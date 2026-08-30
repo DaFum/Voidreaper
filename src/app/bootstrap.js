@@ -421,18 +421,47 @@ export async function bootstrap() {
         bridgeSurvival: () => {
           const maximum = buildMaximum();
           if (!maximum.built) return maximum;
-          const snapshot = services.currentAssembly.getSnapshot(),
-            parent = Object.values(snapshot.nodesById).find(
-              (node) =>
-                node.nodeId !== snapshot.rootNodeId &&
-                Object.values(snapshot.nodesById).some(
-                  (child) => child.parentNodeId === node.nodeId,
-                ),
-            );
+          const snapshot = services.currentAssembly.getSnapshot();
+          // Performance optimization: Avoid nested Object.values().find() and .some() array allocations by using direct for-in loops.
+          let parent = null;
+          const nodes = snapshot.nodesById;
+          if (nodes) {
+            for (const key in nodes) {
+              if (Object.hasOwn(nodes, key)) {
+                const node = nodes[key];
+                if (node && node.nodeId !== snapshot.rootNodeId) {
+                  let hasChild = false;
+                  for (const childKey in nodes) {
+                    if (Object.hasOwn(nodes, childKey)) {
+                      const child = nodes[childKey];
+                      if (child && child.parentNodeId === node.nodeId) {
+                        hasChild = true;
+                        break;
+                      }
+                    }
+                  }
+                  if (hasChild) {
+                    parent = node;
+                    break;
+                  }
+                }
+              }
+            }
+          }
           if (!parent) return { survived: false, reason: "no-parent" };
-          const child = Object.values(snapshot.nodesById).find(
-            (node) => node.parentNodeId === parent.nodeId,
-          );
+          let child = null;
+          if (nodes) {
+            for (const key in nodes) {
+              if (Object.hasOwn(nodes, key)) {
+                const candidate = nodes[key];
+                if (candidate && candidate.parentNodeId === parent.nodeId) {
+                  child = candidate;
+                  break;
+                }
+              }
+            }
+          }
+          if (!child) return { survived: false, reason: "no-child" };
           services.currentAssembly.addSecondaryConnection({
             sourceNodeId: child.nodeId,
             targetNodeId: snapshot.rootNodeId,
@@ -451,15 +480,34 @@ export async function bootstrap() {
           };
         },
         branchCollapse: () => {
-          const snapshot = services.currentAssembly?.getSnapshot(),
-            parent =
-              Object.values(snapshot?.nodesById ?? {}).find(
-                (node) =>
-                  node.nodeId !== snapshot.rootNodeId &&
-                  Object.values(snapshot.nodesById).some(
-                    (child) => child.parentNodeId === node.nodeId,
-                  ),
-              ) ?? firstModule();
+          const snapshot = services.currentAssembly?.getSnapshot();
+          let parent = null;
+          const nodes = snapshot?.nodesById;
+          // Performance optimization: Avoid nested Object.values().find() and .some() array allocations by using direct for-in loops.
+          if (nodes) {
+            for (const key in nodes) {
+              if (Object.hasOwn(nodes, key)) {
+                const node = nodes[key];
+                if (node && node.nodeId !== snapshot.rootNodeId) {
+                  let hasChild = false;
+                  for (const childKey in nodes) {
+                    if (Object.hasOwn(nodes, childKey)) {
+                      const child = nodes[childKey];
+                      if (child && child.parentNodeId === node.nodeId) {
+                        hasChild = true;
+                        break;
+                      }
+                    }
+                  }
+                  if (hasChild) {
+                    parent = node;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+          parent ??= firstModule();
           return parent
             ? services.moduleDamage.applyDamage(parent.nodeId, 9999, "debug")
             : null;
