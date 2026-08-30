@@ -164,12 +164,7 @@ const DAMAGE_STATE_LABELS = {
   detached: "ABGETRENNT",
 };
 
-export async function bootstrap() {
-  document.documentElement.dataset.app = "voidreaper-modular";
-  const events = createEventBus();
-  const effects = registerCoreEffects(createEffectRegistry());
-  // module effect ids stay OUT of the latent set: active-module execution
-  // dispatches them via effects.execute, so a missing module handler must warn
+function registerEvolutionEffects(effects) {
   effects.declareLatent([...SHIP_EFFECT_IDS, ...REACTOR_EFFECT_IDS]);
   effects.register("evolution-prism-lance", (_effect, { player }) => {
     player.evoPrism = true;
@@ -191,134 +186,9 @@ export async function bootstrap() {
   effects.register("evolution-ion-tempest", (_effect, { player }) => {
     player.evoTempest = true;
   });
-  const services = {
-    events,
-    effects,
-    stats: createStatEngine(
-      STAT_DEFINITIONS,
-      (context) => context.sources ?? [],
-    ),
-    tags: createTagEngine(TAG_DEFINITIONS, SYNERGY_DEFINITIONS),
-    energy: createEnergySystem({ eventBus: events }),
-    heat: createHeatSystem({ eventBus: events }),
-    corruption: createCorruptionSystem({ eventBus: events }),
-    dodge: createDodgeSystem({ eventBus: events }),
-  };
-  services.evolutions = createEvolutionSystem(LEGACY_EVOLUTIONS, {
-    eventBus: events,
-  });
-  services.triggers = createTriggerEngine({ eventBus: events, effects });
-  services.save = createSaveStore(
-    globalThis.storage ?? globalThis.localStorage,
-    {
-      onWarning: (message) => legacyRuntime.ui.toast(message),
-    },
-  );
-  services.sectors = createSectorController({ eventBus: events });
-  services.currency = createRunCurrencyService(events);
-  services.daily = createDailyRunService({ saveStore: services.save });
-  services.checkpoints = createCheckpointService(services.save, events);
-  const initialSave = await services.save.load();
-  let metaSave = initialSave;
-  // Seed document-level settings from the loaded save; the settings screen only
-  // writes these on change, so without this a saved reducedMotion/colorPatterns
-  // preference would not apply until the user visits the settings screen.
-  if (metaSave.settings) {
-    document.documentElement.dataset.reducedMotion = String(
-      metaSave.settings.reducedMotion ?? false,
-    );
-    document.documentElement.dataset.colorPatterns = String(
-      metaSave.settings.colorPatterns ?? false,
-    );
-    if (metaSave.settings.uiScale != null)
-      document.documentElement.style.setProperty(
-        "--ui-scale",
-        metaSave.settings.uiScale,
-      );
-  }
-  let currentCheckpoint = initialSave.checkpoint;
-  const writeCurrentCheckpoint = async (run, nodeId) => {
-    currentCheckpoint = await services.checkpoints.writeAfterNode(run, nodeId);
-    return currentCheckpoint;
-  };
-  services.research = createResearchService(services.save, RESEARCH_TREE);
-  services.codex = createCodexService({
-    ships: SHIPS,
-    weapons: WEAPONS,
-    reactors: REACTORS,
-    modules: MODULES,
-    forbidden: WEAPONS.filter((weapon) => weapon.id === "anomaly-engine"),
-  });
-  services.campaignPaths = createCampaignPathService(CAMPAIGN_PATHS);
-  services.simulator = createBuildSimulator();
-  services.tutorial = createTutorialService({
-    saveStore: services.save,
-    eventBus: events,
-    chapters: TUTORIAL_CHAPTERS,
-    onPersistenceError: () =>
-      legacyRuntime.ui.toast(
-        "Tutorialfortschritt konnte nicht gespeichert werden.",
-      ),
-  });
-  services.tutorial.hydrate(initialSave.tutorial);
-  services.wreckSignals = createWreckSignalService();
-  services.salvageMissions = createSalvageMissionService(services.save);
-  services.affixes = createAffixRoller([
-    OFFENSIVE_AFFIXES,
-    DEFENSIVE_AFFIXES,
-    UTILITY_AFFIXES,
-    CORRUPTED_AFFIXES,
-  ]);
-  services.assemblyProfiles = createAssemblyProfileRegistry();
-  for (const profile of SHIP_FRAME_ASSEMBLY_PROFILES)
-    services.assemblyProfiles.registerShipFrame(profile);
-  services.assemblyRenderer = createAssemblyRenderer();
-  services.assemblyErrors = createAssemblyErrorBoundary();
-  console.info(
-    `[assembly] ${services.assemblyProfiles.getCounts().shipFrames} ship profiles`,
-  );
-  services.unlocks = createUnlockService(unlockFlagsFromSave(initialSave));
-  services.equipment = createEquipmentRegistry();
-  for (const definition of [...SHIPS, ...WEAPONS, ...REACTORS, ...MODULES])
-    services.equipment.register(definition);
-  services.campaignRewards = createCampaignRewardService({
-    equipment: services.equipment,
-    eventBus: events,
-    saveStore: services.save,
-  });
-  services.loadouts = createLoadoutService({
-    registry: services.equipment,
-    tagEngine: services.tags,
-    unlocks: services.unlocks,
-  });
-  services.primaryLoadout = () => resolvePrimaryLoadout(metaSave);
-  const blueprintIds = createIdService("meta-blueprints"),
-    thumbnailService = createBlueprintThumbnailService({
-      assemblyRenderer: services.assemblyRenderer,
-      geometryService: {
-        getSnapshot: () => services.assemblyGeometry?.getSnapshot(),
-      },
-    });
-  services.blueprints = createBlueprintService({
-    saveStore: services.save,
-    idFactory: blueprintIds,
-    thumbnailService,
-  });
-  services.blueprints.hydrate(initialSave);
-  console.info(
-    `[content] ${SHIPS.length} ships · ${WEAPONS.length} weapons · ` +
-      `${REACTORS.length} reactors · ${MODULES.length} modules`,
-  );
-  const blueprintValidationContext = () => ({
-    knownDefinitionIds: new Set(
-      services.equipment.values().map((item) => item.id),
-    ),
-    knownShipFrameIds: new Set(
-      SHIP_FRAME_ASSEMBLY_PROFILES.map((item) => item.id),
-    ),
-  });
+}
 
-  const controller = createGameController(services);
+function setupDevDebug(services, controller, getMetaSave, blueprintValidationContext) {
   if (import.meta.env.DEV) {
     const flags = new Map(),
       firstModule = () =>
@@ -517,7 +387,7 @@ export async function bootstrap() {
           resources: controller.run?.resources,
         }),
         setLod: (lod) => {
-          metaSave.assemblyVisualPreferences.lod = lod;
+          getMetaSave().assemblyVisualPreferences.lod = lod;
           return lod;
         },
         blueprintRoundtrip: () => {
@@ -598,6 +468,197 @@ export async function bootstrap() {
         scenarios: scenarioRunner,
       },
     };
+  }
+}
+
+function setupPixiBackdrop(legacyRuntime, prefersReducedMotion) {
+  void (async () => {
+    let stageCanvas = null;
+    try {
+      const gameCanvas = document.getElementById("game");
+      if (!gameCanvas?.parentNode) return;
+      const { createEnvironmentStage } =
+        await import("../render/pixi/environment-stage.js");
+      stageCanvas = document.createElement("canvas");
+      stageCanvas.id = "environment";
+      stageCanvas.setAttribute("aria-hidden", "true");
+      gameCanvas.parentNode.insertBefore(stageCanvas, gameCanvas);
+      const environmentStage = await createEnvironmentStage({
+        canvas: stageCanvas,
+        reducedMotion: prefersReducedMotion(),
+      });
+      document.body.classList.add("gpu-environment");
+      legacyRuntime.configureEnvironmentRenderer((frame) =>
+        environmentStage.render(frame),
+      );
+      console.info("[render] PixiJS environment stage active");
+      let fxCanvas = null;
+      try {
+        const { createCombatFxStage } =
+          await import("../render/pixi/combat-fx-stage.js");
+        fxCanvas = document.createElement("canvas");
+        fxCanvas.id = "combat-fx";
+        fxCanvas.setAttribute("aria-hidden", "true");
+        gameCanvas.after(fxCanvas);
+        const combatFxStage = await createCombatFxStage({
+          canvas: fxCanvas,
+          gameCanvas,
+        });
+        legacyRuntime.configureCombatFxRenderer(combatFxStage);
+        console.info("[render] PixiJS combat FX stage active");
+      } catch (fxError) {
+        fxCanvas?.remove();
+        console.warn(
+          "[render] PixiJS combat FX stage unavailable — 2D particles/bloom remain active",
+          fxError,
+        );
+      }
+    } catch (error) {
+      stageCanvas?.remove();
+      document.body.classList.remove("gpu-environment");
+      console.warn(
+        "[render] PixiJS environment stage unavailable — canvas backdrop remains active",
+        error,
+      );
+    }
+  })();
+}
+
+export async function bootstrap() {
+  document.documentElement.dataset.app = "voidreaper-modular";
+  const events = createEventBus();
+  const effects = registerCoreEffects(createEffectRegistry());
+  registerEvolutionEffects(effects);
+  const services = {
+    events,
+    effects,
+    stats: createStatEngine(
+      STAT_DEFINITIONS,
+      (context) => context.sources ?? [],
+    ),
+    tags: createTagEngine(TAG_DEFINITIONS, SYNERGY_DEFINITIONS),
+    energy: createEnergySystem({ eventBus: events }),
+    heat: createHeatSystem({ eventBus: events }),
+    corruption: createCorruptionSystem({ eventBus: events }),
+    dodge: createDodgeSystem({ eventBus: events }),
+  };
+  services.evolutions = createEvolutionSystem(LEGACY_EVOLUTIONS, {
+    eventBus: events,
+  });
+  services.triggers = createTriggerEngine({ eventBus: events, effects });
+  services.save = createSaveStore(
+    globalThis.storage ?? globalThis.localStorage,
+    {
+      onWarning: (message) => legacyRuntime.ui.toast(message),
+    },
+  );
+  services.sectors = createSectorController({ eventBus: events });
+  services.currency = createRunCurrencyService(events);
+  services.daily = createDailyRunService({ saveStore: services.save });
+  services.checkpoints = createCheckpointService(services.save, events);
+  const initialSave = await services.save.load();
+  let metaSave = initialSave;
+  // Seed document-level settings from the loaded save; the settings screen only
+  // writes these on change, so without this a saved reducedMotion/colorPatterns
+  // preference would not apply until the user visits the settings screen.
+  if (metaSave.settings) {
+    document.documentElement.dataset.reducedMotion = String(
+      metaSave.settings.reducedMotion ?? false,
+    );
+    document.documentElement.dataset.colorPatterns = String(
+      metaSave.settings.colorPatterns ?? false,
+    );
+    if (metaSave.settings.uiScale != null)
+      document.documentElement.style.setProperty(
+        "--ui-scale",
+        metaSave.settings.uiScale,
+      );
+  }
+  let currentCheckpoint = initialSave.checkpoint;
+  const writeCurrentCheckpoint = async (run, nodeId) => {
+    currentCheckpoint = await services.checkpoints.writeAfterNode(run, nodeId);
+    return currentCheckpoint;
+  };
+  services.research = createResearchService(services.save, RESEARCH_TREE);
+  services.codex = createCodexService({
+    ships: SHIPS,
+    weapons: WEAPONS,
+    reactors: REACTORS,
+    modules: MODULES,
+    forbidden: WEAPONS.filter((weapon) => weapon.id === "anomaly-engine"),
+  });
+  services.campaignPaths = createCampaignPathService(CAMPAIGN_PATHS);
+  services.simulator = createBuildSimulator();
+  services.tutorial = createTutorialService({
+    saveStore: services.save,
+    eventBus: events,
+    chapters: TUTORIAL_CHAPTERS,
+    onPersistenceError: () =>
+      legacyRuntime.ui.toast(
+        "Tutorialfortschritt konnte nicht gespeichert werden.",
+      ),
+  });
+  services.tutorial.hydrate(initialSave.tutorial);
+  services.wreckSignals = createWreckSignalService();
+  services.salvageMissions = createSalvageMissionService(services.save);
+  services.affixes = createAffixRoller([
+    OFFENSIVE_AFFIXES,
+    DEFENSIVE_AFFIXES,
+    UTILITY_AFFIXES,
+    CORRUPTED_AFFIXES,
+  ]);
+  services.assemblyProfiles = createAssemblyProfileRegistry();
+  for (const profile of SHIP_FRAME_ASSEMBLY_PROFILES)
+    services.assemblyProfiles.registerShipFrame(profile);
+  services.assemblyRenderer = createAssemblyRenderer();
+  services.assemblyErrors = createAssemblyErrorBoundary();
+  console.info(
+    `[assembly] ${services.assemblyProfiles.getCounts().shipFrames} ship profiles`,
+  );
+  services.unlocks = createUnlockService(unlockFlagsFromSave(initialSave));
+  services.equipment = createEquipmentRegistry();
+  for (const definition of [...SHIPS, ...WEAPONS, ...REACTORS, ...MODULES])
+    services.equipment.register(definition);
+  services.campaignRewards = createCampaignRewardService({
+    equipment: services.equipment,
+    eventBus: events,
+    saveStore: services.save,
+  });
+  services.loadouts = createLoadoutService({
+    registry: services.equipment,
+    tagEngine: services.tags,
+    unlocks: services.unlocks,
+  });
+  services.primaryLoadout = () => resolvePrimaryLoadout(metaSave);
+  const blueprintIds = createIdService("meta-blueprints"),
+    thumbnailService = createBlueprintThumbnailService({
+      assemblyRenderer: services.assemblyRenderer,
+      geometryService: {
+        getSnapshot: () => services.assemblyGeometry?.getSnapshot(),
+      },
+    });
+  services.blueprints = createBlueprintService({
+    saveStore: services.save,
+    idFactory: blueprintIds,
+    thumbnailService,
+  });
+  services.blueprints.hydrate(initialSave);
+  console.info(
+    `[content] ${SHIPS.length} ships · ${WEAPONS.length} weapons · ` +
+      `${REACTORS.length} reactors · ${MODULES.length} modules`,
+  );
+  const blueprintValidationContext = () => ({
+    knownDefinitionIds: new Set(
+      services.equipment.values().map((item) => item.id),
+    ),
+    knownShipFrameIds: new Set(
+      SHIP_FRAME_ASSEMBLY_PROFILES.map((item) => item.id),
+    ),
+  });
+
+  const controller = createGameController(services);
+  if (import.meta.env.DEV) {
+    setupDevDebug(services, controller, () => metaSave, blueprintValidationContext);
   }
   const input = createInputController({
     eventBus: events,
@@ -783,61 +844,7 @@ export async function bootstrap() {
     }
     return rendered;
   });
-  // GPU environment stage (PixiJS) below the #game canvas. Loaded lazily and
-  // fire-and-forget: until it is ready (or if WebGL is unavailable) the legacy
-  // runtime keeps drawing its canvas backdrop.
-  void (async () => {
-    let stageCanvas = null;
-    try {
-      const gameCanvas = document.getElementById("game");
-      if (!gameCanvas?.parentNode) return;
-      const { createEnvironmentStage } =
-        await import("../render/pixi/environment-stage.js");
-      stageCanvas = document.createElement("canvas");
-      stageCanvas.id = "environment";
-      stageCanvas.setAttribute("aria-hidden", "true");
-      gameCanvas.parentNode.insertBefore(stageCanvas, gameCanvas);
-      const environmentStage = await createEnvironmentStage({
-        canvas: stageCanvas,
-        reducedMotion: prefersReducedMotion(),
-      });
-      document.body.classList.add("gpu-environment");
-      legacyRuntime.configureEnvironmentRenderer((frame) =>
-        environmentStage.render(frame),
-      );
-      console.info("[render] PixiJS environment stage active");
-      // combat FX overlay (particles, shockwaves, bloom) above #game — optional
-      // on top of the environment stage, with its own fallback to the 2D path
-      let fxCanvas = null;
-      try {
-        const { createCombatFxStage } =
-          await import("../render/pixi/combat-fx-stage.js");
-        fxCanvas = document.createElement("canvas");
-        fxCanvas.id = "combat-fx";
-        fxCanvas.setAttribute("aria-hidden", "true");
-        gameCanvas.after(fxCanvas);
-        const combatFxStage = await createCombatFxStage({
-          canvas: fxCanvas,
-          gameCanvas,
-        });
-        legacyRuntime.configureCombatFxRenderer(combatFxStage);
-        console.info("[render] PixiJS combat FX stage active");
-      } catch (fxError) {
-        fxCanvas?.remove();
-        console.warn(
-          "[render] PixiJS combat FX stage unavailable — 2D particles/bloom remain active",
-          fxError,
-        );
-      }
-    } catch (error) {
-      stageCanvas?.remove();
-      document.body.classList.remove("gpu-environment");
-      console.warn(
-        "[render] PixiJS environment stage unavailable — canvas backdrop remains active",
-        error,
-      );
-    }
-  })();
+  setupPixiBackdrop(legacyRuntime, prefersReducedMotion);
   legacyRuntime.configurePlayerDamageRouter((_player, damage) => {
     if (game.mode === "tutorial") return 0;
     const geometry = services.assemblyGeometry?.getSnapshot(),
