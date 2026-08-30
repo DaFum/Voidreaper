@@ -68,3 +68,6 @@
 ## 2025-02-18 - Replacing map/filter in Hot Paths
 **Learning:** In highly frequent spatial queries, such as updating and querying the ship assembly hit-zone index (`hit-zone-index.js`), using `.filter(..).map(..)` chaining causes continuous dynamic array allocations. The Garbage Collection (GC) overhead compounds drastically under load and can negatively impact framerates.
 **Action:** Replace all `.filter().map()` array manipulation chains inside high-frequency collision or indexing paths with pre-allocated arrays (or re-used arrays where possible) and imperative single-pass `for` loops.
+## 2024-05-18 - Avoid spreading Map iterators into arrays for sorting
+**Learning:** Spreading Map iterators into arrays (e.g., `[...map.entries()]`) to perform `.sort()` operations just to find a maximum or minimum value is highly inefficient. It allocates intermediate arrays and performs O(N log N) sorting when an O(N) imperative loop could find the max/min value without array allocations.
+**Action:** In performance-critical paths, use an imperative `for...of` loop to iterate over `map.entries()` and track the maximum/minimum value manually to avoid unnecessary allocations and overhead.
