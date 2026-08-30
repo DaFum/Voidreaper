@@ -58,6 +58,180 @@ export const equippedAssemblyItems = (loadout) =>
     .flatMap(([, items]) => items)
     .filter(Boolean);
 
+function createRunInventoryAdapter(run) {
+  let cachedInventoryRef = null;
+  let inventoryMap = null;
+
+  const getInventoryMap = () => {
+    const current = run.inventory ?? [];
+    if (
+      cachedInventoryRef !== current ||
+      !inventoryMap ||
+      inventoryMap.size !== current.length
+    ) {
+      cachedInventoryRef = current;
+      inventoryMap = new Map();
+      for (let i = 0; i < current.length; i++) {
+        const entry = current[i];
+        if (entry && entry.instanceId) {
+          inventoryMap.set(entry.instanceId, { item: entry, index: i });
+        }
+      }
+    }
+    return inventoryMap;
+  };
+
+  return {
+    values: () => run.inventory,
+    store: (id) => {
+      const current = run.inventory ?? [];
+      let cached = getInventoryMap().get(id);
+      if (!cached || current[cached.index] !== cached.item) {
+        cachedInventoryRef = null;
+        cached = getInventoryMap().get(id);
+      }
+      const item =
+        cached && current[cached.index] === cached.item ? cached.item : null;
+      if (item) item.stored = true;
+      return item ?? null;
+    },
+    addPending: (entry) => {
+      (run.pendingAssemblyItems ??= []).push(structuredClone(entry));
+      return entry;
+    },
+    updatePending: (id, patch) => {
+      const entry = (run.pendingAssemblyItems ??= []).find(
+        (item) => item.pendingMountId === id,
+      );
+      if (entry) Object.assign(entry, patch);
+      return entry ?? null;
+    },
+    pending: () => run.pendingAssemblyItems ?? [],
+  };
+}
+
+function initializeAssemblyState(run, services) {
+  const shipFrameId =
+    run.assembly?.shipFrameId ??
+    run.loadout?.slots?.ship?.[0]?.definitionId ??
+    "vesper";
+  const frame = services.assemblyProfiles.getShipFrame(shipFrameId);
+  if (run.assembly) {
+    migrateAssemblyPortLayout(run.assembly, services.equipment);
+  }
+  let rootPorts = [];
+  if (!run.assembly) {
+    const rootNodeId = run.ids.create("assembly-root");
+    const rootNode = {
+      nodeId: rootNodeId,
+      parentNodeId: null,
+      moduleInstanceId: null,
+      definitionId: shipFrameId,
+      visualProfileId: frame.coreGeometryId,
+      localPosition: { x: 0, y: 0 },
+      localRotation: 0,
+      mass: 24,
+      damageState: "intact",
+      childPortIds: [],
+    };
+    rootPorts = frame.initialPorts.map((template) => {
+      const portId = run.ids.create("assembly-port");
+      rootNode.childPortIds.push(portId);
+      return {
+        ...template,
+        portId,
+        parentNodeId: rootNodeId,
+        occupiedByNodeId: null,
+        localPosition: createRootPortPosition(template),
+      };
+    });
+    run.assembly = createAssemblyState({
+      shipFrameId,
+      rootNode,
+      rootPorts,
+    });
+    run.activeBlueprintId = services.blueprints?.getActiveId?.() ?? null;
+    run.activeBlueprintVariantId = null;
+  } else {
+    rootPorts = Object.values(run.assembly.portsById).filter(
+      (port) => port.parentNodeId === run.assembly.rootNodeId,
+    );
+  }
+  run.pendingAssemblyItems ??= [];
+  return { shipFrameId, frame, rootPorts };
+}
+
+function mountInitialLoadoutItems({
+  run,
+  services,
+  compatibilityService,
+  pendingMountService,
+}) {
+  for (const equipped of equippedAssemblyItems(run.loadout)) {
+    const definition = services.equipment.require(equipped.definitionId);
+    const item = {
+      ...structuredClone(equipped),
+      instanceId: run.ids.create("item"),
+      ownership: "temporary",
+      rarity: equipped.rarity ?? "common",
+      itemPower: equipped.itemPower ?? 100,
+      affixes: equipped.affixes ?? [],
+      sockets: equipped.sockets ?? [],
+    };
+    run.inventory.push(item);
+
+    const state = services.currentAssembly.getSnapshot();
+    const geometrySnapshot = services.assemblyGeometry.getSnapshot();
+    const moduleProfile = {
+      ...definition.assembly,
+      definitionId: definition.id,
+      tags: definition.tags,
+    };
+
+    let port = null;
+    if (state.portsById) {
+      for (const key in state.portsById) {
+        if (Object.hasOwn(state.portsById, key)) {
+          const candidate = state.portsById[key];
+          if (
+            candidate &&
+            compatibilityService.evaluate({
+              state,
+              moduleProfile,
+              port: candidate,
+              geometrySnapshot,
+            }).compatible
+          ) {
+            port = candidate;
+            break;
+          }
+        }
+      }
+    }
+
+    if (port) {
+      services.currentAssembly.mountModule({
+        moduleInstanceId: item.instanceId,
+        definitionId: definition.id,
+        parentPort: port,
+        assemblyProfile: definition.assembly,
+        transform: {
+          position: port.localPosition,
+          rotation: rotationForPortDirection(port.direction),
+        },
+      });
+      services.assemblyGeometry.rebuildNow();
+    } else {
+      pendingMountService.queue({
+        itemInstance: item,
+        profile: definition.assembly,
+        source: "loadout",
+        acquiredAt: run.time,
+      });
+    }
+  }
+}
+
 export function createGameController(services) {
   let run = null;
 
@@ -134,100 +308,13 @@ export function createGameController(services) {
       if (!resumed) {
         run.loadout = structuredClone(resolveRunLoadout(services));
       }
-      const shipFrameId =
-        run.assembly?.shipFrameId ??
-        run.loadout?.slots?.ship?.[0]?.definitionId ??
-        "vesper";
-      const frame = services.assemblyProfiles.getShipFrame(shipFrameId);
       if (resumed?.assembly) {
         migrateAssemblyPortLayout(resumed.assembly, services.equipment);
       }
-      let rootPorts = [];
-      if (!run.assembly) {
-        const rootNodeId = run.ids.create("assembly-root");
-        const rootNode = {
-          nodeId: rootNodeId,
-          parentNodeId: null,
-          moduleInstanceId: null,
-          definitionId: shipFrameId,
-          visualProfileId: frame.coreGeometryId,
-          localPosition: { x: 0, y: 0 },
-          localRotation: 0,
-          mass: 24,
-          damageState: "intact",
-          childPortIds: [],
-        };
-        rootPorts = frame.initialPorts.map((template) => {
-          const portId = run.ids.create("assembly-port");
-          rootNode.childPortIds.push(portId);
-          return {
-            ...template,
-            portId,
-            parentNodeId: rootNodeId,
-            occupiedByNodeId: null,
-            localPosition: createRootPortPosition(template),
-          };
-        });
-        run.assembly = createAssemblyState({
-          shipFrameId,
-          rootNode,
-          rootPorts,
-        });
-        run.activeBlueprintId = services.blueprints?.getActiveId?.() ?? null;
-        run.activeBlueprintVariantId = null;
-      } else {
-        rootPorts = Object.values(run.assembly.portsById).filter(
-          (port) => port.parentNodeId === run.assembly.rootNodeId,
-        );
-      }
-      run.pendingAssemblyItems ??= [];
+      const { shipFrameId, frame } = initializeAssemblyState(run, services);
       // Performance optimization: Maintain a cached Map index of run.inventory by instanceId
       // to provide O(1) store lookups instead of O(N) Array.find calls.
-      let cachedInventoryRef = null;
-      let inventoryMap = null;
-      const getInventoryMap = () => {
-        const current = run.inventory ?? [];
-        if (cachedInventoryRef !== current || !inventoryMap || inventoryMap.size !== current.length) {
-          cachedInventoryRef = current;
-          inventoryMap = new Map();
-          for (let i = 0; i < current.length; i++) {
-            const entry = current[i];
-            if (entry && entry.instanceId) {
-              inventoryMap.set(entry.instanceId, { item: entry, index: i });
-            }
-          }
-        }
-        return inventoryMap;
-      };
-
-      const runInventory = {
-        values: () => run.inventory,
-        store: (id) => {
-          const current = run.inventory ?? [];
-          let cached = getInventoryMap().get(id);
-          // Validate that the cached item is still at its expected index in current inventory.
-          // If it was swapped or replaced in-place, invalidate cache and rebuild.
-          if (!cached || current[cached.index] !== cached.item) {
-            cachedInventoryRef = null;
-            cached = getInventoryMap().get(id);
-          }
-          const item = (cached && current[cached.index] === cached.item) ? cached.item : null;
-          if (item) item.stored = true;
-          return item ?? null;
-        },
-        addPending: (entry) => {
-          (run.pendingAssemblyItems ??= []).push(structuredClone(entry));
-          return entry;
-        },
-        updatePending: (id, patch) => {
-          const entry = (run.pendingAssemblyItems ??= []).find(
-            (item) => item.pendingMountId === id,
-          );
-          if (entry) Object.assign(entry, patch);
-          return entry ?? null;
-        },
-        pending: () => run.pendingAssemblyItems ?? [],
-      };
+      const runInventory = createRunInventoryAdapter(run);
       services.currentAssembly = createAssemblyService({
         state: run.assembly,
         eventBus: services.events,
@@ -268,71 +355,12 @@ export function createGameController(services) {
         onError: (message) => globalThis.__VOIDREAPER_TOAST__?.(message),
       });
       if (!resumed) {
-        for (const equipped of equippedAssemblyItems(run.loadout)) {
-          const definition = services.equipment.require(equipped.definitionId);
-          const item = {
-            ...structuredClone(equipped),
-            instanceId: run.ids.create("item"),
-            ownership: "temporary",
-            rarity: equipped.rarity ?? "common",
-            itemPower: equipped.itemPower ?? 100,
-            affixes: equipped.affixes ?? [],
-            sockets: equipped.sockets ?? [],
-          };
-          run.inventory.push(item);
-
-          const state = services.currentAssembly.getSnapshot();
-          const geometrySnapshot = services.assemblyGeometry.getSnapshot();
-          const moduleProfile = {
-            ...definition.assembly,
-            definitionId: definition.id,
-            tags: definition.tags,
-          };
-
-          // Performance optimization: Iterate state.portsById with a for-in loop instead of
-          // Object.values().find() to eliminate array allocations per item loop iteration.
-          let port = null;
-          if (state.portsById) {
-            for (const key in state.portsById) {
-              if (Object.hasOwn(state.portsById, key)) {
-                const candidate = state.portsById[key];
-                if (
-                  candidate &&
-                  compatibilityService.evaluate({
-                    state,
-                    moduleProfile,
-                    port: candidate,
-                    geometrySnapshot,
-                  }).compatible
-                ) {
-                  port = candidate;
-                  break;
-                }
-              }
-            }
-          }
-
-          if (port) {
-            services.currentAssembly.mountModule({
-              moduleInstanceId: item.instanceId,
-              definitionId: definition.id,
-              parentPort: port,
-              assemblyProfile: definition.assembly,
-              transform: {
-                position: port.localPosition,
-                rotation: rotationForPortDirection(port.direction),
-              },
-            });
-            services.assemblyGeometry.rebuildNow();
-          } else {
-            pendingMountService.queue({
-              itemInstance: item,
-              profile: definition.assembly,
-              source: "loadout",
-              acquiredAt: run.time,
-            });
-          }
-        }
+        mountInitialLoadoutItems({
+          run,
+          services,
+          compatibilityService,
+          pendingMountService,
+        });
       }
       services.flightProfile?.destroy?.();
       services.flightProfile = createFlightProfileService({

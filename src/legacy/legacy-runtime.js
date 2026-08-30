@@ -2091,178 +2091,13 @@ const Game = {
     const frozen = this.freezeT > 0;
     const eclipse = this.event && this.event.id === "eclipse";
 
-    this.spawnTimer -= dt;
-    if (this.spawnTimer <= 0 && this.spawnBudget > 0) {
-      this.spawnFromBudget();
-      this.spawnTimer = Math.max(0.12, 0.85 - this.wave * 0.05);
-    }
-    if (
-      this.spawnBudget <= 0 &&
-      this.enemies.length === 0 &&
-      this.spawnsQ.live.length === 0
-    )
-      this.startWave(this.wave + 1);
-
-    // resolve queued spawn telegraphs
-    this.spawnsQ.update((s) => {
-      s.t -= dt;
-      if (s.t <= 0) {
-        s.dead = true;
-        this.spawnEnemy(s.type, s.x, s.y);
-        this.burst(s.x, s.y, 8, ETYPES[s.type].color, 160);
-      }
-    });
-
+    this.updateSpawnsAndCombo(dt);
     this.updateEvent(dt);
-
-    if (this.combo > 0) {
-      this.comboT -= dt;
-      UI.combo(
-        1 + Math.min(4, (this.combo / 6) | 0),
-        clamp(this.comboT / 2.4, 0, 1),
-        this.combo,
-      );
-      if (this.comboT <= 0) {
-        this.combo = 0;
-        this.streakIdx = 0;
-        UI.combo(0, 0, 0);
-      }
-    }
-
-    const [ax, ay] = Input.axis();
-    const accel = 1400;
-    p.vx = lerp(p.vx, ax * p.speed, clamp((accel * dt) / p.speed, 0, 1));
-    p.vy = lerp(p.vy, ay * p.speed, clamp((accel * dt) / p.speed, 0, 1));
-    p.x = clamp(p.x + p.vx * dt, -this.arena, this.arena);
-    p.y = clamp(p.y + p.vy * dt, -this.arena, this.arena);
-    p.iframes = Math.max(0, p.iframes - dt);
-    if (p.regen > 0) p.hp = Math.min(p.maxHp, p.hp + p.regen * dt);
-    // ghost hp bar chases real hp
-    p.hpGhost = Math.max(
-      p.hp / p.maxHp,
-      lerp(p.hpGhost, p.hp / p.maxHp, clamp(1.6 * dt, 0, 1)),
-    );
-    document.body.classList.toggle("lowhp", p.hp / p.maxHp < 0.3);
-
-    const moving = ax || ay;
-    p.thr = lerp(p.thr, moving ? 1 : 0, clamp(8 * dt, 0, 1));
-    if (p.evoTempest) {
-      p.moveCharge = clamp(p.moveCharge + (moving ? dt * 1.5 : -dt * 2), 0, 1);
-      if (p.moveCharge > 0.5 && Math.random() < dt * 8) {
-        const pt = this.parts.get();
-        pt.x = p.x + this.grand(-14, 14);
-        pt.y = p.y + this.grand(-14, 14);
-        pt.vx = this.grand(-120, 120);
-        pt.vy = this.grand(-120, 120);
-        pt.life = pt.maxLife = 0.2;
-        pt.size = 2;
-        pt.color = FORGED_ABYSS_PALETTE.energySoft;
-        pt.drag = 0.85;
-      }
-    }
-
-    p.trailT -= dt;
-    if (moving && p.trailT <= 0) {
-      p.trailT = 0.03;
-      const pt = this.parts.get();
-      pt.x = p.x - p.vx * 0.04;
-      pt.y = p.y - p.vy * 0.04;
-      pt.vx = -p.vx * 0.4 + this.grand(-20, 20);
-      pt.vy = -p.vy * 0.4 + this.grand(-20, 20);
-      pt.life = pt.maxLife = 0.35;
-      pt.size = 2.5;
-      pt.color = "#06ffa5";
-      pt.drag = 0.9;
-    }
+    this.updatePlayerMovement(dt);
 
     let rateMul = p.evoTempest && p.moveCharge > 0.5 ? 0.6 : 1;
-    if (this.event?.id === "frenzy") rateMul *= 0.45;
-    this.hash.clear();
-    for (const e of this.enemies) this.hash.insert(e);
-
-    p.fireT -= dt;
-    if (p.fireT <= 0 && this.enemies.length) {
-      p.fireT = p.fireRate * rateMul;
-      this.fire(p);
-    }
-
-    if (p.nova > 0) {
-      p.novaT -= dt;
-      if (p.novaT <= 0) {
-        p.novaT = p.novaCd;
-        this.novaBlast(p);
-      }
-    }
-    p.orbA += dt * 3.1;
-
-    if (p.orbitals > 0) {
-      const oR = p.evoHalo ? 78 : 62,
-        bladeR = p.evoHalo ? 17 : 12;
-      for (let i = 0; i < p.orbitals; i++) {
-        const a = p.orbA + (i / p.orbitals) * TAU;
-        const ox = p.x + Math.cos(a) * oR,
-          oy = p.y + Math.sin(a) * oR;
-        this.hash.query(ox, oy, 34, this.qbuf);
-        for (const e of this.qbuf) {
-          if (
-            dist2(ox, oy, e.x, e.y) < (bladeR + e.r) * (bladeR + e.r) &&
-            !e.orbCd
-          ) {
-            e.orbCd = 0.25;
-            const crit = this.grng() < p.crit;
-            this.damageEnemy(e, 6 * p.dmgMul * (crit ? 2.5 : 1), crit);
-            if (p.evoHalo) p.hp = Math.min(p.maxHp, p.hp + 0.8);
-          }
-        }
-      }
-    }
-
-    this.zones.update((z) => {
-      z.life -= dt;
-      if (z.life <= 0) {
-        if (z.telegraph) {
-          this.bombBlast(z.x, z.y, z.r + 14, 0);
-          AudioSys.bomb();
-          this.shake(7);
-          const snap = getArrayFromPool([]);
-          this.hash.query(z.x, z.y, z.r + 14, snap);
-          for (let i = snap.length - 1; i >= 0; i--) {
-            const e = snap[i];
-            if (e.dead) continue;
-            if (dist2(z.x, z.y, e.x, e.y) < (z.r + 14) * (z.r + 14))
-              this.damageEnemy(e, 50, false);
-          }
-          releaseArrayToPool(snap);
-          if (dist2(z.x, z.y, p.x, p.y) < (z.r + 14) * (z.r + 14))
-            this.hurtPlayer(p, 22);
-        }
-        z.dead = true;
-        return;
-      }
-      if (!z.telegraph) {
-        this.hash.query(z.x, z.y, z.r + 30, this.qbuf);
-        for (const e of this.qbuf) {
-          if (dist2(z.x, z.y, e.x, e.y) < z.r * z.r) {
-            e.dotT = (e.dotT || 0) - dt;
-            if (e.dotT <= 0) {
-              e.dotT = 0.35;
-              this.damageEnemy(e, z.dps * 0.35, false);
-            }
-            if (z.pull) {
-              // ⚡ Bolt: Avoid Math.atan2 and cos/sin for vector normalization in hot path
-              const dx = z.x - e.x,
-                dy = z.y - e.y;
-              const dist = Math.sqrt(dx * dx + dy * dy);
-              if (dist > 0) {
-                const f = (z.pull * dt * 6) / dist;
-                e.vx += dx * f;
-                e.vy += dy * f;
-              }
-            }
-          }
-        }
-      }
-    });
+    this.updatePlayerWeapons(dt, rateMul, eclipse);
+    this.updateZones(dt);
 
     const eSlow = frozen ? 0 : eclipse ? 0.55 : 1;
     for (let i = this.enemies.length - 1; i >= 0; i--) {
@@ -2453,6 +2288,198 @@ const Game = {
       if (dist2(e.x, e.y, p.x, p.y) < cr * cr) this.hurtPlayer(p, e.dmg);
     }
 
+
+    this.updateProjectilesAndFX(dt, frozen);
+    UI.hud(p, this);
+  },
+
+  updateSpawnsAndCombo(dt) {
+    this.spawnTimer -= dt;
+    if (this.spawnTimer <= 0 && this.spawnBudget > 0) {
+      this.spawnFromBudget();
+      this.spawnTimer = Math.max(0.12, 0.85 - this.wave * 0.05);
+    }
+    if (
+      this.spawnBudget <= 0 &&
+      this.enemies.length === 0 &&
+      this.spawnsQ.live.length === 0
+    )
+      this.startWave(this.wave + 1);
+
+    // resolve queued spawn telegraphs
+    this.spawnsQ.update((s) => {
+      s.t -= dt;
+      if (s.t <= 0) {
+        s.dead = true;
+        this.spawnEnemy(s.type, s.x, s.y);
+        this.burst(s.x, s.y, 8, ETYPES[s.type].color, 160);
+      }
+    });
+
+    if (this.combo > 0) {
+      this.comboT -= dt;
+      UI.combo(
+        1 + Math.min(4, (this.combo / 6) | 0),
+        clamp(this.comboT / 2.4, 0, 1),
+        this.combo,
+      );
+      if (this.comboT <= 0) {
+        this.combo = 0;
+        this.streakIdx = 0;
+        UI.combo(0, 0, 0);
+      }
+    }
+
+  },
+
+  updatePlayerMovement(dt) {
+    const p = this.player;
+    const [ax, ay] = Input.axis();
+    const accel = 1400;
+    p.vx = lerp(p.vx, ax * p.speed, clamp((accel * dt) / p.speed, 0, 1));
+    p.vy = lerp(p.vy, ay * p.speed, clamp((accel * dt) / p.speed, 0, 1));
+    p.x = clamp(p.x + p.vx * dt, -this.arena, this.arena);
+    p.y = clamp(p.y + p.vy * dt, -this.arena, this.arena);
+    p.iframes = Math.max(0, p.iframes - dt);
+    if (p.regen > 0) p.hp = Math.min(p.maxHp, p.hp + p.regen * dt);
+    // ghost hp bar chases real hp
+    p.hpGhost = Math.max(
+      p.hp / p.maxHp,
+      lerp(p.hpGhost, p.hp / p.maxHp, clamp(1.6 * dt, 0, 1)),
+    );
+    document.body.classList.toggle("lowhp", p.hp / p.maxHp < 0.3);
+
+    const moving = ax || ay;
+    p.thr = lerp(p.thr, moving ? 1 : 0, clamp(8 * dt, 0, 1));
+    if (p.evoTempest) {
+      p.moveCharge = clamp(p.moveCharge + (moving ? dt * 1.5 : -dt * 2), 0, 1);
+      if (p.moveCharge > 0.5 && Math.random() < dt * 8) {
+        const pt = this.parts.get();
+        pt.x = p.x + this.grand(-14, 14);
+        pt.y = p.y + this.grand(-14, 14);
+        pt.vx = this.grand(-120, 120);
+        pt.vy = this.grand(-120, 120);
+        pt.life = pt.maxLife = 0.2;
+        pt.size = 2;
+        pt.color = FORGED_ABYSS_PALETTE.energySoft;
+        pt.drag = 0.85;
+      }
+    }
+
+    p.trailT -= dt;
+    if (moving && p.trailT <= 0) {
+      p.trailT = 0.03;
+      const pt = this.parts.get();
+      pt.x = p.x - p.vx * 0.04;
+      pt.y = p.y - p.vy * 0.04;
+      pt.vx = -p.vx * 0.4 + this.grand(-20, 20);
+      pt.vy = -p.vy * 0.4 + this.grand(-20, 20);
+      pt.life = pt.maxLife = 0.35;
+      pt.size = 2.5;
+      pt.color = "#06ffa5";
+      pt.drag = 0.9;
+    }
+
+  },
+
+  updatePlayerWeapons(dt, rateMul, eclipse) {
+    const p = this.player;
+    if (this.event?.id === "frenzy") rateMul *= 0.45;
+    this.hash.clear();
+    for (const e of this.enemies) this.hash.insert(e);
+
+    p.fireT -= dt;
+    if (p.fireT <= 0 && this.enemies.length) {
+      p.fireT = p.fireRate * rateMul;
+      this.fire(p);
+    }
+
+    if (p.nova > 0) {
+      p.novaT -= dt;
+      if (p.novaT <= 0) {
+        p.novaT = p.novaCd;
+        this.novaBlast(p);
+      }
+    }
+    p.orbA += dt * 3.1;
+
+    if (p.orbitals > 0) {
+      const oR = p.evoHalo ? 78 : 62,
+        bladeR = p.evoHalo ? 17 : 12;
+      for (let i = 0; i < p.orbitals; i++) {
+        const a = p.orbA + (i / p.orbitals) * TAU;
+        const ox = p.x + Math.cos(a) * oR,
+          oy = p.y + Math.sin(a) * oR;
+        this.hash.query(ox, oy, 34, this.qbuf);
+        for (const e of this.qbuf) {
+          if (
+            dist2(ox, oy, e.x, e.y) < (bladeR + e.r) * (bladeR + e.r) &&
+            !e.orbCd
+          ) {
+            e.orbCd = 0.25;
+            const crit = this.grng() < p.crit;
+            this.damageEnemy(e, 6 * p.dmgMul * (crit ? 2.5 : 1), crit);
+            if (p.evoHalo) p.hp = Math.min(p.maxHp, p.hp + 0.8);
+          }
+        }
+      }
+    }
+
+  },
+
+  updateZones(dt) {
+    const p = this.player;
+    this.zones.update((z) => {
+      z.life -= dt;
+      if (z.life <= 0) {
+        if (z.telegraph) {
+          this.bombBlast(z.x, z.y, z.r + 14, 0);
+          AudioSys.bomb();
+          this.shake(7);
+          const snap = getArrayFromPool([]);
+          this.hash.query(z.x, z.y, z.r + 14, snap);
+          for (let i = snap.length - 1; i >= 0; i--) {
+            const e = snap[i];
+            if (e.dead) continue;
+            if (dist2(z.x, z.y, e.x, e.y) < (z.r + 14) * (z.r + 14))
+              this.damageEnemy(e, 50, false);
+          }
+          releaseArrayToPool(snap);
+          if (dist2(z.x, z.y, p.x, p.y) < (z.r + 14) * (z.r + 14))
+            this.hurtPlayer(p, 22);
+        }
+        z.dead = true;
+        return;
+      }
+      if (!z.telegraph) {
+        this.hash.query(z.x, z.y, z.r + 30, this.qbuf);
+        for (const e of this.qbuf) {
+          if (dist2(z.x, z.y, e.x, e.y) < z.r * z.r) {
+            e.dotT = (e.dotT || 0) - dt;
+            if (e.dotT <= 0) {
+              e.dotT = 0.35;
+              this.damageEnemy(e, z.dps * 0.35, false);
+            }
+            if (z.pull) {
+              // ⚡ Bolt: Avoid Math.atan2 and cos/sin for vector normalization in hot path
+              const dx = z.x - e.x,
+                dy = z.y - e.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist > 0) {
+                const f = (z.pull * dt * 6) / dist;
+                e.vx += dx * f;
+                e.vy += dy * f;
+              }
+            }
+          }
+        }
+      }
+    });
+
+  },
+
+  updateProjectilesAndFX(dt, frozen) {
+    const p = this.player;
     this.bullets.update((b) => {
       b.x += b.vx * dt;
       b.y += b.vy * dt;
@@ -2586,7 +2613,6 @@ const Game = {
     this.cam.sx = (Math.random() * 2 - 1) * this.cam.shake;
     this.cam.sy = (Math.random() * 2 - 1) * this.cam.shake;
 
-    UI.hud(p, this);
   },
 
   /* ---------- render ---------- */
@@ -2710,6 +2736,17 @@ const Game = {
     const camY = p ? this.cam.y : Math.cos(this.menuT * 0.08) * 90;
     const shakeX = p ? this.cam.sx : 0,
       shakeY = p ? this.cam.sy : 0;
+    const eclipse = this.event && this.event.id === "eclipse";
+    const frozen = this.freezeT > 0;
+
+    this.drawWorldBackdrop(p, camX, camY, t, W, H, shakeX, shakeY);
+    if (!p) return;
+    this.drawWorldEntities(p, camX, camY, t, frozen);
+    const darkness = this.drawParticlesAndFX(p, camX, camY, shakeX, shakeY, W, H, eclipse);
+    this.drawHUDOverlaysAndPostFX(p, camX, camY, W, H, darkness, frozen);
+  },
+
+  drawWorldBackdrop(p, camX, camY, t, W, H, shakeX, shakeY) {
 
     // GPU environment stage (Pixi) can take over the backdrop; the game
     // canvas then stays transparent so the layer below shines through.
@@ -2829,6 +2866,9 @@ const Game = {
       cx.shadowBlur = 0;
     }
 
+  },
+
+  drawWorldEntities(p, camX, camY, t, frozen) {
     // zones
     for (const z of this.zones.live) {
       const f = z.life / z.maxLife;
@@ -3019,6 +3059,9 @@ const Game = {
     cx.beginPath();
     cx.arc(p.x, p.y, p.magnet, 0, TAU);
     cx.stroke();
+  },
+
+  drawParticlesAndFX(p, camX, camY, shakeX, shakeY, W, H, eclipse) {
 
     // darkness (region visibility + eclipse) is computed here so the GPU FX
     // overlay can dim itself like the 2D path; the veil below reuses it
@@ -3092,6 +3135,10 @@ const Game = {
       cx.globalCompositeOperation = "source-over";
       cx.globalAlpha = 1;
     }
+    return darkness;
+  },
+
+  drawHUDOverlaysAndPostFX(p, camX, camY, W, H, darkness, frozen) {
 
     // floating text (damage pops scale in)
     cx.textAlign = "center";
