@@ -395,6 +395,20 @@ button.assembly-port {
 .assembly-port--valid i {
   animation: assembly-port-pulse 1.4s ease-in-out infinite;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .assembly-port--valid i {
+    animation: none;
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+[data-reduced-motion="true"] .assembly-port--valid i {
+  animation: none;
+  opacity: 1;
+  transform: scale(1.08);
+}
 .assembly-port--invalid {
   opacity: 0.28;
   filter: none;

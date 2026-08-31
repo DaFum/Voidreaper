@@ -656,6 +656,10 @@ export async function bootstrap() {
     ),
   });
 
+  const isReducedMotion = () =>
+    document.documentElement.dataset.reducedMotion === "true" ||
+    prefersReducedMotion();
+
   const controller = createGameController(services);
   if (import.meta.env.DEV) {
     setupDevDebug(services, controller, () => metaSave, blueprintValidationContext);
@@ -707,6 +711,7 @@ export async function bootstrap() {
       suggestion: session.suggestions[session.selectedIndex],
       assemblyRenderer: services.assemblyRenderer,
       time: quickMountClock,
+      reducedMotion: isReducedMotion(),
     });
   };
   let quickMountFrame = null,
@@ -782,7 +787,7 @@ export async function bootstrap() {
       onAction: runQuickMountAction,
     });
     renderQuickMount();
-    if (!prefersReducedMotion()) {
+    if (!isReducedMotion()) {
       quickMountLast = performance.now();
       quickMountFrame = requestAnimationFrame(animateQuickMount);
     }
@@ -806,6 +811,7 @@ export async function bootstrap() {
     const lod = metaSave.assemblyVisualPreferences?.lod;
     return !lod || lod === "auto" ? "ultra" : lod;
   };
+
   // weight region-typical enemies (content catalog) into the legacy wave roster;
   // game.visualRegionId is kept current by game-controller.syncLegacy
   legacyRuntime.configureRegionRoster(
@@ -822,6 +828,7 @@ export async function bootstrap() {
       buildAnimations: services.buildAnimations?.snapshot?.() ?? [],
       movement: { x: player.vx, y: player.vy, dodging: player.iframes > 0 },
       lodOptions: { userSetting: getAssemblyLod() },
+      reducedMotion: isReducedMotion(),
     });
     if (rendered && player.shield > 0) {
       // save/restore so strokeStyle, shadowColor and lineWidth do not leak into
@@ -1170,6 +1177,7 @@ export async function bootstrap() {
           time: clock,
           buildAnimations: services.buildAnimations?.snapshot?.() ?? [],
           lodOptions: { userSetting: getAssemblyLod() },
+          reducedMotion: isReducedMotion(),
         });
         const selectedGeometry = geometryById.get(
           workbench.session?.selectedNodeId,
@@ -1306,7 +1314,6 @@ export async function bootstrap() {
     render();
     let lastFrame = performance.now(),
       clock = controller.run?.time ?? 0;
-    const reducedMotion = prefersReducedMotion();
     const frame = (now) => {
       if (!screen.canvas.isConnected || !workbench.session) {
         cleanup();
@@ -1314,7 +1321,7 @@ export async function bootstrap() {
       }
       const dt = Math.min(0.1, (now - lastFrame) / 1000);
       lastFrame = now;
-      if (!reducedMotion) clock += dt;
+      if (!isReducedMotion()) clock += dt;
       services.buildAnimations?.update(dt);
       draw(clock);
       frameHandle = requestAnimationFrame(frame);

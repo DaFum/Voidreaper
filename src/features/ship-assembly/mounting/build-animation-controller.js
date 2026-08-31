@@ -1,4 +1,4 @@
-const BUILD_PHASES = Object.freeze([
+const NORMAL_BUILD_PHASES = Object.freeze([
   { id: "port-glow", duration: 0.12 },
   { id: "extend-braces", duration: 0.18 },
   { id: "lock-core", duration: 0.16 },
@@ -6,14 +6,24 @@ const BUILD_PHASES = Object.freeze([
   { id: "close-armor", duration: 0.22 },
   { id: "power-up", duration: 0.18 },
 ]);
+
+const REDUCED_BUILD_PHASES = Object.freeze([
+  { id: "port-glow", duration: 0.1 },
+  { id: "lock-core", duration: 0.1 },
+  { id: "power-up", duration: 0.1 },
+]);
+
 export function createBuildAnimationController({ reducedMotion = false } = {}) {
   const animations = [];
+  const activePhases = reducedMotion ? REDUCED_BUILD_PHASES : NORMAL_BUILD_PHASES;
   let total = 0;
-  for (let i = 0; i < BUILD_PHASES.length; i++)
-    total += BUILD_PHASES[i].duration;
+  for (let i = 0; i < activePhases.length; i++)
+    total += activePhases[i].duration;
+
   return {
     start(nodeId, { mode = "mount", workbench = false } = {}) {
-      const duration = (workbench ? 1.6 : 0.8) * (reducedMotion ? 0.45 : 1);
+      const baseDuration = (workbench ? 1.6 : 0.8);
+      const duration = reducedMotion ? 0.3 : baseDuration;
       const animation = { nodeId, mode, elapsed: 0, duration, complete: false };
       animations.push(animation);
       return Object.freeze({ ...animation });
@@ -33,15 +43,15 @@ export function createBuildAnimationController({ reducedMotion = false } = {}) {
     },
     snapshot() {
       const snap = new Array(animations.length);
-      const lastPhase = BUILD_PHASES[BUILD_PHASES.length - 1];
+      const lastPhase = activePhases[activePhases.length - 1];
       for (let i = 0; i < animations.length; i++) {
         const animation = animations[i];
         const normalized = animation.elapsed / animation.duration;
         let cursor = 0,
           phase = lastPhase,
           phaseProgress = 1;
-        for (let j = 0; j < BUILD_PHASES.length; j++) {
-          const candidate = BUILD_PHASES[j];
+        for (let j = 0; j < activePhases.length; j++) {
+          const candidate = activePhases[j];
           const share = candidate.duration / total;
           if (normalized <= cursor + share) {
             phase = candidate;
