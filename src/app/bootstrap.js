@@ -1314,7 +1314,6 @@ export async function bootstrap() {
     render();
     let lastFrame = performance.now(),
       clock = controller.run?.time ?? 0;
-    const reducedMotion = prefersReducedMotion();
     const frame = (now) => {
       if (!screen.canvas.isConnected || !workbench.session) {
         cleanup();
