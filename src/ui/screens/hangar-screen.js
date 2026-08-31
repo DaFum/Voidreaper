@@ -1,9 +1,18 @@
-import { createItemCard } from "../components/item-card.js";
+import { createItemCard, updateItemCard } from "../components/item-card.js";
 import { escapeHtml } from "../escape-html.js";
 import {
   deriveEquipmentCatalogEntries,
   LOADOUT_SLOT_LAYOUT,
 } from "../../features/equipment/loadout-service.js";
+import {
+  animate,
+  animateListStagger,
+  animatePanelEnter,
+  animatePanelExit,
+  animatePressFeedback,
+  animateSelectionIndicator,
+} from "../motion/motion.js";
+import { isReducedMotion } from "../motion/reduced-motion.js";
 
 const TABS = [
   "Run starten",
@@ -188,6 +197,18 @@ export function createHangarScreen(
       );
     }
     tabs.scrollLeft = target;
+
+    // Update shared indicator position
+    let indicator = tabs.querySelector(".hangar-tab-indicator");
+    if (!indicator) {
+      indicator = document.createElement("span");
+      indicator.className = "hangar-tab-indicator";
+      tabs.appendChild(indicator);
+    }
+    const targetBounds = selected.getBoundingClientRect();
+    const containerBounds = tabs.getBoundingClientRect();
+    animateSelectionIndicator(indicator, targetBounds, containerBounds, tabs.scrollLeft);
+
     return target;
   };
   const refreshActiveNavigation = () => {
@@ -236,10 +257,40 @@ export function createHangarScreen(
           "aria-pressed",
           String(control.dataset.catalogType === state.type),
         );
-      results.replaceChildren();
+
+      // Catalog DOM state continuity with FLIP positioning
+      const existingCards = new Map();
+      const oldPositions = new Map();
+
+      for (const card of results.children) {
+        if (card.getAttribute && card.getAttribute("data-catalog-empty")) continue;
+        const id = card.dataset.itemId;
+        if (id) {
+          existingCards.set(id, card);
+          if (!isReducedMotion() && typeof card.getBoundingClientRect === "function") {
+            oldPositions.set(id, card.getBoundingClientRect());
+          }
+        }
+      }
+
+      const emptyState = results.querySelector("[data-catalog-empty]");
+      if (emptyState) emptyState.remove();
+
       if (!entries.length) {
+        results.replaceChildren();
         results.innerHTML = `<div class="catalog-empty" data-catalog-empty><strong>Keine Treffer</strong><span>Suche oder Filter blenden derzeit alle Einträge aus.</span><button type="button" data-catalog-reset>Filter zurücksetzen</button></div>`;
       } else {
+        const newCards = [];
+        const survivingCards = [];
+        const entryIds = new Set(entries.map((e) => e.definition.id));
+
+        for (const [id, card] of existingCards.entries()) {
+          if (!entryIds.has(id)) {
+            card.remove();
+          }
+        }
+
+        const fragment = document.createDocumentFragment();
         for (const entry of entries) {
           const statusLabel =
             entry.state === "equipped"
@@ -253,51 +304,120 @@ export function createHangarScreen(
               : entry.state === "locked"
                 ? "Freischaltweg ansehen"
                 : "Slots wählen";
-          results.append(
-            createItemCard(entry.definition, {
-              selected: entry.definition.id === state.selectedItemId,
-              state: entry.state,
-              statusLabel,
-              statusDetail: entry.state === "locked" ? entry.unlockLabel : "",
-              actionLabel,
-              equippedSlots: entry.equippedSlots.map(({ slot, index }) =>
-                slotLabel(slot, index),
-              ),
-              onSelect: (definition) => {
-                state.selectedItemId = definition.id;
-                refreshCatalog();
-              },
-            }),
-          );
+
+          const isSelected = entry.definition.id === state.selectedItemId;
+          const cardOptions = {
+            selected: isSelected,
+            state: entry.state,
+            statusLabel,
+            statusDetail: entry.state === "locked" ? entry.unlockLabel : "",
+            actionLabel,
+            equippedSlots: entry.equippedSlots.map(({ slot, index }) =>
+              slotLabel(slot, index),
+            ),
+            onSelect: (definition) => {
+              state.selectedItemId = definition.id;
+              refreshCatalog();
+            },
+          };
+
+          let card;
+          if (existingCards.has(entry.definition.id)) {
+            card = existingCards.get(entry.definition.id);
+            const hadFocus = document.activeElement === card || (card.contains && card.contains(document.activeElement));
+            updateItemCard(card, entry.definition, cardOptions);
+            if (hadFocus && typeof card.focus === "function") card.focus();
+            survivingCards.push(card);
+          } else {
+            card = createItemCard(entry.definition, cardOptions);
+            newCards.push(card);
+          }
+          fragment.append(card);
+        }
+
+        results.append(fragment);
+
+        if (!isReducedMotion()) {
+          for (const card of survivingCards) {
+            const id = card.dataset.itemId;
+            const oldRect = oldPositions.get(id);
+            if (oldRect && typeof card.getBoundingClientRect === "function") {
+              const newRect = card.getBoundingClientRect();
+              const dx = oldRect.left - newRect.left;
+              const dy = oldRect.top - newRect.top;
+              if ((dx !== 0 || dy !== 0) && typeof card.animate === "function") {
+                animate(
+                  card,
+                  { transform: [`translate(${dx}px, ${dy}px)`, "translate(0px, 0px)"] },
+                  { duration: 0.18, ease: [0.16, 1, 0.3, 1] }
+                );
+              }
+            }
+          }
+
+          if (newCards.length > 0) {
+            animateListStagger(newCards, { staggerDelay: 0.02, maxItems: 8 });
+          }
         }
       }
+
+      // Selection panel full lifecycle transition
       const selectedEntry = entries.find(
         (entry) => entry.definition.id === state.selectedItemId,
       );
+
       if (!selectedEntry) {
-        selection.hidden = true;
-        selection.replaceChildren();
+        if (!selection.hidden) {
+          selection.hidden = true;
+          if (!isReducedMotion()) {
+            selection.dataset.exiting = "true";
+            animatePanelExit(selection).then(() => {
+              delete selection.dataset.exiting;
+              selection.replaceChildren();
+            }).catch(() => {
+              delete selection.dataset.exiting;
+              selection.replaceChildren();
+            });
+          } else {
+            selection.replaceChildren();
+          }
+        }
         return;
       }
+
+      const isOpening = selection.hidden;
       selection.hidden = false;
+
+      let html = "";
       if (selectedEntry.state === "locked") {
-        selection.innerHTML = `<header><div><small>GESPERRT</small><strong>${escapeHtml(selectedEntry.definition.name)}</strong></div><button type="button" data-catalog-selection-close aria-label="Auswahl schließen" title="Auswahl schließen">×</button></header><p>${escapeHtml(selectedEntry.unlockLabel)}</p><p data-catalog-message role="status" aria-live="polite"></p>`;
-        return;
+        html = `<header><div><small>GESPERRT</small><strong>${escapeHtml(selectedEntry.definition.name)}</strong></div><button type="button" data-catalog-selection-close aria-label="Auswahl schließen" title="Auswahl schließen">×</button></header><p>${escapeHtml(selectedEntry.unlockLabel)}</p><p data-catalog-message role="status" aria-live="polite"></p>`;
+      } else {
+        const slot = selectedEntry.definition.slot;
+        const configuredCount = LOADOUT_SLOT_LAYOUT[slot] ?? 0;
+        const slotCount = currentLoadout.slots?.[slot]?.length ?? configuredCount;
+        const slotActions = Array.from({ length: slotCount }, (_, index) => {
+          const current =
+            currentLoadout.slots?.[slot]?.[index]?.definitionId ?? null;
+          const currentName =
+            definitionsById.get(current)?.name ??
+            definitions.find((d) => d.id === current)?.name ??
+            current ??
+            "Leer";
+          return `<button type="button" data-catalog-equip data-slot="${escapeHtml(slot)}" data-index="${index}"><span>${escapeHtml(slotLabel(slot, index))}</span><strong>${escapeHtml(currentName)}</strong><small>${current ? "Ersetzen" : "Hier ausrüsten"}</small></button>`;
+        }).join("");
+        html = `<header><div><small>${escapeHtml(selectedEntry.state === "equipped" ? "AUSGERÜSTET" : "VERFÜGBAR")}</small><strong>${escapeHtml(selectedEntry.definition.name)}</strong></div><button type="button" data-catalog-selection-close aria-label="Auswahl schließen" title="Auswahl schließen">×</button></header><div class="catalog-selection__slots">${slotActions}</div><p data-catalog-message role="status" aria-live="polite"></p>`;
       }
-      const slot = selectedEntry.definition.slot;
-      const configuredCount = LOADOUT_SLOT_LAYOUT[slot] ?? 0;
-      const slotCount = currentLoadout.slots?.[slot]?.length ?? configuredCount;
-      const slotActions = Array.from({ length: slotCount }, (_, index) => {
-        const current =
-          currentLoadout.slots?.[slot]?.[index]?.definitionId ?? null;
-        const currentName =
-          definitionsById.get(current)?.name ??
-          definitions.find((d) => d.id === current)?.name ??
-          current ??
-          "Leer";
-        return `<button type="button" data-catalog-equip data-slot="${escapeHtml(slot)}" data-index="${index}"><span>${escapeHtml(slotLabel(slot, index))}</span><strong>${escapeHtml(currentName)}</strong><small>${current ? "Ersetzen" : "Hier ausrüsten"}</small></button>`;
-      }).join("");
-      selection.innerHTML = `<header><div><small>${escapeHtml(selectedEntry.state === "equipped" ? "AUSGERÜSTET" : "VERFÜGBAR")}</small><strong>${escapeHtml(selectedEntry.definition.name)}</strong></div><button type="button" data-catalog-selection-close aria-label="Auswahl schließen" title="Auswahl schließen">×</button></header><div class="catalog-selection__slots">${slotActions}</div><p data-catalog-message role="status" aria-live="polite"></p>`;
+
+      selection.innerHTML = html;
+
+      if (!isReducedMotion()) {
+        if (isOpening) {
+          animatePanelEnter(selection, { yOffset: 6 });
+        } else {
+          // Content update crossfade
+          animate(selection, { opacity: [0.5, 1] }, { duration: 0.12 });
+        }
+      }
     };
     search.addEventListener("input", (event) => {
       state.query = event.target.value;
@@ -366,6 +486,11 @@ export function createHangarScreen(
     else
       content.innerHTML = `<div class="hangar-placeholder"><strong>${escapeHtml(tab.toUpperCase())}</strong><span>Subsystem ist verbunden. Inhalte werden aus dem persistenten Meta-State geladen.</span></div>`;
     renderTab(tab, content);
+
+    if (!isReducedMotion()) {
+      animatePanelEnter(content, { yOffset: 6 });
+    }
+
     const tabs = container.querySelector(".hangar-tabs");
     const selectedTab = container.querySelector(
       '[role="tab"][aria-selected="true"]',
@@ -385,6 +510,7 @@ export function createHangarScreen(
   container.addEventListener("click", (event) => {
     const tabButton = event.target.closest("[data-hangar-tab]");
     if (tabButton) {
+      animatePressFeedback(tabButton);
       activateTab(tabButton.dataset.hangarTab, { focus: true });
       return;
     }

@@ -203,6 +203,41 @@ describe("Motion System & Reduced Motion Integration", () => {
     container.remove();
   });
 
+  test("hangar catalog retains exact DOM card object identity and preserves focus", async () => {
+    document.documentElement.dataset.reducedMotion = "true";
+    const { createHangarScreen } = await import("../../src/ui/screens/hangar-screen.js");
+    const container = root();
+    document.body.appendChild(container);
+
+    const screen = createHangarScreen(container, {
+      ships: [
+        { id: "s1", slot: "ship", name: "Ship 1", unlockSource: "starter" },
+        { id: "s2", slot: "ship", name: "Ship 2", unlockSource: "starter" },
+      ],
+      weapons: [],
+      modules: [],
+      reactors: [],
+      loadout: { slots: { ship: [null] } },
+      isUnlocked: () => true,
+    });
+
+    screen.show("Schiffe");
+    const card1Before = container.querySelector('[data-item-id="s1"]');
+    expect(card1Before).not.toBeNull();
+
+    card1Before.focus();
+    expect(document.activeElement).toBe(card1Before);
+
+    const search = container.querySelector("[data-catalog-search]");
+    search.value = "Ship";
+    search.dispatchEvent(new Event("input", { bubbles: true }));
+
+    const card1After = container.querySelector('[data-item-id="s1"]');
+    expect(card1After).toBe(card1Before);
+
+    container.remove();
+  });
+
   test("research screen state bookkeeping updates under Reduced Motion without replaying stale transitions", async () => {
     const { renderResearchScreen } = await import("../../src/ui/screens/research-screen.js");
     const container = root();
