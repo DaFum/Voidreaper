@@ -75,3 +75,7 @@
 ## 2025-02-18 - Replacing Object.values().find() and O(N) Array.find in Assembly and Inventory Lookups
 **Learning:** Using `Object.values().find()` in fallback selectors, port resolution loops, or debug scenarios creates intermediate array allocations on every call. Similarly, using `Array.prototype.find()` on inventory arrays scales linearly O(N) and creates CPU bottlenecks in frequently called service methods like `requireInstance` or `store`.
 **Action:** Replace `Object.values().find()` with direct `for...in` loops over the dictionary object to eliminate intermediate array allocations and allow early termination. For inventory instance lookups, maintain a cached `Map` index keyed by `instanceId` to turn O(N) array scans into O(1) constant-time lookups.
+
+## 2024-03-24 - Intermediate array allocations via chained mapping
+**Learning:** In V8, chaining `.values()`, `.flat()`, `.filter()`, and `.map()` on an object with many small properties (like loadout slots) forces the engine to allocate multiple intermediate array closures per call. In hot paths (like `loadout-service` queries called during inspect or render cycles), this causes measureable GC pressure and stuttering.
+**Action:** Replace `.values().flat().filter().map()` chains with single-pass imperative `for...in` or `for...of` loops, pushing directly to a single pre-allocated (or dynamically built) array.

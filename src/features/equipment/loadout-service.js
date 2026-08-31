@@ -84,14 +84,26 @@ export function deriveEquipmentCatalogEntries(
 
 export function createLoadoutService({ registry, tagEngine, unlocks }) {
   function sources(loadout) {
-    return Object.values(loadout.slots)
-      .flat()
-      .filter(Boolean)
-      .map((item) => ({
-        ...registry.require(item.definitionId),
-        instanceId: item.instanceId,
-        item,
-      }));
+    // ⚡ Bolt: Avoid intermediate arrays from Object.values(), .flat(), .filter(), and .map()
+    // by using a single-pass imperative loop to minimize GC pressure in high-frequency queries.
+    const result = [];
+    for (const slotName in loadout.slots) {
+      if (!Object.hasOwn(loadout.slots, slotName)) continue;
+      const slotData = loadout.slots[slotName];
+      if (!slotData) continue;
+      const slotItems = Array.isArray(slotData) ? slotData : [slotData];
+      for (let i = 0; i < slotItems.length; i++) {
+        const item = slotItems[i];
+        if (item) {
+          result.push({
+            ...registry.require(item.definitionId),
+            instanceId: item.instanceId,
+            item,
+          });
+        }
+      }
+    }
+    return result;
   }
 
   return {
