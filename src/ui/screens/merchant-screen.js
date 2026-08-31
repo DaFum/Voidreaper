@@ -1,5 +1,5 @@
 import { escapeHtml } from "../escape-html.js";
-import { animateListStagger, animatePressFeedback } from "../motion/motion.js";
+import { animate, animateListStagger, animatePressFeedback, MOTION_TIMINGS, MOTION_EASINGS } from "../motion/motion.js";
 import { isReducedMotion } from "../motion/reduced-motion.js";
 
 export function canAffordOffer(resources, offer) {
@@ -70,16 +70,20 @@ export function renderMerchantScreen(
   rerollBtn.addEventListener("click", (e) => {
     if (rerolling) return;
     rerolling = true;
+    rerollBtn.disabled = true;
+    for (const card of catalog.children) card.disabled = true;
     animatePressFeedback(rerollBtn);
     const oldCards = Array.from(catalog.children);
     if (!isReducedMotion() && oldCards.length > 0 && typeof oldCards[0].animate === "function") {
       const anims = oldCards.map((card) => {
-        return card.animate(
+        const anim = animate(
+          card,
           { opacity: [1, 0], transform: ["translateY(0px)", "translateY(-8px)"] },
-          { duration: 120, fill: "forwards" }
-        ).finished.catch(() => {});
+          { duration: MOTION_TIMINGS.fast, ease: MOTION_EASINGS.exit }
+        );
+        return anim?.finished ? anim.finished.catch(() => {}) : Promise.resolve();
       });
-      Promise.all(anims).then(() => onReroll(e));
+      Promise.all(anims).then(() => onReroll(e)).catch(() => onReroll(e));
     } else {
       onReroll(e);
     }

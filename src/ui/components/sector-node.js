@@ -3,11 +3,9 @@ import { escapeHtml } from "../escape-html.js";
 
 export const isSectorNodeInteractive = (status) => status === "reachable";
 
-export function createSectorNode(node, { status, selected, onSelect }) {
+export function updateSectorNode(button, node, { status, selected, onSelect }) {
   const definition = NODE_TYPES[node.type] ?? NODE_TYPES.combat;
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = `sector-node sector-node--${status}`;
+  button.className = `sector-node sector-node--${status}${selected ? " sector-node--selected" : ""}`;
   button.dataset.nodeId = node.id;
   button.dataset.id = node.id;
   button.dataset.layer = String(node.layer);
@@ -18,10 +16,20 @@ export function createSectorNode(node, { status, selected, onSelect }) {
   button.setAttribute("aria-pressed", String(selected));
   button.setAttribute("aria-selected", String(selected));
   button.disabled = !isSectorNodeInteractive(status);
+  button._onSelectHandler = onSelect;
   const hidden = node.informationLevel < 1 && status !== "visited";
   button.innerHTML = hidden
     ? `<b class="sector-node__sigil" data-sigil="unknown">?</b><span>UNBEKANNTE SIGNATUR</span><small>Gefahr ${node.danger}</small>`
     : `<b class="sector-node__sigil" data-sigil="${escapeHtml(node.type)}"><i aria-hidden="true"></i><em>${escapeHtml(definition.icon)}</em></b><span>${escapeHtml(definition.label)}</span><small><span class="sector-node__region">${escapeHtml(node.regionId?.replaceAll("-", " "))}</span><span class="sector-node__danger">Gefahr ${node.danger}</span><span class="sector-node__reward">${escapeHtml(node.reward)} · Korr. ${node.corruptionDelta >= 0 ? "+" : ""}${node.corruptionDelta}</span></small>`;
-  button.addEventListener("click", () => onSelect(node, button.getAttribute("aria-selected") === "true" || button.getAttribute("aria-pressed") === "true"));
   return button;
+}
+
+export function createSectorNode(node, options = {}) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.addEventListener("click", () => {
+    const isSelected = button.getAttribute("aria-selected") === "true" || button.getAttribute("aria-pressed") === "true";
+    button._onSelectHandler?.(node, isSelected);
+  });
+  return updateSectorNode(button, node, options);
 }

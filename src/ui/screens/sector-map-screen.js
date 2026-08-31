@@ -1,4 +1,4 @@
-import { createSectorNode } from "../components/sector-node.js";
+import { createSectorNode, updateSectorNode } from "../components/sector-node.js";
 import { flattenSectorMap } from "../../features/sectors/sector-map-generator.js";
 import { createSectorMapConnections } from "../components/sector-map-connections.js";
 import { escapeHtml } from "../escape-html.js";
@@ -29,25 +29,28 @@ export function createSectorMapScreen(
     const nodes = flattenSectorMap(model.map).filter(
       (node) => node.regionIndex === model.regionIndex,
     );
-    const existingGraph = root.querySelector(".sector-map__graph");
-    const existingNodes = new Map();
-    if (existingGraph) {
-      for (const child of existingGraph.children) {
-        const id = child.dataset?.nodeId ?? child.dataset?.id;
-        if (id) existingNodes.set(id, child);
-      }
+    let graph = root.querySelector(".sector-map__graph");
+    const hasWorkbenchBtn = Boolean(root.querySelector("[data-assembly-workbench]"));
+    if (!graph || graph.dataset.regionIndex !== String(model.regionIndex) || hasWorkbenchBtn !== Boolean(onWorkbench)) {
+      root.innerHTML = `<section class="sector-map" data-tutorial-id="sector-map"><header><span>VR // SECTOR TRACE</span><b>REGION ${escapeHtml(model.regionIndex + 1)}/5</b>${onWorkbench ? `<button type="button" class="btn small" data-assembly-workbench>WERKBANK</button>` : ""}</header><div class="sector-map__graph" data-region-index="${model.regionIndex}"></div><aside class="sector-map__detail" data-tutorial-id="sector-detail">Signal wählen. Zweiter Tap bestätigt den erreichbaren Knoten.</aside></section>`;
+      root
+        .querySelector("[data-assembly-workbench]")
+        ?.addEventListener("click", onWorkbench);
+      graph = root.querySelector(".sector-map__graph");
     }
 
-    root.innerHTML = `<section class="sector-map" data-tutorial-id="sector-map"><header><span>VR // SECTOR TRACE</span><b>REGION ${escapeHtml(model.regionIndex + 1)}/5</b>${onWorkbench ? `<button type="button" class="btn small" data-assembly-workbench>WERKBANK</button>` : ""}</header><div class="sector-map__graph"></div><aside class="sector-map__detail" data-tutorial-id="sector-detail">Signal wählen. Zweiter Tap bestätigt den erreichbaren Knoten.</aside></section>`;
-    root
-      .querySelector("[data-assembly-workbench]")
-      ?.addEventListener("click", onWorkbench);
-    const graph = root.querySelector(".sector-map__graph");
+    const existingNodes = new Map();
+    for (const child of graph.children) {
+      const id = child.dataset?.nodeId ?? child.dataset?.id;
+      if (id) existingNodes.set(id, child);
+    }
 
     const nodeElements = [];
+    const fragment = document.createDocumentFragment();
+
     for (const node of nodes) {
       const isSel = selectedId === node.id;
-      const element = createSectorNode(node, {
+      const options = {
         status: statusFor(node, visitedSet, reachableSet),
         selected: isSel,
         onSelect(candidate, alreadySelected) {
@@ -56,10 +59,18 @@ export function createSectorMapScreen(
           onSelect(candidate);
           render();
         },
-      });
+      };
 
-      const oldElement = existingNodes.get(node.id);
-      const wasSel = oldElement?.getAttribute("aria-selected") === "true" || oldElement?.getAttribute("aria-pressed") === "true";
+      let element;
+      let wasSel = false;
+      if (existingNodes.has(node.id)) {
+        element = existingNodes.get(node.id);
+        wasSel = element.getAttribute("aria-selected") === "true" || element.getAttribute("aria-pressed") === "true";
+        updateSectorNode(element, node, options);
+      } else {
+        element = createSectorNode(node, options);
+        fragment.append(element);
+      }
 
       if (isSel && !wasSel && !isReducedMotion() && typeof element.animate === "function") {
         animate(
@@ -70,7 +81,10 @@ export function createSectorMapScreen(
       }
 
       nodeElements.push(element);
-      graph.append(element);
+    }
+
+    if (fragment.children.length > 0) {
+      graph.append(fragment);
     }
     connections = createSectorMapConnections(nodes, nodeElements);
     const selected = nodes.find((node) => node.id === selectedId);

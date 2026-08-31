@@ -1,4 +1,4 @@
-import { createItemCard } from "../components/item-card.js";
+import { createItemCard, updateItemCard } from "../components/item-card.js";
 import { escapeHtml } from "../escape-html.js";
 import {
   deriveEquipmentCatalogEntries,
@@ -311,7 +311,7 @@ export function createHangarScreen(
                 : "Slots wählen";
 
           const isSelected = entry.definition.id === state.selectedItemId;
-          const card = createItemCard(entry.definition, {
+          const cardOptions = {
             selected: isSelected,
             state: entry.state,
             statusLabel,
@@ -324,13 +324,17 @@ export function createHangarScreen(
               state.selectedItemId = definition.id;
               refreshCatalog();
             },
-          });
+          };
 
+          let card;
           if (existingCards.has(entry.definition.id)) {
-            const oldCard = existingCards.get(entry.definition.id);
-            oldCard.replaceWith(card);
+            card = existingCards.get(entry.definition.id);
+            const hadFocus = document.activeElement === card || (card.contains && card.contains(document.activeElement));
+            updateItemCard(card, entry.definition, cardOptions);
+            if (hadFocus && typeof card.focus === "function") card.focus();
             survivingCards.push(card);
           } else {
+            card = createItemCard(entry.definition, cardOptions);
             newCards.push(card);
           }
           fragment.append(card);

@@ -1,11 +1,13 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { renderSettingsScreen } from "../../src/ui/screens/settings-screen.js";
 import {
+  animate,
   animatePanelEnter,
   animateDialogEnter,
   animateDialogExit,
   animateListStagger,
 } from "../../src/ui/motion/motion.js";
+import * as motionModule from "../../src/ui/motion/motion.js";
 import { isReducedMotion } from "../../src/ui/motion/reduced-motion.js";
 
 const root = () => document.createElement("div");
@@ -169,7 +171,7 @@ describe("Motion System & Reduced Motion Integration", () => {
     expect(container.querySelector('[data-state="owned"]')).not.toBeNull();
   });
 
-  test("sector map renders nodes and updates selection state", async () => {
+  test("sector map retains exact DOM node object identity across selection changes", async () => {
     const { createSectorMapScreen } = await import("../../src/ui/screens/sector-map-screen.js");
     const container = root();
     document.body.appendChild(container);
@@ -180,25 +182,96 @@ describe("Motion System & Reduced Motion Integration", () => {
         regions: [
           {
             layers: [
-              [{ id: "n1", type: "combat", layer: 0, index: 0, regionIndex: 0, informationLevel: 1, danger: 1, reward: "S", corruptionDelta: 0 }],
+              [
+                { id: "n1", type: "combat", layer: 0, index: 0, regionIndex: 0, informationLevel: 1, danger: 1, reward: "S", corruptionDelta: 0 },
+                { id: "n2", type: "combat", layer: 0, index: 1, regionIndex: 0, informationLevel: 1, danger: 1, reward: "S", corruptionDelta: 0 },
+              ],
             ],
           },
         ],
       },
       regionIndex: 0,
       visitedNodeIds: [],
-      reachableNodeIds: ["n1"],
+      reachableNodeIds: ["n1", "n2"],
     };
 
     screen.render(mapModel);
-    const reachableNode = container.querySelector('[data-node-id="n1"]');
-    expect(reachableNode).not.toBeNull();
+    const node1Before = container.querySelector('[data-node-id="n1"]');
+    expect(node1Before).not.toBeNull();
 
-    // Trigger selection
-    reachableNode.click();
+    // Select node 1
+    node1Before.click();
 
-    const selectedNode = container.querySelector('[aria-selected="true"]');
-    expect(selectedNode).not.toBeNull();
+    const node1After = container.querySelector('[data-node-id="n1"]');
+    // Strict DOM Object Identity check
+    expect(node1After).toBe(node1Before);
+    expect(node1After.getAttribute("aria-selected")).toBe("true");
+
+    container.remove();
+  });
+
+  test("hangar catalog retains exact DOM card object identity and preserves focus", async () => {
+    document.documentElement.dataset.reducedMotion = "true";
+    const { createHangarScreen } = await import("../../src/ui/screens/hangar-screen.js");
+    const container = root();
+    document.body.appendChild(container);
+
+    const screen = createHangarScreen(container, {
+      ships: [
+        { id: "s1", slot: "ship", name: "Ship 1", unlockSource: "starter" },
+        { id: "s2", slot: "ship", name: "Ship 2", unlockSource: "starter" },
+      ],
+      weapons: [],
+      modules: [],
+      reactors: [],
+      loadout: { slots: { ship: [null] } },
+      isUnlocked: () => true,
+    });
+
+    screen.show("Schiffe");
+    const card1Before = container.querySelector('[data-item-id="s1"]');
+    expect(card1Before).not.toBeNull();
+
+    card1Before.focus();
+    expect(document.activeElement).toBe(card1Before);
+
+    // Filter search query "Ship" -> both survive
+    const search = container.querySelector("[data-catalog-search]");
+    search.value = "Ship";
+    search.dispatchEvent(new Event("input", { bubbles: true }));
+
+    const card1After = container.querySelector('[data-item-id="s1"]');
+    // Strict DOM Object Identity check
+    expect(card1After).toBe(card1Before);
+
+    container.remove();
+  });
+
+  test("research screen state bookkeeping updates under Reduced Motion without replaying stale transitions", async () => {
+    const { renderResearchScreen } = await import("../../src/ui/screens/research-screen.js");
+    const container = root();
+    document.body.appendChild(container);
+
+    const nodes = [
+      { id: "r1", branch: "offense", name: "Laser", description: "Dmg", cost: { shards: 10 }, unlocks: [] },
+    ];
+
+    // Render under Reduced Motion ON
+    document.documentElement.dataset.reducedMotion = "true";
+    renderResearchScreen(container, nodes, { purchased: {}, canPurchase: () => false });
+
+    // Transition state under Reduced Motion ON
+    renderResearchScreen(container, nodes, { purchased: {}, canPurchase: () => true });
+
+    // Turn Reduced Motion OFF
+    delete document.documentElement.dataset.reducedMotion;
+
+    // Render again -> should NOT animate locked -> available because bookkeeping recorded it
+    const spy = vi.spyOn(motionModule, "animate");
+    renderResearchScreen(container, nodes, { purchased: {}, canPurchase: () => true });
+
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
     container.remove();
   });
 });

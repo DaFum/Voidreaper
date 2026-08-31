@@ -1,5 +1,6 @@
 import { escapeHtml } from "../escape-html.js";
-export function createItemCard(
+export function updateItemCard(
+  card,
   definition,
   {
     selected = false,
@@ -12,20 +13,18 @@ export function createItemCard(
     onSelect = null,
   } = {},
 ) {
-  const card = document.createElement(onSelect ? "button" : "article");
-  card.className = "item-card";
   card.dataset.itemId = definition.id;
   card.dataset.state = state;
   card.toggleAttribute("data-selected", selected);
   if (onSelect) {
-    card.type = "button";
     card.setAttribute("aria-pressed", String(selected));
     const label = `${definition.name ?? definition.id}, ${statusLabel.toLowerCase()}${statusDetail ? `, ${statusDetail}` : ""}`;
     card.setAttribute("aria-label", label);
     card.title = label;
     card.disabled = locked;
-    card.addEventListener("click", () => onSelect(definition));
+    card._onSelectHandler = () => onSelect(definition);
   } else if (locked) card.setAttribute("aria-disabled", "true");
+
   const equipped = equippedSlots.length
     ? `<span class="item-card__equipped">${equippedSlots.map(escapeHtml).join(" · ")}</span>`
     : "";
@@ -38,4 +37,14 @@ export function createItemCard(
       "",
     )}</div>${equipped}${statusDetail ? `<span class="item-card__reason">${escapeHtml(statusDetail)}</span>` : ""}<span class="item-card__action">${escapeHtml(actionLabel)}</span><b>${definition.energyCost ?? 0} E</b>`;
   return card;
+}
+
+export function createItemCard(definition, options = {}) {
+  const card = document.createElement(options.onSelect ? "button" : "article");
+  card.className = "item-card";
+  if (options.onSelect) {
+    card.type = "button";
+    card.addEventListener("click", () => card._onSelectHandler?.());
+  }
+  return updateItemCard(card, definition, options);
 }
