@@ -24,7 +24,7 @@ export function renderBlueprintDetail(
   ]
     .map(
       ([action, label]) =>
-        `<button type="button" data-action="${action}"${action === "activate" && active ? " disabled" : ""}>${escapeHtml(label)}</button>`,
+        `<button type="button" data-action="${action}"${action === "activate" && active ? ' disabled aria-label="Aktivieren nicht möglich (Bereits aktiv)" title="Bereits aktiv"' : ""}>${escapeHtml(label)}${action === "activate" && active ? ' <small aria-hidden="true">(Bereits aktiv)</small>' : ""}</button>`,
     )
     .join("")}</div></section>`;
   root.onclick = (event) => {
