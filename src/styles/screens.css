@@ -28,7 +28,8 @@
 }
 
 /* Screen transition semantics */
-.screen.screen--progression {
+.screen.screen--progression,
+.service-screen {
   animation: screen-in-progression var(--motion-normal, 0.35s) var(--ease-enter);
 }
 
@@ -145,7 +146,8 @@ h1::after {
   .screen,
   .screen.screen--progression,
   .screen.screen--impact,
-  .screen.screen--decompression {
+  .screen.screen--decompression,
+  .service-screen {
     animation: none;
   }
   h1::before,
@@ -158,7 +160,8 @@ h1::after {
 [data-reduced-motion="true"] .screen,
 [data-reduced-motion="true"] .screen.screen--progression,
 [data-reduced-motion="true"] .screen.screen--impact,
-[data-reduced-motion="true"] .screen.screen--decompression {
+[data-reduced-motion="true"] .screen.screen--decompression,
+[data-reduced-motion="true"] .service-screen {
   animation: none;
 }
 [data-reduced-motion="true"] h1::before,
@@ -481,13 +484,19 @@ h1::after {
     card-in var(--motion-normal, 0.35s) var(--ease-enter, cubic-bezier(0.2, 0.9, 0.3, 1.2)) backwards;
 }
 
-/* Composite-friendly glow pulse via pseudo-element opacity instead of box-shadow repaint */
+/* Composite-friendly glow pulse via pseudo-element opacity instead of box-shadow repaint.
+   Uses inner radial glow and inset box-shadow so the pulse is clearly visible inside overflow: hidden bounds. */
 .card.evo::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  box-shadow: 0 0 40px rgba(255, 207, 63, 0.5);
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 207, 63, 0.35) 0%,
+    transparent 70%
+  );
+  box-shadow: inset 0 0 18px rgba(255, 207, 63, 0.4);
   opacity: 0;
   pointer-events: none;
   animation: evo-pulse 2s ease-in-out infinite 0.5s;
