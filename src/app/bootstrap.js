@@ -811,6 +811,10 @@ export async function bootstrap() {
   legacyRuntime.configureRegionRoster(
     () => REGION_BY_ID.get(game.visualRegionId)?.enemies ?? [],
   );
+  const isReducedMotion = () =>
+    document.documentElement.dataset.reducedMotion === "true" ||
+    prefersReducedMotion();
+
   legacyRuntime.configureShipRenderer((context, player, legacyGame) => {
     const geometry = services.assemblyGeometry?.getSnapshot();
     if (!geometry?.coreGeometry) return false;
@@ -822,6 +826,7 @@ export async function bootstrap() {
       buildAnimations: services.buildAnimations?.snapshot?.() ?? [],
       movement: { x: player.vx, y: player.vy, dodging: player.iframes > 0 },
       lodOptions: { userSetting: getAssemblyLod() },
+      reducedMotion: isReducedMotion(),
     });
     if (rendered && player.shield > 0) {
       // save/restore so strokeStyle, shadowColor and lineWidth do not leak into
@@ -1170,6 +1175,7 @@ export async function bootstrap() {
           time: clock,
           buildAnimations: services.buildAnimations?.snapshot?.() ?? [],
           lodOptions: { userSetting: getAssemblyLod() },
+          reducedMotion: isReducedMotion(),
         });
         const selectedGeometry = geometryById.get(
           workbench.session?.selectedNodeId,

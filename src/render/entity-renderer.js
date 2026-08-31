@@ -64,6 +64,7 @@ export function renderEntities(
     position: run.player,
     rotation: run.player.rotation ?? 0,
     time: run.time ?? 0,
+    reducedMotion: run.settings?.reducedMotion ?? false,
   });
   if (!rendered) {
     context.fillStyle = "#efeaf7";

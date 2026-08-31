@@ -1,6 +1,6 @@
 export function renderPlacementPreview(
   ctx,
-  { snapshot, suggestion, assemblyRenderer, time = 0 },
+  { snapshot, suggestion, assemblyRenderer, time = 0, reducedMotion = false },
 ) {
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -11,6 +11,7 @@ export function renderPlacementPreview(
     position: { x: 0, y: 0 },
     time,
     lodOptions: { userSetting: "medium" },
+    reducedMotion,
   });
   if (suggestion?.transform) {
     const { x, y } = suggestion.transform.position,
