@@ -1,5 +1,4 @@
 import { clamp } from "../../core/math.js";
-import { animatePressFeedback } from "../motion/motion.js";
 
 const setMeter = (root, name, ratio, label) => {
   const meter = root?.querySelector(`[data-resource="${name}"]`);
@@ -58,14 +57,4 @@ export function updateResourceMeters(
             ? "tainted"
             : "stable",
   );
-}
-
-export function attachPressFeedback(root) {
-  if (!root) return;
-  root.addEventListener("click", (e) => {
-    const btn = e.target.closest("button.btn, button.item-card, button[data-action]");
-    if (btn && !btn.disabled) {
-      animatePressFeedback(btn);
-    }
-  });
 }

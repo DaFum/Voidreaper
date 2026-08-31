@@ -85,6 +85,7 @@ export function createTutorialOverlay({
   let targetId = null;
   let refreshFrame = null;
   let observing = false;
+  let activeSpotlightAnim = null;
 
   const refresh = () => {
     if (!model?.active) return;
@@ -107,6 +108,11 @@ export function createTutorialOverlay({
       height: rect.height + 12,
     };
 
+    if (activeSpotlightAnim?.cancel) {
+      try { activeSpotlightAnim.cancel(); } catch { /* ignore cancel errors */ }
+      activeSpotlightAnim = null;
+    }
+
     if (isReducedMotion()) {
       Object.assign(ring.style, {
         left: `${targetRect.left}px`,
@@ -115,7 +121,7 @@ export function createTutorialOverlay({
         height: `${targetRect.height}px`,
       });
     } else {
-      animateFocusSpotlight(ring, targetRect);
+      activeSpotlightAnim = animateFocusSpotlight(ring, targetRect);
     }
 
     const size = {
@@ -178,6 +184,10 @@ export function createTutorialOverlay({
     render,
     refresh,
     destroy() {
+      if (activeSpotlightAnim?.cancel) {
+        try { activeSpotlightAnim.cancel(); } catch { /* ignore cancel errors */ }
+        activeSpotlightAnim = null;
+      }
       model = null;
       target = null;
       targetId = null;

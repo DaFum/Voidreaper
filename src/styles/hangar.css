@@ -459,6 +459,10 @@
 .catalog-selection[hidden] {
   display: none;
 }
+.catalog-selection[hidden][data-exiting="true"] {
+  display: block;
+  pointer-events: none;
+}
 .catalog-selection header {
   display: flex;
   align-items: center;

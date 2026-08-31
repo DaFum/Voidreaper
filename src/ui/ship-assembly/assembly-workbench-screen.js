@@ -23,6 +23,7 @@ export function createAssemblyWorkbenchScreen(root, { onAction } = {}) {
 
   const abort = new AbortController();
   let currentInspectorAnim = null;
+  let activeInspectorRequestId = 0;
   const previousPortStates = new Map();
 
   root.addEventListener(
@@ -71,19 +72,26 @@ export function createAssemblyWorkbenchScreen(root, { onAction } = {}) {
         })
         .join("");
 
-      // Trigger state transition impulse animation for newly selected / changed ports
+      // Clean up physical port entries no longer present
+      const currentPortIds = new Set(ports.map((p) => p.portId));
+      for (const key of previousPortStates.keys()) {
+        if (!currentPortIds.has(key)) previousPortStates.delete(key);
+      }
+
+      // Trigger state transition impulse animation for newly selected / changed physical ports
       if (!isReducedMotion()) {
         ports.forEach((port) => {
           const state = port.occupiedByNodeId ? "occupied" : (port.state ?? "free");
           const selected = port.occupiedByNodeId
             ? port.occupiedByNodeId === selectedNodeId
             : port.portId === selectedPortId;
-          const key = port.occupiedByNodeId ?? port.portId;
+          const key = port.portId; // Physical portId is the stable Motion identity
+          const actionId = port.occupiedByNodeId ?? port.portId;
           const prevState = previousPortStates.get(key);
           const stateKey = `${state}:${selected}`;
 
           if (prevState && prevState !== stateKey) {
-            const btn = portsContainer.querySelector(`[data-id="${key}"]`);
+            const btn = portsContainer.querySelector(`[data-id="${actionId}"]`);
             if (btn && typeof btn.animate === "function") {
               if (selected) {
                 animate(
@@ -110,16 +118,52 @@ export function createAssemblyWorkbenchScreen(root, { onAction } = {}) {
     },
     setInspector(content) {
       const inspector = root.querySelector('[data-role="inspector"]');
-      if (currentInspectorAnim?.cancel) currentInspectorAnim.cancel();
+      if (!inspector) return;
 
-      if (isReducedMotion() || !inspector) {
+      activeInspectorRequestId++;
+      const requestId = activeInspectorRequestId;
+
+      if (currentInspectorAnim?.cancel) {
+        try { currentInspectorAnim.cancel(); } catch { /* ignore cancel errors */ }
+        currentInspectorAnim = null;
+      }
+
+      if (isReducedMotion()) {
         inspector.replaceChildren(content);
         return;
       }
 
-      // Fast directional opacity cross-fade transition
-      inspector.replaceChildren(content);
-      currentInspectorAnim = animatePanelEnter(inspector, { yOffset: 6 });
+      // Genuine old -> new content cross-fade transition with request ID tracking
+      if (inspector.firstElementChild && typeof inspector.animate === "function") {
+        const oldContent = inspector.firstElementChild;
+        currentInspectorAnim = animate(
+          oldContent,
+          { opacity: [1, 0], transform: ["translateX(0px)", "translateX(-6px)"] },
+          { duration: 0.08, ease: "easeIn" }
+        );
+        currentInspectorAnim.finished
+          .then(() => {
+            if (requestId !== activeInspectorRequestId) return;
+            inspector.replaceChildren(content);
+            if (content && typeof content.animate === "function") {
+              currentInspectorAnim = animate(
+                content,
+                { opacity: [0, 1], transform: ["translateX(6px)", "translateX(0px)"] },
+                { duration: 0.12, ease: "easeOut" }
+              );
+            }
+          })
+          .catch(() => {
+            if (requestId === activeInspectorRequestId) {
+              inspector.replaceChildren(content);
+            }
+          });
+      } else {
+        inspector.replaceChildren(content);
+        if (content && typeof content.animate === "function") {
+          currentInspectorAnim = animatePanelEnter(content, { yOffset: 6 });
+        }
+      }
     },
   };
 }

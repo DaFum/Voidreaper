@@ -62,9 +62,12 @@ function openModal({
       settle(field ? field.value : true);
     });
 
-    // Escape and other out-of-band closes count as cancel.
+    // Intercept native cancel (Escape) to run controlled Motion exit transition
+    dialog.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      settle(null);
+    });
     dialog.addEventListener("close", () => settle(null));
-    dialog.addEventListener("cancel", () => settle(null));
     field?.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
         event.preventDefault();

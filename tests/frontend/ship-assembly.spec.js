@@ -765,17 +765,19 @@ describe("port overlay", () => {
 
 describe("quick mount overlay", () => {
   test("renders the dialog scaffold and forwards footer actions", async () => {
+    document.documentElement.dataset.reducedMotion = "true";
     const container = root(),
       onAction = vi.fn();
     const overlay = createQuickMountOverlay(container, { onAction });
     expect(container.querySelector('[role="dialog"]')).not.toBeNull();
     expect(overlay.canvas).not.toBeNull();
+    container.querySelector('[data-action="previous"]').click();
+    await Promise.resolve();
     container.querySelector('[data-action="confirm"]').click();
-    await new Promise((r) => setTimeout(r, 200));
-    container.querySelector('[data-action="defer"]').click();
-    await new Promise((r) => setTimeout(r, 200));
-    expect(onAction).toHaveBeenNthCalledWith(1, "confirm");
-    expect(onAction).toHaveBeenNthCalledWith(2, "defer");
+    await Promise.resolve();
+    expect(onAction).toHaveBeenNthCalledWith(1, "previous");
+    expect(onAction).toHaveBeenNthCalledWith(2, "confirm");
+    delete document.documentElement.dataset.reducedMotion;
   });
 
   test("render fills name, reasons, capped deltas and details", () => {

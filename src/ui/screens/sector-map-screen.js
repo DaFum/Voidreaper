@@ -29,11 +29,21 @@ export function createSectorMapScreen(
     const nodes = flattenSectorMap(model.map).filter(
       (node) => node.regionIndex === model.regionIndex,
     );
+    const existingGraph = root.querySelector(".sector-map__graph");
+    const existingNodes = new Map();
+    if (existingGraph) {
+      for (const child of existingGraph.children) {
+        const id = child.dataset?.nodeId ?? child.dataset?.id;
+        if (id) existingNodes.set(id, child);
+      }
+    }
+
     root.innerHTML = `<section class="sector-map" data-tutorial-id="sector-map"><header><span>VR // SECTOR TRACE</span><b>REGION ${escapeHtml(model.regionIndex + 1)}/5</b>${onWorkbench ? `<button type="button" class="btn small" data-assembly-workbench>WERKBANK</button>` : ""}</header><div class="sector-map__graph"></div><aside class="sector-map__detail" data-tutorial-id="sector-detail">Signal wählen. Zweiter Tap bestätigt den erreichbaren Knoten.</aside></section>`;
     root
       .querySelector("[data-assembly-workbench]")
       ?.addEventListener("click", onWorkbench);
     const graph = root.querySelector(".sector-map__graph");
+
     const nodeElements = [];
     for (const node of nodes) {
       const isSel = selectedId === node.id;
@@ -48,7 +58,10 @@ export function createSectorMapScreen(
         },
       });
 
-      if (isSel && !isReducedMotion() && typeof element.animate === "function") {
+      const oldElement = existingNodes.get(node.id);
+      const wasSel = oldElement?.getAttribute("aria-selected") === "true" || oldElement?.getAttribute("aria-pressed") === "true";
+
+      if (isSel && !wasSel && !isReducedMotion() && typeof element.animate === "function") {
         animate(
           element,
           { transform: ["translateY(-4px) scale(1)", "translateY(-4px) scale(1.15)", "translateY(-4px) scale(1)"] },

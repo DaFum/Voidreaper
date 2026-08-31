@@ -1,5 +1,7 @@
 import { escapeHtml } from "../ui/escape-html.js";
 import { uiConfirm } from "../ui/components/modal-dialog.js";
+import { animate } from "../ui/motion/motion.js";
+import { isReducedMotion } from "../ui/motion/reduced-motion.js";
 import { getRegionRules } from "../features/sectors/region-rules.js";
 import { FORGED_ABYSS_PALETTE } from "../render/forged-abyss/palettes.js";
 import { withAlpha, mixColor } from "../render/forged-abyss/primitives.js";
@@ -55,9 +57,6 @@ const dist2 = (ax, ay, bx, by) => {
 };
 const fmtTime = (s) =>
   `${String((s / 60) | 0).padStart(2, "0")}:${String((s | 0) % 60).padStart(2, "0")}`;
-const isReducedMotion = () =>
-  document.documentElement.dataset.reducedMotion === "true" ||
-  matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 function mulberry32(seed) {
   return function () {
@@ -3444,6 +3443,7 @@ const UI = {
   _lastMult: 0,
   combo(mult, frac, combo) {
     const c = this.el("combo");
+    if (!c) return;
     if (mult < 2) {
       c.style.opacity = "0";
       this._lastMult = 0;
@@ -3456,10 +3456,9 @@ const UI = {
     this.el("combo-fill").style.transform = `scaleX(${frac})`;
     if (mult !== this._lastMult) {
       this._lastMult = mult;
-      c.classList.remove("pop");
-      void c.offsetWidth;
-      c.classList.add("pop");
-      setTimeout(() => c.classList.remove("pop"), 130);
+      if (!isReducedMotion() && typeof c.animate === "function") {
+        animate(c, { transform: ["scale(1)", "scale(1.18)", "scale(1)"] }, { duration: 0.12, ease: [0.175, 0.885, 0.32, 1.275] });
+      }
     }
   },
   eventBanner(txt, color) {
@@ -3478,11 +3477,78 @@ const UI = {
     }, 3200);
   },
   toast(msg) {
+    const toastsContainer = this.el("toasts");
+    if (!toastsContainer) return;
+
+    // FLIP pre-measurement for existing toasts
+    const existingToasts = Array.from(toastsContainer.children);
+    const oldPositions = new Map();
+    if (!isReducedMotion()) {
+      for (const el of existingToasts) {
+        if (typeof el.getBoundingClientRect === "function") {
+          oldPositions.set(el, el.getBoundingClientRect());
+        }
+      }
+    }
+
     const t = document.createElement("div");
     t.className = "toast";
     t.textContent = msg;
-    this.el("toasts").appendChild(t);
-    setTimeout(() => t.remove(), 3600);
+    toastsContainer.appendChild(t);
+
+    if (!isReducedMotion()) {
+      if (typeof t.animate === "function") {
+        animate(t, { opacity: [0, 1], transform: ["translateY(12px)", "translateY(0px)"] }, { duration: 0.2, ease: "easeOut" });
+      }
+      for (const el of existingToasts) {
+        const oldRect = oldPositions.get(el);
+        if (oldRect && typeof el.getBoundingClientRect === "function") {
+          const newRect = el.getBoundingClientRect();
+          const dy = oldRect.top - newRect.top;
+          if (dy !== 0 && typeof el.animate === "function") {
+            animate(el, { transform: [`translateY(${dy}px)`, "translateY(0px)"] }, { duration: 0.18, ease: "easeOut" });
+          }
+        }
+      }
+    }
+
+    const removeToast = () => {
+      const remainingToasts = Array.from(toastsContainer.children).filter((el) => el !== t);
+      const remainingOldPositions = new Map();
+      if (!isReducedMotion()) {
+        for (const el of remainingToasts) {
+          if (typeof el.getBoundingClientRect === "function") {
+            remainingOldPositions.set(el, el.getBoundingClientRect());
+          }
+        }
+      }
+
+      const finishRemove = () => {
+        t.remove();
+        if (!isReducedMotion()) {
+          for (const el of remainingToasts) {
+            const oldRect = remainingOldPositions.get(el);
+            if (oldRect && typeof el.getBoundingClientRect === "function") {
+              const newRect = el.getBoundingClientRect();
+              const dy = oldRect.top - newRect.top;
+              if (dy !== 0 && typeof el.animate === "function") {
+                animate(el, { transform: [`translateY(${dy}px)`, "translateY(0px)"] }, { duration: 0.18, ease: "easeOut" });
+              }
+            }
+          }
+        }
+      };
+
+      if (!isReducedMotion() && typeof t.animate === "function") {
+        animate(t, { opacity: [1, 0], transform: ["translateY(0px)", "translateY(-8px)"] }, { duration: 0.15, ease: "easeIn" })
+          .finished.then(finishRemove)
+          .catch(finishRemove);
+      } else {
+        finishRemove();
+      }
+    };
+
+    setTimeout(removeToast, 3600);
   },
   boss(on, nm, tier) {
     this.el("bossbar").style.display = on ? "block" : "none";
