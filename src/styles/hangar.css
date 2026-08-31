@@ -710,6 +710,15 @@ button.item-card:focus-visible {
   border: 1px solid rgba(76, 201, 240, 0.28);
   background: rgba(76, 201, 240, 0.06);
 }
+.loadout-picker > button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.loadout-picker > button:disabled small {
+  color: var(--warn);
+  font-weight: 500;
+  margin-left: 0.5ch;
+}
 .loadout-picker__empty {
   grid-column: 1 / -1;
   padding: 14px;
