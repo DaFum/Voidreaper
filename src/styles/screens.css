@@ -119,14 +119,14 @@ h1::before {
   color: var(--wound);
   clip-path: inset(10% 0 62% 0);
   transform: translate(-3px, 0);
-  animation: slice var(--motion-loop-slow, 3.5s) infinite steps(1);
+  animation: slice var(--motion-loop-ambient, 3.5s) infinite steps(1);
 }
 
 h1::after {
   color: var(--ice);
   clip-path: inset(66% 0 6% 0);
   transform: translate(3px, 0);
-  animation: slice calc(var(--motion-loop-slow, 3.5s) * 0.85) infinite steps(1) reverse;
+  animation: slice calc(var(--motion-loop-ambient, 3.5s) * 0.85) infinite steps(1) reverse;
 }
 
 @keyframes slice {
@@ -218,7 +218,7 @@ h1::after {
     rgba(255, 255, 255, 0.25),
     transparent
   );
-  animation: sheen var(--motion-loop-slow, 3.5s) ease-in-out infinite;
+  animation: sheen var(--motion-loop-ambient, 3.5s) ease-in-out infinite;
 }
 
 @keyframes sheen {
@@ -469,27 +469,49 @@ h1::after {
 }
 
 .card.evo {
+  position: relative;
   border-color: var(--gold);
   background: linear-gradient(
     165deg,
     rgba(140, 95, 0, 0.35),
     rgba(4, 1, 10, 0.78)
   );
-  box-shadow: 0 0 26px rgba(255, 207, 63, 0.3);
+  box-shadow: 0 0 22px rgba(255, 207, 63, 0.25);
   animation:
-    card-in var(--motion-normal, 0.35s) var(--ease-enter, cubic-bezier(0.2, 0.9, 0.3, 1.2)) backwards,
-    evo-pulse 2s ease-in-out infinite 0.5s;
+    card-in var(--motion-normal, 0.35s) var(--ease-enter, cubic-bezier(0.2, 0.9, 0.3, 1.2)) backwards;
+}
+
+/* Composite-friendly glow pulse via pseudo-element opacity instead of box-shadow repaint */
+.card.evo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 40px rgba(255, 207, 63, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  animation: evo-pulse 2s ease-in-out infinite 0.5s;
 }
 
 @keyframes evo-pulse {
   0%,
   100% {
-    box-shadow: 0 0 22px rgba(255, 207, 63, 0.25);
+    opacity: 0;
   }
 
   50% {
-    box-shadow: 0 0 40px rgba(255, 207, 63, 0.5);
+    opacity: 1;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card.evo::before {
+    animation: none;
+  }
+}
+
+[data-reduced-motion="true"] .card.evo::before {
+  animation: none;
 }
 
 .card.evo .nm {

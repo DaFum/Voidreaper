@@ -38,17 +38,29 @@ describe("Motion System & Reduced Motion Integration", () => {
     expect(document.documentElement.dataset.reducedMotion).toBe("false");
   });
 
-  test("isReducedMotion evaluates documentElement data attribute correctly", () => {
-    const isReducedMotion = () =>
-      document.documentElement.dataset.reducedMotion === "true" ||
-      (globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false);
+  test("build animation controller dynamically updates on preference change when passed a resolver", async () => {
+    let reducedMotionSetting = false;
+    const isReducedMotion = () => reducedMotionSetting;
 
-    document.documentElement.dataset.reducedMotion = "false";
-    expect(isReducedMotion()).toBe(false);
+    // Import production controller dynamically
+    const { createBuildAnimationController } = await import(
+      "../../src/features/ship-assembly/mounting/build-animation-controller.js"
+    );
 
-    document.documentElement.dataset.reducedMotion = "true";
-    expect(isReducedMotion()).toBe(true);
+    const controller = createBuildAnimationController({
+      reducedMotion: isReducedMotion,
+    });
 
-    document.documentElement.dataset.reducedMotion = "false";
+    // First sequence started under normal motion
+    const anim1 = controller.start("node-1", { workbench: false });
+    expect(anim1.duration).toBe(0.8);
+    controller.update(0.8); // Complete anim1
+
+    // Toggle setting dynamically
+    reducedMotionSetting = true;
+
+    // Subsequent sequence started after toggle should reflect reduced motion without recreating controller
+    const anim2 = controller.start("node-2", { workbench: false });
+    expect(anim2.duration).toBe(0.3);
   });
 });

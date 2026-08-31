@@ -23,6 +23,8 @@
   --motion-emphasis: 0.45s;
   --motion-enter: 0.4s;
   --motion-scene: 0.5s;
+  --motion-loop-feedback: 1.4s;
+  --motion-loop-ambient: 3.5s;
   --motion-loop-slow: 3.5s;
 
   /* Central Easings */

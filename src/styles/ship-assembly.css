@@ -393,7 +393,7 @@ button.assembly-port {
   color: var(--assembly-gold);
 }
 .assembly-port--valid i {
-  animation: assembly-port-pulse var(--motion-loop-slow, 1.4s) ease-in-out infinite;
+  animation: assembly-port-pulse var(--motion-loop-feedback, 1.4s) ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
