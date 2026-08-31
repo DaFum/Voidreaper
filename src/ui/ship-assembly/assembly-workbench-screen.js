@@ -88,13 +88,13 @@ export function createAssemblyWorkbenchScreen(root, { onAction } = {}) {
               if (selected) {
                 animate(
                   btn,
-                  { transform: ["scale(1)", "scale(1.2)", "scale(1)"] },
+                  { transform: ["translate(-50%, -50%) scale(1)", "translate(-50%, -50%) scale(1.2)", "translate(-50%, -50%) scale(1)"] },
                   { duration: MOTION_TIMINGS.fast, ease: MOTION_EASINGS.impact }
                 );
               } else if (state === "valid") {
                 animate(
                   btn,
-                  { transform: ["scale(0.9)", "scale(1.1)", "scale(1)"] },
+                  { transform: ["translate(-50%, -50%) scale(0.9)", "translate(-50%, -50%) scale(1.1)", "translate(-50%, -50%) scale(1)"] },
                   { duration: MOTION_TIMINGS.feedback, ease: MOTION_EASINGS.ui }
                 );
               }

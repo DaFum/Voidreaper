@@ -51,7 +51,7 @@ export function createSectorMapScreen(
       if (isSel && !isReducedMotion() && typeof element.animate === "function") {
         animate(
           element,
-          { transform: ["scale(1)", "scale(1.15)", "scale(1)"] },
+          { transform: ["translateY(-4px) scale(1)", "translateY(-4px) scale(1.15)", "translateY(-4px) scale(1)"] },
           { duration: MOTION_TIMINGS.fast, ease: MOTION_EASINGS.impact }
         );
       }

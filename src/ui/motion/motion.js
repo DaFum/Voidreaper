@@ -53,7 +53,7 @@ export function animatePanelEnter(element, options = {}) {
 export function animatePanelExit(element, options = {}) {
   if (!element || typeof element.animate !== "function") return Promise.resolve();
   if (isReducedMotion()) {
-    return animate(element, { opacity: [1, 0] }, { duration: MOTION_TIMINGS.fast }).finished;
+    return animate(element, { opacity: [1, 0] }, { duration: MOTION_TIMINGS.fast }).finished.catch(() => {});
   }
 
   const { yOffset = -6 } = options;
@@ -68,7 +68,7 @@ export function animatePanelExit(element, options = {}) {
       ease: MOTION_EASINGS.exit,
     }
   );
-  return animation.finished;
+  return animation.finished.catch(() => {});
 }
 
 /**
@@ -105,7 +105,7 @@ export function animateDialogExit(dialogElement, backdropElement = null) {
   if (!dialogElement) return Promise.resolve();
   if (isReducedMotion()) {
     if (backdropElement) animate(backdropElement, { opacity: [1, 0] }, { duration: MOTION_TIMINGS.fast });
-    return animate(dialogElement, { opacity: [1, 0] }, { duration: MOTION_TIMINGS.fast }).finished;
+    return animate(dialogElement, { opacity: [1, 0] }, { duration: MOTION_TIMINGS.fast }).finished.catch(() => {});
   }
 
   if (backdropElement) {
@@ -123,7 +123,7 @@ export function animateDialogExit(dialogElement, backdropElement = null) {
       ease: MOTION_EASINGS.exit,
     }
   );
-  return animation.finished;
+  return animation.finished.catch(() => {});
 }
 
 /**
@@ -158,10 +158,10 @@ export function animateListStagger(elements, options = {}) {
 /**
  * Smooth transition for a active selection indicator (e.g. active tab line).
  */
-export function animateSelectionIndicator(indicator, targetBounds, containerBounds) {
+export function animateSelectionIndicator(indicator, targetBounds, containerBounds, scrollLeft = 0) {
   if (!indicator || !targetBounds || !containerBounds) return null;
 
-  const left = targetBounds.left - containerBounds.left;
+  const left = targetBounds.left - containerBounds.left + scrollLeft;
   const width = targetBounds.width;
 
   if (isReducedMotion()) {

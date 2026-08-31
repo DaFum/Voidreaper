@@ -206,7 +206,7 @@ export function createHangarScreen(
     }
     const targetBounds = selected.getBoundingClientRect();
     const containerBounds = tabs.getBoundingClientRect();
-    animateSelectionIndicator(indicator, targetBounds, containerBounds);
+    animateSelectionIndicator(indicator, targetBounds, containerBounds, tabs.scrollLeft);
 
     return target;
   };

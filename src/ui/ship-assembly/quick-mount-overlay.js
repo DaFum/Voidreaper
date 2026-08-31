@@ -14,13 +14,13 @@ export function createQuickMountOverlay(root, { onAction } = {}) {
     animatePanelEnter(panel, { yOffset: 12 });
   }
 
-  root.addEventListener("click", (event) => {
+  root.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-action]");
     const action = button?.dataset.action;
     if (action) {
       if (button) animatePressFeedback(button);
       if (action === "defer" || action === "confirm") {
-        animatePanelExit(panel);
+        await animatePanelExit(panel);
       }
       onAction?.(action);
     }

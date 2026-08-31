@@ -764,14 +764,16 @@ describe("port overlay", () => {
 });
 
 describe("quick mount overlay", () => {
-  test("renders the dialog scaffold and forwards footer actions", () => {
+  test("renders the dialog scaffold and forwards footer actions", async () => {
     const container = root(),
       onAction = vi.fn();
     const overlay = createQuickMountOverlay(container, { onAction });
     expect(container.querySelector('[role="dialog"]')).not.toBeNull();
     expect(overlay.canvas).not.toBeNull();
     container.querySelector('[data-action="confirm"]').click();
+    await new Promise((r) => setTimeout(r, 200));
     container.querySelector('[data-action="defer"]').click();
+    await new Promise((r) => setTimeout(r, 200));
     expect(onAction).toHaveBeenNthCalledWith(1, "confirm");
     expect(onAction).toHaveBeenNthCalledWith(2, "defer");
   });
