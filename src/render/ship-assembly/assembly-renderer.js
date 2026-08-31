@@ -47,6 +47,7 @@ export function createAssemblyRenderer() {
         buildAnimationByNodeId = null,
         movement = {},
         lodOptions = {},
+        reducedMotion = false,
       },
     ) {
       if (!geometrySnapshot?.coreGeometry) return false;
@@ -151,6 +152,7 @@ export function createAssemblyRenderer() {
         buildAnimations,
         buildAnimationByNodeId,
         movement,
+        reducedMotion,
       });
       for (const node of geometrySnapshot.nodes)
         if (!node.isRoot && node.damageState !== "intact")

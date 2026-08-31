@@ -9,6 +9,7 @@ export function renderActivityAnimations(
     buildAnimations = [],
     buildAnimationByNodeId: providedAnimationMap,
     movement = {},
+    reducedMotion = false,
   },
 ) {
   // ⚡ Bolt: avoided new Map(buildAnimations.map()) to prevent intermediate array allocation in the hot render path
@@ -25,7 +26,7 @@ export function renderActivityAnimations(
               (movement.y ?? 0) * (movement.y ?? 0),
           ) + (movement.dodging ? 0.8 : 0),
         );
-        ctx.globalAlpha = 0.3 + strength * 0.6;
+        ctx.globalAlpha = reducedMotion ? (0.4 + strength * 0.5) : (0.3 + strength * 0.6);
         ctx.fillStyle = palette.thruster;
         ctx.beginPath();
         ctx.ellipse(
@@ -46,7 +47,7 @@ export function renderActivityAnimations(
         ? providedAnimationMap.get(node.nodeId)
         : buildAnimations?.find((b) => b.nodeId === node.nodeId);
     if (!activity?.firing && !(activity?.energyFlow > 0) && !build) continue;
-    const pulse = 0.45 + Math.sin(time * 7 + node.variantSeed) * 0.25;
+    const pulse = reducedMotion ? 0.6 : (0.45 + Math.sin(time * 7 + node.variantSeed) * 0.25);
     ctx.globalAlpha =
       lod === "low" ? 0.35 : pulse * (activity?.faulting ? 0.55 : 1);
     ctx.fillStyle = activity?.faulting
