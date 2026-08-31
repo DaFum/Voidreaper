@@ -16,6 +16,7 @@ export function updateSectorNode(button, node, { status, selected, onSelect }) {
   button.setAttribute("aria-pressed", String(selected));
   button.setAttribute("aria-selected", String(selected));
   button.disabled = !isSectorNodeInteractive(status);
+  button._currentNode = node;
   button._onSelectHandler = onSelect;
   const hidden = node.informationLevel < 1 && status !== "visited";
   button.innerHTML = hidden
@@ -29,7 +30,7 @@ export function createSectorNode(node, options = {}) {
   button.type = "button";
   button.addEventListener("click", () => {
     const isSelected = button.getAttribute("aria-selected") === "true" || button.getAttribute("aria-pressed") === "true";
-    button._onSelectHandler?.(node, isSelected);
+    button._onSelectHandler?.(button._currentNode ?? node, isSelected);
   });
   return updateSectorNode(button, node, options);
 }

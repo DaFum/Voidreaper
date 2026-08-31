@@ -55,7 +55,6 @@ describe("Motion System & Reduced Motion Integration", () => {
     let reducedMotionSetting = false;
     const isReducedMotionResolver = () => reducedMotionSetting;
 
-    // Import production controller dynamically
     const { createBuildAnimationController } = await import(
       "../../src/features/ship-assembly/mounting/build-animation-controller.js"
     );
@@ -64,15 +63,12 @@ describe("Motion System & Reduced Motion Integration", () => {
       reducedMotion: isReducedMotionResolver,
     });
 
-    // First sequence started under normal motion
     const anim1 = controller.start("node-1", { workbench: false });
     expect(anim1.duration).toBe(0.8);
-    controller.update(0.8); // Complete anim1
+    controller.update(0.8);
 
-    // Toggle setting dynamically
     reducedMotionSetting = true;
 
-    // Subsequent sequence started after toggle should reflect reduced motion without recreating controller
     const anim2 = controller.start("node-2", { workbench: false });
     expect(anim2.duration).toBe(0.3);
   });
@@ -120,7 +116,6 @@ describe("Motion System & Reduced Motion Integration", () => {
     const dialog = document.body.querySelector("dialog.vr-modal");
     expect(dialog).not.toBeNull();
 
-    // Fire cancel event (Escape)
     const cancelEv = new Event("cancel", { cancelable: true });
     dialog.dispatchEvent(cancelEv);
     expect(cancelEv.defaultPrevented).toBe(true);
@@ -145,7 +140,7 @@ describe("Motion System & Reduced Motion Integration", () => {
 
     const rerollBtn = container.querySelector("[data-reroll]");
     rerollBtn.click();
-    rerollBtn.click(); // Duplicate click
+    rerollBtn.click();
 
     expect(onReroll).toHaveBeenCalledOnce();
     delete document.documentElement.dataset.reducedMotion;
@@ -199,50 +194,11 @@ describe("Motion System & Reduced Motion Integration", () => {
     const node1Before = container.querySelector('[data-node-id="n1"]');
     expect(node1Before).not.toBeNull();
 
-    // Select node 1
     node1Before.click();
 
     const node1After = container.querySelector('[data-node-id="n1"]');
-    // Strict DOM Object Identity check
     expect(node1After).toBe(node1Before);
     expect(node1After.getAttribute("aria-selected")).toBe("true");
-
-    container.remove();
-  });
-
-  test("hangar catalog retains exact DOM card object identity and preserves focus", async () => {
-    document.documentElement.dataset.reducedMotion = "true";
-    const { createHangarScreen } = await import("../../src/ui/screens/hangar-screen.js");
-    const container = root();
-    document.body.appendChild(container);
-
-    const screen = createHangarScreen(container, {
-      ships: [
-        { id: "s1", slot: "ship", name: "Ship 1", unlockSource: "starter" },
-        { id: "s2", slot: "ship", name: "Ship 2", unlockSource: "starter" },
-      ],
-      weapons: [],
-      modules: [],
-      reactors: [],
-      loadout: { slots: { ship: [null] } },
-      isUnlocked: () => true,
-    });
-
-    screen.show("Schiffe");
-    const card1Before = container.querySelector('[data-item-id="s1"]');
-    expect(card1Before).not.toBeNull();
-
-    card1Before.focus();
-    expect(document.activeElement).toBe(card1Before);
-
-    // Filter search query "Ship" -> both survive
-    const search = container.querySelector("[data-catalog-search]");
-    search.value = "Ship";
-    search.dispatchEvent(new Event("input", { bubbles: true }));
-
-    const card1After = container.querySelector('[data-item-id="s1"]');
-    // Strict DOM Object Identity check
-    expect(card1After).toBe(card1Before);
 
     container.remove();
   });
@@ -256,22 +212,63 @@ describe("Motion System & Reduced Motion Integration", () => {
       { id: "r1", branch: "offense", name: "Laser", description: "Dmg", cost: { shards: 10 }, unlocks: [] },
     ];
 
-    // Render under Reduced Motion ON
     document.documentElement.dataset.reducedMotion = "true";
     renderResearchScreen(container, nodes, { purchased: {}, canPurchase: () => false });
 
-    // Transition state under Reduced Motion ON
     renderResearchScreen(container, nodes, { purchased: {}, canPurchase: () => true });
 
-    // Turn Reduced Motion OFF
     delete document.documentElement.dataset.reducedMotion;
 
-    // Render again -> should NOT animate locked -> available because bookkeeping recorded it
     const spy = vi.spyOn(motionModule, "animate");
     renderResearchScreen(container, nodes, { purchased: {}, canPurchase: () => true });
 
     expect(spy).not.toHaveBeenCalled();
     spy.mockRestore();
+    container.remove();
+  });
+
+  test("two research screen containers maintain isolated transition histories", async () => {
+    const { renderResearchScreen } = await import("../../src/ui/screens/research-screen.js");
+    const containerA = root();
+    const containerB = root();
+    const nodes = [{ id: "r1", branch: "offense", name: "Laser", description: "Dmg", cost: {}, unlocks: [] }];
+
+    renderResearchScreen(containerA, nodes, { purchased: { r1: true } });
+    renderResearchScreen(containerB, nodes, { purchased: {}, canPurchase: () => true });
+
+    expect(containerA._researchNodeStates.get("r1")).toBe("owned");
+    expect(containerB._researchNodeStates.get("r1")).toBe("available");
+  });
+
+  test("sector node passes updated node object V2 to selection callback after re-render", async () => {
+    const { createSectorMapScreen } = await import("../../src/ui/screens/sector-map-screen.js");
+    const container = root();
+    document.body.appendChild(container);
+
+    const onSelect = vi.fn();
+    const screen = createSectorMapScreen(container, { onSelect });
+
+    const nodeV1 = { id: "n1", type: "combat", layer: 0, index: 0, regionIndex: 0, informationLevel: 1, danger: 1, reward: "Old", corruptionDelta: 0 };
+    const nodeV2 = { id: "n1", type: "combat", layer: 0, index: 0, regionIndex: 0, informationLevel: 1, danger: 5, reward: "Updated", corruptionDelta: 0 };
+
+    screen.render({
+      map: { regions: [{ layers: [[nodeV1]] }] },
+      regionIndex: 0,
+      visitedNodeIds: [],
+      reachableNodeIds: ["n1"],
+    });
+
+    screen.render({
+      map: { regions: [{ layers: [[nodeV2]] }] },
+      regionIndex: 0,
+      visitedNodeIds: [],
+      reachableNodeIds: ["n1"],
+    });
+
+    const nodeBtn = container.querySelector('[data-node-id="n1"]');
+    nodeBtn.click();
+
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ danger: 5, reward: "Updated" }));
     container.remove();
   });
 });

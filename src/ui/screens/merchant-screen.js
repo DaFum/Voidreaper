@@ -66,7 +66,10 @@ export function renderMerchantScreen(
   }
 
   const rerollBtn = root.querySelector("[data-reroll]");
+  const leaveBtn = root.querySelector("[data-leave]");
   let rerolling = false;
+  let rerollCancelled = false;
+
   rerollBtn.addEventListener("click", (e) => {
     if (rerolling) return;
     rerolling = true;
@@ -83,13 +86,22 @@ export function renderMerchantScreen(
         );
         return anim?.finished ? anim.finished.catch(() => {}) : Promise.resolve();
       });
-      Promise.all(anims).then(() => onReroll(e)).catch(() => onReroll(e));
+      Promise.all(anims)
+        .then(() => {
+          if (!rerollCancelled) {
+            onReroll(e);
+          }
+        })
+        .catch(() => {});
     } else {
-      onReroll(e);
+      if (!rerollCancelled) {
+        onReroll(e);
+      }
     }
   });
-  const leaveBtn = root.querySelector("[data-leave]");
+
   leaveBtn.addEventListener("click", (e) => {
+    rerollCancelled = true;
     animatePressFeedback(leaveBtn);
     onLeave(e);
   });
