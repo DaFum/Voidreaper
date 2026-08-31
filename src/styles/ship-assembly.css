@@ -371,8 +371,8 @@ button.assembly-port {
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   transition:
-    filter 0.15s,
-    opacity 0.15s;
+    filter var(--motion-feedback, 0.15s),
+    opacity var(--motion-feedback, 0.15s);
   color: var(--assembly-cyan);
 }
 .assembly-port.assembly-port--occupied {
@@ -393,7 +393,7 @@ button.assembly-port {
   color: var(--assembly-gold);
 }
 .assembly-port--valid i {
-  animation: assembly-port-pulse 1.4s ease-in-out infinite;
+  animation: assembly-port-pulse var(--motion-loop-slow, 1.4s) ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -467,8 +467,8 @@ button.assembly-port {
 }
 .assembly-workbench__inventory button {
   transition:
-    background 0.15s,
-    border-color 0.15s;
+    background var(--motion-feedback, 0.15s),
+    border-color var(--motion-feedback, 0.15s);
   gap: 8px;
 }
 .assembly-workbench__inventory button:hover {

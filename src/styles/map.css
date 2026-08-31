@@ -77,10 +77,10 @@
     0 calc(100% - 12px)
   );
   transition:
-    transform 0.16s,
-    border-color 0.16s,
-    box-shadow 0.16s,
-    opacity 0.16s;
+    transform var(--motion-fast, 0.18s) var(--ease-ui),
+    border-color var(--motion-fast, 0.18s),
+    box-shadow var(--motion-fast, 0.18s),
+    opacity var(--motion-fast, 0.18s);
 }
 
 .sector-node::before {
@@ -212,6 +212,23 @@
   .sector-node {
     transition: none;
   }
+  .sector-node--reachable:hover,
+  .sector-node--reachable:focus-visible,
+  .sector-node[aria-pressed="true"] {
+    transform: none;
+  }
+}
+
+[data-reduced-motion="true"] .sector-map__connections path {
+  stroke-dasharray: none;
+}
+[data-reduced-motion="true"] .sector-node {
+  transition: none;
+}
+[data-reduced-motion="true"] .sector-node--reachable:hover,
+[data-reduced-motion="true"] .sector-node--reachable:focus-visible,
+[data-reduced-motion="true"] .sector-node[aria-pressed="true"] {
+  transform: none;
 }
 
 @media (max-width: 700px) {

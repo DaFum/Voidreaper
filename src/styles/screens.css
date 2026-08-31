@@ -12,10 +12,59 @@
   text-align: center;
   overflow-y: auto;
   background: transparent;
-  animation: screen-in var(--motion-emphasis, 0.45s) var(--ease-ui, ease);
+  animation: screen-in var(--motion-normal, 0.35s) var(--ease-ui);
 }
 
 @keyframes screen-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Screen transition semantics */
+.screen.screen--progression {
+  animation: screen-in-progression var(--motion-normal, 0.35s) var(--ease-enter);
+}
+
+@keyframes screen-in-progression {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.screen.screen--impact {
+  animation: screen-in-impact var(--motion-enter, 0.4s) var(--ease-impact);
+}
+
+@keyframes screen-in-impact {
+  from {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.screen.screen--decompression {
+  animation: screen-in-decompression var(--motion-scene, 0.5s) var(--ease-ui);
+}
+
+@keyframes screen-in-decompression {
   from {
     opacity: 0;
   }
@@ -70,14 +119,14 @@ h1::before {
   color: var(--wound);
   clip-path: inset(10% 0 62% 0);
   transform: translate(-3px, 0);
-  animation: slice 3.1s infinite steps(1);
+  animation: slice var(--motion-loop-slow, 3.5s) infinite steps(1);
 }
 
 h1::after {
   color: var(--ice);
   clip-path: inset(66% 0 6% 0);
   transform: translate(3px, 0);
-  animation: slice 2.7s infinite steps(1) reverse;
+  animation: slice calc(var(--motion-loop-slow, 3.5s) * 0.85) infinite steps(1) reverse;
 }
 
 @keyframes slice {
@@ -93,7 +142,10 @@ h1::after {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .screen {
+  .screen,
+  .screen.screen--progression,
+  .screen.screen--impact,
+  .screen.screen--decompression {
     animation: none;
   }
   h1::before,
@@ -103,7 +155,10 @@ h1::after {
   }
 }
 
-[data-reduced-motion="true"] .screen {
+[data-reduced-motion="true"] .screen,
+[data-reduced-motion="true"] .screen.screen--progression,
+[data-reduced-motion="true"] .screen.screen--impact,
+[data-reduced-motion="true"] .screen.screen--decompression {
   animation: none;
 }
 [data-reduced-motion="true"] h1::before,
@@ -144,8 +199,8 @@ h1::after {
   padding: 13px 34px;
   text-transform: uppercase;
   transition:
-    box-shadow 0.2s,
-    background 0.2s;
+    box-shadow var(--motion-ui, 0.2s) var(--ease-standard),
+    background var(--motion-ui, 0.2s) var(--ease-standard);
   clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
 }
 
@@ -163,7 +218,7 @@ h1::after {
     rgba(255, 255, 255, 0.25),
     transparent
   );
-  animation: sheen 3.4s ease-in-out infinite;
+  animation: sheen var(--motion-loop-slow, 3.5s) ease-in-out infinite;
 }
 
 @keyframes sheen {
@@ -361,12 +416,20 @@ h1::after {
   .card.evo .ico {
     animation: none !important;
   }
+  .card:hover,
+  .card:active {
+    transform: none;
+  }
 }
 
 [data-reduced-motion="true"] .card,
 [data-reduced-motion="true"] .card.evo,
 [data-reduced-motion="true"] .card.evo .ico {
   animation: none !important;
+}
+[data-reduced-motion="true"] .card:hover,
+[data-reduced-motion="true"] .card:active {
+  transform: none;
 }
 
 .card::after {

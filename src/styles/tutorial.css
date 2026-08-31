@@ -26,7 +26,7 @@
     calc(100% - 8px) 100%,
     0 100%
   );
-  transition: 0.18s ease;
+  transition: var(--motion-fast, 0.18s) var(--ease-ui);
   pointer-events: none;
 }
 .tutorial-card {
@@ -91,6 +91,12 @@
     background: rgba(2, 4, 12, 0.18);
   }
 }
+@media (prefers-reduced-motion: reduce) {
+  .tutorial-focus {
+    transition: none;
+  }
+}
+
 [data-reduced-motion="true"] .tutorial-focus {
   transition: none;
 }

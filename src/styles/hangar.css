@@ -48,8 +48,8 @@
   font-family: var(--font-m);
   color: var(--bone);
   transition:
-    border-color 0.15s,
-    transform 0.12s;
+    border-color var(--motion-feedback, 0.15s),
+    transform var(--motion-instant, 0.1s) var(--ease-ui);
   clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 0 100%);
 }
 
@@ -132,7 +132,7 @@
   content: "";
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.15s;
+  transition: opacity var(--motion-feedback, 0.15s) var(--ease-standard);
 }
 .hangar-tabs-shell::before {
   left: 44px;
@@ -831,6 +831,19 @@ button.item-card:focus-visible {
   .hangar-tabs-shell::after {
     transition: none;
   }
+  .meta:not(:disabled):active,
+  .meta:not(:disabled):hover {
+    transform: none;
+  }
+}
+
+[data-reduced-motion="true"] .hangar-tabs-shell::before,
+[data-reduced-motion="true"] .hangar-tabs-shell::after {
+  transition: none;
+}
+[data-reduced-motion="true"] .meta:not(:disabled):active,
+[data-reduced-motion="true"] .meta:not(:disabled):hover {
+  transform: none;
 }
 
 /* ---- Startseite/Menü-Umschaltung: data-view auf #start steuert, ob die
