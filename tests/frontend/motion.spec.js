@@ -306,4 +306,51 @@ describe("Motion System & Reduced Motion Integration", () => {
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ danger: 5, reward: "Updated" }));
     container.remove();
   });
+
+  test("hangar catalog selection panel cancels stale exit replacing children if new item is selected during exit", async () => {
+    const { createHangarScreen } = await import("../../src/ui/screens/hangar-screen.js");
+    const container = root();
+    document.body.appendChild(container);
+
+    const screen = createHangarScreen(container, {
+      ships: [
+        { id: "s1", slot: "ship", name: "Ship 1", unlockSource: "starter" },
+        { id: "s2", slot: "ship", name: "Ship 2", unlockSource: "starter" },
+      ],
+      weapons: [],
+      modules: [],
+      reactors: [],
+      loadout: { slots: { ship: [null] } },
+      isUnlocked: () => true,
+    });
+
+    screen.show("Schiffe");
+    const card1 = container.querySelector('[data-item-id="s1"]');
+    const card2 = container.querySelector('[data-item-id="s2"]');
+    const selection = container.querySelector("[data-catalog-selection]");
+
+    // Select Item 1 -> panel opens
+    card1.click();
+    expect(selection.hidden).toBe(false);
+    expect(selection.textContent).toContain("Ship 1");
+
+    // Close selection -> exit animation starts
+    const closeBtn = selection.querySelector("[data-catalog-selection-close]");
+    closeBtn.click();
+    expect(selection.hidden).toBe(true);
+
+    // Immediately select Item 2 while exit animation is pending
+    card2.click();
+    expect(selection.hidden).toBe(false);
+    expect(selection.textContent).toContain("Ship 2");
+
+    // Wait microtasks
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Panel must still show Ship 2 content and not be cleared
+    expect(selection.hidden).toBe(false);
+    expect(selection.textContent).toContain("Ship 2");
+
+    container.remove();
+  });
 });

@@ -143,6 +143,8 @@ export function createHangarScreen(
   let tab = "Run starten";
   let focusTabAfterRender = false;
   let focusMobileAfterRender = false;
+  let selectionRequestId = 0;
+
   const catalogState = Object.fromEntries(
     Object.keys(CATALOG_CONFIG).map((name) => [
       name,
@@ -286,7 +288,31 @@ export function createHangarScreen(
 
         for (const [id, card] of existingCards.entries()) {
           if (!entryIds.has(id)) {
-            card.remove();
+            if (!isReducedMotion() && typeof card.animate === "function") {
+              card.style.pointerEvents = "none";
+              const token = (card._exitToken = (card._exitToken || 0) + 1);
+              card._exitAnim = animate(card, { opacity: [1, 0], transform: ["scale(1)", "scale(0.92)"] }, { duration: 0.12 });
+              if (card._exitAnim?.finished) {
+                card._exitAnim.finished
+                  .then(() => {
+                    if (card._exitToken === token && card.parentNode) {
+                      card.remove();
+                    }
+                  })
+                  .catch(() => {});
+              }
+            } else {
+              card.remove();
+            }
+          } else {
+            if (card._exitAnim) {
+              try { card._exitAnim.cancel(); } catch { /* ignore cancel errors */ }
+              card._exitAnim = null;
+              card._exitToken = (card._exitToken || 0) + 1;
+            }
+            card.style.pointerEvents = "";
+            card.style.opacity = "1";
+            card.style.transform = "none";
           }
         }
 
@@ -361,10 +387,12 @@ export function createHangarScreen(
         }
       }
 
-      // Selection panel full lifecycle transition
+      // Selection panel full lifecycle transition with token guard against exit race conditions
       const selectedEntry = entries.find(
         (entry) => entry.definition.id === state.selectedItemId,
       );
+
+      const requestId = ++selectionRequestId;
 
       if (!selectedEntry) {
         if (!selection.hidden) {
@@ -372,9 +400,11 @@ export function createHangarScreen(
           if (!isReducedMotion()) {
             selection.dataset.exiting = "true";
             animatePanelExit(selection).then(() => {
+              if (requestId !== selectionRequestId) return;
               delete selection.dataset.exiting;
               selection.replaceChildren();
             }).catch(() => {
+              if (requestId !== selectionRequestId) return;
               delete selection.dataset.exiting;
               selection.replaceChildren();
             });
@@ -385,7 +415,8 @@ export function createHangarScreen(
         return;
       }
 
-      const isOpening = selection.hidden;
+      const isOpening = selection.hidden || selection.dataset.exiting === "true";
+      delete selection.dataset.exiting;
       selection.hidden = false;
 
       let html = "";

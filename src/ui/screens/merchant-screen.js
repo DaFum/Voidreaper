@@ -73,29 +73,17 @@ export function renderMerchantScreen(
   rerollBtn.addEventListener("click", (e) => {
     if (rerolling) return;
     rerolling = true;
-    rerollBtn.disabled = true;
-    for (const card of catalog.children) card.disabled = true;
     animatePressFeedback(rerollBtn);
+    onReroll(e);
+
     const oldCards = Array.from(catalog.children);
     if (!isReducedMotion() && oldCards.length > 0 && typeof oldCards[0].animate === "function") {
-      const anims = oldCards.map((card) => {
-        const anim = animate(
+      for (const card of oldCards) {
+        animate(
           card,
           { opacity: [1, 0], transform: ["translateY(0px)", "translateY(-8px)"] },
           { duration: MOTION_TIMINGS.fast, ease: MOTION_EASINGS.exit }
         );
-        return anim?.finished ? anim.finished.catch(() => {}) : Promise.resolve();
-      });
-      Promise.all(anims)
-        .then(() => {
-          if (!rerollCancelled) {
-            onReroll(e);
-          }
-        })
-        .catch(() => {});
-    } else {
-      if (!rerollCancelled) {
-        onReroll(e);
       }
     }
   });
