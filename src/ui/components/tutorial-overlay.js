@@ -1,5 +1,7 @@
 import { escapeHtml } from "../escape-html.js";
 import { placeTutorialCard } from "./tutorial-position.js";
+import { animateFocusSpotlight, animatePanelEnter } from "../motion/motion.js";
+import { isReducedMotion } from "../motion/reduced-motion.js";
 
 const STATIC_TUTORIAL_TARGETS = {
   game: "game-canvas",
@@ -98,6 +100,24 @@ export function createTutorialOverlay({
     ring.hidden = !target;
     if (!target) return;
     const rect = target.getBoundingClientRect();
+    const targetRect = {
+      left: rect.left - 6,
+      top: rect.top - 6,
+      width: rect.width + 12,
+      height: rect.height + 12,
+    };
+
+    if (isReducedMotion()) {
+      Object.assign(ring.style, {
+        left: `${targetRect.left}px`,
+        top: `${targetRect.top}px`,
+        width: `${targetRect.width}px`,
+        height: `${targetRect.height}px`,
+      });
+    } else {
+      animateFocusSpotlight(ring, targetRect);
+    }
+
     const size = {
       width: Math.min(360, card.offsetWidth || 360),
       height: card.offsetHeight || 240,
@@ -105,12 +125,6 @@ export function createTutorialOverlay({
     const pos = placeTutorialCard(rect, size, {
       width: innerWidth,
       height: innerHeight,
-    });
-    Object.assign(ring.style, {
-      left: `${rect.left - 6}px`,
-      top: `${rect.top - 6}px`,
-      width: `${rect.width + 12}px`,
-      height: `${rect.height + 12}px`,
     });
     Object.assign(card.style, {
       left: `${pos.left}px`,
@@ -133,6 +147,10 @@ export function createTutorialOverlay({
     targetId = step.target ?? null;
     target = targetId ? resolveTarget(targetId) : null;
     root.innerHTML = `<div class="tutorial-veil" aria-hidden="true"></div><div class="tutorial-focus" aria-hidden="true"></div><section class="tutorial-card" role="dialog" aria-labelledby="tutorial-title"><span>${escapeHtml(chapter.title)} · ${escapeHtml(stepIndex + 1)}/${escapeHtml(stepCount)}</span><h2 id="tutorial-title">${escapeHtml(step.title)}</h2><p>${escapeHtml(step.body)}</p>${step.hint ? `<small>${escapeHtml(step.hint)}</small>` : ""}<p data-role="status" aria-live="polite">${target || !step.target ? "" : escapeHtml(targetNotVisibleMessage(step.target))}</p><footer><button type="button" data-action="back">ZURÜCK</button><button type="button" data-action="${paused ? "resume" : "pause"}">${paused ? "FORTSETZEN" : "PAUSIEREN"}</button><button type="button" data-action="skip">ÜBERSPRINGEN</button><button type="button" data-action="stop">BEENDEN</button>${(step.kind === "explanation" || step.optional) && !paused ? '<button type="button" data-action="next">WEITER</button>' : ""}</footer></section>`;
+    const card = root.querySelector(".tutorial-card");
+    if (card && !isReducedMotion()) {
+      animatePanelEnter(card, { yOffset: 6 });
+    }
     root.onclick = (event) => {
       const action = event.target.closest("[data-action]")?.dataset.action;
       if (action) onAction(action);

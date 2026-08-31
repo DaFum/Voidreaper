@@ -4,6 +4,14 @@ import {
   deriveEquipmentCatalogEntries,
   LOADOUT_SLOT_LAYOUT,
 } from "../../features/equipment/loadout-service.js";
+import {
+  animate,
+  animateListStagger,
+  animatePanelEnter,
+  animatePressFeedback,
+  animateSelectionIndicator,
+} from "../motion/motion.js";
+import { isReducedMotion } from "../motion/reduced-motion.js";
 
 const TABS = [
   "Run starten",
@@ -188,6 +196,18 @@ export function createHangarScreen(
       );
     }
     tabs.scrollLeft = target;
+
+    // Update shared indicator position
+    let indicator = tabs.querySelector(".hangar-tab-indicator");
+    if (!indicator) {
+      indicator = document.createElement("span");
+      indicator.className = "hangar-tab-indicator";
+      tabs.appendChild(indicator);
+    }
+    const targetBounds = selected.getBoundingClientRect();
+    const containerBounds = tabs.getBoundingClientRect();
+    animateSelectionIndicator(indicator, targetBounds, containerBounds);
+
     return target;
   };
   const refreshActiveNavigation = () => {
@@ -270,6 +290,9 @@ export function createHangarScreen(
             }),
           );
         }
+        if (results.children.length > 0) {
+          animateListStagger(results.children, { staggerDelay: 0.02, maxItems: 8 });
+        }
       }
       const selectedEntry = entries.find(
         (entry) => entry.definition.id === state.selectedItemId,
@@ -282,6 +305,7 @@ export function createHangarScreen(
       selection.hidden = false;
       if (selectedEntry.state === "locked") {
         selection.innerHTML = `<header><div><small>GESPERRT</small><strong>${escapeHtml(selectedEntry.definition.name)}</strong></div><button type="button" data-catalog-selection-close aria-label="Auswahl schließen" title="Auswahl schließen">×</button></header><p>${escapeHtml(selectedEntry.unlockLabel)}</p><p data-catalog-message role="status" aria-live="polite"></p>`;
+        animatePanelEnter(selection, { yOffset: 6 });
         return;
       }
       const slot = selectedEntry.definition.slot;
@@ -298,6 +322,7 @@ export function createHangarScreen(
         return `<button type="button" data-catalog-equip data-slot="${escapeHtml(slot)}" data-index="${index}"><span>${escapeHtml(slotLabel(slot, index))}</span><strong>${escapeHtml(currentName)}</strong><small>${current ? "Ersetzen" : "Hier ausrüsten"}</small></button>`;
       }).join("");
       selection.innerHTML = `<header><div><small>${escapeHtml(selectedEntry.state === "equipped" ? "AUSGERÜSTET" : "VERFÜGBAR")}</small><strong>${escapeHtml(selectedEntry.definition.name)}</strong></div><button type="button" data-catalog-selection-close aria-label="Auswahl schließen" title="Auswahl schließen">×</button></header><div class="catalog-selection__slots">${slotActions}</div><p data-catalog-message role="status" aria-live="polite"></p>`;
+      animatePanelEnter(selection, { yOffset: 6 });
     };
     search.addEventListener("input", (event) => {
       state.query = event.target.value;
@@ -366,6 +391,11 @@ export function createHangarScreen(
     else
       content.innerHTML = `<div class="hangar-placeholder"><strong>${escapeHtml(tab.toUpperCase())}</strong><span>Subsystem ist verbunden. Inhalte werden aus dem persistenten Meta-State geladen.</span></div>`;
     renderTab(tab, content);
+
+    if (!isReducedMotion()) {
+      animatePanelEnter(content, { yOffset: 6 });
+    }
+
     const tabs = container.querySelector(".hangar-tabs");
     const selectedTab = container.querySelector(
       '[role="tab"][aria-selected="true"]',
@@ -385,6 +415,7 @@ export function createHangarScreen(
   container.addEventListener("click", (event) => {
     const tabButton = event.target.closest("[data-hangar-tab]");
     if (tabButton) {
+      animatePressFeedback(tabButton);
       activateTab(tabButton.dataset.hangarTab, { focus: true });
       return;
     }

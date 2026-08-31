@@ -1,4 +1,7 @@
 import { escapeHtml } from "../escape-html.js";
+import { animatePressFeedback, animate, MOTION_TIMINGS, MOTION_EASINGS } from "../motion/motion.js";
+import { isReducedMotion } from "../motion/reduced-motion.js";
+
 export function renderResearchScreen(
   container,
   nodes,
@@ -26,9 +29,19 @@ export function renderResearchScreen(
         })()}</article>`,
     )
     .join("")}</div>`;
+
   container.onclick = (event) => {
     const button = event.target.closest("[data-research-id]");
     if (!button || button.disabled) return;
+    const card = button.closest(".research-node");
+    animatePressFeedback(button);
+    if (card && !isReducedMotion() && typeof card.animate === "function") {
+      animate(
+        card,
+        { transform: ["scale(1)", "scale(0.97)", "scale(1)"] },
+        { duration: MOTION_TIMINGS.feedback, ease: MOTION_EASINGS.impact }
+      );
+    }
     button.disabled = true;
     onPurchase(button.dataset.researchId);
   };

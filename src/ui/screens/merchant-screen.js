@@ -1,4 +1,6 @@
 import { escapeHtml } from "../escape-html.js";
+import { animateListStagger, animatePressFeedback } from "../motion/motion.js";
+
 export function canAffordOffer(resources, offer) {
   if (offer.corrupted) return true;
   const balance = offer.currency === "flux" ? resources.flux : resources.scrap;
@@ -51,9 +53,25 @@ export function renderMerchantScreen(
       );
       button.title = `${offer.name} – nicht genügend ${offer.currency === "flux" ? "Flux" : "Scrap"}`;
     }
-    button.addEventListener("click", () => onBuy(offer));
+    button.addEventListener("click", () => {
+      animatePressFeedback(button);
+      onBuy(offer);
+    });
     catalog.append(button);
   }
-  root.querySelector("[data-reroll]").addEventListener("click", onReroll);
-  root.querySelector("[data-leave]").addEventListener("click", onLeave);
+
+  if (catalog.children.length > 0) {
+    animateListStagger(catalog.children, { staggerDelay: 0.04, yOffset: 8 });
+  }
+
+  const rerollBtn = root.querySelector("[data-reroll]");
+  rerollBtn.addEventListener("click", (e) => {
+    animatePressFeedback(rerollBtn);
+    onReroll(e);
+  });
+  const leaveBtn = root.querySelector("[data-leave]");
+  leaveBtn.addEventListener("click", (e) => {
+    animatePressFeedback(leaveBtn);
+    onLeave(e);
+  });
 }

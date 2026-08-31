@@ -2,6 +2,8 @@ import { createSectorNode } from "../components/sector-node.js";
 import { flattenSectorMap } from "../../features/sectors/sector-map-generator.js";
 import { createSectorMapConnections } from "../components/sector-map-connections.js";
 import { escapeHtml } from "../escape-html.js";
+import { animate, MOTION_TIMINGS, MOTION_EASINGS } from "../motion/motion.js";
+import { isReducedMotion } from "../motion/reduced-motion.js";
 
 export function createSectorMapScreen(
   root,
@@ -34,9 +36,10 @@ export function createSectorMapScreen(
     const graph = root.querySelector(".sector-map__graph");
     const nodeElements = [];
     for (const node of nodes) {
+      const isSel = selectedId === node.id;
       const element = createSectorNode(node, {
         status: statusFor(node, visitedSet, reachableSet),
-        selected: selectedId === node.id,
+        selected: isSel,
         onSelect(candidate, alreadySelected) {
           if (alreadySelected) return onConfirm(candidate);
           selectedId = candidate.id;
@@ -44,6 +47,15 @@ export function createSectorMapScreen(
           render();
         },
       });
+
+      if (isSel && !isReducedMotion() && typeof element.animate === "function") {
+        animate(
+          element,
+          { transform: ["scale(1)", "scale(1.15)", "scale(1)"] },
+          { duration: MOTION_TIMINGS.fast, ease: MOTION_EASINGS.impact }
+        );
+      }
+
       nodeElements.push(element);
       graph.append(element);
     }

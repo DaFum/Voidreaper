@@ -1,5 +1,12 @@
 import { describe, expect, test, vi } from "vitest";
 import { renderSettingsScreen } from "../../src/ui/screens/settings-screen.js";
+import {
+  animatePanelEnter,
+  animateDialogEnter,
+  animateDialogExit,
+  animateListStagger,
+} from "../../src/ui/motion/motion.js";
+import { isReducedMotion } from "../../src/ui/motion/reduced-motion.js";
 
 const root = () => document.createElement("div");
 
@@ -40,7 +47,7 @@ describe("Motion System & Reduced Motion Integration", () => {
 
   test("build animation controller dynamically updates on preference change when passed a resolver", async () => {
     let reducedMotionSetting = false;
-    const isReducedMotion = () => reducedMotionSetting;
+    const isReducedMotionResolver = () => reducedMotionSetting;
 
     // Import production controller dynamically
     const { createBuildAnimationController } = await import(
@@ -48,7 +55,7 @@ describe("Motion System & Reduced Motion Integration", () => {
     );
 
     const controller = createBuildAnimationController({
-      reducedMotion: isReducedMotion,
+      reducedMotion: isReducedMotionResolver,
     });
 
     // First sequence started under normal motion
@@ -62,5 +69,34 @@ describe("Motion System & Reduced Motion Integration", () => {
     // Subsequent sequence started after toggle should reflect reduced motion without recreating controller
     const anim2 = controller.start("node-2", { workbench: false });
     expect(anim2.duration).toBe(0.3);
+  });
+
+  test("isReducedMotion respects documentElement dataset and fallback", () => {
+    document.documentElement.dataset.reducedMotion = "true";
+    expect(isReducedMotion()).toBe(true);
+
+    document.documentElement.dataset.reducedMotion = "false";
+    expect(isReducedMotion()).toBe(false);
+  });
+
+  test("animatePanelEnter handles null and disconnected elements gracefully", () => {
+    expect(animatePanelEnter(null)).toBeNull();
+    const div = document.createElement("div");
+    const anim = animatePanelEnter(div);
+    expect(anim).not.toBeNull();
+  });
+
+  test("animateDialogExit returns a promise that resolves on completion", async () => {
+    document.documentElement.dataset.reducedMotion = "true";
+    const dialog = document.createElement("dialog");
+    const res = await animateDialogExit(dialog);
+    expect(res).toBeDefined();
+  });
+
+  test("animateListStagger filters invalid elements and runs stagger animation", () => {
+    const el1 = document.createElement("div");
+    const el2 = document.createElement("div");
+    const anim = animateListStagger([el1, null, el2]);
+    expect(anim).not.toBeNull();
   });
 });
