@@ -410,28 +410,6 @@ h1::after {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .card,
-  .card.evo,
-  .card.evo .ico {
-    animation: none !important;
-  }
-  .card:hover,
-  .card:active {
-    transform: none;
-  }
-}
-
-[data-reduced-motion="true"] .card,
-[data-reduced-motion="true"] .card.evo,
-[data-reduced-motion="true"] .card.evo .ico {
-  animation: none !important;
-}
-[data-reduced-motion="true"] .card:hover,
-[data-reduced-motion="true"] .card:active {
-  transform: none;
-}
-
 .card::after {
   content: "";
   position: absolute;
@@ -459,6 +437,30 @@ h1::after {
   transform: translateY(-5px) rotate(-0.5deg);
   border-color: var(--phosphor);
   box-shadow: 0 8px 30px rgba(6, 255, 165, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .card.evo,
+  .card.evo .ico {
+    animation: none !important;
+  }
+  .card,
+  .card:hover,
+  .card:active {
+    transform: none;
+  }
+}
+
+[data-reduced-motion="true"] .card,
+[data-reduced-motion="true"] .card.evo,
+[data-reduced-motion="true"] .card.evo .ico {
+  animation: none !important;
+}
+[data-reduced-motion="true"] .card,
+[data-reduced-motion="true"] .card:hover,
+[data-reduced-motion="true"] .card:active {
+  transform: none;
 }
 
 .card:focus-visible {

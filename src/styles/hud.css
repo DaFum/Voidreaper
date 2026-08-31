@@ -72,9 +72,6 @@
   .toast {
     animation: none;
   }
-  #combo.pop {
-    transform: none;
-  }
 }
 
 [data-reduced-motion="true"] .resource-cluster[data-load-tier="critical"],
@@ -85,9 +82,6 @@
 }
 [data-reduced-motion="true"] .toast {
   animation: none;
-}
-[data-reduced-motion="true"] #combo.pop {
-  transform: none;
 }
 
 .hud-top {
@@ -197,6 +191,16 @@
 
 #combo.pop {
   transform: scale(1.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #combo.pop {
+    transform: none;
+  }
+}
+
+[data-reduced-motion="true"] #combo.pop {
+  transform: none;
 }
 
 #combo .x {
