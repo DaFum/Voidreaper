@@ -5,6 +5,7 @@ export function renderEntities(
   assemblyRenderer,
   assemblyGeometry,
   viewport = {},
+  reducedMotion = false,
 ) {
   const width =
     viewport.width ?? context.canvas.clientWidth ?? context.canvas.width;
@@ -64,7 +65,7 @@ export function renderEntities(
     position: run.player,
     rotation: run.player.rotation ?? 0,
     time: run.time ?? 0,
-    reducedMotion: run.settings?.reducedMotion ?? false,
+    reducedMotion,
   });
   if (!rendered) {
     context.fillStyle = "#efeaf7";

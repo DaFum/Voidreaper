@@ -330,10 +330,12 @@ export function createGameController(services) {
         errorBoundary: services.assemblyErrors,
       });
       services.assemblyGeometry.rebuildNow();
+      const isReducedMotion =
+        document.documentElement.dataset.reducedMotion === "true" ||
+        (globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ??
+          false);
       services.buildAnimations = createBuildAnimationController({
-        reducedMotion: globalThis.matchMedia?.(
-          "(prefers-reduced-motion: reduce)",
-        )?.matches,
+        reducedMotion: isReducedMotion,
       });
       const equipmentService = createEquipmentService({
         registry: services.equipment,

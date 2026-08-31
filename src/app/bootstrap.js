@@ -656,6 +656,10 @@ export async function bootstrap() {
     ),
   });
 
+  const isReducedMotion = () =>
+    document.documentElement.dataset.reducedMotion === "true" ||
+    prefersReducedMotion();
+
   const controller = createGameController(services);
   if (import.meta.env.DEV) {
     setupDevDebug(services, controller, () => metaSave, blueprintValidationContext);
@@ -707,6 +711,7 @@ export async function bootstrap() {
       suggestion: session.suggestions[session.selectedIndex],
       assemblyRenderer: services.assemblyRenderer,
       time: quickMountClock,
+      reducedMotion: isReducedMotion(),
     });
   };
   let quickMountFrame = null,
@@ -782,7 +787,7 @@ export async function bootstrap() {
       onAction: runQuickMountAction,
     });
     renderQuickMount();
-    if (!prefersReducedMotion()) {
+    if (!isReducedMotion()) {
       quickMountLast = performance.now();
       quickMountFrame = requestAnimationFrame(animateQuickMount);
     }
@@ -806,15 +811,12 @@ export async function bootstrap() {
     const lod = metaSave.assemblyVisualPreferences?.lod;
     return !lod || lod === "auto" ? "ultra" : lod;
   };
+
   // weight region-typical enemies (content catalog) into the legacy wave roster;
   // game.visualRegionId is kept current by game-controller.syncLegacy
   legacyRuntime.configureRegionRoster(
     () => REGION_BY_ID.get(game.visualRegionId)?.enemies ?? [],
   );
-  const isReducedMotion = () =>
-    document.documentElement.dataset.reducedMotion === "true" ||
-    prefersReducedMotion();
-
   legacyRuntime.configureShipRenderer((context, player, legacyGame) => {
     const geometry = services.assemblyGeometry?.getSnapshot();
     if (!geometry?.coreGeometry) return false;
@@ -1320,7 +1322,7 @@ export async function bootstrap() {
       }
       const dt = Math.min(0.1, (now - lastFrame) / 1000);
       lastFrame = now;
-      if (!reducedMotion) clock += dt;
+      if (!isReducedMotion()) clock += dt;
       services.buildAnimations?.update(dt);
       draw(clock);
       frameHandle = requestAnimationFrame(frame);
