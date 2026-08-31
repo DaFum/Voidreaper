@@ -61,7 +61,10 @@
   }
 }
 
-.screen.screen--decompression {
+.screen.screen--decompression,
+.service-screen.extraction,
+.service-screen.run-summary,
+.service-screen.summary {
   animation: screen-in-decompression var(--motion-scene, 0.5s) var(--ease-ui);
 }
 
