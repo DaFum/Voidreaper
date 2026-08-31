@@ -96,3 +96,13 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+[data-reduced-motion="true"] .quick-mount__scan {
+  display: none;
+}
+[data-reduced-motion="true"] .assembly-port,
+[data-reduced-motion="true"] .assembly-port i,
+[data-reduced-motion="true"] .assembly-build-effect {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}

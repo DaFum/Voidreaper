@@ -257,7 +257,8 @@ export async function createEnvironmentStage({
     applyTheme(regionId);
     shakeLayer.position.set(shakeX * 0.6, shakeY * 0.6);
 
-    const drift = reducedMotion ? 0 : time * 3;
+    const isReduced = typeof reducedMotion === "function" ? reducedMotion() : Boolean(reducedMotion);
+    const drift = isReduced ? 0 : time * 3;
     nebulaFar.tilePosition.set(
       -camX * 0.12 + drift,
       -camY * 0.12 + drift * 0.6,
@@ -271,7 +272,7 @@ export async function createEnvironmentStage({
       const parallax = 0.15 + spec.depth * 0.6;
       sprite.x = wrap(spec.x * FIELD - camX * parallax, width, 48);
       sprite.y = wrap(spec.y * FIELD - camY * parallax, height, 48);
-      const twinkle = reducedMotion
+      const twinkle = isReduced
         ? 0.85
         : 0.55 + Math.sin(time * spec.twinkleSpeed + spec.twinklePhase) * 0.45;
       sprite.alpha = (0.25 + spec.depth * 0.6) * twinkle;
@@ -292,13 +293,13 @@ export async function createEnvironmentStage({
         );
         sprite.alpha =
           spec.alpha *
-          (reducedMotion
+          (isReduced
             ? 1
             : 0.6 + Math.sin(time * spec.pulseSpeed + spec.pulsePhase) * 0.4);
       }
     }
 
-    streakLayer.visible = !reducedMotion && !lowDetail;
+    streakLayer.visible = !isReduced && !lowDetail;
     if (streakLayer.visible) {
       for (const { spec, sprite } of streaks) {
         const phase =

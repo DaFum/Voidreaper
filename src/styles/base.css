@@ -54,7 +54,7 @@ body {
   height: 100%;
   display: block;
   background: var(--void);
-  transition: filter 0.15s;
+  transition: filter var(--motion-feedback, 0.15s) var(--ease-standard);
 }
 
 /* GPU environment stage (PixiJS) sits below #game; the game canvas turns
@@ -112,7 +112,7 @@ body.glitching #game {
   inset: 0;
   pointer-events: none;
   z-index: 41;
-  transition: box-shadow var(--motion-normal, 0.35s);
+  transition: box-shadow var(--motion-normal, 0.35s) var(--ease-standard);
   background: radial-gradient(
     ellipse at center,
     transparent 52%,
@@ -127,7 +127,7 @@ body.glitching #game {
   box-shadow: inset 0 0 120px rgba(255, 45, 120, 0.5);
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--motion-normal, 0.35s);
+  transition: opacity var(--motion-normal, 0.35s) var(--ease-standard);
 }
 
 body.lowhp #vignette::before {
@@ -154,7 +154,7 @@ body.lowhp #vignette::before {
 }
 
 body.glitching #crt {
-  animation: crt-jump 0.18s steps(2) 1;
+  animation: crt-jump var(--motion-fast, 0.18s) steps(2) 1;
 }
 
 @keyframes crt-jump {

@@ -142,7 +142,7 @@
   inset: 1px;
   transform-origin: left;
   transform: scaleX(1);
-  transition: transform 0.14s cubic-bezier(0.2, 0.8, 0.3, 1);
+  transition: transform var(--motion-feedback, 0.15s) var(--ease-ui);
 }
 
 .bar > u {
@@ -150,7 +150,7 @@
   inset: 1px;
   transform-origin: left;
   background: rgba(255, 255, 255, 0.35);
-  transition: transform 0.6s ease 0.15s;
+  transition: transform var(--motion-scene, 0.6s) ease var(--motion-feedback, 0.15s);
   text-decoration: none;
 }
 
@@ -185,12 +185,22 @@
   pointer-events: none;
   opacity: 0;
   transition:
-    opacity 0.2s,
-    transform 0.12s;
+    opacity var(--motion-ui, 0.2s) var(--ease-standard),
+    transform var(--motion-instant, 0.1s) var(--ease-ui);
 }
 
 #combo.pop {
   transform: scale(1.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #combo.pop {
+    transform: none;
+  }
+}
+
+[data-reduced-motion="true"] #combo.pop {
+  transform: none;
 }
 
 #combo .x {
@@ -249,7 +259,7 @@
   font-size: clamp(15px, 5vw, 26px);
   letter-spacing: 0.4em;
   opacity: 0;
-  transition: opacity 0.4s;
+  transition: opacity var(--motion-enter, 0.4s) var(--ease-standard);
   white-space: nowrap;
   padding: 6px 26px;
   border-top: 1px solid currentColor;

@@ -15,16 +15,30 @@ const REDUCED_BUILD_PHASES = Object.freeze([
 
 export function createBuildAnimationController({ reducedMotion = false } = {}) {
   const animations = [];
-  const activePhases = reducedMotion ? REDUCED_BUILD_PHASES : NORMAL_BUILD_PHASES;
-  let total = 0;
-  for (let i = 0; i < activePhases.length; i++)
-    total += activePhases[i].duration;
+
+  const resolveIsReduced = () =>
+    typeof reducedMotion === "function" ? Boolean(reducedMotion()) : Boolean(reducedMotion);
 
   return {
     start(nodeId, { mode = "mount", workbench = false } = {}) {
-      const baseDuration = (workbench ? 1.6 : 0.8);
-      const duration = reducedMotion ? 0.3 : baseDuration;
-      const animation = { nodeId, mode, elapsed: 0, duration, complete: false };
+      const isReduced = resolveIsReduced();
+      const activePhases = isReduced ? REDUCED_BUILD_PHASES : NORMAL_BUILD_PHASES;
+      let totalPhasesDuration = 0;
+      for (let i = 0; i < activePhases.length; i++) {
+        totalPhasesDuration += activePhases[i].duration;
+      }
+
+      const baseDuration = workbench ? 1.6 : 0.8;
+      const duration = isReduced ? 0.3 : baseDuration;
+      const animation = {
+        nodeId,
+        mode,
+        elapsed: 0,
+        duration,
+        complete: false,
+        activePhases,
+        totalPhasesDuration,
+      };
       animations.push(animation);
       return Object.freeze({ ...animation });
     },
@@ -43,9 +57,11 @@ export function createBuildAnimationController({ reducedMotion = false } = {}) {
     },
     snapshot() {
       const snap = new Array(animations.length);
-      const lastPhase = activePhases[activePhases.length - 1];
       for (let i = 0; i < animations.length; i++) {
         const animation = animations[i];
+        const activePhases = animation.activePhases;
+        const total = animation.totalPhasesDuration;
+        const lastPhase = activePhases[activePhases.length - 1];
         const normalized = animation.elapsed / animation.duration;
         let cursor = 0,
           phase = lastPhase,
@@ -61,7 +77,11 @@ export function createBuildAnimationController({ reducedMotion = false } = {}) {
           cursor += share;
         }
         snap[i] = Object.freeze({
-          ...animation,
+          nodeId: animation.nodeId,
+          mode: animation.mode,
+          elapsed: animation.elapsed,
+          duration: animation.duration,
+          complete: animation.complete,
           phase: phase.id,
           phaseProgress: Math.max(0, Math.min(1, phaseProgress)),
         });

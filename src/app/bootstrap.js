@@ -851,7 +851,7 @@ export async function bootstrap() {
     }
     return rendered;
   });
-  setupPixiBackdrop(legacyRuntime, prefersReducedMotion);
+  setupPixiBackdrop(legacyRuntime, isReducedMotion);
   legacyRuntime.configurePlayerDamageRouter((_player, damage) => {
     if (game.mode === "tutorial") return 0;
     const geometry = services.assemblyGeometry?.getSnapshot(),

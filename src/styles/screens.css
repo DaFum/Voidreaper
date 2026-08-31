@@ -12,10 +12,63 @@
   text-align: center;
   overflow-y: auto;
   background: transparent;
-  animation: screen-in var(--motion-emphasis, 0.45s) var(--ease-ui, ease);
+  animation: screen-in var(--motion-normal, 0.35s) var(--ease-ui);
 }
 
 @keyframes screen-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Screen transition semantics */
+.screen.screen--progression,
+.service-screen {
+  animation: screen-in-progression var(--motion-normal, 0.35s) var(--ease-enter);
+}
+
+@keyframes screen-in-progression {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.screen.screen--impact {
+  animation: screen-in-impact var(--motion-enter, 0.4s) var(--ease-impact);
+}
+
+@keyframes screen-in-impact {
+  from {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.screen.screen--decompression,
+.service-screen.extraction,
+.service-screen.run-summary,
+.service-screen.summary {
+  animation: screen-in-decompression var(--motion-scene, 0.5s) var(--ease-ui);
+}
+
+@keyframes screen-in-decompression {
   from {
     opacity: 0;
   }
@@ -70,14 +123,14 @@ h1::before {
   color: var(--wound);
   clip-path: inset(10% 0 62% 0);
   transform: translate(-3px, 0);
-  animation: slice 3.1s infinite steps(1);
+  animation: slice var(--motion-loop-ambient, 3.5s) infinite steps(1);
 }
 
 h1::after {
   color: var(--ice);
   clip-path: inset(66% 0 6% 0);
   transform: translate(3px, 0);
-  animation: slice 2.7s infinite steps(1) reverse;
+  animation: slice calc(var(--motion-loop-ambient, 3.5s) * 0.85) infinite steps(1) reverse;
 }
 
 @keyframes slice {
@@ -93,7 +146,11 @@ h1::after {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .screen {
+  .screen,
+  .screen.screen--progression,
+  .screen.screen--impact,
+  .screen.screen--decompression,
+  .service-screen {
     animation: none;
   }
   h1::before,
@@ -103,7 +160,11 @@ h1::after {
   }
 }
 
-[data-reduced-motion="true"] .screen {
+[data-reduced-motion="true"] .screen,
+[data-reduced-motion="true"] .screen.screen--progression,
+[data-reduced-motion="true"] .screen.screen--impact,
+[data-reduced-motion="true"] .screen.screen--decompression,
+[data-reduced-motion="true"] .service-screen {
   animation: none;
 }
 [data-reduced-motion="true"] h1::before,
@@ -144,8 +205,8 @@ h1::after {
   padding: 13px 34px;
   text-transform: uppercase;
   transition:
-    box-shadow 0.2s,
-    background 0.2s;
+    box-shadow var(--motion-ui, 0.2s) var(--ease-standard),
+    background var(--motion-ui, 0.2s) var(--ease-standard);
   clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
 }
 
@@ -163,7 +224,7 @@ h1::after {
     rgba(255, 255, 255, 0.25),
     transparent
   );
-  animation: sheen 3.4s ease-in-out infinite;
+  animation: sheen var(--motion-loop-ambient, 3.5s) ease-in-out infinite;
 }
 
 @keyframes sheen {
@@ -355,20 +416,6 @@ h1::after {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .card,
-  .card.evo,
-  .card.evo .ico {
-    animation: none !important;
-  }
-}
-
-[data-reduced-motion="true"] .card,
-[data-reduced-motion="true"] .card.evo,
-[data-reduced-motion="true"] .card.evo .ico {
-  animation: none !important;
-}
-
 .card::after {
   content: "";
   position: absolute;
@@ -398,33 +445,85 @@ h1::after {
   box-shadow: 0 8px 30px rgba(6, 255, 165, 0.18);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .card.evo,
+  .card.evo .ico {
+    animation: none !important;
+  }
+  .card,
+  .card:hover,
+  .card:active {
+    transform: none;
+  }
+}
+
+[data-reduced-motion="true"] .card,
+[data-reduced-motion="true"] .card.evo,
+[data-reduced-motion="true"] .card.evo .ico {
+  animation: none !important;
+}
+[data-reduced-motion="true"] .card,
+[data-reduced-motion="true"] .card:hover,
+[data-reduced-motion="true"] .card:active {
+  transform: none;
+}
+
 .card:focus-visible {
   outline: 2px solid var(--phosphor);
   outline-offset: 2px;
 }
 
 .card.evo {
+  position: relative;
   border-color: var(--gold);
   background: linear-gradient(
     165deg,
     rgba(140, 95, 0, 0.35),
     rgba(4, 1, 10, 0.78)
   );
-  box-shadow: 0 0 26px rgba(255, 207, 63, 0.3);
+  box-shadow: 0 0 22px rgba(255, 207, 63, 0.25);
   animation:
-    card-in var(--motion-normal, 0.35s) var(--ease-enter, cubic-bezier(0.2, 0.9, 0.3, 1.2)) backwards,
-    evo-pulse 2s ease-in-out infinite 0.5s;
+    card-in var(--motion-normal, 0.35s) var(--ease-enter, cubic-bezier(0.2, 0.9, 0.3, 1.2)) backwards;
+}
+
+/* Composite-friendly glow pulse via pseudo-element opacity instead of box-shadow repaint.
+   Uses inner radial glow and inset box-shadow so the pulse is clearly visible inside overflow: hidden bounds. */
+.card.evo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 207, 63, 0.35) 0%,
+    transparent 70%
+  );
+  box-shadow: inset 0 0 18px rgba(255, 207, 63, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  animation: evo-pulse 2s ease-in-out infinite 0.5s;
 }
 
 @keyframes evo-pulse {
   0%,
   100% {
-    box-shadow: 0 0 22px rgba(255, 207, 63, 0.25);
+    opacity: 0;
   }
 
   50% {
-    box-shadow: 0 0 40px rgba(255, 207, 63, 0.5);
+    opacity: 1;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card.evo::before {
+    animation: none;
+  }
+}
+
+[data-reduced-motion="true"] .card.evo::before {
+  animation: none;
 }
 
 .card.evo .nm {

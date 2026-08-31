@@ -330,7 +330,7 @@ export function createGameController(services) {
         errorBoundary: services.assemblyErrors,
       });
       services.assemblyGeometry.rebuildNow();
-      const isReducedMotion =
+      const isReducedMotion = () =>
         document.documentElement.dataset.reducedMotion === "true" ||
         (globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ??
           false);
