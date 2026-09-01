@@ -210,8 +210,8 @@ export function createTutorialOverlay({
       model = null;
       target = null;
       targetId = null;
-      removeEventListener("resize", refresh);
-      removeEventListener("scroll", refresh, true);
+      removeEventListener("resize", scheduleRefresh);
+      removeEventListener("scroll", scheduleRefresh, true);
       observer.disconnect();
       observing = false;
       if (refreshFrame != null) cancelAnimationFrame(refreshFrame);

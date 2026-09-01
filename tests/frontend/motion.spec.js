@@ -189,6 +189,40 @@ describe("Motion System & Reduced Motion Integration", () => {
     container.remove();
   });
 
+  test("tutorial overlay removes scroll and resize listeners on destroy", async () => {
+    const { createTutorialOverlay } = await import("../../src/ui/components/tutorial-overlay.js");
+    const container = root();
+    document.body.appendChild(container);
+
+    const rafSpy = vi.spyOn(window, "requestAnimationFrame");
+
+    const overlay = createTutorialOverlay({
+      root: container,
+      resolveTarget: () => document.body,
+    });
+
+    overlay.render({
+      active: {
+        chapter: { title: "Ch 1" },
+        step: { title: "Step 1", body: "Body 1" },
+        stepIndex: 0,
+        stepCount: 1,
+        paused: false,
+      },
+    });
+
+    overlay.destroy();
+    rafSpy.mockClear();
+
+    window.dispatchEvent(new Event("scroll"));
+    window.dispatchEvent(new Event("resize"));
+
+    expect(rafSpy).not.toHaveBeenCalled();
+
+    rafSpy.mockRestore();
+    container.remove();
+  });
+
   test("animateListStagger filters invalid elements and runs stagger animation", () => {
     const el1 = document.createElement("div");
     const el2 = document.createElement("div");
