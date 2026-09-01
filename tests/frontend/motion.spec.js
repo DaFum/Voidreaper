@@ -188,7 +188,8 @@ describe("Motion System & Reduced Motion Integration", () => {
         // Explicitly complete old-card exit
         resolveExit();
         await controlledExitPromise;
-        await vi.waitFor(() => expect(onReroll).toHaveBeenCalledOnce());
+        await rerollBtn._rerollPromise;
+        expect(onReroll).toHaveBeenCalledOnce();
       } finally {
         Element.prototype.animate = origAnimate;
         delete document.documentElement.dataset.reducedMotion;
@@ -196,7 +197,7 @@ describe("Motion System & Reduced Motion Integration", () => {
       }
     });
 
-    test("rejected exit animation restores disabled and pointerEvents if card is not re-added", async () => {
+    test("rejected exit animation removes invalid card when not re-added", async () => {
       document.documentElement.dataset.reducedMotion = "false";
       const { createHangarScreen } = await import("../../src/ui/screens/hangar-screen.js");
       const container = root();
@@ -254,11 +255,10 @@ describe("Motion System & Reduced Motion Integration", () => {
         // Reject exit animation without re-adding card
         rejectExit(new Error("Animation aborted"));
         await exitPromise.catch(() => {});
-        await vi.waitFor(() => expect(cardB.disabled).toBe(false));
+        await vi.waitFor(() => expect(container.querySelector('[data-item-id="s2"]')).toBeNull());
 
-        // Card should no longer be disabled or block pointer events
-        expect(cardB.disabled).toBe(false);
-        expect(cardB.style.pointerEvents).toBe("");
+        // Card should be removed from DOM
+        expect(container.querySelector('[data-item-id="s2"]')).toBeNull();
       } finally {
         spy.mockRestore();
         Element.prototype.animate = origAnimate;
@@ -312,10 +312,8 @@ describe("Motion System & Reduced Motion Integration", () => {
         // Now complete exit
         resolveExit();
         await controlledExitPromise;
-        // Drain microtask queue completely so the async click handler continuation completes
-        for (let i = 0; i < 5; i++) {
-          await Promise.resolve();
-        }
+        // Explicitly wait for the reroll handler's async promise continuation
+        await rerollBtn._rerollPromise;
 
         // Assert onReroll was never called
         expect(onReroll).not.toHaveBeenCalled();

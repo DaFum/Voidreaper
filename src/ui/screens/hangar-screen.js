@@ -306,8 +306,7 @@ export function createHangarScreen(
                   })
                   .catch(() => {
                     if (card._exitToken === token && card.parentNode) {
-                      card.disabled = card.dataset.state === "locked";
-                      card.style.pointerEvents = "";
+                      card.remove();
                     }
                   });
                 exitPromises.push(removalPromise);
@@ -352,8 +351,7 @@ export function createHangarScreen(
                   })
                   .catch(() => {
                     if (card._exitToken === token && card.parentNode) {
-                      card.disabled = card.dataset.state === "locked";
-                      card.style.pointerEvents = "";
+                      card.remove();
                     }
                   });
               }
