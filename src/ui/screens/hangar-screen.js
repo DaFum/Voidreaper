@@ -289,6 +289,7 @@ export function createHangarScreen(
           const exitPromises = [];
           for (const [id, card] of existingCards.entries()) {
             card.style.pointerEvents = "none";
+            card.disabled = true;
             const token = (card._exitToken = (card._exitToken || 0) + 1);
             if (typeof card.animate === "function") {
               card._exitAnim = animate(
@@ -303,7 +304,11 @@ export function createHangarScreen(
                       card.remove();
                     }
                   })
-                  .catch(() => {});
+                  .catch(() => {
+                    if (card._exitToken === token && card.parentNode) {
+                      card.remove();
+                    }
+                  });
                 exitPromises.push(removalPromise);
               } else {
                 card.remove();
@@ -334,6 +339,7 @@ export function createHangarScreen(
           if (!entryIds.has(id)) {
             if (!isReducedMotion() && typeof card.animate === "function") {
               card.style.pointerEvents = "none";
+              card.disabled = true;
               const token = (card._exitToken = (card._exitToken || 0) + 1);
               card._exitAnim = animate(card, { opacity: [1, 0], transform: ["scale(1)", "scale(0.92)"] }, { duration: 0.12 });
               if (card._exitAnim?.finished) {
@@ -343,7 +349,11 @@ export function createHangarScreen(
                       card.remove();
                     }
                   })
-                  .catch(() => {});
+                  .catch(() => {
+                    if (card._exitToken === token && card.parentNode) {
+                      card.remove();
+                    }
+                  });
               }
             } else {
               card.remove();

@@ -188,8 +188,79 @@ describe("Motion System & Reduced Motion Integration", () => {
         // Explicitly complete old-card exit
         resolveExit();
         await controlledExitPromise;
-        await vi.waitFor(() => expect(onReroll).toHaveBeenCalledOnce());
+        await rerollBtn._rerollPromise;
+        expect(onReroll).toHaveBeenCalledOnce();
       } finally {
+        Element.prototype.animate = origAnimate;
+        delete document.documentElement.dataset.reducedMotion;
+        container.remove();
+      }
+    });
+
+    test("rejected exit animation removes invalid card when not re-added", async () => {
+      document.documentElement.dataset.reducedMotion = "false";
+      const { createHangarScreen } = await import("../../src/ui/screens/hangar-screen.js");
+      const container = root();
+      document.body.appendChild(container);
+
+      let exitPromise;
+      let rejectExit;
+
+      const origAnimate = Element.prototype.animate;
+      Element.prototype.animate = function() {
+        return {
+          finished: Promise.resolve(),
+          cancel: vi.fn(),
+          pause: () => {},
+          play: () => {},
+        };
+      };
+
+      const spy = vi.spyOn(motionModule, "animate").mockImplementation((el) => {
+        if (!Array.isArray(el) && el?.dataset?.itemId === "s2") {
+          exitPromise = new Promise((_, reject) => {
+            rejectExit = reject;
+          });
+          exitPromise.catch(() => {});
+          return { finished: exitPromise, cancel: vi.fn() };
+        }
+        return { finished: Promise.resolve(), cancel: vi.fn() };
+      });
+
+      try {
+        const screen = createHangarScreen(container, {
+          ships: [
+            { id: "s1", slot: "ship", name: "Ship Alpha", unlockSource: "starter" },
+            { id: "s2", slot: "ship", name: "Ship Beta", unlockSource: "starter" },
+          ],
+          weapons: [],
+          modules: [],
+          reactors: [],
+          loadout: { slots: { ship: [null] } },
+          isUnlocked: () => true,
+        });
+
+        screen.show("Schiffe");
+        const cardB = container.querySelector('[data-item-id="s2"]');
+        expect(cardB).not.toBeNull();
+
+        // Search for "Alpha" -> s2 begins exit animation
+        const searchInput = container.querySelector("[data-catalog-search]");
+        searchInput.value = "Alpha";
+        searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+        expect(cardB.disabled).toBe(true);
+        expect(cardB.style.pointerEvents).toBe("none");
+
+        // Reject exit animation without re-adding card
+        rejectExit(new Error("Animation aborted"));
+        await exitPromise.catch(() => {});
+        await vi.waitFor(() => expect(container.querySelector('[data-item-id="s2"]')).toBeNull());
+
+        // Card should be removed from DOM
+        expect(container.querySelector('[data-item-id="s2"]')).toBeNull();
+      } finally {
+        spy.mockRestore();
         Element.prototype.animate = origAnimate;
         delete document.documentElement.dataset.reducedMotion;
         container.remove();
@@ -241,8 +312,8 @@ describe("Motion System & Reduced Motion Integration", () => {
         // Now complete exit
         resolveExit();
         await controlledExitPromise;
-        // Flush microtasks / promise continuations
-        await new Promise((r) => setTimeout(r, 0));
+        // Explicitly wait for the reroll handler's async promise continuation
+        await rerollBtn._rerollPromise;
 
         // Assert onReroll was never called
         expect(onReroll).not.toHaveBeenCalled();
@@ -320,6 +391,7 @@ describe("Motion System & Reduced Motion Integration", () => {
 
         // Card B is currently exiting
         expect(cardBBefore.style.pointerEvents).toBe("none");
+        expect(cardBBefore.disabled).toBe(true);
 
         // Before exit completes, filter changes back to match "Ship" -> s2 is required again
         searchInput.value = "Ship";
@@ -329,6 +401,7 @@ describe("Motion System & Reduced Motion Integration", () => {
 
         // Assertions
         expect(cardBAfter).toBe(cardBBefore); // Strict DOM object identity
+        expect(cardBAfter.disabled).toBe(false);
         expect(cardBAfter.style.pointerEvents).toBe("");
         expect(cardBAfter.style.opacity).toBe("1");
         expect(cardBAfter.style.transform).toBe("none");
@@ -391,6 +464,7 @@ describe("Motion System & Reduced Motion Integration", () => {
         // Card is in exit transition, empty state is not yet present
         expect(container.querySelector("[data-catalog-empty]")).toBeNull();
         expect(card.style.pointerEvents).toBe("none");
+        expect(card.disabled).toBe(true);
 
         // Complete exit
         resolveExit();
