@@ -1,4 +1,6 @@
 import { escapeHtml } from "../escape-html.js";
+import { animateDialogEnter, animateDialogExit, animatePressFeedback } from "../motion/motion.js";
+import { isReducedMotion } from "../motion/reduced-motion.js";
 
 let modalCounter = 0;
 
@@ -24,35 +26,63 @@ function openModal({
     const field = dialog.querySelector('[data-role="input"]');
     if (field) field.value = input;
     let settled = false;
+
     const settle = (value) => {
       if (settled) return;
       settled = true;
-      if (dialog.open && typeof dialog.close === "function") dialog.close();
-      host.remove();
-      if (opener?.isConnected) opener.focus?.();
-      resolve(value);
+
+      const finishClose = () => {
+        if (dialog.open && typeof dialog.close === "function") dialog.close();
+        host.remove();
+        if (opener?.isConnected) opener.focus?.();
+        resolve(value);
+      };
+
+      if (isReducedMotion()) {
+        finishClose();
+      } else {
+        const exitPromise = animateDialogExit(dialog);
+        if (exitPromise && typeof exitPromise.then === "function") {
+          exitPromise.then(finishClose, finishClose);
+        } else {
+          finishClose();
+        }
+      }
     };
-    dialog
-      .querySelector('[data-action="cancel"]')
-      .addEventListener("click", () => settle(null));
-    dialog
-      .querySelector('[data-action="confirm"]')
-      .addEventListener("click", () => settle(field ? field.value : true));
-    // Escape and other out-of-band closes count as cancel.
+
+    const confirmBtn = dialog.querySelector('[data-action="confirm"]');
+    const cancelBtn = dialog.querySelector('[data-action="cancel"]');
+
+    cancelBtn.addEventListener("click", () => {
+      animatePressFeedback(cancelBtn);
+      settle(null);
+    });
+    confirmBtn.addEventListener("click", () => {
+      animatePressFeedback(confirmBtn);
+      settle(field ? field.value : true);
+    });
+
+    // Intercept native cancel (Escape) to run controlled Motion exit transition
+    dialog.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      settle(null);
+    });
     dialog.addEventListener("close", () => settle(null));
-    dialog.addEventListener("cancel", () => settle(null));
     field?.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
         event.preventDefault();
         settle(field.value);
       }
     });
+
     host.append(dialog);
     document.body.append(host);
     if (typeof dialog.showModal === "function") dialog.showModal();
     else dialog.setAttribute("open", "");
-    const focusTarget =
-      field ?? dialog.querySelector('[data-action="confirm"]');
+
+    animateDialogEnter(dialog);
+
+    const focusTarget = field ?? confirmBtn;
     focusTarget.focus?.();
     field?.select?.();
   });

@@ -1,4 +1,7 @@
 import { escapeHtml } from "../escape-html.js";
+import { animate, animateListStagger, animatePressFeedback, MOTION_TIMINGS, MOTION_EASINGS } from "../motion/motion.js";
+import { isReducedMotion } from "../motion/reduced-motion.js";
+
 export function canAffordOffer(resources, offer) {
   if (offer.corrupted) return true;
   const balance = offer.currency === "flux" ? resources.flux : resources.scrap;
@@ -51,9 +54,65 @@ export function renderMerchantScreen(
       );
       button.title = `${offer.name} – nicht genügend ${offer.currency === "flux" ? "Flux" : "Scrap"}`;
     }
-    button.addEventListener("click", () => onBuy(offer));
+    button.addEventListener("click", () => {
+      animatePressFeedback(button);
+      onBuy(offer);
+    });
     catalog.append(button);
   }
-  root.querySelector("[data-reroll]").addEventListener("click", onReroll);
-  root.querySelector("[data-leave]").addEventListener("click", onLeave);
+
+  if (catalog.children.length > 0) {
+    animateListStagger(catalog.children, { staggerDelay: 0.04, yOffset: 8 });
+  }
+
+  const rerollBtn = root.querySelector("[data-reroll]");
+  const leaveBtn = root.querySelector("[data-leave]");
+  let rerolling = false;
+  let rerollCancelled = false;
+  let rerollRequestId = 0;
+
+  rerollBtn.addEventListener("click", async (e) => {
+    if (rerolling) return;
+    rerolling = true;
+    const currentRequestId = ++rerollRequestId;
+
+    rerollBtn.disabled = true;
+    const oldCards = Array.from(catalog.children);
+    for (const card of oldCards) {
+      card.disabled = true;
+      card.style.pointerEvents = "none";
+    }
+
+    animatePressFeedback(rerollBtn);
+
+    const exitPromises = [];
+    if (!isReducedMotion() && oldCards.length > 0 && typeof oldCards[0].animate === "function") {
+      for (const card of oldCards) {
+        const anim = animate(
+          card,
+          { opacity: [1, 0], transform: ["translateY(0px)", "translateY(-8px)"] },
+          { duration: MOTION_TIMINGS.fast, ease: MOTION_EASINGS.exit }
+        );
+        if (anim?.finished) {
+          exitPromises.push(anim.finished.catch(() => {}));
+        }
+      }
+    }
+
+    if (exitPromises.length > 0) {
+      await Promise.allSettled(exitPromises);
+    }
+
+    if (rerollCancelled || currentRequestId !== rerollRequestId) {
+      return;
+    }
+
+    onReroll(e);
+  });
+
+  leaveBtn.addEventListener("click", (e) => {
+    rerollCancelled = true;
+    animatePressFeedback(leaveBtn);
+    onLeave(e);
+  });
 }
