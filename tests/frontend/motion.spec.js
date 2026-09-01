@@ -231,7 +231,7 @@ describe("Motion System & Reduced Motion Integration", () => {
         const rerollBtn = container.querySelector("[data-reroll]");
         const leaveBtn = container.querySelector("[data-leave]");
 
-        const rerollPromise = rerollBtn.click();
+        rerollBtn.click();
         expect(onReroll).not.toHaveBeenCalled();
 
         // Click leave while reroll exit is still pending
@@ -240,7 +240,9 @@ describe("Motion System & Reduced Motion Integration", () => {
 
         // Now complete exit
         resolveExit();
-        await rerollPromise;
+        await controlledExitPromise;
+        // Flush microtasks / promise continuations
+        await new Promise((r) => setTimeout(r, 0));
 
         // Assert onReroll was never called
         expect(onReroll).not.toHaveBeenCalled();
