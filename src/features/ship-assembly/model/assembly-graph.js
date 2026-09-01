@@ -1,16 +1,53 @@
 import { MAX_BRANCH_DEPTH } from "./assembly-constants.js";
-export const getChildren = (state, nodeId) =>
-  Object.values(state.nodesById).filter((node) => node.parentNodeId === nodeId);
+export const getChildren = (state, nodeId) => {
+  // ⚡ Bolt: Avoid Object.values().filter() to eliminate intermediate array allocations
+  const children = [];
+  if (state.nodesById) {
+    for (const key in state.nodesById) {
+      if (Object.hasOwn(state.nodesById, key)) {
+        const node = state.nodesById[key];
+        if (node && node.parentNodeId === nodeId) {
+          children.push(node);
+        }
+      }
+    }
+  }
+  return children;
+};
 export function getBranchNodeIds(state, rootNodeId) {
   const result = [];
   const seen = new Set();
   const queue = [rootNodeId];
+
+  // ⚡ Bolt: Build adjacency list for fast lookup to make this O(V) instead of O(N*V).
+  // Also avoids array mapping and spread operator allocations on each iteration.
+  const childrenByParent = {};
+  if (state.nodesById) {
+    for (const key in state.nodesById) {
+      if (Object.hasOwn(state.nodesById, key)) {
+        const node = state.nodesById[key];
+        if (node && node.parentNodeId) {
+          if (!childrenByParent[node.parentNodeId]) {
+            childrenByParent[node.parentNodeId] = [];
+          }
+          childrenByParent[node.parentNodeId].push(node.nodeId);
+        }
+      }
+    }
+  }
+
   while (queue.length) {
     const nodeId = queue.shift();
     if (!state.nodesById[nodeId] || seen.has(nodeId)) continue;
     seen.add(nodeId);
     result.push(nodeId);
-    queue.push(...getChildren(state, nodeId).map((node) => node.nodeId));
+
+    const children = childrenByParent[nodeId];
+    if (children) {
+      for (let i = 0; i < children.length; i++) {
+        queue.push(children[i]);
+      }
+    }
   }
   return result;
 }
