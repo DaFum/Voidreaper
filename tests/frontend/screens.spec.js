@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { legacyRuntime } from "../../src/legacy/legacy-runtime.js";
 import { renderAbyssTransition } from "../../src/ui/screens/abyss-transition-screen.js";
 import { renderAnomalyScreen } from "../../src/ui/screens/anomaly-screen.js";
 import {
@@ -47,6 +48,70 @@ import {
 const root = () => document.createElement("div");
 if (!Element.prototype.scrollIntoView)
   Element.prototype.scrollIntoView = () => {};
+
+describe("pause and resume integration flow", () => {
+  test("pause displays pause screen and resume restores hud using actual legacy runtime wiring", () => {
+    document.body.innerHTML = `
+      <div id="start" class="hidden"></div>
+      <div id="levelup" class="hidden"></div>
+      <div id="pausescr" class="hidden">
+        <div id="pausestats"></div>
+        <button id="resumebtn">Resume</button>
+      </div>
+      <div id="over" class="hidden"></div>
+      <div id="hud" style="display:none"></div>
+      <button id="pausebtn" style="display:none"></button>
+    `;
+
+    const game = legacyRuntime.game;
+    const ui = legacyRuntime.ui;
+
+    // Reset game state and player mock required for pauseStats
+    game.state = "run";
+    game.player = {
+      dmgMul: 1,
+      fireRate: 1,
+      shots: 1,
+      pierce: 0,
+      crit: 0,
+      orbitals: 0,
+      regen: 0,
+    };
+    game.wave = 1;
+    game.score = 0;
+    game.kills = 0;
+    game.maxCombo = 0;
+    game.shardsRun = 0;
+
+    // Show initial hud state as in game.start()
+    ui.show("hud");
+    expect(game.state).toBe("run");
+    expect(document.getElementById("hud").style.display).toBe("block");
+    expect(document.getElementById("pausescr").classList.contains("hidden")).toBe(true);
+
+    // Attach click listener for resumebtn
+    const resumeBtn = document.getElementById("resumebtn");
+    const resumeSpy = vi.spyOn(game, "resume");
+    resumeBtn.addEventListener("click", () => game.resume());
+
+    // Execute pause using production Game.pause()
+    game.pause();
+
+    expect(game.state).toBe("pause");
+    expect(document.getElementById("pausescr").classList.contains("hidden")).toBe(false);
+    expect(document.getElementById("hud").style.display).toBe("none");
+
+    // Trigger resume via button click
+    resumeBtn.click();
+
+    expect(resumeSpy).toHaveBeenCalledOnce();
+    expect(game.state).toBe("run");
+    expect(document.getElementById("pausescr").classList.contains("hidden")).toBe(true);
+    expect(document.getElementById("hud").style.display).toBe("block");
+
+    resumeSpy.mockRestore();
+  });
+});
 
 describe("abyss transition screen", () => {
   test("renders the profile and wires descend/extract", () => {
