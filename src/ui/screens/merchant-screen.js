@@ -69,23 +69,45 @@ export function renderMerchantScreen(
   const leaveBtn = root.querySelector("[data-leave]");
   let rerolling = false;
   let rerollCancelled = false;
+  let rerollRequestId = 0;
 
-  rerollBtn.addEventListener("click", (e) => {
+  rerollBtn.addEventListener("click", async (e) => {
     if (rerolling) return;
     rerolling = true;
-    animatePressFeedback(rerollBtn);
-    onReroll(e);
+    const currentRequestId = ++rerollRequestId;
 
+    rerollBtn.disabled = true;
     const oldCards = Array.from(catalog.children);
+    for (const card of oldCards) {
+      card.disabled = true;
+      card.style.pointerEvents = "none";
+    }
+
+    animatePressFeedback(rerollBtn);
+
+    const exitPromises = [];
     if (!isReducedMotion() && oldCards.length > 0 && typeof oldCards[0].animate === "function") {
       for (const card of oldCards) {
-        animate(
+        const anim = animate(
           card,
           { opacity: [1, 0], transform: ["translateY(0px)", "translateY(-8px)"] },
           { duration: MOTION_TIMINGS.fast, ease: MOTION_EASINGS.exit }
         );
+        if (anim?.finished) {
+          exitPromises.push(anim.finished.catch(() => {}));
+        }
       }
     }
+
+    if (exitPromises.length > 0) {
+      await Promise.allSettled(exitPromises);
+    }
+
+    if (rerollCancelled || currentRequestId !== rerollRequestId) {
+      return;
+    }
+
+    onReroll(e);
   });
 
   leaveBtn.addEventListener("click", (e) => {

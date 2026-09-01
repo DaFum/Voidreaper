@@ -278,14 +278,58 @@ export function createHangarScreen(
       const emptyState = results.querySelector("[data-catalog-empty]");
       if (emptyState) emptyState.remove();
 
-      if (!entries.length) {
-        results.replaceChildren();
-        results.innerHTML = `<div class="catalog-empty" data-catalog-empty><strong>Keine Treffer</strong><span>Suche oder Filter blenden derzeit alle Einträge aus.</span><button type="button" data-catalog-reset>Filter zurücksetzen</button></div>`;
-      } else {
-        const newCards = [];
-        const survivingCards = [];
-        const entryIds = new Set(entries.map((e) => e.definition.id));
+      const newCards = [];
+      const survivingCards = [];
+      const entryIds = new Set(entries.map((e) => e.definition.id));
 
+      const emptyHtml = `<div class="catalog-empty" data-catalog-empty><strong>Keine Treffer</strong><span>Suche oder Filter blenden derzeit alle Einträge aus.</span><button type="button" data-catalog-reset>Filter zurücksetzen</button></div>`;
+
+      if (!entries.length) {
+        if (existingCards.size > 0 && !isReducedMotion()) {
+          const exitPromises = [];
+          for (const [id, card] of existingCards.entries()) {
+            card.style.pointerEvents = "none";
+            const token = (card._exitToken = (card._exitToken || 0) + 1);
+            if (typeof card.animate === "function") {
+              card._exitAnim = animate(
+                card,
+                { opacity: [1, 0], transform: ["scale(1)", "scale(0.92)"] },
+                { duration: 0.12 }
+              );
+              if (card._exitAnim?.finished) {
+                const removalPromise = card._exitAnim.finished
+                  .then(() => {
+                    if (card._exitToken === token && card.parentNode) {
+                      card.remove();
+                    }
+                  })
+                  .catch(() => {});
+                exitPromises.push(removalPromise);
+              } else {
+                card.remove();
+              }
+            } else {
+              card.remove();
+            }
+          }
+
+          if (exitPromises.length > 0) {
+            queueMicrotask(() => {
+              Promise.allSettled(exitPromises).then(() => {
+                if (results.children.length === 0 && !results.querySelector("[data-catalog-empty]")) {
+                  results.innerHTML = emptyHtml;
+                }
+              });
+            });
+          } else {
+            results.replaceChildren();
+            results.innerHTML = emptyHtml;
+          }
+        } else {
+          results.replaceChildren();
+          results.innerHTML = emptyHtml;
+        }
+      } else {
         for (const [id, card] of existingCards.entries()) {
           if (!entryIds.has(id)) {
             if (!isReducedMotion() && typeof card.animate === "function") {
