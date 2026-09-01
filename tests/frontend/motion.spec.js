@@ -125,25 +125,343 @@ describe("Motion System & Reduced Motion Integration", () => {
     delete document.documentElement.dataset.reducedMotion;
   });
 
-  test("merchant screen prevents duplicate rerolls during transition", async () => {
-    document.documentElement.dataset.reducedMotion = "true";
-    const { renderMerchantScreen } = await import("../../src/ui/screens/merchant-screen.js");
-    const container = root();
-    const onReroll = vi.fn();
+  describe("Merchant Screen Lifecycle Tests", () => {
+    test("duplicate reroll is prevented", async () => {
+      document.documentElement.dataset.reducedMotion = "true";
+      const { renderMerchantScreen } = await import("../../src/ui/screens/merchant-screen.js");
+      const container = root();
+      const onReroll = vi.fn();
 
-    renderMerchantScreen(container, {
-      offers: [{ name: "Offer 1", price: 10, currency: "scrap" }],
-      resources: { scrap: 100, flux: 100 },
-      canReroll: true,
-      onReroll,
+      renderMerchantScreen(container, {
+        offers: [{ name: "Offer 1", price: 10, currency: "scrap" }],
+        resources: { scrap: 100, flux: 100 },
+        canReroll: true,
+        onReroll,
+      });
+
+      const rerollBtn = container.querySelector("[data-reroll]");
+      const promise1 = rerollBtn.click();
+      const promise2 = rerollBtn.click();
+
+      await Promise.all([promise1, promise2]);
+
+      expect(onReroll).toHaveBeenCalledOnce();
+      delete document.documentElement.dataset.reducedMotion;
     });
 
-    const rerollBtn = container.querySelector("[data-reroll]");
-    rerollBtn.click();
-    rerollBtn.click();
+    test("old offers exit finishes before onReroll callback is invoked", async () => {
+      document.documentElement.dataset.reducedMotion = "false";
+      const { renderMerchantScreen } = await import("../../src/ui/screens/merchant-screen.js");
+      const container = root();
+      document.body.appendChild(container);
+      const onReroll = vi.fn();
 
-    expect(onReroll).toHaveBeenCalledOnce();
-    delete document.documentElement.dataset.reducedMotion;
+      let resolveExit;
+      const controlledExitPromise = new Promise((resolve) => {
+        resolveExit = resolve;
+      });
+
+      const origAnimate = Element.prototype.animate;
+      Element.prototype.animate = function() {
+        return {
+          finished: controlledExitPromise,
+          cancel: () => {},
+          pause: () => {},
+          play: () => {},
+        };
+      };
+
+      try {
+        renderMerchantScreen(container, {
+          offers: [{ name: "Offer 1", price: 10, currency: "scrap" }],
+          resources: { scrap: 100, flux: 100 },
+          canReroll: true,
+          onReroll,
+        });
+
+        const rerollBtn = container.querySelector("[data-reroll]");
+        const rerollPromise = rerollBtn.click();
+
+        // Assert onReroll has NOT been called while exit animation is pending
+        expect(onReroll).not.toHaveBeenCalled();
+
+        // Explicitly complete old-card exit
+        resolveExit();
+        await controlledExitPromise;
+        await vi.waitFor(() => expect(onReroll).toHaveBeenCalledOnce());
+      } finally {
+        Element.prototype.animate = origAnimate;
+        delete document.documentElement.dataset.reducedMotion;
+        container.remove();
+      }
+    });
+
+    test("leaving during reroll cancels pending onReroll", async () => {
+      document.documentElement.dataset.reducedMotion = "false";
+      const { renderMerchantScreen } = await import("../../src/ui/screens/merchant-screen.js");
+      const container = root();
+      document.body.appendChild(container);
+      const onReroll = vi.fn();
+      const onLeave = vi.fn();
+
+      let resolveExit;
+      const controlledExitPromise = new Promise((resolve) => {
+        resolveExit = resolve;
+      });
+
+      const origAnimate = Element.prototype.animate;
+      Element.prototype.animate = function() {
+        return {
+          finished: controlledExitPromise,
+          cancel: () => {},
+          pause: () => {},
+          play: () => {},
+        };
+      };
+
+      try {
+        renderMerchantScreen(container, {
+          offers: [{ name: "Offer 1", price: 10, currency: "scrap" }],
+          resources: { scrap: 100, flux: 100 },
+          canReroll: true,
+          onReroll,
+          onLeave,
+        });
+
+        const rerollBtn = container.querySelector("[data-reroll]");
+        const leaveBtn = container.querySelector("[data-leave]");
+
+        const rerollPromise = rerollBtn.click();
+        expect(onReroll).not.toHaveBeenCalled();
+
+        // Click leave while reroll exit is still pending
+        leaveBtn.click();
+        expect(onLeave).toHaveBeenCalledOnce();
+
+        // Now complete exit
+        resolveExit();
+        await rerollPromise;
+
+        // Assert onReroll was never called
+        expect(onReroll).not.toHaveBeenCalled();
+      } finally {
+        Element.prototype.animate = origAnimate;
+        delete document.documentElement.dataset.reducedMotion;
+        container.remove();
+      }
+    });
+
+    test("reduced motion executes reroll without spatial transition wait", async () => {
+      document.documentElement.dataset.reducedMotion = "true";
+      const { renderMerchantScreen } = await import("../../src/ui/screens/merchant-screen.js");
+      const container = root();
+      const onReroll = vi.fn();
+
+      renderMerchantScreen(container, {
+        offers: [{ name: "Offer 1", price: 10, currency: "scrap" }],
+        resources: { scrap: 100, flux: 100 },
+        canReroll: true,
+        onReroll,
+      });
+
+      const rerollBtn = container.querySelector("[data-reroll]");
+      await rerollBtn.click();
+
+      expect(onReroll).toHaveBeenCalledOnce();
+      delete document.documentElement.dataset.reducedMotion;
+    });
+  });
+
+  describe("Hangar Catalog Exit & Race Tests", () => {
+    test("rapid remove -> re-add preserves card DOM identity and cancels exit", async () => {
+      document.documentElement.dataset.reducedMotion = "false";
+      const { createHangarScreen } = await import("../../src/ui/screens/hangar-screen.js");
+      const container = root();
+      document.body.appendChild(container);
+
+      let resolveExit;
+      const controlledExitPromise = new Promise((resolve) => {
+        resolveExit = resolve;
+      });
+
+      const origAnimate = Element.prototype.animate;
+      Element.prototype.animate = function() {
+        return {
+          finished: controlledExitPromise,
+          cancel: vi.fn(),
+          pause: () => {},
+          play: () => {},
+        };
+      };
+
+      try {
+        const screen = createHangarScreen(container, {
+          ships: [
+            { id: "s1", slot: "ship", name: "Ship Alpha", unlockSource: "starter" },
+            { id: "s2", slot: "ship", name: "Ship Beta", unlockSource: "starter" },
+          ],
+          weapons: [],
+          modules: [],
+          reactors: [],
+          loadout: { slots: { ship: [null] } },
+          isUnlocked: () => true,
+        });
+
+        screen.show("Schiffe");
+        const cardBBefore = container.querySelector('[data-item-id="s2"]');
+        expect(cardBBefore).not.toBeNull();
+
+        // Search for "Alpha" -> s2 (Ship Beta) begins exit
+        const searchInput = container.querySelector("[data-catalog-search]");
+        searchInput.value = "Alpha";
+        searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+        // Card B is currently exiting
+        expect(cardBBefore.style.pointerEvents).toBe("none");
+
+        // Before exit completes, filter changes back to match "Ship" -> s2 is required again
+        searchInput.value = "Ship";
+        searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+        const cardBAfter = container.querySelector('[data-item-id="s2"]');
+
+        // Assertions
+        expect(cardBAfter).toBe(cardBBefore); // Strict DOM object identity
+        expect(cardBAfter.style.pointerEvents).toBe("");
+        expect(cardBAfter.style.opacity).toBe("1");
+        expect(cardBAfter.style.transform).toBe("none");
+
+        // Complete stale exit callback
+        resolveExit();
+        await controlledExitPromise.catch(() => {});
+
+        // Stale completion must not delete card B
+        expect(container.querySelector('[data-item-id="s2"]')).toBe(cardBBefore);
+      } finally {
+        Element.prototype.animate = origAnimate;
+        delete document.documentElement.dataset.reducedMotion;
+        container.remove();
+      }
+    });
+
+    test("items -> empty exit lifecycle defers empty state insertion until exit completes", async () => {
+      document.documentElement.dataset.reducedMotion = "false";
+      const { createHangarScreen } = await import("../../src/ui/screens/hangar-screen.js");
+      const container = root();
+      document.body.appendChild(container);
+
+      let resolveExit;
+      const controlledExitPromise = new Promise((resolve) => {
+        resolveExit = resolve;
+      });
+
+      const origAnimate = Element.prototype.animate;
+      Element.prototype.animate = function() {
+        return {
+          finished: controlledExitPromise,
+          cancel: () => {},
+          pause: () => {},
+          play: () => {},
+        };
+      };
+
+      try {
+        const screen = createHangarScreen(container, {
+          ships: [
+            { id: "s1", slot: "ship", name: "Ship Alpha", unlockSource: "starter" },
+          ],
+          weapons: [],
+          modules: [],
+          reactors: [],
+          loadout: { slots: { ship: [null] } },
+          isUnlocked: () => true,
+        });
+
+        screen.show("Schiffe");
+        const card = container.querySelector('[data-item-id="s1"]');
+        expect(card).not.toBeNull();
+
+        // Search for non-matching string -> items -> 0 results
+        const searchInput = container.querySelector("[data-catalog-search]");
+        searchInput.value = "NonExistent";
+        searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+        // Card is in exit transition, empty state is not yet present
+        expect(container.querySelector("[data-catalog-empty]")).toBeNull();
+        expect(card.style.pointerEvents).toBe("none");
+
+        // Complete exit
+        resolveExit();
+        await controlledExitPromise;
+        await vi.waitFor(() => expect(container.querySelector("[data-catalog-empty]")).not.toBeNull());
+
+        // Card is removed
+        expect(container.querySelector('[data-item-id="s1"]')).toBeNull();
+      } finally {
+        Element.prototype.animate = origAnimate;
+        delete document.documentElement.dataset.reducedMotion;
+        container.remove();
+      }
+    });
+
+    test("empty transition superseded by valid filter does not insert obsolete empty state", async () => {
+      document.documentElement.dataset.reducedMotion = "false";
+      const { createHangarScreen } = await import("../../src/ui/screens/hangar-screen.js");
+      const container = root();
+      document.body.appendChild(container);
+
+      let resolveExit;
+      const controlledExitPromise = new Promise((resolve) => {
+        resolveExit = resolve;
+      });
+
+      const origAnimate = Element.prototype.animate;
+      Element.prototype.animate = function() {
+        return {
+          finished: controlledExitPromise,
+          cancel: vi.fn(),
+          pause: () => {},
+          play: () => {},
+        };
+      };
+
+      try {
+        const screen = createHangarScreen(container, {
+          ships: [
+            { id: "s1", slot: "ship", name: "Ship Alpha", unlockSource: "starter" },
+          ],
+          weapons: [],
+          modules: [],
+          reactors: [],
+          loadout: { slots: { ship: [null] } },
+          isUnlocked: () => true,
+        });
+
+        screen.show("Schiffe");
+
+        // Filter -> 0 results
+        const searchInput = container.querySelector("[data-catalog-search]");
+        searchInput.value = "NonExistent";
+        searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+        // Immediately change search back to valid results
+        searchInput.value = "Alpha";
+        searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+        // Resolve stale empty transition exit
+        resolveExit();
+        await controlledExitPromise.catch(() => {});
+        await Promise.resolve();
+
+        // Valid cards remain and no empty state exists
+        expect(container.querySelector('[data-item-id="s1"]')).not.toBeNull();
+        expect(container.querySelector("[data-catalog-empty]")).toBeNull();
+      } finally {
+        Element.prototype.animate = origAnimate;
+        delete document.documentElement.dataset.reducedMotion;
+        container.remove();
+      }
+    });
   });
 
   test("research screen reflects node state transitions", async () => {
@@ -308,49 +626,71 @@ describe("Motion System & Reduced Motion Integration", () => {
   });
 
   test("hangar catalog selection panel cancels stale exit replacing children if new item is selected during exit", async () => {
+    document.documentElement.dataset.reducedMotion = "false";
     const { createHangarScreen } = await import("../../src/ui/screens/hangar-screen.js");
     const container = root();
     document.body.appendChild(container);
 
-    const screen = createHangarScreen(container, {
-      ships: [
-        { id: "s1", slot: "ship", name: "Ship 1", unlockSource: "starter" },
-        { id: "s2", slot: "ship", name: "Ship 2", unlockSource: "starter" },
-      ],
-      weapons: [],
-      modules: [],
-      reactors: [],
-      loadout: { slots: { ship: [null] } },
-      isUnlocked: () => true,
+    let resolveExit;
+    const controlledExitPromise = new Promise((resolve) => {
+      resolveExit = resolve;
     });
 
-    screen.show("Schiffe");
-    const card1 = container.querySelector('[data-item-id="s1"]');
-    const card2 = container.querySelector('[data-item-id="s2"]');
-    const selection = container.querySelector("[data-catalog-selection]");
+    const origAnimate = Element.prototype.animate;
+    Element.prototype.animate = function() {
+      return {
+        finished: controlledExitPromise,
+        cancel: vi.fn(),
+        pause: () => {},
+        play: () => {},
+      };
+    };
 
-    // Select Item 1 -> panel opens
-    card1.click();
-    expect(selection.hidden).toBe(false);
-    expect(selection.textContent).toContain("Ship 1");
+    try {
+      const screen = createHangarScreen(container, {
+        ships: [
+          { id: "s1", slot: "ship", name: "Ship 1", unlockSource: "starter" },
+          { id: "s2", slot: "ship", name: "Ship 2", unlockSource: "starter" },
+        ],
+        weapons: [],
+        modules: [],
+        reactors: [],
+        loadout: { slots: { ship: [null] } },
+        isUnlocked: () => true,
+      });
 
-    // Close selection -> exit animation starts
-    const closeBtn = selection.querySelector("[data-catalog-selection-close]");
-    closeBtn.click();
-    expect(selection.hidden).toBe(true);
+      screen.show("Schiffe");
+      const card1 = container.querySelector('[data-item-id="s1"]');
+      const card2 = container.querySelector('[data-item-id="s2"]');
+      const selection = container.querySelector("[data-catalog-selection]");
 
-    // Immediately select Item 2 while exit animation is pending
-    card2.click();
-    expect(selection.hidden).toBe(false);
-    expect(selection.textContent).toContain("Ship 2");
+      // Select Item 1 -> panel opens
+      card1.click();
+      expect(selection.hidden).toBe(false);
+      expect(selection.textContent).toContain("Ship 1");
 
-    // Wait microtasks
-    await new Promise((r) => setTimeout(r, 50));
+      // Close selection -> exit animation starts
+      const closeBtn = selection.querySelector("[data-catalog-selection-close]");
+      closeBtn.click();
+      expect(selection.hidden).toBe(true);
 
-    // Panel must still show Ship 2 content and not be cleared
-    expect(selection.hidden).toBe(false);
-    expect(selection.textContent).toContain("Ship 2");
+      // Immediately select Item 2 while exit animation for Item 1 is pending
+      card2.click();
+      expect(selection.hidden).toBe(false);
+      expect(selection.textContent).toContain("Ship 2");
 
-    container.remove();
+      // Complete stale A exit
+      resolveExit();
+      await controlledExitPromise.catch(() => {});
+      await Promise.resolve();
+
+      // Panel must still show Ship 2 content, not hidden and not cleared
+      expect(selection.hidden).toBe(false);
+      expect(selection.textContent).toContain("Ship 2");
+    } finally {
+      Element.prototype.animate = origAnimate;
+      delete document.documentElement.dataset.reducedMotion;
+      container.remove();
+    }
   });
 });
