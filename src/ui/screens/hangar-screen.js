@@ -304,7 +304,12 @@ export function createHangarScreen(
                       card.remove();
                     }
                   })
-                  .catch(() => {});
+                  .catch(() => {
+                    if (card._exitToken === token && card.parentNode) {
+                      card.disabled = card.dataset.state === "locked";
+                      card.style.pointerEvents = "";
+                    }
+                  });
                 exitPromises.push(removalPromise);
               } else {
                 card.remove();
@@ -345,7 +350,12 @@ export function createHangarScreen(
                       card.remove();
                     }
                   })
-                  .catch(() => {});
+                  .catch(() => {
+                    if (card._exitToken === token && card.parentNode) {
+                      card.disabled = card.dataset.state === "locked";
+                      card.style.pointerEvents = "";
+                    }
+                  });
               }
             } else {
               card.remove();
