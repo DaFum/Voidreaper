@@ -98,6 +98,47 @@ describe("Motion System & Reduced Motion Integration", () => {
     expect(res).toBeDefined();
   });
 
+  test("animateSelectionIndicator uses transform translateX/scaleX instead of left/width layout properties", () => {
+    const indicator = document.createElement("span");
+
+    const targetBounds1 = { left: 100, width: 80 };
+    const targetBounds2 = { left: 150, width: 100 };
+    const containerBounds = { left: 20 };
+
+    // Initial positioning snaps transform without animating
+    const initialAnim = motionModule.animateSelectionIndicator(indicator, targetBounds1, containerBounds, 0);
+    expect(initialAnim).toBeNull();
+    expect(indicator.style.left).toBe("0px");
+    expect(indicator.style.width).toBe("1px");
+    expect(indicator.style.transformOrigin).toBe("top left");
+    expect(indicator.style.transform).toBe("translateX(80px) scaleX(80)");
+
+    // Subsequent position update triggers transform animation
+    const secondAnim = motionModule.animateSelectionIndicator(indicator, targetBounds2, containerBounds, 0);
+    expect(secondAnim).not.toBeNull();
+  });
+
+  test("animateFocusSpotlight uses transform translate/scale instead of top/left/width/height layout properties", () => {
+    const spotlight = document.createElement("div");
+
+    const targetRect1 = { left: 50, top: 40, width: 200, height: 100 };
+    const targetRect2 = { left: 100, top: 80, width: 300, height: 150 };
+
+    // Initial positioning snaps transform without animating
+    const initialAnim = motionModule.animateFocusSpotlight(spotlight, targetRect1);
+    expect(initialAnim).toBeNull();
+    expect(spotlight.style.left).toBe("0px");
+    expect(spotlight.style.top).toBe("0px");
+    expect(spotlight.style.width).toBe("1px");
+    expect(spotlight.style.height).toBe("1px");
+    expect(spotlight.style.transformOrigin).toBe("top left");
+    expect(spotlight.style.transform).toBe("translate(50px, 40px) scale(200, 100)");
+
+    // Subsequent position update triggers transform animation
+    const secondAnim = motionModule.animateFocusSpotlight(spotlight, targetRect2);
+    expect(secondAnim).not.toBeNull();
+  });
+
   test("animateListStagger filters invalid elements and runs stagger animation", () => {
     const el1 = document.createElement("div");
     const el2 = document.createElement("div");
