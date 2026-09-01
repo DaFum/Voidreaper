@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { legacyRuntime } from "../../src/legacy/legacy-runtime.js";
 import { renderAbyssTransition } from "../../src/ui/screens/abyss-transition-screen.js";
 import { renderAnomalyScreen } from "../../src/ui/screens/anomaly-screen.js";
 import {
@@ -49,66 +50,66 @@ if (!Element.prototype.scrollIntoView)
   Element.prototype.scrollIntoView = () => {};
 
 describe("pause and resume integration flow", () => {
-  test("pause displays pause screen and resume restores hud", () => {
+  test("pause displays pause screen and resume restores hud using actual legacy runtime wiring", () => {
     document.body.innerHTML = `
-      <div id="pausescr" style="display:none">
+      <div id="start" class="hidden"></div>
+      <div id="levelup" class="hidden"></div>
+      <div id="pausescr" class="hidden">
+        <div id="pausestats"></div>
         <button id="resumebtn">Resume</button>
       </div>
+      <div id="over" class="hidden"></div>
       <div id="hud" style="display:none"></div>
+      <button id="pausebtn" style="display:none"></button>
     `;
 
-    const mockInspector = { update: vi.fn() };
-    const mockController = {
-      inspectorModel: vi.fn((g) => ({
-        tags: new Map(),
-        synergies: { active: [], near: [], blocked: [] },
-      })),
-    };
+    const game = legacyRuntime.game;
+    const ui = legacyRuntime.ui;
 
-    const UI = {
-      show(id) {
-        document.getElementById("pausescr").style.display =
-          id === "pausescr" ? "block" : "none";
-        document.getElementById("hud").style.display =
-          id === "hud" ? "block" : "none";
-      },
-      pauseStats(g) {
-        mockInspector.update(mockController.inspectorModel(g));
-      },
+    // Reset game state and player mock required for pauseStats
+    game.state = "run";
+    game.player = {
+      dmgMul: 1,
+      fireRate: 1,
+      shots: 1,
+      pierce: 0,
+      crit: 0,
+      orbitals: 0,
+      regen: 0,
     };
+    game.wave = 1;
+    game.score = 0;
+    game.kills = 0;
+    game.maxCombo = 0;
+    game.shardsRun = 0;
 
-    const game = {
-      state: "run",
-      pause() {
-        if (this.state !== "run") return;
-        this.state = "pause";
-        UI.pauseStats(this);
-        UI.show("pausescr");
-      },
-      resume() {
-        if (this.state !== "pause") return;
-        this.state = "run";
-        UI.show("hud");
-      },
-    };
-
-    // Initial state check
+    // Show initial hud state as in game.start()
+    ui.show("hud");
     expect(game.state).toBe("run");
+    expect(document.getElementById("hud").style.display).toBe("block");
+    expect(document.getElementById("pausescr").classList.contains("hidden")).toBe(true);
 
-    // Click pause
+    // Attach click listener for resumebtn
+    const resumeBtn = document.getElementById("resumebtn");
+    const resumeSpy = vi.spyOn(game, "resume");
+    resumeBtn.addEventListener("click", () => game.resume());
+
+    // Execute pause using production Game.pause()
     game.pause();
+
     expect(game.state).toBe("pause");
-    expect(mockController.inspectorModel).toHaveBeenCalledWith(game);
-    expect(document.getElementById("pausescr").style.display).toBe("block");
+    expect(document.getElementById("pausescr").classList.contains("hidden")).toBe(false);
     expect(document.getElementById("hud").style.display).toBe("none");
 
-    // Click resume via resume button event simulation
-    document.getElementById("resumebtn").onclick = () => game.resume();
-    document.getElementById("resumebtn").click();
+    // Trigger resume via button click
+    resumeBtn.click();
 
+    expect(resumeSpy).toHaveBeenCalledOnce();
     expect(game.state).toBe("run");
-    expect(document.getElementById("pausescr").style.display).toBe("none");
+    expect(document.getElementById("pausescr").classList.contains("hidden")).toBe(true);
     expect(document.getElementById("hud").style.display).toBe("block");
+
+    resumeSpy.mockRestore();
   });
 });
 
