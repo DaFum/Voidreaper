@@ -242,7 +242,7 @@ describe("Motion System & Reduced Motion Integration", () => {
         resolveExit();
         await controlledExitPromise;
         // Flush microtasks / promise continuations
-        await new Promise((r) => setTimeout(r, 0));
+        await Promise.resolve();
 
         // Assert onReroll was never called
         expect(onReroll).not.toHaveBeenCalled();
@@ -320,6 +320,7 @@ describe("Motion System & Reduced Motion Integration", () => {
 
         // Card B is currently exiting
         expect(cardBBefore.style.pointerEvents).toBe("none");
+        expect(cardBBefore.disabled).toBe(true);
 
         // Before exit completes, filter changes back to match "Ship" -> s2 is required again
         searchInput.value = "Ship";
@@ -329,6 +330,7 @@ describe("Motion System & Reduced Motion Integration", () => {
 
         // Assertions
         expect(cardBAfter).toBe(cardBBefore); // Strict DOM object identity
+        expect(cardBAfter.disabled).toBe(false);
         expect(cardBAfter.style.pointerEvents).toBe("");
         expect(cardBAfter.style.opacity).toBe("1");
         expect(cardBAfter.style.transform).toBe("none");
@@ -391,6 +393,7 @@ describe("Motion System & Reduced Motion Integration", () => {
         // Card is in exit transition, empty state is not yet present
         expect(container.querySelector("[data-catalog-empty]")).toBeNull();
         expect(card.style.pointerEvents).toBe("none");
+        expect(card.disabled).toBe(true);
 
         // Complete exit
         resolveExit();
