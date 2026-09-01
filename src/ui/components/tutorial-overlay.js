@@ -157,6 +157,14 @@ export function createTutorialOverlay({
     card.dataset.side = pos.side;
   };
 
+  const scheduleRefresh = () => {
+    if (refreshFrame != null) return;
+    refreshFrame = requestAnimationFrame(() => {
+      refreshFrame = null;
+      refresh();
+    });
+  };
+
   const render = (next) => {
     model = next;
     lastTargetRect = null;
@@ -181,15 +189,9 @@ export function createTutorialOverlay({
     requestAnimationFrame(refresh);
   };
 
-  addEventListener("resize", refresh);
-  addEventListener("scroll", refresh, true);
-  const observer = new MutationObserver(() => {
-    if (refreshFrame != null) return;
-    refreshFrame = requestAnimationFrame(() => {
-      refreshFrame = null;
-      refresh();
-    });
-  });
+  addEventListener("resize", scheduleRefresh);
+  addEventListener("scroll", scheduleRefresh, true);
+  const observer = new MutationObserver(scheduleRefresh);
   const setObserving = (active) => {
     if (active === observing) return;
     observing = active;

@@ -145,6 +145,50 @@ describe("Motion System & Reduced Motion Integration", () => {
     expect(spotlight.style.height).toBe("150px");
   });
 
+  test("tutorial stylesheet disables CSS transition on .tutorial-focus to prevent dual layout interpolation", async () => {
+    const { readFileSync } = await import("node:fs");
+    const cssContent = readFileSync("src/styles/tutorial.css", "utf-8");
+    const focusBlock = cssContent.match(/\.tutorial-focus\s*\{([^}]+)\}/);
+    expect(focusBlock).not.toBeNull();
+    expect(focusBlock[1]).toContain("transition: none;");
+  });
+
+  test("tutorial overlay schedules refresh via requestAnimationFrame on scroll and resize", async () => {
+    const { createTutorialOverlay } = await import("../../src/ui/components/tutorial-overlay.js");
+    const container = root();
+    document.body.appendChild(container);
+
+    const rafSpy = vi.spyOn(window, "requestAnimationFrame");
+
+    const overlay = createTutorialOverlay({
+      root: container,
+      resolveTarget: () => document.body,
+    });
+
+    overlay.render({
+      active: {
+        chapter: { title: "Ch 1" },
+        step: { title: "Step 1", body: "Body 1" },
+        stepIndex: 0,
+        stepCount: 1,
+        paused: false,
+      },
+    });
+
+    rafSpy.mockClear();
+
+    window.dispatchEvent(new Event("scroll"));
+    window.dispatchEvent(new Event("scroll"));
+    window.dispatchEvent(new Event("resize"));
+
+    // Coalesced to 1 requestAnimationFrame call
+    expect(rafSpy).toHaveBeenCalledTimes(1);
+
+    rafSpy.mockRestore();
+    overlay.destroy();
+    container.remove();
+  });
+
   test("animateListStagger filters invalid elements and runs stagger animation", () => {
     const el1 = document.createElement("div");
     const el2 = document.createElement("div");
