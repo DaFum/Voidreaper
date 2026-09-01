@@ -98,6 +98,131 @@ describe("Motion System & Reduced Motion Integration", () => {
     expect(res).toBeDefined();
   });
 
+  test("animateSelectionIndicator uses FLIP transform invert instead of left/width layout animations", () => {
+    const indicator = document.createElement("span");
+
+    const targetBounds1 = { left: 100, width: 80 };
+    const targetBounds2 = { left: 150, width: 100 };
+    const containerBounds = { left: 20 };
+
+    // Initial positioning sets target layout dimensions directly without scale distortion
+    const initialAnim = motionModule.animateSelectionIndicator(indicator, targetBounds1, containerBounds, 0);
+    expect(initialAnim).toBeNull();
+    expect(indicator.style.left).toBe("80px");
+    expect(indicator.style.width).toBe("80px");
+    expect(indicator.style.transformOrigin).toBe("top left");
+    expect(indicator.style.transform).toBe("none");
+
+    // Subsequent position update triggers FLIP transform invert animation
+    const secondAnim = motionModule.animateSelectionIndicator(indicator, targetBounds2, containerBounds, 0);
+    expect(secondAnim).not.toBeNull();
+    expect(indicator.style.left).toBe("130px");
+    expect(indicator.style.width).toBe("100px");
+  });
+
+  test("animateFocusSpotlight uses FLIP transform invert instead of top/left/width/height layout animations", () => {
+    const spotlight = document.createElement("div");
+
+    const targetRect1 = { left: 50, top: 40, width: 200, height: 100 };
+    const targetRect2 = { left: 100, top: 80, width: 300, height: 150 };
+
+    // Initial positioning sets target layout dimensions directly without border scale distortion
+    const initialAnim = motionModule.animateFocusSpotlight(spotlight, targetRect1);
+    expect(initialAnim).toBeNull();
+    expect(spotlight.style.left).toBe("50px");
+    expect(spotlight.style.top).toBe("40px");
+    expect(spotlight.style.width).toBe("200px");
+    expect(spotlight.style.height).toBe("100px");
+    expect(spotlight.style.transformOrigin).toBe("top left");
+    expect(spotlight.style.transform).toBe("none");
+
+    // Subsequent position update triggers FLIP transform invert animation
+    const secondAnim = motionModule.animateFocusSpotlight(spotlight, targetRect2);
+    expect(secondAnim).not.toBeNull();
+    expect(spotlight.style.left).toBe("100px");
+    expect(spotlight.style.top).toBe("80px");
+    expect(spotlight.style.width).toBe("300px");
+    expect(spotlight.style.height).toBe("150px");
+  });
+
+  test("tutorial stylesheet disables CSS transition on .tutorial-focus to prevent dual layout interpolation", async () => {
+    const { readFileSync } = await import("node:fs");
+    const cssContent = readFileSync("src/styles/tutorial.css", "utf-8");
+    const focusBlock = cssContent.match(/\.tutorial-focus\s*\{([^}]+)\}/);
+    expect(focusBlock).not.toBeNull();
+    expect(focusBlock[1]).toContain("transition: none;");
+  });
+
+  test("tutorial overlay schedules refresh via requestAnimationFrame on scroll and resize", async () => {
+    const { createTutorialOverlay } = await import("../../src/ui/components/tutorial-overlay.js");
+    const container = root();
+    document.body.appendChild(container);
+
+    const rafSpy = vi.spyOn(window, "requestAnimationFrame");
+
+    const overlay = createTutorialOverlay({
+      root: container,
+      resolveTarget: () => document.body,
+    });
+
+    overlay.render({
+      active: {
+        chapter: { title: "Ch 1" },
+        step: { title: "Step 1", body: "Body 1" },
+        stepIndex: 0,
+        stepCount: 1,
+        paused: false,
+      },
+    });
+
+    rafSpy.mockClear();
+
+    window.dispatchEvent(new Event("scroll"));
+    window.dispatchEvent(new Event("scroll"));
+    window.dispatchEvent(new Event("resize"));
+
+    // Coalesced to 1 requestAnimationFrame call
+    expect(rafSpy).toHaveBeenCalledTimes(1);
+
+    rafSpy.mockRestore();
+    overlay.destroy();
+    container.remove();
+  });
+
+  test("tutorial overlay removes scroll and resize listeners on destroy", async () => {
+    const { createTutorialOverlay } = await import("../../src/ui/components/tutorial-overlay.js");
+    const container = root();
+    document.body.appendChild(container);
+
+    const rafSpy = vi.spyOn(window, "requestAnimationFrame");
+
+    const overlay = createTutorialOverlay({
+      root: container,
+      resolveTarget: () => document.body,
+    });
+
+    overlay.render({
+      active: {
+        chapter: { title: "Ch 1" },
+        step: { title: "Step 1", body: "Body 1" },
+        stepIndex: 0,
+        stepCount: 1,
+        paused: false,
+      },
+    });
+
+    overlay.destroy();
+    rafSpy.mockClear();
+
+    window.dispatchEvent(new Event("scroll"));
+    window.dispatchEvent(new Event("resize"));
+
+    expect(rafSpy).not.toHaveBeenCalled();
+
+    rafSpy.mockRestore();
+    container.remove();
+  });
+
   test("animateListStagger filters invalid elements and runs stagger animation", () => {
     const el1 = document.createElement("div");
     const el2 = document.createElement("div");

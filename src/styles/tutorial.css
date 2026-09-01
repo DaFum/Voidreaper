@@ -26,7 +26,7 @@
     calc(100% - 8px) 100%,
     0 100%
   );
-  transition: var(--motion-fast, 0.18s) var(--ease-ui);
+  transition: none;
   pointer-events: none;
 }
 .tutorial-card {

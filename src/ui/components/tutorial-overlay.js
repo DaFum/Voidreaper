@@ -86,6 +86,7 @@ export function createTutorialOverlay({
   let refreshFrame = null;
   let observing = false;
   let activeSpotlightAnim = null;
+  let lastTargetRect = null;
 
   const refresh = () => {
     if (!model?.active) return;
@@ -99,7 +100,12 @@ export function createTutorialOverlay({
     if (status && status.textContent !== statusText)
       status.textContent = statusText;
     ring.hidden = !target;
-    if (!target) return;
+    if (!target) {
+      lastTargetRect = null;
+      return;
+    }
+
+    // 1. Measure phase
     const rect = target.getBoundingClientRect();
     const targetRect = {
       left: rect.left - 6,
@@ -108,30 +114,40 @@ export function createTutorialOverlay({
       height: rect.height + 12,
     };
 
-    if (activeSpotlightAnim?.cancel) {
-      try { activeSpotlightAnim.cancel(); } catch { /* ignore cancel errors */ }
-      activeSpotlightAnim = null;
-    }
-
-    if (isReducedMotion()) {
-      Object.assign(ring.style, {
-        left: `${targetRect.left}px`,
-        top: `${targetRect.top}px`,
-        width: `${targetRect.width}px`,
-        height: `${targetRect.height}px`,
-      });
-    } else {
-      activeSpotlightAnim = animateFocusSpotlight(ring, targetRect);
-    }
-
     const size = {
       width: Math.min(360, card.offsetWidth || 360),
       height: card.offsetHeight || 240,
     };
+
+    // 2. Calculate phase
     const pos = placeTutorialCard(rect, size, {
       width: innerWidth,
       height: innerHeight,
     });
+
+    const isSameRect =
+      lastTargetRect &&
+      Math.abs(lastTargetRect.left - targetRect.left) < 0.5 &&
+      Math.abs(lastTargetRect.top - targetRect.top) < 0.5 &&
+      Math.abs(lastTargetRect.width - targetRect.width) < 0.5 &&
+      Math.abs(lastTargetRect.height - targetRect.height) < 0.5;
+
+    // 3. Mutate phase
+    if (!isSameRect) {
+      lastTargetRect = targetRect;
+
+      if (activeSpotlightAnim?.cancel) {
+        try { activeSpotlightAnim.cancel(); } catch { /* ignore cancel errors */ }
+        activeSpotlightAnim = null;
+      }
+
+      if (isReducedMotion()) {
+        animateFocusSpotlight(ring, targetRect);
+      } else {
+        activeSpotlightAnim = animateFocusSpotlight(ring, targetRect);
+      }
+    }
+
     Object.assign(card.style, {
       left: `${pos.left}px`,
       top: `${pos.top}px`,
@@ -141,8 +157,17 @@ export function createTutorialOverlay({
     card.dataset.side = pos.side;
   };
 
+  const scheduleRefresh = () => {
+    if (refreshFrame != null) return;
+    refreshFrame = requestAnimationFrame(() => {
+      refreshFrame = null;
+      refresh();
+    });
+  };
+
   const render = (next) => {
     model = next;
+    lastTargetRect = null;
     setObserving(Boolean(next?.active));
     root.hidden = !next?.active;
     if (root.hidden) {
@@ -164,15 +189,9 @@ export function createTutorialOverlay({
     requestAnimationFrame(refresh);
   };
 
-  addEventListener("resize", refresh);
-  addEventListener("scroll", refresh, true);
-  const observer = new MutationObserver(() => {
-    if (refreshFrame != null) return;
-    refreshFrame = requestAnimationFrame(() => {
-      refreshFrame = null;
-      refresh();
-    });
-  });
+  addEventListener("resize", scheduleRefresh);
+  addEventListener("scroll", scheduleRefresh, true);
+  const observer = new MutationObserver(scheduleRefresh);
   const setObserving = (active) => {
     if (active === observing) return;
     observing = active;
@@ -191,8 +210,8 @@ export function createTutorialOverlay({
       model = null;
       target = null;
       targetId = null;
-      removeEventListener("resize", refresh);
-      removeEventListener("scroll", refresh, true);
+      removeEventListener("resize", scheduleRefresh);
+      removeEventListener("scroll", scheduleRefresh, true);
       observer.disconnect();
       observing = false;
       if (refreshFrame != null) cancelAnimationFrame(refreshFrame);
