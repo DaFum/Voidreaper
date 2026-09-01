@@ -156,8 +156,8 @@ export function animateListStagger(elements, options = {}) {
 }
 
 /**
- * Smooth transition for an active selection indicator using CSS transform (translateX, scaleX).
- * Eliminates layout and repaint passes each frame caused by left/width animations.
+ * Smooth FLIP transition for an active selection indicator using CSS transform invert (translateX, scaleX).
+ * Sets target layout bounds directly and animates relative FLIP transform scale back to 1.
  */
 export function animateSelectionIndicator(indicator, targetBounds, containerBounds, scrollLeft = 0) {
   if (!indicator || !targetBounds || !containerBounds) return null;
@@ -165,25 +165,32 @@ export function animateSelectionIndicator(indicator, targetBounds, containerBoun
   const targetLeft = targetBounds.left - containerBounds.left + scrollLeft;
   const targetWidth = targetBounds.width;
 
-  const isInitial = indicator._indicatorLeft === undefined;
-  const prevLeft = isInitial ? targetLeft : indicator._indicatorLeft;
-  const prevWidth = isInitial ? targetWidth : (indicator._indicatorWidth ?? targetWidth);
+  const prevLeft = indicator._indicatorLeft;
+  const prevWidth = indicator._indicatorWidth;
 
-  indicator.style.left = "0px";
-  indicator.style.width = "1px";
+  indicator.style.left = `${targetLeft}px`;
+  indicator.style.width = `${targetWidth}px`;
   indicator.style.transformOrigin = "top left";
 
   indicator._indicatorLeft = targetLeft;
   indicator._indicatorWidth = targetWidth;
 
-  const toTransform = `translateX(${targetLeft}px) scaleX(${targetWidth})`;
-
-  if (isReducedMotion() || isInitial) {
-    indicator.style.transform = toTransform;
+  if (
+    isReducedMotion() ||
+    prevLeft === undefined ||
+    prevWidth === undefined ||
+    !targetWidth ||
+    !prevWidth
+  ) {
+    indicator.style.transform = "none";
     return null;
   }
 
-  const fromTransform = `translateX(${prevLeft}px) scaleX(${prevWidth})`;
+  const dx = prevLeft - targetLeft;
+  const sx = prevWidth / targetWidth;
+
+  const fromTransform = `translateX(${dx}px) scaleX(${sx})`;
+  const toTransform = "translateX(0px) scaleX(1)";
 
   return animate(
     indicator,
@@ -216,37 +223,50 @@ export function animatePressFeedback(element) {
 }
 
 /**
- * Smooth spotlight / tutorial focus rectangle interpolation using CSS transforms (translate, scale).
- * Eliminates layout and repaint passes each frame caused by top/left/width/height animations.
+ * Smooth FLIP transition for tutorial focus spotlight using CSS transform invert (translate, scale).
+ * Sets target layout dimensions directly to prevent border/shadow scale distortion at rest.
  */
 export function animateFocusSpotlight(spotlightElement, targetRect) {
   if (!spotlightElement || !targetRect) return null;
 
-  const isInitial = spotlightElement._spotlightLeft === undefined;
-  const prevLeft = isInitial ? targetRect.left : spotlightElement._spotlightLeft;
-  const prevTop = isInitial ? targetRect.top : spotlightElement._spotlightTop;
-  const prevWidth = isInitial ? targetRect.width : (spotlightElement._spotlightWidth ?? targetRect.width);
-  const prevHeight = isInitial ? targetRect.height : (spotlightElement._spotlightHeight ?? targetRect.height);
+  const prevLeft = spotlightElement._spotlightLeft;
+  const prevTop = spotlightElement._spotlightTop;
+  const prevWidth = spotlightElement._spotlightWidth;
+  const prevHeight = spotlightElement._spotlightHeight;
 
-  spotlightElement.style.left = "0px";
-  spotlightElement.style.top = "0px";
-  spotlightElement.style.width = "1px";
-  spotlightElement.style.height = "1px";
-  spotlightElement.style.transformOrigin = "top left";
+  Object.assign(spotlightElement.style, {
+    left: `${targetRect.left}px`,
+    top: `${targetRect.top}px`,
+    width: `${targetRect.width}px`,
+    height: `${targetRect.height}px`,
+    transformOrigin: "top left",
+  });
 
   spotlightElement._spotlightLeft = targetRect.left;
   spotlightElement._spotlightTop = targetRect.top;
   spotlightElement._spotlightWidth = targetRect.width;
   spotlightElement._spotlightHeight = targetRect.height;
 
-  const toTransform = `translate(${targetRect.left}px, ${targetRect.top}px) scale(${targetRect.width}, ${targetRect.height})`;
-
-  if (isReducedMotion() || isInitial) {
-    spotlightElement.style.transform = toTransform;
+  if (
+    isReducedMotion() ||
+    prevLeft === undefined ||
+    prevTop === undefined ||
+    !prevWidth ||
+    !prevHeight ||
+    !targetRect.width ||
+    !targetRect.height
+  ) {
+    spotlightElement.style.transform = "none";
     return null;
   }
 
-  const fromTransform = `translate(${prevLeft}px, ${prevTop}px) scale(${prevWidth}, ${prevHeight})`;
+  const dx = prevLeft - targetRect.left;
+  const dy = prevTop - targetRect.top;
+  const sx = prevWidth / targetRect.width;
+  const sy = prevHeight / targetRect.height;
+
+  const fromTransform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
+  const toTransform = "translate(0px, 0px) scale(1, 1)";
 
   return animate(
     spotlightElement,

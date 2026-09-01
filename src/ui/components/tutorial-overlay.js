@@ -159,6 +159,7 @@ export function createTutorialOverlay({
 
   const render = (next) => {
     model = next;
+    lastTargetRect = null;
     setObserving(Boolean(next?.active));
     root.hidden = !next?.active;
     if (root.hidden) {
