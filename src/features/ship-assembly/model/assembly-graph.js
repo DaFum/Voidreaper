@@ -21,12 +21,12 @@ export function getBranchNodeIds(state, rootNodeId) {
 
   // ⚡ Bolt: Build adjacency list for fast lookup to make this O(V) instead of O(N*V).
   // Also avoids array mapping and spread operator allocations on each iteration.
-  const childrenByParent = {};
+  const childrenByParent = Object.create(null);
   if (state.nodesById) {
     for (const key in state.nodesById) {
       if (Object.hasOwn(state.nodesById, key)) {
         const node = state.nodesById[key];
-        if (node && node.parentNodeId) {
+        if (node && node.parentNodeId != null) {
           if (!childrenByParent[node.parentNodeId]) {
             childrenByParent[node.parentNodeId] = [];
           }

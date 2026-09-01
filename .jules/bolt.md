@@ -83,3 +83,7 @@
 ## 2024-05-18 - Optimize getBranchNodeIds traversal with Adjacency List
 **Learning:** In recursive tree traversals (like ship assembly graphs), performing an O(N) lookup for children inside a while loop for every node in the branch results in O(N * V) complexity (where N is total nodes, V is branch size) and heavy array allocation overhead.
 **Action:** When traversing tree structures, pre-compute an adjacency list (e.g., `childrenByParent` map) in a single O(N) pass to reduce traversal complexity to O(N + V) and eliminate intermediate array allocations from `.filter()` or spread operators.
+
+## 2024-05-18 - Safe Object Maps for Iteration
+**Learning:** When using objects as lookup maps/dictionaries (like adjacency lists), `__proto__`, `constructor`, etc can cause runtime collisions if not handled, and `Object.hasOwn` checks are necessary when building arrays unless `Object.create(null)` is used. Furthermore, omitting nodes with falsy parentIDs (e.g. `0` or `""`) is incorrect if those IDs are technically valid in the data model.
+**Action:** Always use `Object.create(null)` for ad-hoc lookup maps instead of `{}` to avoid prototype inheritance issues, and check against `null` or `undefined` instead of falsy values when evaluating IDs.
