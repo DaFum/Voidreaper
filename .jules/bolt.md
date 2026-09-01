@@ -79,3 +79,11 @@
 ## 2024-03-24 - Intermediate array allocations via chained mapping
 **Learning:** In V8, chaining `.values()`, `.flat()`, `.filter()`, and `.map()` on an object with many small properties (like loadout slots) forces the engine to allocate multiple intermediate array closures per call. In hot paths (like `loadout-service` queries called during inspect or render cycles), this causes measureable GC pressure and stuttering.
 **Action:** Replace `.values().flat().filter().map()` chains with single-pass imperative `for...in` or `for...of` loops, pushing directly to a single pre-allocated (or dynamically built) array.
+
+## 2024-05-18 - Optimize getBranchNodeIds traversal with Adjacency List
+**Learning:** In recursive tree traversals (like ship assembly graphs), performing an O(N) lookup for children inside a while loop for every node in the branch results in O(N * V) complexity (where N is total nodes, V is branch size) and heavy array allocation overhead.
+**Action:** When traversing tree structures, pre-compute an adjacency list (e.g., `childrenByParent` map) in a single O(N) pass to reduce traversal complexity to O(N + V) and eliminate intermediate array allocations from `.filter()` or spread operators.
+
+## 2024-05-18 - Safe Object Maps for Iteration
+**Learning:** When using objects as lookup maps/dictionaries (like adjacency lists), `__proto__`, `constructor`, etc can cause runtime collisions if not handled, and `Object.hasOwn` checks are necessary when building arrays unless `Object.create(null)` is used. Furthermore, omitting nodes with falsy parentIDs (e.g. `0` or `""`) is incorrect if those IDs are technically valid in the data model.
+**Action:** Always use `Object.create(null)` for ad-hoc lookup maps instead of `{}` to avoid prototype inheritance issues, and check against `null` or `undefined` instead of falsy values when evaluating IDs.
