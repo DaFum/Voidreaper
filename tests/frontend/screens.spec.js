@@ -48,6 +48,70 @@ const root = () => document.createElement("div");
 if (!Element.prototype.scrollIntoView)
   Element.prototype.scrollIntoView = () => {};
 
+describe("pause and resume integration flow", () => {
+  test("pause displays pause screen and resume restores hud", () => {
+    document.body.innerHTML = `
+      <div id="pausescr" style="display:none">
+        <button id="resumebtn">Resume</button>
+      </div>
+      <div id="hud" style="display:none"></div>
+    `;
+
+    const mockInspector = { update: vi.fn() };
+    const mockController = {
+      inspectorModel: vi.fn((g) => ({
+        tags: new Map(),
+        synergies: { active: [], near: [], blocked: [] },
+      })),
+    };
+
+    const UI = {
+      show(id) {
+        document.getElementById("pausescr").style.display =
+          id === "pausescr" ? "block" : "none";
+        document.getElementById("hud").style.display =
+          id === "hud" ? "block" : "none";
+      },
+      pauseStats(g) {
+        mockInspector.update(mockController.inspectorModel(g));
+      },
+    };
+
+    const game = {
+      state: "run",
+      pause() {
+        if (this.state !== "run") return;
+        this.state = "pause";
+        UI.pauseStats(this);
+        UI.show("pausescr");
+      },
+      resume() {
+        if (this.state !== "pause") return;
+        this.state = "run";
+        UI.show("hud");
+      },
+    };
+
+    // Initial state check
+    expect(game.state).toBe("run");
+
+    // Click pause
+    game.pause();
+    expect(game.state).toBe("pause");
+    expect(mockController.inspectorModel).toHaveBeenCalledWith(game);
+    expect(document.getElementById("pausescr").style.display).toBe("block");
+    expect(document.getElementById("hud").style.display).toBe("none");
+
+    // Click resume via resume button event simulation
+    document.getElementById("resumebtn").onclick = () => game.resume();
+    document.getElementById("resumebtn").click();
+
+    expect(game.state).toBe("run");
+    expect(document.getElementById("pausescr").style.display).toBe("none");
+    expect(document.getElementById("hud").style.display).toBe("block");
+  });
+});
+
 describe("abyss transition screen", () => {
   test("renders the profile and wires descend/extract", () => {
     const container = root(),

@@ -525,16 +525,14 @@ export function createGameController(services) {
       return true;
     },
     inspectorModel(game) {
-      const inspectorTags = run?.build.tags ?? {
+      const tagCollection = run?.build.tags ?? {
         totals: new Map(),
         provenance: new Map(),
       };
-      const tags = inspectorTags.totals ?? inspectorTags;
-      tags.provenance = inspectorTags.provenance;
+      const tagTotals = tagCollection.totals ?? tagCollection;
+      tagTotals.provenance = tagCollection.provenance;
       const context = {
-        // evolution requirements read context.tags as a Map of totals, while
-        // collect() returns { totals, provenance } — pass the totals Map here
-        tags,
+        tags: tagTotals,
         upgrades: game.upgradeCounts,
         corruption: run?.corruption.value ?? 0,
         loadRatio: run?.player.energy?.ratio ?? 0,
@@ -542,9 +540,9 @@ export function createGameController(services) {
         sources: run?.build.sources ?? [],
       };
       return {
-        tags,
+        tags: tagTotals,
         statContext: { run, player: run?.player, sources: context.sources },
-        synergies: services.tags.resolve(tags, context),
+        synergies: services.tags.resolve(tagCollection, context),
         evolutions: services.evolutions.evaluate(context),
         load: run?.player.energy ?? { ratio: 0, tier: "stable" },
         heat: run?.heat.value ?? 0,
