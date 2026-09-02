@@ -87,3 +87,7 @@
 ## 2024-05-18 - Safe Object Maps for Iteration
 **Learning:** When using objects as lookup maps/dictionaries (like adjacency lists), `__proto__`, `constructor`, etc can cause runtime collisions if not handled, and `Object.hasOwn` checks are necessary when building arrays unless `Object.create(null)` is used. Furthermore, omitting nodes with falsy parentIDs (e.g. `0` or `""`) is incorrect if those IDs are technically valid in the data model.
 **Action:** Always use `Object.create(null)` for ad-hoc lookup maps instead of `{}` to avoid prototype inheritance issues, and check against `null` or `undefined` instead of falsy values when evaluating IDs.
+## 2026-09-02 - Keydown Set Lookups
+
+**Learning:** While `Set.prototype.has()` is an O(1) operation and prevents array allocation in hot paths compared to `[...].includes()`, applying this to very low-frequency events like `keydown` handlers has absolutely no measurable impact. It violates the persona constraint against unmeasurable micro-optimizations.
+**Action:** Reserve O(1) Set lookups and array-allocation-avoidance optimizations for true hot paths (e.g., render loops, continuous spatial queries, deeply recursive functions) and not infrequent user inputs.
