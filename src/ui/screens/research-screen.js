@@ -29,14 +29,14 @@ export function renderResearchScreen(
           const label = isOwned ? "ERFORSCHT" : "FORSCHEN";
           const disabledReason =
             !isOwned && !canBuy ? "Voraussetzungen nicht erfüllt" : "";
-          const titleAttr = disabledReason ? ` title="${disabledReason}"` : "";
-          const ariaLabel = disabledReason
-            ? ` aria-label="${label} - ${disabledReason}"`
+          const descId = `research-desc-${escapeHtml(node.id)}`;
+          const ariaDescribedBy = disabledReason
+            ? ` aria-describedby="${descId}"`
             : "";
           const visibleReason = disabledReason
-            ? ` <small aria-hidden="true">(${disabledReason})</small>`
+            ? ` <small id="${descId}">(${disabledReason})</small>`
             : "";
-          return `<button type="button" data-research-id="${escapeHtml(node.id)}" ${disabled ? "disabled" : ""}${titleAttr}${ariaLabel}>${label}${visibleReason}</button>`;
+          return `<button type="button" data-research-id="${escapeHtml(node.id)}" ${disabled ? 'aria-disabled="true"' : ""}${ariaDescribedBy}>${label}${visibleReason}</button>`;
         })()}</article>`,
     )
     .join("")}</div>`;
@@ -72,7 +72,7 @@ export function renderResearchScreen(
 
   container.onclick = (event) => {
     const button = event.target.closest("[data-research-id]");
-    if (!button || button.disabled) return;
+    if (!button || button.getAttribute("aria-disabled") === "true") return;
     const card = button.closest(".research-node");
     animatePressFeedback(button);
     if (card && !isReducedMotion() && typeof card.animate === "function") {
@@ -82,7 +82,7 @@ export function renderResearchScreen(
         { duration: MOTION_TIMINGS.feedback, ease: MOTION_EASINGS.impact },
       );
     }
-    button.disabled = true;
+    button.setAttribute("aria-disabled", "true");
     onPurchase(button.dataset.researchId);
   };
 }

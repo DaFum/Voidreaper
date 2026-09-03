@@ -1283,7 +1283,7 @@ describe("research screen", () => {
     const available = container.querySelector('[data-research-id="r2"]');
     available.click();
     expect(onPurchase).toHaveBeenCalledWith("r2");
-    expect(available.disabled).toBe(true);
+    expect(available.getAttribute("aria-disabled")).toBe("true");
   });
 });
 
