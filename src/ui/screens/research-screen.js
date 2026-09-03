@@ -1,5 +1,10 @@
 import { escapeHtml } from "../escape-html.js";
-import { animatePressFeedback, animate, MOTION_TIMINGS, MOTION_EASINGS } from "../motion/motion.js";
+import {
+  animatePressFeedback,
+  animate,
+  MOTION_TIMINGS,
+  MOTION_EASINGS,
+} from "../motion/motion.js";
 import { isReducedMotion } from "../motion/reduced-motion.js";
 
 export function renderResearchScreen(
@@ -7,7 +12,8 @@ export function renderResearchScreen(
   nodes,
   { purchased = {}, canPurchase = () => false, onPurchase = () => {} } = {},
 ) {
-  const instanceStates = (container._researchNodeStates = container._researchNodeStates || new Map());
+  const instanceStates = (container._researchNodeStates =
+    container._researchNodeStates || new Map());
 
   container.innerHTML = `<div class="research-grid">${nodes
     .map(
@@ -24,24 +30,39 @@ export function renderResearchScreen(
           const disabledReason =
             !isOwned && !canBuy ? "Voraussetzungen nicht erfüllt" : "";
           const titleAttr = disabledReason ? ` title="${disabledReason}"` : "";
-          const visibleReason = disabledReason
-            ? ` <small>(${disabledReason})</small>`
+          const ariaLabel = disabledReason
+            ? ` aria-label="${label} - ${disabledReason}"`
             : "";
-          return `<button type="button" data-research-id="${escapeHtml(node.id)}" ${disabled ? "disabled" : ""}${titleAttr}>${label}${visibleReason}</button>`;
+          const visibleReason = disabledReason
+            ? ` <small aria-hidden="true">(${disabledReason})</small>`
+            : "";
+          return `<button type="button" data-research-id="${escapeHtml(node.id)}" ${disabled ? "disabled" : ""}${titleAttr}${ariaLabel}>${label}${visibleReason}</button>`;
         })()}</article>`,
     )
     .join("")}</div>`;
 
   for (const node of nodes) {
-    const currentState = purchased[node.id] ? "owned" : canPurchase(node) ? "available" : "locked";
+    const currentState = purchased[node.id]
+      ? "owned"
+      : canPurchase(node)
+        ? "available"
+        : "locked";
     const prevState = instanceStates.get(node.id);
     if (prevState && prevState !== currentState && !isReducedMotion()) {
       const card = container.querySelector(`article[data-id="${node.id}"]`);
       if (card && typeof card.animate === "function") {
         if (currentState === "owned") {
-          animate(card, { transform: ["scale(1)", "scale(1.04)", "scale(1)"] }, { duration: MOTION_TIMINGS.emphasis, ease: MOTION_EASINGS.impact });
+          animate(
+            card,
+            { transform: ["scale(1)", "scale(1.04)", "scale(1)"] },
+            { duration: MOTION_TIMINGS.emphasis, ease: MOTION_EASINGS.impact },
+          );
         } else if (currentState === "available" && prevState === "locked") {
-          animate(card, { opacity: [0.6, 1], transform: ["scale(0.96)", "scale(1)"] }, { duration: MOTION_TIMINGS.enter, ease: MOTION_EASINGS.ui });
+          animate(
+            card,
+            { opacity: [0.6, 1], transform: ["scale(0.96)", "scale(1)"] },
+            { duration: MOTION_TIMINGS.enter, ease: MOTION_EASINGS.ui },
+          );
         }
       }
     }
@@ -58,7 +79,7 @@ export function renderResearchScreen(
       animate(
         card,
         { transform: ["scale(1)", "scale(0.97)", "scale(1)"] },
-        { duration: MOTION_TIMINGS.feedback, ease: MOTION_EASINGS.impact }
+        { duration: MOTION_TIMINGS.feedback, ease: MOTION_EASINGS.impact },
       );
     }
     button.disabled = true;
