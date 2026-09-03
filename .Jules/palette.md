@@ -24,3 +24,7 @@
 ## 2024-08-03 - Revalidate Inventory Target
 **Learning:** During UI interactions involving asynchronous operations (like modal confirmation dialogs via `uiConfirm`), the underlying state can change before the operation executes. When performing destructive actions, it's critical to revalidate the target's existence and mutate the state transactionally to avoid data corruption.
 **Action:** When working with long-running confirmations (like `await uiConfirm`), perform the final state mutation inside an atomic update block (e.g. `services.save.update`) and immediately reload any cached representations of the state (like `metaSave`).
+
+## 2024-09-03 - [Redundant Screen Reader Announcements in Disabled Elements]
+**Learning:** When using `<small>` elements to visually explain why a button is disabled, screen readers will often read both the button's standard `aria-label` and the text inside the `<small>` tag, causing confusing redundancy.
+**Action:** When adding visible `<small>` explanation text to a disabled element, always add `aria-hidden="true"` to the `<small>` element and ensure the parent button's `aria-label` contains the full combined context.

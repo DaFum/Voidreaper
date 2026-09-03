@@ -1,5 +1,10 @@
 import { escapeHtml } from "../escape-html.js";
-import { animatePressFeedback, animate, MOTION_TIMINGS, MOTION_EASINGS } from "../motion/motion.js";
+import {
+  animatePressFeedback,
+  animate,
+  MOTION_TIMINGS,
+  MOTION_EASINGS,
+} from "../motion/motion.js";
 import { isReducedMotion } from "../motion/reduced-motion.js";
 
 export function renderResearchScreen(
@@ -7,7 +12,8 @@ export function renderResearchScreen(
   nodes,
   { purchased = {}, canPurchase = () => false, onPurchase = () => {} } = {},
 ) {
-  const instanceStates = (container._researchNodeStates = container._researchNodeStates || new Map());
+  const instanceStates = (container._researchNodeStates =
+    container._researchNodeStates || new Map());
 
   container.innerHTML = `<div class="research-grid">${nodes
     .map(
@@ -23,25 +29,40 @@ export function renderResearchScreen(
           const label = isOwned ? "ERFORSCHT" : "FORSCHEN";
           const disabledReason =
             !isOwned && !canBuy ? "Voraussetzungen nicht erfüllt" : "";
-          const titleAttr = disabledReason ? ` title="${disabledReason}"` : "";
-          const visibleReason = disabledReason
-            ? ` <small>(${disabledReason})</small>`
+          const descId = `research-desc-${escapeHtml(node.id)}`;
+          const ariaDescribedBy = disabledReason
+            ? ` aria-describedby="${descId}"`
             : "";
-          return `<button type="button" data-research-id="${escapeHtml(node.id)}" ${disabled ? "disabled" : ""}${titleAttr}>${label}${visibleReason}</button>`;
+          const visibleReason = disabledReason
+            ? ` <small id="${descId}">(${disabledReason})</small>`
+            : "";
+          return `<button type="button" data-research-id="${escapeHtml(node.id)}" ${disabled ? 'aria-disabled="true"' : ""}${ariaDescribedBy}>${label}${visibleReason}</button>`;
         })()}</article>`,
     )
     .join("")}</div>`;
 
   for (const node of nodes) {
-    const currentState = purchased[node.id] ? "owned" : canPurchase(node) ? "available" : "locked";
+    const currentState = purchased[node.id]
+      ? "owned"
+      : canPurchase(node)
+        ? "available"
+        : "locked";
     const prevState = instanceStates.get(node.id);
     if (prevState && prevState !== currentState && !isReducedMotion()) {
       const card = container.querySelector(`article[data-id="${node.id}"]`);
       if (card && typeof card.animate === "function") {
         if (currentState === "owned") {
-          animate(card, { transform: ["scale(1)", "scale(1.04)", "scale(1)"] }, { duration: MOTION_TIMINGS.emphasis, ease: MOTION_EASINGS.impact });
+          animate(
+            card,
+            { transform: ["scale(1)", "scale(1.04)", "scale(1)"] },
+            { duration: MOTION_TIMINGS.emphasis, ease: MOTION_EASINGS.impact },
+          );
         } else if (currentState === "available" && prevState === "locked") {
-          animate(card, { opacity: [0.6, 1], transform: ["scale(0.96)", "scale(1)"] }, { duration: MOTION_TIMINGS.enter, ease: MOTION_EASINGS.ui });
+          animate(
+            card,
+            { opacity: [0.6, 1], transform: ["scale(0.96)", "scale(1)"] },
+            { duration: MOTION_TIMINGS.enter, ease: MOTION_EASINGS.ui },
+          );
         }
       }
     }
@@ -51,17 +72,17 @@ export function renderResearchScreen(
 
   container.onclick = (event) => {
     const button = event.target.closest("[data-research-id]");
-    if (!button || button.disabled) return;
+    if (!button || button.getAttribute("aria-disabled") === "true") return;
     const card = button.closest(".research-node");
     animatePressFeedback(button);
     if (card && !isReducedMotion() && typeof card.animate === "function") {
       animate(
         card,
         { transform: ["scale(1)", "scale(0.97)", "scale(1)"] },
-        { duration: MOTION_TIMINGS.feedback, ease: MOTION_EASINGS.impact }
+        { duration: MOTION_TIMINGS.feedback, ease: MOTION_EASINGS.impact },
       );
     }
-    button.disabled = true;
+    button.setAttribute("aria-disabled", "true");
     onPurchase(button.dataset.researchId);
   };
 }
