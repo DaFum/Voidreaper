@@ -176,12 +176,20 @@ export function createLoadoutService({ registry, tagEngine, unlocks }) {
       };
     },
     assemblyItems(loadout) {
-      return sources(loadout)
-        .filter((source) => source.item?.instanceId)
-        .map((source) => ({
-          moduleInstanceId: source.item.instanceId,
-          definitionId: source.id,
-        }));
+      // ⚡ Bolt: Avoid intermediate array allocations from .filter().map() chaining
+      // in frequent assembly updates. Use a single pass loop instead.
+      const items = sources(loadout);
+      const result = [];
+      for (let i = 0; i < items.length; i++) {
+        const source = items[i];
+        if (source.item?.instanceId) {
+          result.push({
+            moduleInstanceId: source.item.instanceId,
+            definitionId: source.id,
+          });
+        }
+      }
+      return result;
     },
   };
 }
