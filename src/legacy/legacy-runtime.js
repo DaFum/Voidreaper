@@ -412,18 +412,6 @@ class Pool {
 }
 
 /* ---------- input ---------- */
-// ⚡ Bolt: Replace dynamic array includes with static Sets initialized once.
-// Using Set.prototype.has() provides O(1) constant-time lookups on every keyboard event,
-// eliminating unnecessary O(N) array allocations and linear searches to reduce GC pressure.
-const IGNORED_TAGS = new Set(["INPUT", "TEXTAREA", "SELECT", "BUTTON"]);
-const PREVENT_DEFAULT_KEYS = new Set([
-  "ArrowUp",
-  "ArrowDown",
-  "ArrowLeft",
-  "ArrowRight",
-  "Space",
-]);
-
 const Input = {
   keys: new Set(),
   stickActive: false,
@@ -438,11 +426,17 @@ const Input = {
     window.addEventListener("keydown", (e) => {
       if (
         e.target &&
-        (IGNORED_TAGS.has(e.target.tagName) || e.target.isContentEditable)
+        (["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(e.target.tagName) ||
+          e.target.isContentEditable)
       )
         return;
       this.keys.add(e.code);
-      if (PREVENT_DEFAULT_KEYS.has(e.code)) e.preventDefault();
+      if (
+        ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(
+          e.code,
+        )
+      )
+        e.preventDefault();
     });
     window.addEventListener("keyup", (e) => this.keys.delete(e.code));
     window.addEventListener("blur", () => this.keys.clear());
