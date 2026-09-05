@@ -1,5 +1,11 @@
 import { escapeHtml } from "../escape-html.js";
-import { animate, animateListStagger, animatePressFeedback, MOTION_TIMINGS, MOTION_EASINGS } from "../motion/motion.js";
+import {
+  animate,
+  animateListStagger,
+  animatePressFeedback,
+  MOTION_TIMINGS,
+  MOTION_EASINGS,
+} from "../motion/motion.js";
 import { isReducedMotion } from "../motion/reduced-motion.js";
 
 export function canAffordOffer(resources, offer) {
@@ -48,11 +54,13 @@ export function renderMerchantScreen(
     const affordable = canAffordOffer(resources, offer);
     button.disabled = !affordable;
     if (!affordable) {
+      const currencyLabel = offer.currency === "flux" ? "Flux" : "Scrap";
       button.setAttribute(
         "aria-label",
-        `${offer.name} – nicht genügend ${offer.currency === "flux" ? "Flux" : "Scrap"}`,
+        `${offer.name} – nicht genügend ${currencyLabel}`,
       );
-      button.title = `${offer.name} – nicht genügend ${offer.currency === "flux" ? "Flux" : "Scrap"}`;
+      button.title = `${offer.name} – nicht genügend ${currencyLabel}`;
+      button.innerHTML += `<small class="item-card__reason" aria-hidden="true">(nicht genügend ${currencyLabel})</small>`;
     }
     button.addEventListener("click", () => {
       animatePressFeedback(button);
@@ -87,12 +95,19 @@ export function renderMerchantScreen(
       animatePressFeedback(rerollBtn);
 
       const exitPromises = [];
-      if (!isReducedMotion() && oldCards.length > 0 && typeof oldCards[0].animate === "function") {
+      if (
+        !isReducedMotion() &&
+        oldCards.length > 0 &&
+        typeof oldCards[0].animate === "function"
+      ) {
         for (const card of oldCards) {
           const anim = animate(
             card,
-            { opacity: [1, 0], transform: ["translateY(0px)", "translateY(-8px)"] },
-            { duration: MOTION_TIMINGS.fast, ease: MOTION_EASINGS.exit }
+            {
+              opacity: [1, 0],
+              transform: ["translateY(0px)", "translateY(-8px)"],
+            },
+            { duration: MOTION_TIMINGS.fast, ease: MOTION_EASINGS.exit },
           );
           if (anim?.finished) {
             exitPromises.push(anim.finished.catch(() => {}));
