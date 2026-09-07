@@ -3367,14 +3367,28 @@ const UI = {
       const lv = Persist.data.meta[m.id] || 0;
       const cost = m.cost(lv);
       const maxed = lv >= m.max;
+      const disabled = maxed || Persist.data.shards < cost;
       const btn = document.createElement("button");
       btn.className = "meta";
-      btn.disabled = maxed || Persist.data.shards < cost;
+      btn.disabled = disabled;
+
+      let disabledReason = "";
+      if (disabled) {
+        disabledReason = maxed ? "Upgrade already maxed" : "Not enough shards";
+        const label = `${m.nm} - ${disabledReason}`;
+        btn.setAttribute("aria-label", label);
+        btn.title = label;
+      }
+
       const pips = Array.from(
         { length: m.max },
         (_, i) => `<i class="${i < lv ? "on" : ""}"></i>`,
       ).join("");
-      btn.innerHTML = `<span class="mn">${escapeHtml(m.nm)}</span><div class="mp">${escapeHtml(m.ds)}</div><div class="pips">${pips}</div><div class="mc">${escapeHtml(maxed ? "MAXED" : "◇ " + cost)}</div>`;
+
+      const costHtml = maxed ? "MAXED" : "◇ " + cost;
+      const reasonHtml = disabled && !maxed ? ` <small aria-hidden="true">(${disabledReason})</small>` : "";
+
+      btn.innerHTML = `<span class="mn">${escapeHtml(m.nm)}</span><div class="mp">${escapeHtml(m.ds)}</div><div class="pips">${pips}</div><div class="mc">${escapeHtml(costHtml)}${reasonHtml}</div>`;
       btn.addEventListener("click", () => {
         if (maxed || Persist.data.shards < cost) return;
         Persist.data.shards -= cost;
