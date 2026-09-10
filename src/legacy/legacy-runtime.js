@@ -3596,16 +3596,18 @@ const UI = {
 
     const rerollBtn = this.el("rerollbtn");
     rerollBtn.disabled = Game.rerolls <= 0;
-    rerollBtn.parentElement.title =
-      Game.rerolls <= 0 ? "No rerolls remaining" : "Reroll mutation choices";
+    const rerollTitle = Game.rerolls <= 0 ? "Reroll mutation choices - No rerolls remaining" : "Reroll mutation choices";
+    rerollBtn.parentElement.title = rerollTitle;
+    rerollBtn.setAttribute("aria-label", rerollTitle);
+    rerollBtn.innerHTML = `⟲ Reroll (<span id="reroll-n">${Game.rerolls}</span>)${Game.rerolls <= 0 ? ' <small class="item-card__reason" aria-hidden="true">(No rerolls remaining)</small>' : ''}`;
     rerollBtn.style.opacity = "";
 
     const banishBtn = this.el("banishbtn");
     banishBtn.disabled = Game.banishes <= 0;
-    banishBtn.parentElement.title =
-      Game.banishes <= 0
-        ? "No banishes remaining"
-        : "Permanently remove a mutation";
+    const banishTitle = Game.banishes <= 0 ? "Permanently remove a mutation - No banishes remaining" : "Permanently remove a mutation";
+    banishBtn.parentElement.title = banishTitle;
+    banishBtn.setAttribute("aria-label", banishTitle);
+    banishBtn.innerHTML = `✕ Banish (<span id="banish-n">${Game.banishes}</span>)${Game.banishes <= 0 ? ' <small class="item-card__reason" aria-hidden="true">(No banishes remaining)</small>' : ''}`;
     banishBtn.style.opacity = "";
     banishBtn.style.background = Game.banishMode ? "rgba(255,45,120,.15)" : "";
     this.show("levelup");
