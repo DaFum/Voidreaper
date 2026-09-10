@@ -20,3 +20,7 @@
 ## 2024-08-27 - Contextual Disabled States for Secondary Action Buttons
 **Learning:** Secondary UI actions (like the Merchant "Reroll" button) that can be unavailable due to missing resources (e.g., Scrap) often lacked contextual feedback when disabled. Relying solely on the native `disabled` attribute leaves users wondering why an action is blocked.
 **Action:** When adding or maintaining secondary interactive elements that can be disabled due to specific conditions, ensure that native `title` and `aria-label` attributes provide descriptive, context-aware reasoning for the disabled state, and embed a visible ` <small aria-hidden="true">(reason)</small>` directly in the button to provide context to all users, especially touch users, while ensuring accessibility via `aria-label`.
+
+## 2026-09-10 - Visible Context for Legacy UI Action Buttons
+**Learning:** The legacy UI buttons (Reroll and Banish) lacked visible feedback when disabled (e.g., when no rerolls or banishes remain). This means touch users could not see why the actions were disabled since they don't see tooltips.
+**Action:** Appended visible text via `<small aria-hidden="true">(reason)</small>` to disabled buttons in legacy systems, complementing existing `aria-label` and `title` updates for a universally accessible experience.
