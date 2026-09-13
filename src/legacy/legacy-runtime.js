@@ -3623,30 +3623,28 @@ const UI = {
 
     const rerollBtn = this.el("rerollbtn");
     rerollBtn.disabled = Game.rerolls <= 0;
-    if (Game.rerolls <= 0) {
-      rerollBtn.title = "No rerolls remaining";
-      rerollBtn.setAttribute("aria-label", "No rerolls remaining");
-      rerollBtn.innerHTML = `⟲ Reroll (<span id="reroll-n">${Game.rerolls}</span>) <small aria-hidden="true">(No rerolls remaining)</small>`;
-    } else {
-      rerollBtn.title = "Reroll mutation choices";
-      rerollBtn.setAttribute("aria-label", "Reroll mutation choices");
-      rerollBtn.innerHTML = `⟲ Reroll (<span id="reroll-n">${Game.rerolls}</span>)`;
-    }
-    rerollBtn.parentElement.removeAttribute("title");
+    rerollBtn.parentElement.title =
+      Game.rerolls <= 0 ? "No rerolls remaining" : "Reroll mutation choices";
+    rerollBtn.setAttribute(
+      "aria-label",
+      Game.rerolls <= 0
+        ? "Reroll - No rerolls remaining"
+        : "Reroll - Reroll mutation choices",
+    );
     rerollBtn.style.opacity = "";
 
     const banishBtn = this.el("banishbtn");
     banishBtn.disabled = Game.banishes <= 0;
-    if (Game.banishes <= 0) {
-      banishBtn.title = "No banishes remaining";
-      banishBtn.setAttribute("aria-label", "No banishes remaining");
-      banishBtn.innerHTML = `✕ Banish (<span id="banish-n">${Game.banishes}</span>) <small aria-hidden="true">(No banishes remaining)</small>`;
-    } else {
-      banishBtn.title = "Permanently remove a mutation";
-      banishBtn.setAttribute("aria-label", "Permanently remove a mutation");
-      banishBtn.innerHTML = `✕ Banish (<span id="banish-n">${Game.banishes}</span>)`;
-    }
-    banishBtn.parentElement.removeAttribute("title");
+    banishBtn.parentElement.title =
+      Game.banishes <= 0
+        ? "No banishes remaining"
+        : "Permanently remove a mutation";
+    banishBtn.setAttribute(
+      "aria-label",
+      Game.banishes <= 0
+        ? "Banish - No banishes remaining"
+        : "Banish - Permanently remove a mutation",
+    );
     banishBtn.style.opacity = "";
     banishBtn.style.background = Game.banishMode ? "rgba(255,45,120,.15)" : "";
     this.show("levelup");
