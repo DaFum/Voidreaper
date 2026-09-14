@@ -59,8 +59,8 @@
   <button id="pausebtn" aria-label="Pause game" title="Pause game">‖ PAUSE</button>
   <div id="combat-actions" aria-label="Combat actions">
     <button class="combat-action" id="dodgebtn" data-action="dodge" aria-label="Dodge" title="Dodge"><span>SPACE</span>⇥</button>
-    <button class="combat-action" id="active1btn" data-action="active-1" aria-label="Active module one" title="Active module one" disabled><span>Q</span>EMPTY</button>
-    <button class="combat-action" id="active2btn" data-action="active-2" aria-label="Active module two" title="Active module two" disabled><span>E</span>EMPTY</button>
+    <button class="combat-action" id="active1btn" data-action="active-1" aria-label="Active module one – Slot empty" title="Active module one – Slot empty" disabled><span>Q</span>EMPTY<small aria-hidden="true">(Slot empty)</small></button>
+    <button class="combat-action" id="active2btn" data-action="active-2" aria-label="Active module two – Slot empty" title="Active module two – Slot empty" disabled><span>E</span>EMPTY<small aria-hidden="true">(Slot empty)</small></button>
   </div>
   <div id="stick" aria-hidden="true">
     <div id="knob"></div>
@@ -74,9 +74,9 @@
     <div class="modes">
       <button class="btn" id="startbtn">Standard Run</button>
       <button class="btn gold" id="dailybtn">Daily Seed</button>
-      <button class="btn" id="menuopenbtn">☰ Menü</button>
+      <button class="btn" id="menuopenbtn"><span aria-hidden="true">☰</span> Menü</button>
     </div>
-    <button class="btn small" id="menuclosebtn">← Zurück zum Start</button>
+    <button class="btn small" id="menuclosebtn"><span aria-hidden="true">←</span> Zurück zum Start</button>
     <div id="hangar">
       <h3>◢ HANGAR — PERMANENT UPGRADES ◣</h3>
       <div class="meta-grid" id="metagrid"></div>
@@ -94,8 +94,8 @@
     <div class="sub">choose one mutation</div>
     <div class="cards" id="cards"></div>
     <div id="rerollrow">
-      <span class="tooltip-wrapper" style="display: inline-block"><button class="btn small" id="rerollbtn">⟲ Reroll (<span id="reroll-n">0</span>)</button></span>
-      <span class="tooltip-wrapper" style="display: inline-block"><button class="btn small" id="banishbtn">✕ Banish (<span id="banish-n">0</span>)</button></span>
+      <span class="tooltip-wrapper" style="display: inline-block"><button class="btn small" id="rerollbtn"><span aria-hidden="true">⟲</span> Reroll (<span id="reroll-n">0</span>)</button></span>
+      <span class="tooltip-wrapper" style="display: inline-block"><button class="btn small" id="banishbtn"><span aria-hidden="true">✕</span> Banish (<span id="banish-n">0</span>)</button></span>
     </div>
   </div>
 
