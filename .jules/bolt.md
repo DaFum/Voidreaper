@@ -87,3 +87,7 @@
 ## 2024-05-18 - Safe Object Maps for Iteration
 **Learning:** When using objects as lookup maps/dictionaries (like adjacency lists), `__proto__`, `constructor`, etc can cause runtime collisions if not handled, and `Object.hasOwn` checks are necessary when building arrays unless `Object.create(null)` is used. Furthermore, omitting nodes with falsy parentIDs (e.g. `0` or `""`) is incorrect if those IDs are technically valid in the data model.
 **Action:** Always use `Object.create(null)` for ad-hoc lookup maps instead of `{}` to avoid prototype inheritance issues, and check against `null` or `undefined` instead of falsy values when evaluating IDs.
+
+## 2025-02-18 - Replacing chained array methods in hot paths with imperative loops
+**Learning:** Chained array methods (like `.flatMap()`, `.map()`, and `.filter()`) inside frequently executed code paths (such as the `calculate` method of `stat-engine.js`) create multiple intermediate O(N) array allocations. In scenarios involving tight game loops or frequent UI recalculations, this builds significant GC pressure and can degrade overall application performance.
+**Action:** Replace chained `.flatMap().map().filter()` array manipulations inside hot paths with a single-pass imperative `for` loop to build up the required array directly, saving memory allocations and preventing potential stuttering.
