@@ -37,14 +37,16 @@ export function createStatEngine(
       for (const source of sourceProvider(context)) {
         if (!source.modifiers) continue;
         for (const modifier of source.modifiers) {
+          const normalizedModifier = {
+            ...modifier,
+            sourceId: modifier.sourceId ?? source.id,
+          };
           if (
-            modifier.targetStat === statId &&
-            (!modifier.condition || modifier.condition(context))
+            normalizedModifier.targetStat === statId &&
+            (!normalizedModifier.condition ||
+              normalizedModifier.condition(context))
           ) {
-            modifiers.push({
-              ...modifier,
-              sourceId: modifier.sourceId ?? source.id,
-            });
+            modifiers.push(normalizedModifier);
           }
         }
       }
