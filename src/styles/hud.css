@@ -390,7 +390,7 @@ body:has(#hud[style*="display: block"]) #combat-actions {
   );
 }
 
-.combat-action span {
+.combat-action span:first-child {
   display: block;
   color: var(--bone);
   margin-bottom: 5px;

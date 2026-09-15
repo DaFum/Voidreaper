@@ -20,3 +20,6 @@
 ## 2024-08-27 - Contextual Disabled States for Secondary Action Buttons
 **Learning:** Secondary UI actions (like the Merchant "Reroll" button) that can be unavailable due to missing resources (e.g., Scrap) often lacked contextual feedback when disabled. Relying solely on the native `disabled` attribute leaves users wondering why an action is blocked.
 **Action:** When adding or maintaining secondary interactive elements that can be disabled due to specific conditions, ensure that native `title` and `aria-label` attributes provide descriptive, context-aware reasoning for the disabled state, and embed a visible ` <small aria-hidden="true">(reason)</small>` directly in the button to provide context to all users, especially touch users, while ensuring accessibility via `aria-label`.
+## 2024-09-15 - Hide decorative icons from screen readers
+**Learning:** Screen readers often read out literal character names for decorative Unicode icons (e.g., `‖`, `☰`, `←`), which can be confusing for users (e.g., reading "Trigram for Heaven" for a hamburger menu icon).
+**Action:** When adding or maintaining interactive elements with decorative text-based symbols or Unicode icons, wrap them in `<span aria-hidden="true">` to prevent assistive technologies from announcing them, while relying on `aria-label` for semantic meaning.
