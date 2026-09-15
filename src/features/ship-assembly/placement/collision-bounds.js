@@ -3,12 +3,12 @@ export const fitsSize = (moduleSize, portSize) =>
   SIZE_RANK[moduleSize] <= SIZE_RANK[portSize];
 // ⚡ Bolt: Use a single-pass imperative loop instead of .some() to reduce GC pressure
 // from closure creation and array iteration overhead in this hot path.
-export function overlapsAny(candidate, occupied, margin = 4, ignoreOwnerId = null) {
+export function overlapsAny(candidate, occupied, margin = 4, ignoreOwnerId) {
   for (let i = 0; i < occupied.length; i++) {
     const bounds = occupied[i];
     if (
       bounds.ownerId !== candidate.ownerId &&
-      bounds.ownerId !== ignoreOwnerId &&
+      (ignoreOwnerId === undefined || bounds.ownerId !== ignoreOwnerId) &&
       !(
         candidate.maxX + margin < bounds.minX ||
         candidate.minX - margin > bounds.maxX ||

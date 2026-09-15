@@ -90,3 +90,6 @@
 ## 2024-05-14 - Imperative spatial queries and param-passing filters
 **Learning:** In hot spatial queries like collision detection (`overlapsAny`), chaining array methods like `.filter().some()` to exclude self-bounds before performing overlap checks creates immense GC pressure from intermediate array allocation.
 **Action:** Replace these chained calls with a single-pass imperative `for` loop, and introduce parameters like `ignoreOwnerId` to the query function so that filtering logic can be evaluated directly in the hot loop without any array allocations.
+## 2024-05-18 - Parameter sentinels in hot loops
+**Learning:** When adding an optional parameter (like `ignoreOwnerId`) to avoid `.filter()` allocations, avoid using `null` as the default. If the object's property is actually `null`, `null !== null` will evaluate to false and falsely trigger an ignore.
+**Action:** Use `undefined` as the default (or omit it) and check `ignoreOwnerId === undefined` before applying the exclusion logic.
