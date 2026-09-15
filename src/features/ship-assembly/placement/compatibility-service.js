@@ -50,11 +50,12 @@ export function createCompatibilityService({
         candidate = geometrySnapshot.previewBounds(moduleProfile, {
           ...port,
           worldPosition: worldTransform.position,
-        }),
-        occupied = (geometrySnapshot.occupiedBounds ?? []).filter(
-          (bounds) => bounds.ownerId !== port.parentNodeId,
-        );
-      if (overlapsAny(candidate, occupied)) reasons.push("overlap");
+        });
+      // ⚡ Bolt: Avoid intermediate array allocation by passing occupiedBounds directly
+      // and using the ignoreOwnerId parameter to skip the parent node.
+      if (overlapsAny(candidate, geometrySnapshot.occupiedBounds ?? [], 4, port.parentNodeId)) {
+        reasons.push("overlap");
+      }
       if (
         coreExposureService &&
         !coreExposureService.accepts({ ...geometrySnapshot, candidate })
