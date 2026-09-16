@@ -51,10 +51,11 @@ export function createCompatibilityService({
           ...port,
           worldPosition: worldTransform.position,
         }),
-        occupied = (geometrySnapshot.occupiedBounds ?? []).filter(
-          (bounds) => bounds.ownerId !== port.parentNodeId,
-        );
-      if (overlapsAny(candidate, occupied)) reasons.push("overlap");
+        occupied = geometrySnapshot.occupiedBounds ?? [];
+      // ⚡ Bolt: Pass ignoreOwnerId directly to overlapsAny to avoid allocating
+      // an intermediate array via .filter() in this hot placement check.
+      if (overlapsAny(candidate, occupied, 4, port.parentNodeId))
+        reasons.push("overlap");
       if (
         coreExposureService &&
         !coreExposureService.accepts({ ...geometrySnapshot, candidate })

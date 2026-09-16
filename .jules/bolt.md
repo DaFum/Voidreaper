@@ -87,3 +87,7 @@
 ## 2024-05-18 - Safe Object Maps for Iteration
 **Learning:** When using objects as lookup maps/dictionaries (like adjacency lists), `__proto__`, `constructor`, etc can cause runtime collisions if not handled, and `Object.hasOwn` checks are necessary when building arrays unless `Object.create(null)` is used. Furthermore, omitting nodes with falsy parentIDs (e.g. `0` or `""`) is incorrect if those IDs are technically valid in the data model.
 **Action:** Always use `Object.create(null)` for ad-hoc lookup maps instead of `{}` to avoid prototype inheritance issues, and check against `null` or `undefined` instead of falsy values when evaluating IDs.
+
+## 2025-02-18 - Passing exclusion criteria to spatial queries to avoid allocation
+**Learning:** Pre-filtering candidates (e.g., using `.filter(bounds => bounds.ownerId !== id)`) before passing them to a hot spatial query (like collision detection) creates unnecessary intermediate array allocations and increases Garbage Collection pressure.
+**Action:** Always add exclusion parameters (like `ignoreOwnerId = undefined`) directly to the spatial query evaluation function (e.g., `overlapsAny`) and handle the filtering within a single-pass imperative `for` loop to eliminate array allocation overhead.

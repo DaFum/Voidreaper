@@ -1,17 +1,30 @@
 const SIZE_RANK = Object.freeze({ S: 1, M: 2, L: 3, XL: 4 });
 export const fitsSize = (moduleSize, portSize) =>
   SIZE_RANK[moduleSize] <= SIZE_RANK[portSize];
-export function overlapsAny(candidate, occupied, margin = 4) {
-  return occupied.some(
-    (bounds) =>
+export function overlapsAny(
+  candidate,
+  occupied,
+  margin = 4,
+  ignoreOwnerId = undefined,
+) {
+  // ⚡ Bolt: Avoid Array.prototype.some() and allow passing ignoreOwnerId directly
+  // to avoid allocating intermediate arrays via .filter() before calling this function.
+  for (let i = 0; i < occupied.length; i++) {
+    const bounds = occupied[i];
+    if (
       bounds.ownerId !== candidate.ownerId &&
+      bounds.ownerId !== ignoreOwnerId &&
       !(
         candidate.maxX + margin < bounds.minX ||
         candidate.minX - margin > bounds.maxX ||
         candidate.maxY + margin < bounds.minY ||
         candidate.minY - margin > bounds.maxY
-      ),
-  );
+      )
+    ) {
+      return true;
+    }
+  }
+  return false;
 }
 // Preview footprint must match the real module AABB or validated mounts overlap.
 // Mirrors module-geometry-builders: extent = length/2 + radius = size*(lengthFactor/2 + 0.55),
