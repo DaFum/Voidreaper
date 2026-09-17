@@ -2287,7 +2287,6 @@ const Game = {
       if (dist2(e.x, e.y, p.x, p.y) < cr * cr) this.hurtPlayer(p, e.dmg);
     }
 
-
     this.updateProjectilesAndFX(dt, frozen);
     UI.hud(p, this);
   },
@@ -2328,7 +2327,6 @@ const Game = {
         UI.combo(0, 0, 0);
       }
     }
-
   },
 
   updatePlayerMovement(dt) {
@@ -2378,7 +2376,6 @@ const Game = {
       pt.color = "#06ffa5";
       pt.drag = 0.9;
     }
-
   },
 
   updatePlayerWeapons(dt, rateMul, eclipse) {
@@ -2423,7 +2420,6 @@ const Game = {
         }
       }
     }
-
   },
 
   updateZones(dt) {
@@ -2474,7 +2470,6 @@ const Game = {
         }
       }
     });
-
   },
 
   updateProjectilesAndFX(dt, frozen) {
@@ -2611,7 +2606,6 @@ const Game = {
     if (this.cam.shake < 0.15) this.cam.shake = 0;
     this.cam.sx = (Math.random() * 2 - 1) * this.cam.shake;
     this.cam.sy = (Math.random() * 2 - 1) * this.cam.shake;
-
   },
 
   /* ---------- render ---------- */
@@ -2741,12 +2735,20 @@ const Game = {
     this.drawWorldBackdrop(p, camX, camY, t, W, H, shakeX, shakeY);
     if (!p) return;
     this.drawWorldEntities(p, camX, camY, t, frozen);
-    const darkness = this.drawParticlesAndFX(p, camX, camY, shakeX, shakeY, W, H, eclipse);
+    const darkness = this.drawParticlesAndFX(
+      p,
+      camX,
+      camY,
+      shakeX,
+      shakeY,
+      W,
+      H,
+      eclipse,
+    );
     this.drawHUDOverlaysAndPostFX(p, camX, camY, W, H, darkness, frozen);
   },
 
   drawWorldBackdrop(p, camX, camY, t, W, H, shakeX, shakeY) {
-
     // GPU environment stage (Pixi) can take over the backdrop; the game
     // canvas then stays transparent so the layer below shines through.
     const envHandled =
@@ -2864,7 +2866,6 @@ const Game = {
       cx.globalAlpha = 1;
       cx.shadowBlur = 0;
     }
-
   },
 
   drawWorldEntities(p, camX, camY, t, frozen) {
@@ -3061,7 +3062,6 @@ const Game = {
   },
 
   drawParticlesAndFX(p, camX, camY, shakeX, shakeY, W, H, eclipse) {
-
     // darkness (region visibility + eclipse) is computed here so the GPU FX
     // overlay can dim itself like the 2D path; the veil below reuses it
     const rules = getRegionRules(
@@ -3138,7 +3138,6 @@ const Game = {
   },
 
   drawHUDOverlaysAndPostFX(p, camX, camY, W, H, darkness, frozen) {
-
     // floating text (damage pops scale in)
     cx.textAlign = "center";
     for (const tx of this.texts.live) {
@@ -3457,7 +3456,11 @@ const UI = {
     if (mult !== this._lastMult) {
       this._lastMult = mult;
       if (!isReducedMotion() && typeof c.animate === "function") {
-        animate(c, { transform: ["scale(1)", "scale(1.18)", "scale(1)"] }, { duration: 0.12, ease: [0.175, 0.885, 0.32, 1.275] });
+        animate(
+          c,
+          { transform: ["scale(1)", "scale(1.18)", "scale(1)"] },
+          { duration: 0.12, ease: [0.175, 0.885, 0.32, 1.275] },
+        );
       }
     }
   },
@@ -3498,7 +3501,14 @@ const UI = {
 
     if (!isReducedMotion()) {
       if (typeof t.animate === "function") {
-        animate(t, { opacity: [0, 1], transform: ["translateY(12px)", "translateY(0px)"] }, { duration: 0.2, ease: "easeOut" });
+        animate(
+          t,
+          {
+            opacity: [0, 1],
+            transform: ["translateY(12px)", "translateY(0px)"],
+          },
+          { duration: 0.2, ease: "easeOut" },
+        );
       }
       for (const el of existingToasts) {
         const oldRect = oldPositions.get(el);
@@ -3506,14 +3516,20 @@ const UI = {
           const newRect = el.getBoundingClientRect();
           const dy = oldRect.top - newRect.top;
           if (dy !== 0 && typeof el.animate === "function") {
-            animate(el, { transform: [`translateY(${dy}px)`, "translateY(0px)"] }, { duration: 0.18, ease: "easeOut" });
+            animate(
+              el,
+              { transform: [`translateY(${dy}px)`, "translateY(0px)"] },
+              { duration: 0.18, ease: "easeOut" },
+            );
           }
         }
       }
     }
 
     const removeToast = () => {
-      const remainingToasts = Array.from(toastsContainer.children).filter((el) => el !== t);
+      const remainingToasts = Array.from(toastsContainer.children).filter(
+        (el) => el !== t,
+      );
       const remainingOldPositions = new Map();
       if (!isReducedMotion()) {
         for (const el of remainingToasts) {
@@ -3532,7 +3548,11 @@ const UI = {
               const newRect = el.getBoundingClientRect();
               const dy = oldRect.top - newRect.top;
               if (dy !== 0 && typeof el.animate === "function") {
-                animate(el, { transform: [`translateY(${dy}px)`, "translateY(0px)"] }, { duration: 0.18, ease: "easeOut" });
+                animate(
+                  el,
+                  { transform: [`translateY(${dy}px)`, "translateY(0px)"] },
+                  { duration: 0.18, ease: "easeOut" },
+                );
               }
             }
           }
@@ -3540,7 +3560,14 @@ const UI = {
       };
 
       if (!isReducedMotion() && typeof t.animate === "function") {
-        animate(t, { opacity: [1, 0], transform: ["translateY(0px)", "translateY(-8px)"] }, { duration: 0.15, ease: "easeIn" })
+        animate(
+          t,
+          {
+            opacity: [1, 0],
+            transform: ["translateY(0px)", "translateY(-8px)"],
+          },
+          { duration: 0.15, ease: "easeIn" },
+        )
           .finished.then(finishRemove)
           .catch(finishRemove);
       } else {
@@ -3595,10 +3622,18 @@ const UI = {
     this.el("banish-n").textContent = Game.banishes;
 
     const rerollBtn = this.el("rerollbtn");
-    const rerollReason = Game.rerolls <= 0 ? "No rerolls remaining" : "Reroll mutation choices";
+    const rerollReason =
+      Game.rerolls <= 0 ? "No rerolls remaining" : "Reroll mutation choices";
     rerollBtn.disabled = Game.rerolls <= 0;
+    rerollBtn.parentElement.title = rerollReason;
     rerollBtn.title = rerollReason;
-    rerollBtn.setAttribute("aria-label", "Reroll mutation choices. " + (Game.rerolls <= 0 ? "No rerolls remaining." : `${Game.rerolls} rerolls remaining.`));
+    rerollBtn.setAttribute(
+      "aria-label",
+      "Reroll: Reroll mutation choices. " +
+        (Game.rerolls <= 0
+          ? "No rerolls remaining."
+          : `${Game.rerolls} rerolls remaining.`),
+    );
 
     // Manage visible reason
     let rerollReasonEl = rerollBtn.querySelector("small");
@@ -3615,10 +3650,20 @@ const UI = {
     rerollBtn.style.opacity = "";
 
     const banishBtn = this.el("banishbtn");
-    const banishReason = Game.banishes <= 0 ? "No banishes remaining" : "Permanently remove a mutation";
+    const banishReason =
+      Game.banishes <= 0
+        ? "No banishes remaining"
+        : "Permanently remove a mutation";
     banishBtn.disabled = Game.banishes <= 0;
+    banishBtn.parentElement.title = banishReason;
     banishBtn.title = banishReason;
-    banishBtn.setAttribute("aria-label", "Permanently remove a mutation. " + (Game.banishes <= 0 ? "No banishes remaining." : `${Game.banishes} banishes remaining.`));
+    banishBtn.setAttribute(
+      "aria-label",
+      "Banish: Permanently remove a mutation. " +
+        (Game.banishes <= 0
+          ? "No banishes remaining."
+          : `${Game.banishes} banishes remaining.`),
+    );
 
     // Manage visible reason
     let banishReasonEl = banishBtn.querySelector("small");
