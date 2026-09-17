@@ -20,3 +20,7 @@
 ## 2024-08-27 - Contextual Disabled States for Secondary Action Buttons
 **Learning:** Secondary UI actions (like the Merchant "Reroll" button) that can be unavailable due to missing resources (e.g., Scrap) often lacked contextual feedback when disabled. Relying solely on the native `disabled` attribute leaves users wondering why an action is blocked.
 **Action:** When adding or maintaining secondary interactive elements that can be disabled due to specific conditions, ensure that native `title` and `aria-label` attributes provide descriptive, context-aware reasoning for the disabled state, and embed a visible ` <small aria-hidden="true">(reason)</small>` directly in the button to provide context to all users, especially touch users, while ensuring accessibility via `aria-label`.
+
+## 2024-05-18 - Replacing aria-label dynamically for contextual disabled states
+**Learning:** Using `aria-label` to provide context (like "No rerolls remaining") must be paired with visible elements (like `<small>`) directly inside the button when disabled to communicate that same state to sighted and touch users, rather than relying on tooltip hovers alone. Furthermore, we must avoid completely replacing the name of the button with the error reason, but rather append it to the end of the accessible name.
+**Action:** When conditionally disabling action buttons, dynamically update both the `aria-label` and visible innerHTML (using a `<small aria-hidden="true">` element) to provide explicit reasoning to all users without removing the primary action label context.

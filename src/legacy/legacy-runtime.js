@@ -3595,17 +3595,43 @@ const UI = {
     this.el("banish-n").textContent = Game.banishes;
 
     const rerollBtn = this.el("rerollbtn");
+    const rerollReason = Game.rerolls <= 0 ? "No rerolls remaining" : "Reroll mutation choices";
     rerollBtn.disabled = Game.rerolls <= 0;
-    rerollBtn.parentElement.title =
-      Game.rerolls <= 0 ? "No rerolls remaining" : "Reroll mutation choices";
+    rerollBtn.title = rerollReason;
+    rerollBtn.setAttribute("aria-label", "Reroll mutation choices. " + (Game.rerolls <= 0 ? "No rerolls remaining." : `${Game.rerolls} rerolls remaining.`));
+
+    // Manage visible reason
+    let rerollReasonEl = rerollBtn.querySelector("small");
+    if (Game.rerolls <= 0) {
+      if (!rerollReasonEl) {
+        rerollReasonEl = document.createElement("small");
+        rerollReasonEl.setAttribute("aria-hidden", "true");
+        rerollBtn.appendChild(rerollReasonEl);
+      }
+      rerollReasonEl.textContent = " (No rerolls remaining)";
+    } else if (rerollReasonEl) {
+      rerollReasonEl.remove();
+    }
     rerollBtn.style.opacity = "";
 
     const banishBtn = this.el("banishbtn");
+    const banishReason = Game.banishes <= 0 ? "No banishes remaining" : "Permanently remove a mutation";
     banishBtn.disabled = Game.banishes <= 0;
-    banishBtn.parentElement.title =
-      Game.banishes <= 0
-        ? "No banishes remaining"
-        : "Permanently remove a mutation";
+    banishBtn.title = banishReason;
+    banishBtn.setAttribute("aria-label", "Permanently remove a mutation. " + (Game.banishes <= 0 ? "No banishes remaining." : `${Game.banishes} banishes remaining.`));
+
+    // Manage visible reason
+    let banishReasonEl = banishBtn.querySelector("small");
+    if (Game.banishes <= 0) {
+      if (!banishReasonEl) {
+        banishReasonEl = document.createElement("small");
+        banishReasonEl.setAttribute("aria-hidden", "true");
+        banishBtn.appendChild(banishReasonEl);
+      }
+      banishReasonEl.textContent = " (No banishes remaining)";
+    } else if (banishReasonEl) {
+      banishReasonEl.remove();
+    }
     banishBtn.style.opacity = "";
     banishBtn.style.background = Game.banishMode ? "rgba(255,45,120,.15)" : "";
     this.show("levelup");
