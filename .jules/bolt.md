@@ -91,3 +91,19 @@
 ## 2024-09-17 - Array chaining in placement suggestion service
 **Learning:** Using `Object.values().map().filter().map()` chains inside the `placement-suggestion-service.js` hot path for module placement created severe intermediate array allocations and GC overhead on every frame while previewing placements.
 **Action:** Replace `Object.values(obj).map().filter().map()` chains with single-pass imperative `for...in` loops combined with early `continue` statements for filtering to eliminate all intermediate array allocations.
+## 2024-05-14 - Imperative spatial queries and param-passing filters
+**Learning:** In hot spatial queries like collision detection (`overlapsAny`), chaining array methods like `.filter().some()` to exclude self-bounds before performing overlap checks creates immense GC pressure from intermediate array allocation.
+**Action:** Replace these chained calls with a single-pass imperative `for` loop, and introduce parameters like `ignoreOwnerId` to the query function so that filtering logic can be evaluated directly in the hot loop without any array allocations.
+## 2024-05-18 - Parameter sentinels in hot loops
+**Learning:** When adding an optional parameter (like `ignoreOwnerId`) to avoid `.filter()` allocations, avoid using `null` as the default. If the object's property is actually `null`, `null !== null` will evaluate to false and falsely trigger an ignore.
+**Action:** Use `undefined` as the default (or omit it) and check `ignoreOwnerId === undefined` before applying the exclusion logic.
+
+## 2025-02-18 - Replacing chained array methods in hot paths with imperative loops
+**Learning:** Chained array methods (like `.flatMap()`, `.map()`, and `.filter()`) inside frequently executed code paths (such as the `calculate` method of `stat-engine.js`) create multiple intermediate O(N) array allocations. In scenarios involving tight game loops or frequent UI recalculations, this builds significant GC pressure and can degrade overall application performance.
+**Action:** Replace chained `.flatMap().map().filter()` array manipulations inside hot paths with a single-pass imperative `for` loop to build up the required array directly, saving memory allocations and preventing potential stuttering.
+## 2025-02-18 - Object.values().find() is an O(N) allocation trap
+**Learning:** Using `Object.values(obj).find(...)` to search an object's properties forces the JavaScript engine to allocate a completely new array containing all of the object's values before the `.find()` method even begins iterating. In high-frequency functions or when dealing with objects with many properties (like `nodesById` or `secondaryConnectionsById` in `branch-failure-service`), this creates massive, unnecessary garbage collection overhead and prevents short-circuiting the underlying property traversal.
+**Action:** Replace `Object.values(obj).find(...)` in hot paths with a traditional `for...in` loop with an `Object.hasOwn(obj, key)` check. This allows returning immediately upon finding a match (true O(1) best case and O(N) worst case without the initial O(N) array allocation).
+## 2025-02-18 - Avoiding intermediate arrays in assembly state updates
+**Learning:** During ship assembly updates (handled in `module-fault-adapter.js` via `assembly:changed` events), using chained array methods like `Object.values(snapshot.nodesById).map(…).filter(…)` allocates multiple intermediate arrays on a highly frequent event path, creating significant garbage collection pressure and potentially inducing stutter during gameplay interactions.
+**Action:** Replace `Object.values(…).map(…).filter(…)` chains in hot event handlers like `assembly:changed` with a single-pass imperative `for...in` loop checking `Object.hasOwn()`. This eliminates the intermediate array allocations while keeping the behavior identical.
