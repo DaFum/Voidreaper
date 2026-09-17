@@ -12,34 +12,32 @@ export function createPlacementSuggestionService({
   return {
     suggest({ state, moduleProfile, blueprint }) {
       const geometry = geometryService.getSnapshot();
-      const evaluated = Object.values(state.portsById).map((port) => ({
-        port,
-        result: compatibilityService.evaluate({
+      const suggestions = [];
+
+      // ⚡ Bolt: Avoid intermediate array allocations from Object.values(), .map(), and .filter()
+      // in the hot path of placement suggestions by using a single-pass imperative loop.
+      for (const key in state.portsById) {
+        if (!Object.hasOwn(state.portsById, key)) continue;
+        const port = state.portsById[key];
+
+        const result = compatibilityService.evaluate({
           state,
           moduleProfile,
           port,
           geometrySnapshot: geometry,
-        }),
-      }));
-      const compatible = evaluated.filter((entry) => entry.result.compatible);
-      const suggestions = compatible.map((entry) => {
-        const target = findBlueprintTarget(
-          blueprint,
-          entry.port,
-          moduleProfile,
-        );
+        });
+
+        if (!result.compatible) continue;
+
+        const target = findBlueprintTarget(blueprint, port, moduleProfile);
         const metrics = {
-          ...geometryService.measurePlacement(
-            entry.port,
-            moduleProfile,
-            blueprint,
-          ),
+          ...geometryService.measurePlacement(port, moduleProfile, blueprint),
           blueprintMatch: blueprintMatchBonus(target?.match),
         };
         const flightDelta = flightProfileService.previewPlacement(
           {
-            ...entry.port,
-            worldPosition: entry.result.candidate?.center,
+            ...port,
+            worldPosition: result.candidate?.center,
           },
           moduleProfile,
         );
@@ -53,14 +51,14 @@ export function createPlacementSuggestionService({
           ),
         });
         const transform = {
-          position: entry.port.localPosition ?? {
-            x: (entry.port.direction?.x ?? 0) * 46,
-            y: (entry.port.direction?.y ?? 0) * 46,
+          position: port.localPosition ?? {
+            x: (port.direction?.x ?? 0) * 46,
+            y: (port.direction?.y ?? 0) * 46,
           },
-          rotation: rotationForPortDirection(entry.port.direction),
+          rotation: rotationForPortDirection(port.direction),
         };
-        return {
-          portId: entry.port.portId,
+        suggestions.push({
+          portId: port.portId,
           score,
           metrics,
           flightDelta,
@@ -68,8 +66,9 @@ export function createPlacementSuggestionService({
           blueprintNodeId: target?.node.blueprintNodeId ?? null,
           reasons: explainPlacement(metrics, flightDelta),
           transform,
-        };
-      });
+        });
+      }
+
       return suggestions
         .sort((a, b) => b.score - a.score || a.portId.localeCompare(b.portId))
         .slice(0, 3);

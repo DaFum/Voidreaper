@@ -87,6 +87,10 @@
 ## 2024-05-18 - Safe Object Maps for Iteration
 **Learning:** When using objects as lookup maps/dictionaries (like adjacency lists), `__proto__`, `constructor`, etc can cause runtime collisions if not handled, and `Object.hasOwn` checks are necessary when building arrays unless `Object.create(null)` is used. Furthermore, omitting nodes with falsy parentIDs (e.g. `0` or `""`) is incorrect if those IDs are technically valid in the data model.
 **Action:** Always use `Object.create(null)` for ad-hoc lookup maps instead of `{}` to avoid prototype inheritance issues, and check against `null` or `undefined` instead of falsy values when evaluating IDs.
+
+## 2024-09-17 - Array chaining in placement suggestion service
+**Learning:** Using `Object.values().map().filter().map()` chains inside the `placement-suggestion-service.js` hot path for module placement created severe intermediate array allocations and GC overhead on every frame while previewing placements.
+**Action:** Replace `Object.values(obj).map().filter().map()` chains with single-pass imperative `for...in` loops combined with early `continue` statements for filtering to eliminate all intermediate array allocations.
 ## 2024-05-14 - Imperative spatial queries and param-passing filters
 **Learning:** In hot spatial queries like collision detection (`overlapsAny`), chaining array methods like `.filter().some()` to exclude self-bounds before performing overlap checks creates immense GC pressure from intermediate array allocation.
 **Action:** Replace these chained calls with a single-pass imperative `for` loop, and introduce parameters like `ignoreOwnerId` to the query function so that filtering logic can be evaluated directly in the hot loop without any array allocations.
