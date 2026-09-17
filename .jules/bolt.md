@@ -87,6 +87,12 @@
 ## 2024-05-18 - Safe Object Maps for Iteration
 **Learning:** When using objects as lookup maps/dictionaries (like adjacency lists), `__proto__`, `constructor`, etc can cause runtime collisions if not handled, and `Object.hasOwn` checks are necessary when building arrays unless `Object.create(null)` is used. Furthermore, omitting nodes with falsy parentIDs (e.g. `0` or `""`) is incorrect if those IDs are technically valid in the data model.
 **Action:** Always use `Object.create(null)` for ad-hoc lookup maps instead of `{}` to avoid prototype inheritance issues, and check against `null` or `undefined` instead of falsy values when evaluating IDs.
+## 2024-05-14 - Imperative spatial queries and param-passing filters
+**Learning:** In hot spatial queries like collision detection (`overlapsAny`), chaining array methods like `.filter().some()` to exclude self-bounds before performing overlap checks creates immense GC pressure from intermediate array allocation.
+**Action:** Replace these chained calls with a single-pass imperative `for` loop, and introduce parameters like `ignoreOwnerId` to the query function so that filtering logic can be evaluated directly in the hot loop without any array allocations.
+## 2024-05-18 - Parameter sentinels in hot loops
+**Learning:** When adding an optional parameter (like `ignoreOwnerId`) to avoid `.filter()` allocations, avoid using `null` as the default. If the object's property is actually `null`, `null !== null` will evaluate to false and falsely trigger an ignore.
+**Action:** Use `undefined` as the default (or omit it) and check `ignoreOwnerId === undefined` before applying the exclusion logic.
 
 ## 2025-02-18 - Replacing chained array methods in hot paths with imperative loops
 **Learning:** Chained array methods (like `.flatMap()`, `.map()`, and `.filter()`) inside frequently executed code paths (such as the `calculate` method of `stat-engine.js`) create multiple intermediate O(N) array allocations. In scenarios involving tight game loops or frequent UI recalculations, this builds significant GC pressure and can degrade overall application performance.
