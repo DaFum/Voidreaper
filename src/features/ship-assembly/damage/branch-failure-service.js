@@ -1,16 +1,27 @@
 export function findSurvivingSecondaryConnection(snapshot, childNodeId) {
-  return (
-    Object.values(snapshot.secondaryConnectionsById).find((connection) => {
+  // ⚡ Bolt: Use a for-in loop instead of Object.values().find() to eliminate
+  // intermediate array allocations and allow early exit.
+  const connections = snapshot.secondaryConnectionsById;
+  for (const key in connections) {
+    if (Object.hasOwn(connections, key)) {
+      const connection = connections[key];
       const touches =
-          connection.sourceNodeId === childNodeId ||
-          connection.targetNodeId === childNodeId,
-        other =
+        connection.sourceNodeId === childNodeId ||
+        connection.targetNodeId === childNodeId;
+
+      if (touches) {
+        const other =
           connection.sourceNodeId === childNodeId
             ? connection.targetNodeId
             : connection.sourceNodeId;
-      return touches && Boolean(snapshot.nodesById[other]);
-    }) ?? null
-  );
+
+        if (snapshot.nodesById[other]) {
+          return connection;
+        }
+      }
+    }
+  }
+  return null;
 }
 export function createBranchFailureService({
   assemblyService,
