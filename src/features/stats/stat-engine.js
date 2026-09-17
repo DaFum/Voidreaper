@@ -31,19 +31,26 @@ export function createStatEngine(
     calculate(statId, context = {}) {
       const definition = definitionMap.get(statId);
       if (!definition) return null;
-      const modifiers = sourceProvider(context)
-        .flatMap((source) =>
-          (source.modifiers ?? []).map((modifier) => ({
+      // ⚡ Bolt: Use a single-pass imperative for-loop instead of chained array methods
+      // (.flatMap, .map, .filter) to minimize GC pressure and O(N) array allocations in the calculation hot path.
+      const modifiers = [];
+      for (const source of sourceProvider(context)) {
+        if (!source.modifiers) continue;
+        for (const modifier of source.modifiers) {
+          const normalizedModifier = {
             ...modifier,
             sourceId: modifier.sourceId ?? source.id,
-          })),
-        )
-        .filter(
-          (modifier) =>
-            modifier.targetStat === statId &&
-            (!modifier.condition || modifier.condition(context)),
-        )
-        .sort((a, b) => stageValue(a) - stageValue(b));
+          };
+          if (
+            normalizedModifier.targetStat === statId &&
+            (!normalizedModifier.condition ||
+              normalizedModifier.condition(context))
+          ) {
+            modifiers.push(normalizedModifier);
+          }
+        }
+      }
+      modifiers.sort((a, b) => stageValue(a) - stageValue(b));
       let value = definition.baseValue;
       const contributions = [];
       for (const modifier of modifiers) {
