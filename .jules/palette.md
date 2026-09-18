@@ -30,3 +30,6 @@
 ## 2026-09-10 - Visible Context for Legacy UI Action Buttons
 **Learning:** The legacy UI buttons (Reroll and Banish) lacked visible feedback when disabled (e.g., when no rerolls or banishes remain). This means touch users could not see why the actions were disabled since they don't see tooltips.
 **Action:** Appended visible text via `<small aria-hidden="true">(reason)</small>` to disabled buttons in legacy systems, complementing existing `aria-label` and `title` updates for a universally accessible experience.
+## 2024-05-18 - Decorative Unicode characters in interactive elements
+**Learning:** Decorative Unicode characters (like `⟲`, `✕`, `◇`, or emojis) inside interactive elements are read out by screen readers using their literal character names (e.g., "anticlockwise open circle arrow", "white diamond"), which creates a poor audio experience.
+**Action:** Wrap decorative text-based symbols or Unicode icons inside interactive elements with `<span aria-hidden="true">` to prevent screen readers from reading out literal character names.
