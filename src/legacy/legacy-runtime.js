@@ -3622,7 +3622,7 @@ const UI = {
       ["Score", g.score],
       ["Kills", g.kills],
       ["Max combo", "x" + (1 + Math.min(4, (g.maxCombo / 6) | 0))],
-      ["Shards", "<span aria-hidden=\"true\">◇</span> " + g.shardsRun],
+      ["Shards", g.shardsRun, "<span aria-hidden=\"true\">◇</span> "],
       ["Damage", "x" + p.dmgMul.toFixed(2)],
       ["Fire rate", (1 / p.fireRate).toFixed(1) + "/s"],
       ["Projectiles", p.shots],
@@ -3640,7 +3640,7 @@ const UI = {
     ].filter((k) => p[k]).length;
     rows.push(["Evolutions", evos]);
     this.el("pausestats").innerHTML = rows
-      .map((r) => `<span>${escapeHtml(r[0])}</span><b>${escapeHtml(r[1])}</b>`)
+      .map((r) => `<span>${escapeHtml(r[0])}</span><b>${r[2] || ""}${escapeHtml(r[1])}</b>`)
       .join("");
   },
   gameOver(g, shardsGained, isBest) {
