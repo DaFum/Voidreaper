@@ -3574,11 +3574,11 @@ const UI = {
       const btn = document.createElement("button");
       if (o.evo) {
         btn.className = "card evo";
-        btn.innerHTML = `<span class="ico">${escapeHtml(o.evo.ico)}</span><span class="nm">${escapeHtml(o.evo.nm)}</span> <span class="lv" style="color:var(--gold)">EVOLUTION</span><div class="ds">${escapeHtml(o.evo.ds)}</div>`;
+        btn.innerHTML = `<span class="ico" aria-hidden="true">${escapeHtml(o.evo.ico)}</span><span class="nm">${escapeHtml(o.evo.nm)}</span> <span class="lv" style="color:var(--gold)">EVOLUTION</span><div class="ds">${escapeHtml(o.evo.ds)}</div>`;
       } else {
         const lv = (Game.upgradeCounts[o.up.id] || 0) + 1;
         btn.className = "card";
-        btn.innerHTML = `<span class="ico">${escapeHtml(o.up.ico)}</span><span class="nm">${escapeHtml(o.up.nm)}</span> <span class="lv">LV ${escapeHtml(lv)}/${escapeHtml(o.up.max)}</span><div class="ds">${escapeHtml(o.up.ds)}</div>`;
+        btn.innerHTML = `<span class="ico" aria-hidden="true">${escapeHtml(o.up.ico)}</span><span class="nm">${escapeHtml(o.up.nm)}</span> <span class="lv">LV ${escapeHtml(lv)}/${escapeHtml(o.up.max)}</span><div class="ds">${escapeHtml(o.up.ds)}</div>`;
       }
       btn.addEventListener("click", () => {
         if (Game.banishMode && !o.evo) {
@@ -3599,7 +3599,7 @@ const UI = {
     const rerollTitle = Game.rerolls <= 0 ? "Reroll mutation choices - No rerolls remaining" : "Reroll mutation choices";
     rerollBtn.parentElement.title = rerollTitle;
     rerollBtn.setAttribute("aria-label", rerollTitle);
-    rerollBtn.innerHTML = `⟲ Reroll (<span id="reroll-n">${Game.rerolls}</span>)${Game.rerolls <= 0 ? ' <small class="item-card__reason" aria-hidden="true">(No rerolls remaining)</small>' : ''}`;
+    rerollBtn.innerHTML = `<span aria-hidden="true">⟲</span> Reroll (<span id="reroll-n">${Game.rerolls}</span>)${Game.rerolls <= 0 ? ' <small class="item-card__reason" aria-hidden="true">(No rerolls remaining)</small>' : ''}`;
     rerollBtn.style.opacity = "";
 
     const banishBtn = this.el("banishbtn");
@@ -3607,7 +3607,7 @@ const UI = {
     const banishTitle = Game.banishes <= 0 ? "Permanently remove a mutation - No banishes remaining" : "Permanently remove a mutation";
     banishBtn.parentElement.title = banishTitle;
     banishBtn.setAttribute("aria-label", banishTitle);
-    banishBtn.innerHTML = `✕ Banish (<span id="banish-n">${Game.banishes}</span>)${Game.banishes <= 0 ? ' <small class="item-card__reason" aria-hidden="true">(No banishes remaining)</small>' : ''}`;
+    banishBtn.innerHTML = `<span aria-hidden="true">✕</span> Banish (<span id="banish-n">${Game.banishes}</span>)${Game.banishes <= 0 ? ' <small class="item-card__reason" aria-hidden="true">(No banishes remaining)</small>' : ''}`;
     banishBtn.style.opacity = "";
     banishBtn.style.background = Game.banishMode ? "rgba(255,45,120,.15)" : "";
     this.show("levelup");
@@ -3622,7 +3622,7 @@ const UI = {
       ["Score", g.score],
       ["Kills", g.kills],
       ["Max combo", "x" + (1 + Math.min(4, (g.maxCombo / 6) | 0))],
-      ["Shards", "◇ " + g.shardsRun],
+      ["Shards", "<span aria-hidden=\"true\">◇</span> " + g.shardsRun],
       ["Damage", "x" + p.dmgMul.toFixed(2)],
       ["Fire rate", (1 / p.fireRate).toFixed(1) + "/s"],
       ["Projectiles", p.shots],
