@@ -4,8 +4,15 @@ import {
   CORRUPTION_THRESHOLDS,
 } from "../../content/corruption/corruption-rules.js";
 
-const tierFor = (value) =>
-  [...CORRUPTION_THRESHOLDS].reverse().find((rule) => value >= rule.value);
+const tierFor = (value) => {
+  // ⚡ Bolt: Avoid array spreading and reverse() in threshold lookups
+  // to prevent intermediate array allocations and GC overhead in hot paths.
+  for (let i = CORRUPTION_THRESHOLDS.length - 1; i >= 0; i--) {
+    if (value >= CORRUPTION_THRESHOLDS[i].value)
+      return CORRUPTION_THRESHOLDS[i];
+  }
+  return undefined;
+};
 
 export function createCorruptionState(value = 0) {
   const tier = tierFor(value);

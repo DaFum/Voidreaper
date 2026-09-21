@@ -14,9 +14,14 @@ export function createHeatState() {
   };
 }
 
-const thresholdFor = (value) =>
-  [...HEAT_THRESHOLDS].reverse().find((threshold) => value >= threshold.value)
-    ?.id ?? "cold";
+const thresholdFor = (value) => {
+  // ⚡ Bolt: Avoid array spreading and reverse() in threshold lookups
+  // to prevent intermediate array allocations and GC overhead in hot paths.
+  for (let i = HEAT_THRESHOLDS.length - 1; i >= 0; i--) {
+    if (value >= HEAT_THRESHOLDS[i].value) return HEAT_THRESHOLDS[i].id;
+  }
+  return "cold";
+};
 
 export function createHeatSystem({ eventBus, modules } = {}) {
   return {
