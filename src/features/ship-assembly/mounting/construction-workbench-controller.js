@@ -58,9 +58,18 @@ export function createConstructionWorkbenchController({
         state = assemblyService.getSnapshot(),
         node = state.nodesById[current.selectedNodeId];
       if (!node) return { allowed: false, warnings: ["Kein Modul ausgewählt"] };
-      const childCount = Object.values(state.nodesById).filter(
-        (item) => item.parentNodeId === node.nodeId,
-      ).length;
+
+      // ⚡ Bolt: Avoid intermediate array allocations from Object.values() and .filter()
+      // in the workbench consequence preview by using a single-pass imperative for-in loop.
+      let childCount = 0;
+      for (const key in state.nodesById) {
+        if (Object.hasOwn(state.nodesById, key)) {
+          if (state.nodesById[key].parentNodeId === node.nodeId) {
+            childCount++;
+          }
+        }
+      }
+
       return {
         allowed: includeBranch || childCount === 0,
         warnings:
