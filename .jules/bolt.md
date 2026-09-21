@@ -108,6 +108,9 @@
 **Learning:** During ship assembly updates (handled in `module-fault-adapter.js` via `assembly:changed` events), using chained array methods like `Object.values(snapshot.nodesById).map(…).filter(…)` allocates multiple intermediate arrays on a highly frequent event path, creating significant garbage collection pressure and potentially inducing stutter during gameplay interactions.
 **Action:** Replace `Object.values(…).map(…).filter(…)` chains in hot event handlers like `assembly:changed` with a single-pass imperative `for...in` loop checking `Object.hasOwn()`. This eliminates the intermediate array allocations while keeping the behavior identical.
 
-## $(date +%Y-%m-%d) - Array chaining optimization in challenge codex
+## 2025-02-20 - Array spreading and reverse() in threshold lookups
+**Learning:** Using `[...THRESHOLDS].reverse().find(rule => value >= rule.value)` allocates a new array, copies all elements, reverses it in-place, and then runs a `.find()` on it. This creates unnecessary garbage collection pressure when called frequently, such as in heat or corruption systems.
+**Action:** In threshold lookups, iterate backward through the constant threshold array using an imperative `for` loop from `length - 1` down to `0` to completely eliminate the array allocations and `reverse()` operations.
+## 2025-02-20 - Array chaining optimization in challenge codex
 **Learning:** In UI render functions (like `renderChallengesScreen`), chaining `Object.values().filter().length` on objects creates two intermediate arrays and iterates the values twice just to count a subset of items, causing unnecessary GC pressure.
 **Action:** When counting items in an object based on a condition, replace `Object.values().filter().length` chains with a single-pass imperative `for...in` loop with `Object.hasOwn()` that increments a counter directly.
