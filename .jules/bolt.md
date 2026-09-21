@@ -111,6 +111,6 @@
 ## 2025-02-20 - Array spreading and reverse() in threshold lookups
 **Learning:** Using `[...THRESHOLDS].reverse().find(rule => value >= rule.value)` allocates a new array, copies all elements, reverses it in-place, and then runs a `.find()` on it. This creates unnecessary garbage collection pressure when called frequently, such as in heat or corruption systems.
 **Action:** In threshold lookups, iterate backward through the constant threshold array using an imperative `for` loop from `length - 1` down to `0` to completely eliminate the array allocations and `reverse()` operations.
-## $(date +%Y-%m-%d) - Array chaining optimization in challenge codex
+## 2025-02-20 - Array chaining optimization in challenge codex
 **Learning:** In UI render functions (like `renderChallengesScreen`), chaining `Object.values().filter().length` on objects creates two intermediate arrays and iterates the values twice just to count a subset of items, causing unnecessary GC pressure.
 **Action:** When counting items in an object based on a condition, replace `Object.values().filter().length` chains with a single-pass imperative `for...in` loop with `Object.hasOwn()` that increments a counter directly.
