@@ -1960,7 +1960,13 @@ const Game = {
         Persist.data.ach.push(a.id);
         Persist.data.shards += a.shards;
         Persist.save();
-        UI.toast(`<span aria-hidden="true">★</span> ${a.nm} — +${a.shards}◇`);
+        const frag = document.createDocumentFragment();
+        const span = document.createElement("span");
+        span.setAttribute("aria-hidden", "true");
+        span.textContent = "★";
+        frag.appendChild(span);
+        frag.appendChild(document.createTextNode(` ${a.nm} — +${a.shards}◇`));
+        UI.toast(frag);
         AudioSys.evolve();
       }
     }
@@ -3496,7 +3502,11 @@ const UI = {
 
     const t = document.createElement("div");
     t.className = "toast";
-    t.textContent = msg;
+    if (msg instanceof Node) {
+      t.appendChild(msg);
+    } else {
+      t.textContent = msg;
+    }
     toastsContainer.appendChild(t);
 
     if (!isReducedMotion()) {
