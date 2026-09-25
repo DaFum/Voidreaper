@@ -14,7 +14,7 @@ export function renderBlueprintDetail(
   { blueprint, active = false, onAction } = {},
 ) {
   const thumbnail = safeImageDataUrl(blueprint.thumbnailDataUrl);
-  root.innerHTML = `<section class="blueprint-detail"><header><button type="button" data-action="back">← ARCHIV</button><small>${escapeHtml(blueprint.shipFrameId)} // ${escapeHtml(Number(blueprint.nodes?.length ?? 0))} KNOTEN</small><h2>${escapeHtml(blueprint.name)}</h2>${active ? "<b>AKTIVE VORLAGE</b>" : ""}</header><div class="blueprint-detail__preview">${thumbnail ? `<img src="${thumbnail}" alt="Bauplan ${escapeHtml(blueprint.name)}">` : "KEINE MINIATUR"}</div><div class="blueprint-detail__actions" data-tutorial-id="blueprint-actions">${[
+  root.innerHTML = `<section class="blueprint-detail"><header><button type="button" data-action="back"><span aria-hidden="true">←</span> ARCHIV</button><small>${escapeHtml(blueprint.shipFrameId)} // ${escapeHtml(Number(blueprint.nodes?.length ?? 0))} KNOTEN</small><h2>${escapeHtml(blueprint.name)}</h2>${active ? "<b>AKTIVE VORLAGE</b>" : ""}</header><div class="blueprint-detail__preview">${thumbnail ? `<img src="${thumbnail}" alt="Bauplan ${escapeHtml(blueprint.name)}">` : "KEINE MINIATUR"}</div><div class="blueprint-detail__actions" data-tutorial-id="blueprint-actions">${[
     ["activate", active ? "AKTIV" : "ALS STANDARD"],
     ["rename", "UMBENENNEN"],
     ["duplicate", "DUPLIZIEREN"],

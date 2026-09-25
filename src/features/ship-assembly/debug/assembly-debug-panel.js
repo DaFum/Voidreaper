@@ -1,6 +1,6 @@
 import { escapeHtml } from "../../../ui/escape-html.js";
 export function createAssemblyDebugPanel(root, service) {
-  root.innerHTML = `<aside class="assembly-debug"><header><small>DEV // ASSEMBLY</small><button data-action="close">×</button></header><label>SZENARIO<select data-role="scenario">${service
+  root.innerHTML = `<aside class="assembly-debug"><header><small>DEV // ASSEMBLY</small><button data-action="close" aria-label="Schließen" title="Schließen"><span aria-hidden="true">×</span></button></header><label>SZENARIO<select data-role="scenario">${service
     .listScenarios()
     .map((id) => `<option value="${escapeHtml(id)}">${escapeHtml(id)}</option>`)
     .join(
