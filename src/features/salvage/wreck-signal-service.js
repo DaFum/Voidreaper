@@ -44,9 +44,17 @@ export function createWreckSignalService() {
       return signals;
     },
     visible(signals) {
-      return Object.values(signals).filter(
-        (signal) => signal.status === "visible",
-      );
+      // ⚡ Bolt: Avoid intermediate array allocations from Object.values().filter()
+      // in frequent queries by using a single-pass imperative loop.
+      const result = [];
+      for (const key in signals) {
+        if (!Object.hasOwn(signals, key)) continue;
+        const signal = signals[key];
+        if (signal.status === "visible") {
+          result.push(signal);
+        }
+      }
+      return result;
     },
   };
 }
