@@ -118,3 +118,6 @@
 ## 2025-02-20 - Replacing chained array methods in game controller and salvage service
 **Learning:** Using `Object.values(obj).filter()` chaining to search or collect object properties allocates intermediate arrays just to filter over them, increasing garbage collection pressure. This happens even in initialization paths like `game-controller.js` or queries in `wreck-signal-service.js`.
 **Action:** Replace `Object.values(obj).filter()` in frequent queries with a single-pass imperative `for...in` loop with an `Object.hasOwn()` check to build arrays directly and skip the initial O(N) extraction array.
+## 2025-02-23 - Avoiding intermediate arrays in branch failure resolution
+**Learning:** During ship assembly branch failure evaluation, `Object.values(initial.nodesById).filter(...).map(...)` allocates multiple arrays when extracting child nodes for `resolveNodeLoss`. Since this path handles active gameplay events where damage causes pieces to detach, optimizing it reduces GC pressure.
+**Action:** Replace `Object.values(...).filter(...).map(...)` arrays in hot simulation paths with imperative `for...in` loops that populate a single pre-allocated (or dynamically filled) array.
