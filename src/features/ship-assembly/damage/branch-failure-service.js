@@ -29,10 +29,20 @@ export function createBranchFailureService({
 }) {
   return {
     resolveNodeLoss(nodeId) {
-      const initial = assemblyService.getSnapshot(),
-        childIds = Object.values(initial.nodesById)
-          .filter((node) => node.parentNodeId === nodeId)
-          .map((node) => node.nodeId);
+      const initial = assemblyService.getSnapshot();
+
+      // ⚡ Bolt: Avoid intermediate array allocations from Object.values(), .filter(), and .map()
+      // in the hot path of damage resolution by using a single-pass imperative loop.
+      const childIds = [];
+      for (const key in initial.nodesById) {
+        if (Object.hasOwn(initial.nodesById, key)) {
+          const node = initial.nodesById[key];
+          if (node.parentNodeId === nodeId) {
+            childIds.push(node.nodeId);
+          }
+        }
+      }
+
       for (const childNodeId of childIds) {
         const live = assemblyService.getSnapshot();
         if (!live.nodesById[childNodeId]) continue;

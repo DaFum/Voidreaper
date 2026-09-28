@@ -114,3 +114,6 @@
 ## 2025-02-20 - Array chaining optimization in challenge codex
 **Learning:** In UI render functions (like `renderChallengesScreen`), chaining `Object.values().filter().length` on objects creates two intermediate arrays and iterates the values twice just to count a subset of items, causing unnecessary GC pressure.
 **Action:** When counting items in an object based on a condition, replace `Object.values().filter().length` chains with a single-pass imperative `for...in` loop with `Object.hasOwn()` that increments a counter directly.
+## 2025-02-23 - Avoiding intermediate arrays in branch failure resolution
+**Learning:** During ship assembly branch failure evaluation, `Object.values(initial.nodesById).filter(...).map(...)` allocates multiple arrays when extracting child nodes for `resolveNodeLoss`. Since this path handles active gameplay events where damage causes pieces to detach, optimizing it reduces GC pressure.
+**Action:** Replace `Object.values(...).filter(...).map(...)` arrays in hot simulation paths with imperative `for...in` loops that populate a single pre-allocated (or dynamically filled) array.
