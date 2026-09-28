@@ -52,11 +52,23 @@ export const createRootPortPosition = (template) => ({
   x: template.direction.x * 72,
   y: template.direction.y * 72,
 });
-export const equippedAssemblyItems = (loadout) =>
-  Object.entries(loadout?.slots ?? {})
-    .filter(([slot]) => slot !== "ship")
-    .flatMap(([, items]) => items)
-    .filter(Boolean);
+export const equippedAssemblyItems = (loadout) => {
+  // ⚡ Bolt: Avoid intermediate arrays from Object.entries().filter().flatMap().filter()
+  // by using a single-pass imperative loop to minimize GC pressure during loadout evaluation.
+  const result = [];
+  if (!loadout?.slots) return result;
+  for (const slotName in loadout.slots) {
+    if (slotName === "ship" || !Object.hasOwn(loadout.slots, slotName))
+      continue;
+    const items = loadout.slots[slotName];
+    if (!items) continue;
+    const itemsArray = Array.isArray(items) ? items : [items];
+    for (let i = 0; i < itemsArray.length; i++) {
+      if (itemsArray[i]) result.push(itemsArray[i]);
+    }
+  }
+  return result;
+};
 
 function createRunInventoryAdapter(run) {
   let cachedInventoryRef = null;

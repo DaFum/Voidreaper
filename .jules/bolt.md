@@ -114,3 +114,7 @@
 ## 2025-02-20 - Array chaining optimization in challenge codex
 **Learning:** In UI render functions (like `renderChallengesScreen`), chaining `Object.values().filter().length` on objects creates two intermediate arrays and iterates the values twice just to count a subset of items, causing unnecessary GC pressure.
 **Action:** When counting items in an object based on a condition, replace `Object.values().filter().length` chains with a single-pass imperative `for...in` loop with `Object.hasOwn()` that increments a counter directly.
+
+## 2025-02-20 - Avoid filter and flatMap chains in Loadout Evaluation
+**Learning:** In frequently evaluated loadout parsers like `equippedAssemblyItems`, chained methods (`.entries().filter().flatMap().filter()`) allocate several intermediate arrays per call. As loadouts are queried repeatedly during gameplay, this compounds GC overhead and can induce minor frame stuttering.
+**Action:** Replace functional array manipulations on `loadout.slots` with a single-pass imperative `for...in` loop checking `Object.hasOwn` and safely pushing directly to an accumulator array, completely skipping `flatMap` overhead.
