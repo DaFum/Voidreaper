@@ -71,13 +71,21 @@ export function createBlueprintService({
           variants: previous?.visualVariants ?? [],
         });
       if (previous) blueprint.createdAt = previous.createdAt;
-      if (veteran)
-        blueprint.veteranDamage = Object.values(assemblySnapshot.nodesById)
-          .filter((node) => node.damageState !== "intact")
-          .map((node) => ({
-            blueprintNodeId: node.nodeId,
-            damageState: node.damageState,
-          }));
+      if (veteran) {
+        // ⚡ Bolt: Avoid intermediate arrays from Object.values(), .filter(), and .map()
+        // by using a single-pass imperative loop.
+        blueprint.veteranDamage = [];
+        for (const key in assemblySnapshot.nodesById) {
+          if (!Object.hasOwn(assemblySnapshot.nodesById, key)) continue;
+          const node = assemblySnapshot.nodesById[key];
+          if (node.damageState !== "intact") {
+            blueprint.veteranDamage.push({
+              blueprintNodeId: node.nodeId,
+              damageState: node.damageState,
+            });
+          }
+        }
+      }
       blueprint.thumbnailDataUrl =
         (await thumbnailService?.render?.(
           geometrySnapshot ?? assemblySnapshot,

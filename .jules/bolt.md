@@ -57,17 +57,19 @@
 ## 2024-05-18 - Avoid chained array extractions
 **Learning:** Chained array methods that extract a limited subset (e.g., `.filter(condition).slice(0, limit).map(...)`) are a performance bottleneck because they force a full O(N) traversal of the initial array and allocate multiple intermediate arrays before slicing.
 **Action:** When extracting a subset with a known limit, replace chained methods with an imperative `for` loop, tracking the extracted count, pushing to a results array, and using `break` once the limit is reached to short-circuit execution.
+
 ## 2024-05-18 - Raycasting and Angle Normalization Hot Path Optimization
 **Learning:** In hot geometric algorithms (like AABB ray intersections and angular distance checking), dynamic property access (e.g., \`bounds[\`min\${axis}\`]\`), array instantiations for loop iterations (e.g., \`[["x", dx], ["y", dy]]\`), and chained array methods (\`Array.from().filter().some()\`) create massive garbage collection pressure and CPU overhead. Additionally, using \`Math.atan2(Math.sin(), Math.cos())\` just to normalize an angle is vastly slower than using a simple modulo operation.
 **Action:** When calculating angle differences, use \`let a = Math.abs(value) % (Math.PI * 2); return a > Math.PI ? Math.PI * 2 - a : a;\` instead of trigonometry. Always unroll axis-based iterations into explicit \`x\` and \`y\` blocks to allow constant-time property access, and strictly replace all functional array chains with imperative \`for\` loops in high-frequency rendering or collision paths.
 
-## $(date +%Y-%m-%d) - Optimize Array Removal in Drone Controller
+## 2025-02-18 - Optimize Array Removal in Drone Controller
 **Learning:** When optimizing array removals in performance-critical paths where the array cannot be reassigned (e.g., referenced externally or accessed via getters), avoid using `splice()` in a loop as it causes O(N²) time complexity.
 **Action:** Use an O(N) in-place two-pointer filtering approach (e.g., `arr[writeIdx++] = arr[i]`) combined with an O(1) lookup structure (like a `Set`) and truncate the array afterwards (`arr.length = writeIdx`) to preserve the original array reference while drastically improving performance.
 
 ## 2025-02-18 - Replacing map/filter in Hot Paths
 **Learning:** In highly frequent spatial queries, such as updating and querying the ship assembly hit-zone index (`hit-zone-index.js`), using `.filter(..).map(..)` chaining causes continuous dynamic array allocations. The Garbage Collection (GC) overhead compounds drastically under load and can negatively impact framerates.
 **Action:** Replace all `.filter().map()` array manipulation chains inside high-frequency collision or indexing paths with pre-allocated arrays (or re-used arrays where possible) and imperative single-pass `for` loops.
+
 ## 2024-05-18 - Avoid spreading Map iterators into arrays for sorting
 **Learning:** Spreading Map iterators into arrays (e.g., `[...map.entries()]`) to perform `.sort()` operations just to find a maximum or minimum value is highly inefficient. It allocates intermediate arrays and performs O(N log N) sorting when an O(N) imperative loop could find the max/min value without array allocations.
 **Action:** In performance-critical paths, use an imperative `for...of` loop to iterate over `map.entries()` and track the maximum/minimum value manually to avoid unnecessary allocations and overhead.
@@ -91,9 +93,11 @@
 ## 2024-09-17 - Array chaining in placement suggestion service
 **Learning:** Using `Object.values().map().filter().map()` chains inside the `placement-suggestion-service.js` hot path for module placement created severe intermediate array allocations and GC overhead on every frame while previewing placements.
 **Action:** Replace `Object.values(obj).map().filter().map()` chains with single-pass imperative `for...in` loops combined with early `continue` statements for filtering to eliminate all intermediate array allocations.
+
 ## 2024-05-14 - Imperative spatial queries and param-passing filters
 **Learning:** In hot spatial queries like collision detection (`overlapsAny`), chaining array methods like `.filter().some()` to exclude self-bounds before performing overlap checks creates immense GC pressure from intermediate array allocation.
 **Action:** Replace these chained calls with a single-pass imperative `for` loop, and introduce parameters like `ignoreOwnerId` to the query function so that filtering logic can be evaluated directly in the hot loop without any array allocations.
+
 ## 2024-05-18 - Parameter sentinels in hot loops
 **Learning:** When adding an optional parameter (like `ignoreOwnerId`) to avoid `.filter()` allocations, avoid using `null` as the default. If the object's property is actually `null`, `null !== null` will evaluate to false and falsely trigger an ignore.
 **Action:** Use `undefined` as the default (or omit it) and check `ignoreOwnerId === undefined` before applying the exclusion logic.
@@ -101,9 +105,11 @@
 ## 2025-02-18 - Replacing chained array methods in hot paths with imperative loops
 **Learning:** Chained array methods (like `.flatMap()`, `.map()`, and `.filter()`) inside frequently executed code paths (such as the `calculate` method of `stat-engine.js`) create multiple intermediate O(N) array allocations. In scenarios involving tight game loops or frequent UI recalculations, this builds significant GC pressure and can degrade overall application performance.
 **Action:** Replace chained `.flatMap().map().filter()` array manipulations inside hot paths with a single-pass imperative `for` loop to build up the required array directly, saving memory allocations and preventing potential stuttering.
+
 ## 2025-02-18 - Object.values().find() is an O(N) allocation trap
 **Learning:** Using `Object.values(obj).find(...)` to search an object's properties forces the JavaScript engine to allocate a completely new array containing all of the object's values before the `.find()` method even begins iterating. In high-frequency functions or when dealing with objects with many properties (like `nodesById` or `secondaryConnectionsById` in `branch-failure-service`), this creates massive, unnecessary garbage collection overhead and prevents short-circuiting the underlying property traversal.
 **Action:** Replace `Object.values(obj).find(...)` in hot paths with a traditional `for...in` loop with an `Object.hasOwn(obj, key)` check. This allows returning immediately upon finding a match (true O(1) best case and O(N) worst case without the initial O(N) array allocation).
+
 ## 2025-02-18 - Avoiding intermediate arrays in assembly state updates
 **Learning:** During ship assembly updates (handled in `module-fault-adapter.js` via `assembly:changed` events), using chained array methods like `Object.values(snapshot.nodesById).map(…).filter(…)` allocates multiple intermediate arrays on a highly frequent event path, creating significant garbage collection pressure and potentially inducing stutter during gameplay interactions.
 **Action:** Replace `Object.values(…).map(…).filter(…)` chains in hot event handlers like `assembly:changed` with a single-pass imperative `for...in` loop checking `Object.hasOwn()`. This eliminates the intermediate array allocations while keeping the behavior identical.
@@ -111,6 +117,7 @@
 ## 2025-02-20 - Array spreading and reverse() in threshold lookups
 **Learning:** Using `[...THRESHOLDS].reverse().find(rule => value >= rule.value)` allocates a new array, copies all elements, reverses it in-place, and then runs a `.find()` on it. This creates unnecessary garbage collection pressure when called frequently, such as in heat or corruption systems.
 **Action:** In threshold lookups, iterate backward through the constant threshold array using an imperative `for` loop from `length - 1` down to `0` to completely eliminate the array allocations and `reverse()` operations.
+
 ## 2025-02-20 - Array chaining optimization in challenge codex
 **Learning:** In UI render functions (like `renderChallengesScreen`), chaining `Object.values().filter().length` on objects creates two intermediate arrays and iterates the values twice just to count a subset of items, causing unnecessary GC pressure.
 **Action:** When counting items in an object based on a condition, replace `Object.values().filter().length` chains with a single-pass imperative `for...in` loop with `Object.hasOwn()` that increments a counter directly.
@@ -118,3 +125,11 @@
 ## 2025-02-20 - Avoid filter and flatMap chains in Loadout Evaluation
 **Learning:** In frequently evaluated loadout parsers like `equippedAssemblyItems`, chained methods (`.entries().filter().flatMap().filter()`) allocate several intermediate arrays per call. As loadouts are queried repeatedly during gameplay, this compounds GC overhead and can induce minor frame stuttering.
 **Action:** Replace functional array manipulations on `loadout.slots` with a single-pass imperative `for...in` loop checking `Object.hasOwn` and safely pushing directly to an accumulator array, completely skipping `flatMap` overhead.
+
+## 2025-02-20 - Replacing chained array methods in game controller and salvage service
+**Learning:** Using `Object.values(obj).filter()` chaining to search or collect object properties allocates intermediate arrays just to filter over them, increasing garbage collection pressure. This happens even in initialization paths like `game-controller.js` or queries in `wreck-signal-service.js`.
+**Action:** Replace `Object.values(obj).filter()` in frequent queries with a single-pass imperative `for...in` loop with an `Object.hasOwn()` check to build arrays directly and skip the initial O(N) extraction array.
+
+## 2025-02-23 - Avoiding intermediate arrays in branch failure resolution
+**Learning:** During ship assembly branch failure evaluation, `Object.values(initial.nodesById).filter(...).map(...)` allocates multiple arrays when extracting child nodes for `resolveNodeLoss`. Since this path handles active gameplay events where damage causes pieces to detach, optimizing it reduces GC pressure.
+**Action:** Replace `Object.values(...).filter(...).map(...)` arrays in hot simulation paths with imperative `for...in` loops that populate a single pre-allocated (or dynamically filled) array.

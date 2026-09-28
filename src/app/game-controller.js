@@ -165,9 +165,16 @@ function initializeAssemblyState(run, services) {
     run.activeBlueprintId = services.blueprints?.getActiveId?.() ?? null;
     run.activeBlueprintVariantId = null;
   } else {
-    rootPorts = Object.values(run.assembly.portsById).filter(
-      (port) => port.parentNodeId === run.assembly.rootNodeId,
-    );
+    // ⚡ Bolt: Avoid intermediate array allocations from Object.values().filter()
+    // by using a single-pass imperative loop.
+    rootPorts = [];
+    for (const key in run.assembly.portsById) {
+      if (!Object.hasOwn(run.assembly.portsById, key)) continue;
+      const port = run.assembly.portsById[key];
+      if (port.parentNodeId === run.assembly.rootNodeId) {
+        rootPorts.push(port);
+      }
+    }
   }
   run.pendingAssemblyItems ??= [];
   return { shipFrameId, frame, rootPorts };
