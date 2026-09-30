@@ -363,7 +363,7 @@ describe("codex screen", () => {
       onToggleFavorite,
     );
     expect(container.innerHTML).toContain(
-      '<span>☆</span> <small aria-hidden="true">Favorisieren</small>',
+      '<span><span aria-hidden="true">☆</span></span> <small aria-hidden="true">Favorisieren</small>',
     );
     container.querySelector('[data-favorite="b1"]').click();
     expect(onToggleFavorite).toHaveBeenCalledWith("b1");
