@@ -133,3 +133,6 @@
 ## 2025-02-23 - Avoiding intermediate arrays in branch failure resolution
 **Learning:** During ship assembly branch failure evaluation, `Object.values(initial.nodesById).filter(...).map(...)` allocates multiple arrays when extracting child nodes for `resolveNodeLoss`. Since this path handles active gameplay events where damage causes pieces to detach, optimizing it reduces GC pressure.
 **Action:** Replace `Object.values(...).filter(...).map(...)` arrays in hot simulation paths with imperative `for...in` loops that populate a single pre-allocated (or dynamically filled) array.
+## 2025-02-23 - Replacing Object.values() with for-in loops in Assembly Geometry Service
+**Learning:** In the extremely hot `rebuild` path of `assembly-geometry-service.js` which recalculates collision and visuals constantly during ship construction, doing `for (const node of Object.values(snapshot.nodesById))` creates an intermediate array allocation of all nodes on every frame/change, compounding GC pressure.
+**Action:** Replace `Object.values(obj)` iterations in hot geometry and frame-bound game loop routines with a single-pass imperative `for...in` loop checking `Object.hasOwn(obj, key)` to extract properties without allocating arrays.
