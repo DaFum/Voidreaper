@@ -133,3 +133,7 @@
 ## 2025-02-23 - Avoiding intermediate arrays in branch failure resolution
 **Learning:** During ship assembly branch failure evaluation, `Object.values(initial.nodesById).filter(...).map(...)` allocates multiple arrays when extracting child nodes for `resolveNodeLoss`. Since this path handles active gameplay events where damage causes pieces to detach, optimizing it reduces GC pressure.
 **Action:** Replace `Object.values(...).filter(...).map(...)` arrays in hot simulation paths with imperative `for...in` loops that populate a single pre-allocated (or dynamically filled) array.
+
+## 2026-10-02 - Memoization in state selectors
+**Learning:** While replacing `Object.values().filter()` with a `for...in` loop in state selectors eliminates intermediate array allocation GC overhead, it still creates and returns a completely *new* array reference on every single call. In a typical state-management (e.g., Redux) context, returning new references from selectors causes unnecessary re-renders in connected components.
+**Action:** A more impactful performance optimization for selectors would be to use memoization (e.g., `createSelector` from `reselect`), which completely skips the computation and preserves array references if the underlying data structure hasn't changed.

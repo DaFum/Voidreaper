@@ -1,11 +1,30 @@
-export const selectRealSegments = (state) =>
-  Object.values(state.nodesById).filter(
-    (node) => node.nodeId !== state.rootNodeId && node.moduleInstanceId,
-  );
-export const selectFreePorts = (state) =>
-  Object.values(state.portsById).filter(
-    (port) => !port.occupiedByNodeId && !port.disabled,
-  );
+// ⚡ Bolt: Avoid Object.values().filter() to eliminate intermediate array allocations
+export const selectRealSegments = (state) => {
+  const segments = [];
+  for (const key in state.nodesById) {
+    if (Object.hasOwn(state.nodesById, key)) {
+      const node = state.nodesById[key];
+      if (node.nodeId !== state.rootNodeId && node.moduleInstanceId) {
+        segments.push(node);
+      }
+    }
+  }
+  return segments;
+};
+
+// ⚡ Bolt: Avoid Object.values().filter() to eliminate intermediate array allocations
+export const selectFreePorts = (state) => {
+  const freePorts = [];
+  for (const key in state.portsById) {
+    if (Object.hasOwn(state.portsById, key)) {
+      const port = state.portsById[key];
+      if (!port.occupiedByNodeId && !port.disabled) {
+        freePorts.push(port);
+      }
+    }
+  }
+  return freePorts;
+};
 export const selectModuleOwner = (state, moduleInstanceId) => {
   if (!moduleInstanceId) return null;
   if (state.nodeIdByModuleInstanceId) {
