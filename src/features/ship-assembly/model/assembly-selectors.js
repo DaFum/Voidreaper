@@ -1,11 +1,15 @@
 const _realSegmentsCache = new WeakMap();
 // ⚡ Bolt: Optimize selector by eliminating intermediate arrays from Object.values().filter().
-// Uses WeakMap memoization based on nodesById and rootNodeId to maintain referential equality
-// and prevent downstream UI re-renders unless these specific state parts change.
+// Uses WeakMap memoization based on nodesById, tracking structuralRevision and rootNodeId
+// to properly invalidate when assembly state mutates in-place (e.g., during mount/detach).
 // Impact: Eliminates O(N) intermediate array allocations and preserves O(1) equality checks for pure components.
 export const selectRealSegments = (state) => {
   let cacheEntry = _realSegmentsCache.get(state.nodesById);
-  if (cacheEntry && cacheEntry.rootNodeId === state.rootNodeId) {
+  if (
+    cacheEntry &&
+    cacheEntry.rootNodeId === state.rootNodeId &&
+    cacheEntry.structuralRevision === state.structuralRevision
+  ) {
     return cacheEntry.result;
   }
   const result = [];
@@ -17,17 +21,26 @@ export const selectRealSegments = (state) => {
       }
     }
   }
-  _realSegmentsCache.set(state.nodesById, { rootNodeId: state.rootNodeId, result });
+  _realSegmentsCache.set(state.nodesById, {
+    rootNodeId: state.rootNodeId,
+    structuralRevision: state.structuralRevision,
+    result,
+  });
   return result;
 };
 
 const _freePortsCache = new WeakMap();
 // ⚡ Bolt: Optimize selector by eliminating intermediate arrays from Object.values().filter().
-// Uses WeakMap memoization on portsById to maintain referential equality and prevent UI re-renders.
+// Uses WeakMap memoization on portsById, tracking structuralRevision to properly
+// invalidate when assembly state mutates in-place.
 // Impact: Eliminates O(N) intermediate array allocations and preserves O(1) equality checks for pure components.
 export const selectFreePorts = (state) => {
-  if (_freePortsCache.has(state.portsById)) {
-    return _freePortsCache.get(state.portsById);
+  let cacheEntry = _freePortsCache.get(state.portsById);
+  if (
+    cacheEntry &&
+    cacheEntry.structuralRevision === state.structuralRevision
+  ) {
+    return cacheEntry.result;
   }
   const result = [];
   for (const key in state.portsById) {
@@ -38,7 +51,10 @@ export const selectFreePorts = (state) => {
       }
     }
   }
-  _freePortsCache.set(state.portsById, result);
+  _freePortsCache.set(state.portsById, {
+    structuralRevision: state.structuralRevision,
+    result,
+  });
   return result;
 };
 export const selectModuleOwner = (state, moduleInstanceId) => {
