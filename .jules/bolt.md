@@ -133,3 +133,6 @@
 ## 2025-02-23 - Avoiding intermediate arrays in branch failure resolution
 **Learning:** During ship assembly branch failure evaluation, `Object.values(initial.nodesById).filter(...).map(...)` allocates multiple arrays when extracting child nodes for `resolveNodeLoss`. Since this path handles active gameplay events where damage causes pieces to detach, optimizing it reduces GC pressure.
 **Action:** Replace `Object.values(...).filter(...).map(...)` arrays in hot simulation paths with imperative `for...in` loops that populate a single pre-allocated (or dynamically filled) array.
+## 2025-02-23 - Proper caching semantics for derived state arrays
+**Learning:** When optimizing state selectors using manual `WeakMap` memoization to eliminate intermediate array allocations, it is critical to explicitly track *all* dependencies of the selector. Memoizing solely on the object key (like `state.nodesById`) while evaluating other primitive state properties (like `state.rootNodeId`) can result in cache invalidation bugs and stale returns if those primitives update independently.
+**Action:** In manual memoization with `WeakMap`, store a composite value containing both the resulting array and the other dependent primitives (e.g., `{ rootNodeId: state.rootNodeId, result }`). Validate all dependencies within the cached result before returning a cache hit.

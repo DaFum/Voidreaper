@@ -1,11 +1,61 @@
-export const selectRealSegments = (state) =>
-  Object.values(state.nodesById).filter(
-    (node) => node.nodeId !== state.rootNodeId && node.moduleInstanceId,
-  );
-export const selectFreePorts = (state) =>
-  Object.values(state.portsById).filter(
-    (port) => !port.occupiedByNodeId && !port.disabled,
-  );
+// ⚡ Bolt: Cache derived arrays using WeakMap keyed on state objects to preserve
+// referential equality across updates. When cache misses, use an imperative for-in loop
+// instead of Object.values().filter() to completely eliminate intermediate array allocations.
+const segmentsCache = new WeakMap();
+export const selectRealSegments = (state) => {
+  const cached = segmentsCache.get(state.nodesById);
+  // Ensure the cache depends on both the objects and the root node.
+  if (
+    cached &&
+    cached.rootNodeId === state.rootNodeId &&
+    cached.structuralRevision === state.structuralRevision
+  ) {
+    return cached.result;
+  }
+
+  const result = [];
+  for (const key in state.nodesById) {
+    if (Object.hasOwn(state.nodesById, key)) {
+      const node = state.nodesById[key];
+      if (node.nodeId !== state.rootNodeId && node.moduleInstanceId) {
+        result.push(node);
+      }
+    }
+  }
+
+  segmentsCache.set(state.nodesById, {
+    rootNodeId: state.rootNodeId,
+    structuralRevision: state.structuralRevision,
+    result,
+  });
+  return result;
+};
+
+// ⚡ Bolt: Cache free ports array to preserve referential equality and use an
+// imperative for-in loop on cache misses to prevent Object.values() allocations.
+const freePortsCache = new WeakMap();
+export const selectFreePorts = (state) => {
+  let cached = freePortsCache.get(state.portsById);
+  if (cached && cached.structuralRevision === state.structuralRevision) {
+    return cached.result;
+  }
+
+  const result = [];
+  for (const key in state.portsById) {
+    if (Object.hasOwn(state.portsById, key)) {
+      const port = state.portsById[key];
+      if (!port.occupiedByNodeId && !port.disabled) {
+        result.push(port);
+      }
+    }
+  }
+
+  freePortsCache.set(state.portsById, {
+    structuralRevision: state.structuralRevision,
+    result,
+  });
+  return result;
+};
 export const selectModuleOwner = (state, moduleInstanceId) => {
   if (!moduleInstanceId) return null;
   if (state.nodeIdByModuleInstanceId) {
