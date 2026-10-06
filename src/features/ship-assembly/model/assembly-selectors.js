@@ -5,7 +5,11 @@ const segmentsCache = new WeakMap();
 export const selectRealSegments = (state) => {
   const cached = segmentsCache.get(state.nodesById);
   // Ensure the cache depends on both the objects and the root node.
-  if (cached && cached.rootNodeId === state.rootNodeId) {
+  if (
+    cached &&
+    cached.rootNodeId === state.rootNodeId &&
+    cached.structuralRevision === state.structuralRevision
+  ) {
     return cached.result;
   }
 
@@ -19,7 +23,11 @@ export const selectRealSegments = (state) => {
     }
   }
 
-  segmentsCache.set(state.nodesById, { rootNodeId: state.rootNodeId, result });
+  segmentsCache.set(state.nodesById, {
+    rootNodeId: state.rootNodeId,
+    structuralRevision: state.structuralRevision,
+    result,
+  });
   return result;
 };
 
@@ -28,7 +36,9 @@ export const selectRealSegments = (state) => {
 const freePortsCache = new WeakMap();
 export const selectFreePorts = (state) => {
   let cached = freePortsCache.get(state.portsById);
-  if (cached) return cached;
+  if (cached && cached.structuralRevision === state.structuralRevision) {
+    return cached.result;
+  }
 
   const result = [];
   for (const key in state.portsById) {
@@ -40,7 +50,10 @@ export const selectFreePorts = (state) => {
     }
   }
 
-  freePortsCache.set(state.portsById, result);
+  freePortsCache.set(state.portsById, {
+    structuralRevision: state.structuralRevision,
+    result,
+  });
   return result;
 };
 export const selectModuleOwner = (state, moduleInstanceId) => {
