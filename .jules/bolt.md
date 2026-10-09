@@ -133,3 +133,11 @@
 ## 2025-02-23 - Avoiding intermediate arrays in branch failure resolution
 **Learning:** During ship assembly branch failure evaluation, `Object.values(initial.nodesById).filter(...).map(...)` allocates multiple arrays when extracting child nodes for `resolveNodeLoss`. Since this path handles active gameplay events where damage causes pieces to detach, optimizing it reduces GC pressure.
 **Action:** Replace `Object.values(...).filter(...).map(...)` arrays in hot simulation paths with imperative `for...in` loops that populate a single pre-allocated (or dynamically filled) array.
+
+## 2025-02-23 - Replacing Object.values().map chains with imperative loops in serialization and rendering
+**Learning:** During blueprint serialization (e.g., `saveFromAssembly` and `createVariant`) or heavy UI rendering paths (like evaluating ports for `assemblyWorkbench`), combining `Object.values(obj)` with `.map(...)` creates multiple intermediate arrays, causing noticeable memory churn and garbage collection pressure in contexts involving many assembly nodes or ports.
+**Action:** Replace `Object.values(obj).map(...)` with an explicit imperative `for...in` loop combining `Object.hasOwn(obj, key)` and a `.push` to a single accumulator array. This significantly reduces intermediate array allocations.
+
+## 2025-02-23 - Retaining Object.values() when not chained
+**Learning:** While replacing `Object.values(obj).map(...)` with an imperative `for...in` loop successfully avoids allocating multiple arrays, applying this same 5-line `for...in` expansion to unchained `Object.values(obj)` calls (e.g. `connections: Object.values(...)`) saves no allocations, since `Object.values` correctly allocates the necessary final array in one C++ pass.
+**Action:** Do not replace isolated `Object.values(obj)` assignments unless they are directly chained with other functional array methods (like `.map`, `.filter`, `.flat`). Doing so degrades code readability without providing any performance benefit.
