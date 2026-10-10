@@ -33,3 +33,6 @@
 ## 2024-05-18 - Decorative Unicode characters in interactive elements
 **Learning:** Decorative Unicode characters (like `⟲`, `✕`, `◇`, or emojis) inside interactive elements are read out by screen readers using their literal character names (e.g., "anticlockwise open circle arrow", "white diamond"), which creates a poor audio experience.
 **Action:** Wrap decorative text-based symbols or Unicode icons inside interactive elements with `<span aria-hidden="true">` to prevent screen readers from reading out literal character names.
+## 2024-10-10 - Hiding decorative characters in sub-screens
+**Learning:** Adding aria-hidden spans to hide decorative text icons isn't limited to the main index.html. Dynamically generated structural UI elements in JavaScript (like `assembly-workbench-screen.js` or `quick-mount-overlay.js`) also use native button elements that require the same accessibility treatment to prevent redundant screen reader announcements (e.g. reading "Vergrößern, plus").
+**Action:** When creating or maintaining dynamic UI templates in JS files, ensure that standalone decorative symbols in buttons (like `+`, `−`, `⌖`, `◁`, `▷`) are wrapped in `<span aria-hidden="true">` to match the index.html accessibility patterns.

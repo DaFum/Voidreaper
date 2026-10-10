@@ -7,7 +7,7 @@ import {
 } from "../motion/motion.js";
 
 export function createQuickMountOverlay(root, { onAction } = {}) {
-  root.innerHTML = `<section class="quick-mount" role="dialog" aria-label="Modul montieren"><i class="quick-mount__scan"></i><header><span class="quick-mount__eyebrow">NEUES MODUL // MONTAGEFENSTER</span><h2 data-role="module-name">UNBEKANNTES MODUL</h2></header><canvas data-role="preview" data-tutorial-id="quick-mount-preview" width="480" height="240"></canvas><div class="quick-mount__reason" data-role="reason"></div><dl class="quick-mount__deltas" data-role="deltas"></dl><details><summary>DETAILDATEN</summary><div data-role="details"></div></details><footer data-tutorial-id="quick-mount-actions"><button type="button" data-action="previous" aria-label="Vorherige Position" title="Vorherige Position">◁</button><button type="button" class="quick-mount__confirm" data-action="confirm">MONTIEREN</button><button type="button" data-action="next" aria-label="Nächste Position" title="Nächste Position">▷</button><button type="button" data-action="defer">INS INVENTAR</button></footer></section>`;
+  root.innerHTML = `<section class="quick-mount" role="dialog" aria-label="Modul montieren"><i class="quick-mount__scan"></i><header><span class="quick-mount__eyebrow">NEUES MODUL // MONTAGEFENSTER</span><h2 data-role="module-name">UNBEKANNTES MODUL</h2></header><canvas data-role="preview" data-tutorial-id="quick-mount-preview" width="480" height="240"></canvas><div class="quick-mount__reason" data-role="reason"></div><dl class="quick-mount__deltas" data-role="deltas"></dl><details><summary>DETAILDATEN</summary><div data-role="details"></div></details><footer data-tutorial-id="quick-mount-actions"><button type="button" data-action="previous" aria-label="Vorherige Position" title="Vorherige Position"><span aria-hidden="true">◁</span></button><button type="button" class="quick-mount__confirm" data-action="confirm">MONTIEREN</button><button type="button" data-action="next" aria-label="Nächste Position" title="Nächste Position"><span aria-hidden="true">▷</span></button><button type="button" data-action="defer">INS INVENTAR</button></footer></section>`;
 
   const panel = root.querySelector(".quick-mount");
   if (panel) {
@@ -23,7 +23,8 @@ export function createQuickMountOverlay(root, { onAction } = {}) {
       if (button) animatePressFeedback(button);
       if (action === "defer" || action === "confirm") {
         dismissing = true;
-        for (const btn of root.querySelectorAll("[data-action]")) btn.disabled = true;
+        for (const btn of root.querySelectorAll("[data-action]"))
+          btn.disabled = true;
         await animatePanelExit(panel);
       }
       onAction?.(action);
@@ -48,7 +49,10 @@ export function createQuickMountOverlay(root, { onAction } = {}) {
         .join("");
 
       if (deltasContainer.children.length > 0) {
-        animateListStagger(deltasContainer.children, { staggerDelay: 0.02, yOffset: 6 });
+        animateListStagger(deltasContainer.children, {
+          staggerDelay: 0.02,
+          yOffset: 6,
+        });
       }
 
       root.querySelector('[data-role="details"]').textContent = (

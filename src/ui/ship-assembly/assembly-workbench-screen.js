@@ -19,7 +19,7 @@ const PORT_STATE_CLASS = Object.freeze({
 });
 
 export function createAssemblyWorkbenchScreen(root, { onAction } = {}) {
-  root.innerHTML = `<section class="assembly-workbench" aria-label="Schiffswerkbank"><aside class="assembly-workbench__inventory"><header><small>RUN-INVENTAR</small><h2>MODULE</h2><button type="button" data-action="close">ZURÜCK ZUR KARTE</button></header><div data-role="inventory"></div></aside><main class="assembly-workbench__stage"><div class="assembly-toolbar" data-role="modes"></div><canvas data-role="canvas" width="960" height="640"></canvas><div class="assembly-stage__layer" data-role="ports"></div><div class="assembly-camera" role="group" aria-label="Ansicht" data-tutorial-id="workbench-actions"><button type="button" data-action="zoom-in" aria-label="Vergrößern" title="Vergrößern">+</button><button type="button" data-action="zoom-out" aria-label="Verkleinern" title="Verkleinern">−</button><button type="button" data-action="reset-view" aria-label="Ansicht zurücksetzen" title="Ansicht zurücksetzen">⌖</button></div><footer class="assembly-stage__hint" data-role="hint" aria-live="polite"></footer></main><aside class="assembly-workbench__inspector" data-role="inspector"></aside></section>`;
+  root.innerHTML = `<section class="assembly-workbench" aria-label="Schiffswerkbank"><aside class="assembly-workbench__inventory"><header><small>RUN-INVENTAR</small><h2>MODULE</h2><button type="button" data-action="close">ZURÜCK ZUR KARTE</button></header><div data-role="inventory"></div></aside><main class="assembly-workbench__stage"><div class="assembly-toolbar" data-role="modes"></div><canvas data-role="canvas" width="960" height="640"></canvas><div class="assembly-stage__layer" data-role="ports"></div><div class="assembly-camera" role="group" aria-label="Ansicht" data-tutorial-id="workbench-actions"><button type="button" data-action="zoom-in" aria-label="Vergrößern" title="Vergrößern"><span aria-hidden="true">+</span></button><button type="button" data-action="zoom-out" aria-label="Verkleinern" title="Verkleinern"><span aria-hidden="true">−</span></button><button type="button" data-action="reset-view" aria-label="Ansicht zurücksetzen" title="Ansicht zurücksetzen"><span aria-hidden="true">⌖</span></button></div><footer class="assembly-stage__hint" data-role="hint" aria-live="polite"></footer></main><aside class="assembly-workbench__inspector" data-role="inspector"></aside></section>`;
 
   const abort = new AbortController();
   let currentInspectorAnim = null;
@@ -81,7 +81,9 @@ export function createAssemblyWorkbenchScreen(root, { onAction } = {}) {
       // Trigger state transition impulse animation for newly selected / changed physical ports
       if (!isReducedMotion()) {
         ports.forEach((port) => {
-          const state = port.occupiedByNodeId ? "occupied" : (port.state ?? "free");
+          const state = port.occupiedByNodeId
+            ? "occupied"
+            : (port.state ?? "free");
           const selected = port.occupiedByNodeId
             ? port.occupiedByNodeId === selectedNodeId
             : port.portId === selectedPortId;
@@ -96,14 +98,32 @@ export function createAssemblyWorkbenchScreen(root, { onAction } = {}) {
               if (selected) {
                 animate(
                   btn,
-                  { transform: ["translate(-50%, -50%) scale(1)", "translate(-50%, -50%) scale(1.2)", "translate(-50%, -50%) scale(1)"] },
-                  { duration: MOTION_TIMINGS.fast, ease: MOTION_EASINGS.impact }
+                  {
+                    transform: [
+                      "translate(-50%, -50%) scale(1)",
+                      "translate(-50%, -50%) scale(1.2)",
+                      "translate(-50%, -50%) scale(1)",
+                    ],
+                  },
+                  {
+                    duration: MOTION_TIMINGS.fast,
+                    ease: MOTION_EASINGS.impact,
+                  },
                 );
               } else if (state === "valid") {
                 animate(
                   btn,
-                  { transform: ["translate(-50%, -50%) scale(0.9)", "translate(-50%, -50%) scale(1.1)", "translate(-50%, -50%) scale(1)"] },
-                  { duration: MOTION_TIMINGS.feedback, ease: MOTION_EASINGS.ui }
+                  {
+                    transform: [
+                      "translate(-50%, -50%) scale(0.9)",
+                      "translate(-50%, -50%) scale(1.1)",
+                      "translate(-50%, -50%) scale(1)",
+                    ],
+                  },
+                  {
+                    duration: MOTION_TIMINGS.feedback,
+                    ease: MOTION_EASINGS.ui,
+                  },
                 );
               }
             }
@@ -124,7 +144,11 @@ export function createAssemblyWorkbenchScreen(root, { onAction } = {}) {
       const requestId = activeInspectorRequestId;
 
       if (currentInspectorAnim?.cancel) {
-        try { currentInspectorAnim.cancel(); } catch { /* ignore cancel errors */ }
+        try {
+          currentInspectorAnim.cancel();
+        } catch {
+          /* ignore cancel errors */
+        }
         currentInspectorAnim = null;
       }
 
@@ -134,12 +158,18 @@ export function createAssemblyWorkbenchScreen(root, { onAction } = {}) {
       }
 
       // Genuine old -> new content cross-fade transition with request ID tracking
-      if (inspector.firstElementChild && typeof inspector.animate === "function") {
+      if (
+        inspector.firstElementChild &&
+        typeof inspector.animate === "function"
+      ) {
         const oldContent = inspector.firstElementChild;
         currentInspectorAnim = animate(
           oldContent,
-          { opacity: [1, 0], transform: ["translateX(0px)", "translateX(-6px)"] },
-          { duration: 0.08, ease: "easeIn" }
+          {
+            opacity: [1, 0],
+            transform: ["translateX(0px)", "translateX(-6px)"],
+          },
+          { duration: 0.08, ease: "easeIn" },
         );
         currentInspectorAnim.finished
           .then(() => {
@@ -148,8 +178,11 @@ export function createAssemblyWorkbenchScreen(root, { onAction } = {}) {
             if (content && typeof content.animate === "function") {
               currentInspectorAnim = animate(
                 content,
-                { opacity: [0, 1], transform: ["translateX(6px)", "translateX(0px)"] },
-                { duration: 0.12, ease: "easeOut" }
+                {
+                  opacity: [0, 1],
+                  transform: ["translateX(6px)", "translateX(0px)"],
+                },
+                { duration: 0.12, ease: "easeOut" },
               );
             }
           })
