@@ -33,3 +33,7 @@
 ## 2024-05-18 - Decorative Unicode characters in interactive elements
 **Learning:** Decorative Unicode characters (like `⟲`, `✕`, `◇`, or emojis) inside interactive elements are read out by screen readers using their literal character names (e.g., "anticlockwise open circle arrow", "white diamond"), which creates a poor audio experience.
 **Action:** Wrap decorative text-based symbols or Unicode icons inside interactive elements with `<span aria-hidden="true">` to prevent screen readers from reading out literal character names.
+## 2024-10-11 - Hide decorative icons from screen readers in interactive elements
+
+**Learning:** When making structural HTML changes to UI components for accessibility (such as adding `aria-hidden="true"` spans around decorative icons like `★`, `+`, `⟲`), related Vitest frontend DOM assertion tests often rely on exact HTML string matches using `.toContain()` on `.innerHTML` and will fail if they are not concurrently updated.
+**Action:** Always check the `tests/frontend/` directory (e.g. `screens.spec.js`) for literal DOM assertions that might break when wrapping Unicode symbols in spans, and update the test strings accordingly.
