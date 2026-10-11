@@ -87,7 +87,9 @@ describe("pause and resume integration flow", () => {
     ui.show("hud");
     expect(game.state).toBe("run");
     expect(document.getElementById("hud").style.display).toBe("block");
-    expect(document.getElementById("pausescr").classList.contains("hidden")).toBe(true);
+    expect(
+      document.getElementById("pausescr").classList.contains("hidden"),
+    ).toBe(true);
 
     // Attach click listener for resumebtn
     const resumeBtn = document.getElementById("resumebtn");
@@ -98,7 +100,9 @@ describe("pause and resume integration flow", () => {
     game.pause();
 
     expect(game.state).toBe("pause");
-    expect(document.getElementById("pausescr").classList.contains("hidden")).toBe(false);
+    expect(
+      document.getElementById("pausescr").classList.contains("hidden"),
+    ).toBe(false);
     expect(document.getElementById("hud").style.display).toBe("none");
 
     // Trigger resume via button click
@@ -106,7 +110,9 @@ describe("pause and resume integration flow", () => {
 
     expect(resumeSpy).toHaveBeenCalledOnce();
     expect(game.state).toBe("run");
-    expect(document.getElementById("pausescr").classList.contains("hidden")).toBe(true);
+    expect(
+      document.getElementById("pausescr").classList.contains("hidden"),
+    ).toBe(true);
     expect(document.getElementById("hud").style.display).toBe("block");
 
     resumeSpy.mockRestore();
@@ -363,7 +369,7 @@ describe("codex screen", () => {
       onToggleFavorite,
     );
     expect(container.innerHTML).toContain(
-      '<span>☆</span> <small aria-hidden="true">Favorisieren</small>',
+      '<span aria-hidden="true">☆</span> <small aria-hidden="true">Favorisieren</small>',
     );
     container.querySelector('[data-favorite="b1"]').click();
     expect(onToggleFavorite).toHaveBeenCalledWith("b1");
