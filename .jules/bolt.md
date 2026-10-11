@@ -133,3 +133,7 @@
 ## 2025-02-23 - Avoiding intermediate arrays in branch failure resolution
 **Learning:** During ship assembly branch failure evaluation, `Object.values(initial.nodesById).filter(...).map(...)` allocates multiple arrays when extracting child nodes for `resolveNodeLoss`. Since this path handles active gameplay events where damage causes pieces to detach, optimizing it reduces GC pressure.
 **Action:** Replace `Object.values(...).filter(...).map(...)` arrays in hot simulation paths with imperative `for...in` loops that populate a single pre-allocated (or dynamically filled) array.
+
+## 2025-02-23 - Array chaining optimization in path generation logic
+**Learning:** Using chained `.filter().map()` inside nested loops to calculate or link paths in generators (like `generateSectorMap`) rapidly allocates many short-lived intermediate arrays. This produces measurable GC overhead and bottlenecks execution when run frequently.
+**Action:** Replace `.filter().map()` chains in nested path generation logic with a single-pass imperative `for...of` loop to directly push matching values to a new array, eliminating intermediate array allocation overhead.

@@ -67,7 +67,9 @@ export function generateSectorMap({
     const layers = [];
     for (let layer = 0; layer < 3; layer += 1) {
       const count = rng.integer(2, 3);
-      const nodes = Array.from({ length: count }, (_, index) => {
+      // ⚡ Bolt: Avoid intermediate array allocations by using an imperative for loop instead of Array.from
+      const nodes = [];
+      for (let index = 0; index < count; index++) {
         let type =
           TYPE_ROTATION[
             (regionIndex * 3 + layer + index) % TYPE_ROTATION.length
@@ -75,14 +77,16 @@ export function generateSectorMap({
         if (layer === 1 && regionIndex % 2 === 0 && index === 0)
           type = "workshop";
         if (layer === 2) type = index === 0 ? "mid-boss" : "extraction";
-        return node(rng, {
-          regionIndex,
-          layer,
-          index,
-          type,
-          contentVersion,
-        });
-      });
+        nodes.push(
+          node(rng, {
+            regionIndex,
+            layer,
+            index,
+            type,
+            contentVersion,
+          }),
+        );
+      }
       layers.push(nodes);
     }
     const boss = node(rng, {
@@ -94,14 +98,17 @@ export function generateSectorMap({
     });
     layers.push([boss]);
     for (let layer = 0; layer < layers.length - 1; layer += 1) {
-      for (const current of layers[layer]) {
-        current.next = layers[layer + 1]
-          .filter(
-            (candidate) =>
-              !(current.type === "merchant" && candidate.type === "merchant"),
-          )
-          .map((candidate) => candidate.id);
-        if (!current.next.length) current.next = [layers[layer + 1][0].id];
+      const currentLayer = layers[layer];
+      const nextLayer = layers[layer + 1];
+      for (const current of currentLayer) {
+        // ⚡ Bolt: Replace .filter().map() chaining with a single-pass imperative for loop
+        const next = [];
+        for (const candidate of nextLayer) {
+          if (!(current.type === "merchant" && candidate.type === "merchant")) {
+            next.push(candidate.id);
+          }
+        }
+        current.next = next.length > 0 ? next : [nextLayer[0].id];
       }
     }
     return { id: regionId, index: regionIndex, layers };
