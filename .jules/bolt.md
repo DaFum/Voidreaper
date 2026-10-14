@@ -133,3 +133,7 @@
 ## 2025-02-23 - Avoiding intermediate arrays in branch failure resolution
 **Learning:** During ship assembly branch failure evaluation, `Object.values(initial.nodesById).filter(...).map(...)` allocates multiple arrays when extracting child nodes for `resolveNodeLoss`. Since this path handles active gameplay events where damage causes pieces to detach, optimizing it reduces GC pressure.
 **Action:** Replace `Object.values(...).filter(...).map(...)` arrays in hot simulation paths with imperative `for...in` loops that populate a single pre-allocated (or dynamically filled) array.
+
+## 2025-02-23 - Optimizing Map/Object Selectors by replacing values().filter()
+**Learning:** Using `Object.values(obj).filter(...)` in state selectors creates intermediate arrays on every evaluation. When these selectors run frequently (e.g. `selectRealSegments` and `selectFreePorts`), this puts unnecessary pressure on the garbage collector.
+**Action:** Replace `Object.values(obj).filter(...)` chains in hot state selectors with an imperative `for...in` loop checking `Object.hasOwn()`, pushing results to a dynamically built array to prevent multiple O(N) array allocations.
