@@ -3369,12 +3369,26 @@ const UI = {
       const maxed = lv >= m.max;
       const btn = document.createElement("button");
       btn.className = "meta";
-      btn.disabled = maxed || Persist.data.shards < cost;
+      const isUnavailable = maxed || Persist.data.shards < cost;
+      btn.disabled = isUnavailable;
       const pips = Array.from(
         { length: m.max },
         (_, i) => `<i class="${i < lv ? "on" : ""}"></i>`,
       ).join("");
-      btn.innerHTML = `<span class="mn">${escapeHtml(m.nm)}</span><div class="mp">${escapeHtml(m.ds)}</div><div class="pips">${pips}</div><div class="mc">${escapeHtml(maxed ? "MAXED" : "◇ " + cost)}</div>`;
+      const costHtml = maxed ? "MAXED" : `<span aria-hidden="true">◇</span> ${escapeHtml(String(cost))}`;
+      let reasonHtml = "";
+      if (isUnavailable) {
+        const reason = maxed ? "Maximum level reached" : "Not enough Void Shards";
+        btn.title = `${m.nm} - ${reason}`;
+        btn.setAttribute("aria-describedby", `desc-${m.id}`);
+        reasonHtml = `<span id="desc-${m.id}" hidden>${reason}</span>`;
+      } else {
+        btn.title = `Upgrade ${m.nm} for ${cost} Void Shards`;
+        btn.setAttribute("aria-describedby", `desc-${m.id}`);
+        reasonHtml = `<span id="desc-${m.id}" hidden>Upgrade for ${cost} Void Shards</span>`;
+      }
+      btn.innerHTML = `<span class="mn">${escapeHtml(m.nm)}</span><div class="mp">${escapeHtml(m.ds)}</div><div class="pips">${pips}</div><div class="mc">${costHtml}</div>${reasonHtml}`;
+
       btn.addEventListener("click", () => {
         if (maxed || Persist.data.shards < cost) return;
         Persist.data.shards -= cost;
