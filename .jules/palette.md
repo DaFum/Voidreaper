@@ -33,3 +33,6 @@
 ## 2024-05-18 - Decorative Unicode characters in interactive elements
 **Learning:** Decorative Unicode characters (like `⟲`, `✕`, `◇`, or emojis) inside interactive elements are read out by screen readers using their literal character names (e.g., "anticlockwise open circle arrow", "white diamond"), which creates a poor audio experience.
 **Action:** Wrap decorative text-based symbols or Unicode icons inside interactive elements with `<span aria-hidden="true">` to prevent screen readers from reading out literal character names.
+## 2026-10-15 - Keep unavailable upgrades reachable by keyboard
+**Learning:** When an upgrade is maxed or unaffordable, retaining the native `disabled` attribute removes the button from sequential keyboard focus, so Tab-only users cannot reach the control and hear the newly added `aria-describedby` explanation; the `title` is also hover-dependent.
+**Action:** Keep these explanatory controls focusable by using `aria-disabled="true"` instead of `disabled` and handle the logic gate in JavaScript. Also update CSS selectors to style `[aria-disabled="true"]` like `:disabled` and avoid pseudo-classes like `:not(:disabled):hover` affecting them.

@@ -3370,7 +3370,7 @@ const UI = {
       const btn = document.createElement("button");
       btn.className = "meta";
       const isUnavailable = maxed || Persist.data.shards < cost;
-      btn.disabled = isUnavailable;
+      if (isUnavailable) btn.setAttribute("aria-disabled", "true");
       const pips = Array.from(
         { length: m.max },
         (_, i) => `<i class="${i < lv ? "on" : ""}"></i>`,
