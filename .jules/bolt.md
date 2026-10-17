@@ -133,3 +133,6 @@
 ## 2025-02-23 - Avoiding intermediate arrays in branch failure resolution
 **Learning:** During ship assembly branch failure evaluation, `Object.values(initial.nodesById).filter(...).map(...)` allocates multiple arrays when extracting child nodes for `resolveNodeLoss`. Since this path handles active gameplay events where damage causes pieces to detach, optimizing it reduces GC pressure.
 **Action:** Replace `Object.values(...).filter(...).map(...)` arrays in hot simulation paths with imperative `for...in` loops that populate a single pre-allocated (or dynamically filled) array.
+## 2025-02-23 - Replacing array spread and reverse() with an imperative backwards loop
+**Learning:** Using `[...array].reverse()` creates a shallow copy of the entire array (using the spread operator to avoid mutating the original array) just to iterate through it backwards. This requires intermediate array allocation and O(N) operations to copy and reverse the data, creating unnecessary garbage collection pressure and CPU overhead in frequently called paths (such as `getBranchNodeIds` iteration in `assembly-service.js`).
+**Action:** Replace `for (const item of [...array].reverse())` with a traditional decrementing `for` loop (`for (let i = array.length - 1; i >= 0; i--)`) to eliminate intermediate array allocations and iterate through the existing array backward directly.
