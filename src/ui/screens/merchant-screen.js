@@ -27,7 +27,7 @@ export function renderMerchantScreen(
   },
 ) {
   if (!root) return;
-  const rerollDisabled = !canReroll ? " disabled" : "";
+  const rerollDisabled = !canReroll ? ' aria-disabled="true"' : "";
   const costLabel = rerollCost.scrap
     ? `${rerollCost.scrap} S`
     : rerollCost.flux
@@ -39,12 +39,12 @@ export function renderMerchantScreen(
       ? "Flux"
       : "";
   const rerollAriaTitle = !canReroll
-    ? ` aria-label="Angebote neu würfeln (${costLabel}) – nicht genügend ${shortCurrency}" title="Angebote neu würfeln (${costLabel}) – nicht genügend ${shortCurrency}"`
-    : ` aria-label="Angebote neu würfeln (${costLabel})"`;
-  const rerollReason = !canReroll
-    ? ` <small aria-hidden="true">(nicht genügend ${shortCurrency})</small>`
+    ? ` aria-describedby="reroll-reason"`
     : "";
-  root.innerHTML = `<section class="service-screen"><header>VOID BROKER <b>${escapeHtml(resources.scrap)} SCRAP · ${escapeHtml(resources.flux)} FLUX</b></header><div class="item-catalog" data-tutorial-id="merchant-offers"></div><div class="service-screen__actions"><button type="button" class="btn small" data-reroll${rerollDisabled}${rerollAriaTitle}>⟲ Angebote neu würfeln (${costLabel})${rerollReason}</button><button type="button" class="btn small" data-leave>ZURÜCK ZUR KARTE</button></div></section>`;
+  const rerollReason = !canReroll
+    ? ` <small id="reroll-reason" aria-hidden="true">(nicht genügend ${shortCurrency})</small>`
+    : "";
+  root.innerHTML = `<section class="service-screen"><header>VOID BROKER <b>${escapeHtml(resources.scrap)} SCRAP · ${escapeHtml(resources.flux)} FLUX</b></header><div class="item-catalog" data-tutorial-id="merchant-offers"></div><div class="service-screen__actions"><button type="button" class="btn small" data-reroll${rerollDisabled}${rerollAriaTitle}><span aria-hidden="true">⟲</span> Angebote neu würfeln (${costLabel})${rerollReason}</button><button type="button" class="btn small" data-leave>ZURÜCK ZUR KARTE</button></div></section>`;
   const catalog = root.querySelector(".item-catalog");
   for (const offer of offers) {
     const button = document.createElement("button");
@@ -52,17 +52,15 @@ export function renderMerchantScreen(
     button.className = "item-card";
     button.innerHTML = `<span class="item-card__slot">${offer.corrupted ? "CORRUPTED" : escapeHtml(offer.slot ?? "SERVICE")}</span><strong>${escapeHtml(offer.name)}</strong><small>${escapeHtml(offer.description ?? "Einmaliger Sektordienst")}</small><b>${escapeHtml(offer.price)} ${offer.currency === "flux" ? "F" : "S"}</b>`;
     const affordable = canAffordOffer(resources, offer);
-    button.disabled = !affordable;
     if (!affordable) {
+      button.setAttribute("aria-disabled", "true");
       const currencyLabel = offer.currency === "flux" ? "Flux" : "Scrap";
-      button.setAttribute(
-        "aria-label",
-        `${offer.name} – nicht genügend ${currencyLabel}`,
-      );
-      button.title = `${offer.name} – nicht genügend ${currencyLabel}`;
-      button.innerHTML += `<small class="item-card__reason" aria-hidden="true">(nicht genügend ${currencyLabel})</small>`;
+      const reasonId = `offer-reason-${offer.name.replace(/\s+/g, '-')}`;
+      button.setAttribute("aria-describedby", reasonId);
+      button.innerHTML += `<small id="${reasonId}" class="item-card__reason" aria-hidden="true">(nicht genügend ${currencyLabel})</small>`;
     }
     button.addEventListener("click", () => {
+      if (button.getAttribute("aria-disabled") === "true") return;
       animatePressFeedback(button);
       onBuy(offer);
     });
@@ -80,15 +78,17 @@ export function renderMerchantScreen(
   let rerollRequestId = 0;
 
   rerollBtn.addEventListener("click", (e) => {
+    if (rerollBtn.getAttribute("aria-disabled") === "true") return;
     const handleReroll = async () => {
       if (rerolling) return;
       rerolling = true;
       const currentRequestId = ++rerollRequestId;
 
-      rerollBtn.disabled = true;
+      rerollBtn.setAttribute("aria-disabled", "true");
       const oldCards = Array.from(catalog.children);
       for (const card of oldCards) {
-        card.disabled = true;
+        card.setAttribute("aria-disabled", "true");
+        card.disabled = true; // Still disabled during animation to prevent keyboard focus
         card.style.pointerEvents = "none";
       }
 
