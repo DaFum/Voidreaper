@@ -1,0 +1,3 @@
+1. Identify performance optimization opportunity: in `src/features/ship-assembly/model/assembly-service.js`, `[...nodeIds].reverse()` creates an intermediate array and copies all elements just to iterate backwards. We can replace this with an imperative `for` loop starting from `nodeIds.length - 1` down to `0`, to iterate backward through `nodeIds` directly, eliminating intermediate array allocation.
+2. Complete pre commit steps.
+3. Submit the change with "⚡ Bolt: Replace array reverse with imperative backward loop".
