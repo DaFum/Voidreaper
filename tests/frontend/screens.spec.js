@@ -1157,8 +1157,10 @@ describe("merchant screen", () => {
     const [expensive, cheap] = [
       ...container.querySelectorAll(".item-catalog .item-card"),
     ];
-    expect(expensive.disabled).toBe(true);
-    expect(expensive.getAttribute("aria-label")).toContain(
+    expect(expensive.getAttribute("aria-disabled")).toBe("true");
+    const reasonId = expensive.getAttribute("aria-describedby");
+    expect(reasonId).toBe("offer-reason-Teuer");
+    expect(expensive.querySelector(`#${reasonId}`).textContent).toContain(
       "nicht genügend Scrap",
     );
     cheap.click();

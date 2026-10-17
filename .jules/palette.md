@@ -33,3 +33,6 @@
 ## 2024-05-18 - Decorative Unicode characters in interactive elements
 **Learning:** Decorative Unicode characters (like `⟲`, `✕`, `◇`, or emojis) inside interactive elements are read out by screen readers using their literal character names (e.g., "anticlockwise open circle arrow", "white diamond"), which creates a poor audio experience.
 **Action:** Wrap decorative text-based symbols or Unicode icons inside interactive elements with `<span aria-hidden="true">` to prevent screen readers from reading out literal character names.
+## 2023-10-27 - Contextually Disabled Buttons Accessibility
+**Learning:** When a button is disabled because a contextual condition is not met (like insufficient currency), using the native `disabled` attribute prevents keyboard focus entirely, meaning screen reader users can't navigate to it to hear *why* it is disabled. Attempting to use `aria-label` to combine the name and reason overrides the inner content and violates WCAG 2.5.3 (Label in Name).
+**Action:** Use `aria-disabled="true"` instead of `disabled` to allow keyboard focus. Append the disabled reason as a visually hidden element (`<small aria-hidden="true">`) and link it to the button using `aria-describedby`. Add an explicit early return in the `click` handler checking `button.getAttribute("aria-disabled") === "true"` to prevent activation.
