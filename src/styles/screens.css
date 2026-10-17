@@ -248,8 +248,8 @@ h1::after {
   animation: none;
 }
 
-.btn:active,
-.btn:hover {
+.btn:not(:disabled):not([aria-disabled="true"]):active,
+.btn:not(:disabled):not([aria-disabled="true"]):hover {
   background: rgba(6, 255, 165, 0.16);
   box-shadow: 0 0 28px rgba(6, 255, 165, 0.5);
 }
@@ -265,8 +265,8 @@ h1::after {
   background: rgba(255, 207, 63, 0.05);
 }
 
-.btn.gold:active,
-.btn.gold:hover {
+.btn.gold:not(:disabled):not([aria-disabled="true"]):active,
+.btn.gold:not(:disabled):not([aria-disabled="true"]):hover {
   background: rgba(255, 207, 63, 0.14);
   box-shadow: 0 0 28px rgba(255, 207, 63, 0.45);
 }
@@ -277,13 +277,14 @@ h1::after {
   background: rgba(255, 45, 120, 0.05);
 }
 
-.btn.danger:active,
-.btn.danger:hover {
+.btn.danger:not(:disabled):not([aria-disabled="true"]):active,
+.btn.danger:not(:disabled):not([aria-disabled="true"]):hover {
   background: rgba(255, 45, 120, 0.14);
   box-shadow: 0 0 28px rgba(255, 45, 120, 0.45);
 }
 
-.btn:disabled {
+.btn:disabled,
+.btn[aria-disabled="true"] {
   opacity: 0.4;
   cursor: default;
   pointer-events: none;
