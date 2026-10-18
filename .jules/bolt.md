@@ -133,3 +133,6 @@
 ## 2025-02-23 - Avoiding intermediate arrays in branch failure resolution
 **Learning:** During ship assembly branch failure evaluation, `Object.values(initial.nodesById).filter(...).map(...)` allocates multiple arrays when extracting child nodes for `resolveNodeLoss`. Since this path handles active gameplay events where damage causes pieces to detach, optimizing it reduces GC pressure.
 **Action:** Replace `Object.values(...).filter(...).map(...)` arrays in hot simulation paths with imperative `for...in` loops that populate a single pre-allocated (or dynamically filled) array.
+## 2025-02-23 - Eliminating `[...array].reverse()` allocations in hot paths
+**Learning:** In performance-critical functions, copying and reversing arrays inline (e.g., `for (const id of [...nodeIds].reverse())`) allocates a new intermediate array, adding unnecessary GC overhead. This is especially impactful in frequent graph/tree operations like `detachNode`.
+**Action:** Replace `[...array].reverse()` with standard backward `for` loops (e.g., `for (let i = array.length - 1; i >= 0; i--)`) to eliminate intermediate allocations and optimize memory usage.
