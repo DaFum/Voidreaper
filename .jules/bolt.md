@@ -133,3 +133,6 @@
 ## 2025-02-23 - Avoiding intermediate arrays in branch failure resolution
 **Learning:** During ship assembly branch failure evaluation, `Object.values(initial.nodesById).filter(...).map(...)` allocates multiple arrays when extracting child nodes for `resolveNodeLoss`. Since this path handles active gameplay events where damage causes pieces to detach, optimizing it reduces GC pressure.
 **Action:** Replace `Object.values(...).filter(...).map(...)` arrays in hot simulation paths with imperative `for...in` loops that populate a single pre-allocated (or dynamically filled) array.
+## 2025-02-23 - Array spreading and reverse() during detachment loops
+**Learning:** Using `[...nodeIds].reverse()` to iterate through an array backward (to ensure child dependencies are handled safely in tree structures) allocates a brand new array, copies elements into it, and mutates it with reverse. This creates immediate O(N) memory allocation and subsequent GC pressure on a hot path like assembly modification (`detachNode`).
+**Action:** When backward iteration is required, avoid cloning and `reverse()`. Use an imperative `for` loop starting from `length - 1` to completely bypass the allocation overhead while maintaining exact execution order and safety.
