@@ -95,12 +95,14 @@ export function generateSectorMap({
     layers.push([boss]);
     for (let layer = 0; layer < layers.length - 1; layer += 1) {
       for (const current of layers[layer]) {
-        current.next = layers[layer + 1]
-          .filter(
-            (candidate) =>
-              !(current.type === "merchant" && candidate.type === "merchant"),
-          )
-          .map((candidate) => candidate.id);
+        // ⚡ Bolt: Use a single-pass imperative loop instead of .filter().map() chains
+        // to avoid allocating intermediate arrays.
+        current.next = [];
+        for (const candidate of layers[layer + 1]) {
+          if (!(current.type === "merchant" && candidate.type === "merchant")) {
+            current.next.push(candidate.id);
+          }
+        }
         if (!current.next.length) current.next = [layers[layer + 1][0].id];
       }
     }
@@ -116,7 +118,20 @@ export function flattenSectorMap(map) {
     return [];
   let flat = flattenCache.get(map);
   if (!flat) {
-    flat = map.regions.flatMap((region) => region.layers.flat());
+    // ⚡ Bolt: Use a single-pass imperative loop instead of .flatMap() and .flat()
+    // to avoid allocating intermediate arrays.
+    flat = [];
+    for (const region of map.regions) {
+      if (Array.isArray(region.layers)) {
+        for (const layer of region.layers) {
+          if (Array.isArray(layer)) {
+            for (const node of layer) {
+              flat.push(node);
+            }
+          }
+        }
+      }
+    }
     flattenCache.set(map, flat);
   }
   return flat;

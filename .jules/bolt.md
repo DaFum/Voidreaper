@@ -133,3 +133,7 @@
 ## 2025-02-23 - Avoiding intermediate arrays in branch failure resolution
 **Learning:** During ship assembly branch failure evaluation, `Object.values(initial.nodesById).filter(...).map(...)` allocates multiple arrays when extracting child nodes for `resolveNodeLoss`. Since this path handles active gameplay events where damage causes pieces to detach, optimizing it reduces GC pressure.
 **Action:** Replace `Object.values(...).filter(...).map(...)` arrays in hot simulation paths with imperative `for...in` loops that populate a single pre-allocated (or dynamically filled) array.
+
+## 2025-02-23 - Flattening nested arrays in generation logic
+**Learning:** When flattening nested multi-dimensional arrays (like extracting nodes from regions and layers in `flattenSectorMap`), chaining functional methods like `.flatMap()` and `.flat()` creates intermediate array allocations. In systems that execute frequently or deal with complex structures, this causes garbage collection overhead.
+**Action:** Replace `.flatMap()` and `.flat()` chains with nested imperative `for...of` loops, pushing elements directly into a single result array.
