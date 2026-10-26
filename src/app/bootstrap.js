@@ -188,7 +188,12 @@ function registerEvolutionEffects(effects) {
   });
 }
 
-function setupDevDebug(services, controller, getMetaSave, blueprintValidationContext) {
+function setupDevDebug(
+  services,
+  controller,
+  getMetaSave,
+  blueprintValidationContext,
+) {
   if (import.meta.env.DEV) {
     const flags = new Map(),
       firstModule = () =>
@@ -662,7 +667,12 @@ export async function bootstrap() {
 
   const controller = createGameController(services);
   if (import.meta.env.DEV) {
-    setupDevDebug(services, controller, () => metaSave, blueprintValidationContext);
+    setupDevDebug(
+      services,
+      controller,
+      () => metaSave,
+      blueprintValidationContext,
+    );
   }
   const input = createInputController({
     eventBus: events,
@@ -1031,7 +1041,11 @@ export async function bootstrap() {
         ? null
         : moduleProfileFor(selectedItem);
       let validPortCount = 0;
-      const ports = Object.values(model.assembly.portsById).map((port) => {
+      // ⚡ Bolt: Avoid intermediate array allocations from Object.values().map()
+      const ports = [];
+      for (const portId in model.assembly.portsById) {
+        if (!Object.hasOwn(model.assembly.portsById, portId)) continue;
+        const port = model.assembly.portsById[portId];
         const worldTransform = resolvePortWorldTransform(port, model.geometry);
         const compatibility = port.occupiedByNodeId
           ? null
@@ -1045,15 +1059,15 @@ export async function bootstrap() {
             : compatibility.reasonLabels.join(", ");
         } else if (movingBranch && !port.occupiedByNodeId) state = "valid";
         if (state === "valid") validPortCount++;
-        return {
+        ports.push({
           ...port,
           direction: worldTransform.direction,
           state,
           reasonText,
           position: worldTransform.position,
           label: portAccessibilityLabel(port, compatibility ?? undefined),
-        };
-      });
+        });
+      }
       screen.renderInventory(
         looseInventory.map((item) => {
           const definition = equipmentDefinition(item.definitionId);
