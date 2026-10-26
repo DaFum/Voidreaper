@@ -129,7 +129,7 @@ describe("abyss transition screen", () => {
       onDescend,
     });
     expect(container.innerHTML).toContain("ABYSS 3");
-    expect(container.innerHTML).toContain("×1.25");
+    expect(container.innerHTML).toContain('<span aria-hidden="true">×</span>1.25');
     container.querySelector("[data-descend]").click();
     container.querySelector("[data-extract]").click();
     expect(onDescend).toHaveBeenCalledOnce();
@@ -363,7 +363,7 @@ describe("codex screen", () => {
       onToggleFavorite,
     );
     expect(container.innerHTML).toContain(
-      '<span>☆</span> <small aria-hidden="true">Favorisieren</small>',
+      '<span><span aria-hidden="true">☆</span></span> <small aria-hidden="true">Favorisieren</small>',
     );
     container.querySelector('[data-favorite="b1"]').click();
     expect(onToggleFavorite).toHaveBeenCalledWith("b1");
