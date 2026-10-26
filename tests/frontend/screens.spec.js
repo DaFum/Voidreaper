@@ -129,7 +129,7 @@ describe("abyss transition screen", () => {
       onDescend,
     });
     expect(container.innerHTML).toContain("ABYSS 3");
-    expect(container.innerHTML).toContain('<span aria-hidden="true">×</span>1.25');
+    expect(container.innerHTML).toContain("×1.25");
     container.querySelector("[data-descend]").click();
     container.querySelector("[data-extract]").click();
     expect(onDescend).toHaveBeenCalledOnce();
