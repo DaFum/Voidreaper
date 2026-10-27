@@ -33,3 +33,6 @@
 ## 2024-05-18 - Decorative Unicode characters in interactive elements
 **Learning:** Decorative Unicode characters (like `⟲`, `✕`, `◇`, or emojis) inside interactive elements are read out by screen readers using their literal character names (e.g., "anticlockwise open circle arrow", "white diamond"), which creates a poor audio experience.
 **Action:** Wrap decorative text-based symbols or Unicode icons inside interactive elements with `<span aria-hidden="true">` to prevent screen readers from reading out literal character names.
+## 2024-05-18 - Hide decorative characters in interactive elements for screen readers
+**Learning:** Screen readers announce literal character names for decorative Unicode icons (e.g. 🔒, ★, ☆, ⟲), creating a poor audio experience when these symbols are purely decorative or redundant to accessible text.
+**Action:** Wrapped decorative text-based symbols or Unicode icons inside interactive elements with `<span aria-hidden="true">` across multiple UI components (e.g., `item-card`, `merchant-screen`, `codex-screen`, `prototype-vault-screen`) to prevent assistive technologies from reading out literal character names.

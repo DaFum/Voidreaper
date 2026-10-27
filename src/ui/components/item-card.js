@@ -28,7 +28,7 @@ export function updateItemCard(
   const equipped = equippedSlots.length
     ? `<span class="item-card__equipped">${equippedSlots.map(escapeHtml).join(" · ")}</span>`
     : "";
-  card.innerHTML = `<span class="item-card__status">${state === "locked" ? "🔒 " : ""}${escapeHtml(statusLabel)}</span><span class="item-card__slot">${escapeHtml(definition.slot)}</span><strong>${escapeHtml(definition.name)}</strong><small>${escapeHtml(definition.description ?? definition.signature ?? definition.id)}</small><div>${(
+  card.innerHTML = `<span class="item-card__status">${state === "locked" ? '<span aria-hidden="true">🔒</span> ' : ""}${escapeHtml(statusLabel)}</span><span class="item-card__slot">${escapeHtml(definition.slot)}</span><strong>${escapeHtml(definition.name)}</strong><small>${escapeHtml(definition.description ?? definition.signature ?? definition.id)}</small><div>${(
     definition.tags ?? []
   )
     .slice(0, 4)

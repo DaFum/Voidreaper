@@ -1960,7 +1960,7 @@ const Game = {
         Persist.data.ach.push(a.id);
         Persist.data.shards += a.shards;
         Persist.save();
-        UI.toast(`★ ${a.nm} — +${a.shards}◇`);
+        UI.toast(`<span aria-hidden="true">★</span> ${a.nm} — +${a.shards}◇`);
         AudioSys.evolve();
       }
     }
