@@ -1960,7 +1960,7 @@ const Game = {
         Persist.data.ach.push(a.id);
         Persist.data.shards += a.shards;
         Persist.save();
-        UI.toast(`<span aria-hidden="true">★</span> ${a.nm} — +${a.shards}◇`);
+        UI.toast(`<span aria-hidden="true">★</span> ${escapeHtml(a.nm)} — +${a.shards}◇`, true);
         AudioSys.evolve();
       }
     }
@@ -3476,7 +3476,7 @@ const UI = {
       b.style.opacity = "0";
     }, 3200);
   },
-  toast(msg) {
+  toast(msg, htmlMode = false) {
     const toastsContainer = this.el("toasts");
     if (!toastsContainer) return;
 
@@ -3493,7 +3493,11 @@ const UI = {
 
     const t = document.createElement("div");
     t.className = "toast";
-    t.textContent = msg;
+    if (htmlMode) {
+      t.innerHTML = msg;
+    } else {
+      t.textContent = msg;
+    }
     toastsContainer.appendChild(t);
 
     if (!isReducedMotion()) {

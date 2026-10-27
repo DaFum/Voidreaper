@@ -36,3 +36,6 @@
 ## 2024-05-18 - Hide decorative characters in interactive elements for screen readers
 **Learning:** Screen readers announce literal character names for decorative Unicode icons (e.g. 🔒, ★, ☆, ⟲), creating a poor audio experience when these symbols are purely decorative or redundant to accessible text.
 **Action:** Wrapped decorative text-based symbols or Unicode icons inside interactive elements with `<span aria-hidden="true">` across multiple UI components (e.g., `item-card`, `merchant-screen`, `codex-screen`, `prototype-vault-screen`) to prevent assistive technologies from reading out literal character names.
+## 2026-10-27 - Safely handling HTML inside dynamic toast elements
+**Learning:** Adding HTML formatting to strings passed into UI renderers that strictly use `textContent` results in users seeing raw HTML tags rather than formatted output.
+**Action:** When converting plain text assignments into HTML (e.g. wrapping a star in an aria-hidden span), you must update the receiving function (like `UI.toast`) to support `innerHTML` assignments for those messages, whilst ensuring user data is safely escaped (e.g., using `escapeHtml`) to prevent injection flaws.
