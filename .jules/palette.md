@@ -80,3 +80,27 @@
 ## 2024-09-03 - [Redundant Screen Reader Announcements in Disabled Elements]
 **Learning:** When using `<small>` elements to visually explain why a button is disabled, screen readers will often read both the button's standard `aria-label` and the text inside the `<small>` tag, causing confusing redundancy.
 **Action:** When adding visible `<small>` explanation text to a disabled element, always add `aria-hidden="true"` to the `<small>` element and ensure the parent button's `aria-label` contains the full combined context.
+
+## 2024-10-11 - Hide decorative icons from screen readers in interactive elements
+**Learning:** When making structural HTML changes to UI components for accessibility (such as adding `aria-hidden="true"` spans around decorative icons like `★`, `+`, `⟲`), related Vitest frontend DOM assertion tests often rely on exact HTML string matches using `.toContain()` on `.innerHTML` and will fail if they are not concurrently updated.
+**Action:** Always check the `tests/frontend/` directory (e.g. `screens.spec.js`) for literal DOM assertions that might break when wrapping Unicode symbols in spans, and update the test strings accordingly.
+
+## 2026-10-15 - Keep unavailable upgrades reachable by keyboard
+**Learning:** When an upgrade is maxed or unaffordable, retaining the native `disabled` attribute removes the button from sequential keyboard focus, so Tab-only users cannot reach the control and hear the newly added `aria-describedby` explanation; the `title` is also hover-dependent.
+**Action:** Keep these explanatory controls focusable by using `aria-disabled="true"` instead of `disabled` and handle the logic gate in JavaScript. Also update CSS selectors to style `[aria-disabled="true"]` like `:disabled` and avoid pseudo-classes like `:not(:disabled):hover` affecting them.
+
+## 2023-10-27 - Contextually Disabled Buttons Accessibility
+**Learning:** When a button is disabled because a contextual condition is not met (like insufficient currency), using the native `disabled` attribute prevents keyboard focus entirely, meaning screen reader users can't navigate to it to hear *why* it is disabled. Attempting to use `aria-label` to combine the name and reason overrides the inner content and violates WCAG 2.5.3 (Label in Name).
+**Action:** Use `aria-disabled="true"` instead of `disabled` to allow keyboard focus. Append the disabled reason as a visually hidden element (`<small aria-hidden="true">`) and link it to the button using `aria-describedby`. Add an explicit early return in the `click` handler checking `button.getAttribute("aria-disabled") === "true"` to prevent activation.
+
+## 2026-10-27 - Safely handling HTML inside dynamic toast elements
+**Learning:** Adding HTML formatting to strings passed into UI renderers that strictly use `textContent` results in users seeing raw HTML tags rather than formatted output.
+**Action:** When converting plain text assignments into HTML (e.g. wrapping a star in an aria-hidden span), you must update the receiving function (like `UI.toast`) to support `innerHTML` assignments for those messages, whilst ensuring user data is safely escaped (e.g., using `escapeHtml`) to prevent injection flaws.
+
+## 2024-10-28 - Add visual feedback for disabled item cards
+**Learning:** `button.item-card` components had no CSS rules for their disabled state (`:disabled` or `[aria-disabled="true"]`), causing them to look interactive even when they were unclickable. It's important to provide visual feedback for disabled states to match user expectations.
+**Action:** Added distinct visual styling for disabled `.item-card` buttons by reducing opacity and changing the cursor to `default`. Hover and focus-visible effects were prevented from triggering on disabled items to avoid confusing UX. This ensures that users can easily distinguish between available and unavailable items in the UI.
+
+## 2024-10-28 - Preserve disabled opacity after entrance animation
+**Learning:** When using Web Animations API (WAAPI) functions to animate entrance opacities (e.g., `opacity: [0, 1]`), the final inline styles persist and will override subsequent CSS rules like `:disabled` or `[aria-disabled='true']`.
+**Action:** When a stagger entrance animation finishes, hook into its `.finished` promise and clear the inline styles (e.g., `element.style.opacity = ''`, `element.style.transform = ''`) so that standard CSS styling can resume control over the element's appearance.

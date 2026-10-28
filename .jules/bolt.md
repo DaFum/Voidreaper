@@ -161,3 +161,15 @@
 ## 2024-05-18 - Safe memoization of in-place mutated state objects
 **Learning:** When optimizing state selectors (e.g., in `src/features/ship-assembly/model/assembly-selectors.js`) using manual `WeakMap` memoization, note that some state objects (like `nodesById` or `portsById`) are mutated in-place by services rather than being replaced immutably. To prevent stale cache returns, validation must include explicit revision checks (e.g., `cached.structuralRevision === state.structuralRevision`) alongside object identity and other primitive dependencies.
 **Action:** When memoizing selectors that read from mutable state, always verify if the module provides a specific revision counter (like `structuralRevision`) and include it in the cache validation check, rather than relying solely on object identity.
+
+## 2025-02-23 - Array chaining optimization in path generation logic
+**Learning:** Using chained `.filter().map()` inside nested loops to calculate or link paths in generators (like `generateSectorMap`) rapidly allocates many short-lived intermediate arrays. This produces measurable GC overhead and bottlenecks execution when run frequently.
+**Action:** Replace `.filter().map()` chains in nested path generation logic with a single-pass imperative `for...of` loop to directly push matching values to a new array, eliminating intermediate array allocation overhead.
+
+## 2025-02-23 - Flattening nested arrays in generation logic
+**Learning:** When flattening nested multi-dimensional arrays (like extracting nodes from regions and layers in `flattenSectorMap`), chaining functional methods like `.flatMap()` and `.flat()` creates intermediate array allocations. In systems that execute frequently or deal with complex structures, this causes garbage collection overhead.
+**Action:** Replace `.flatMap()` and `.flat()` chains with nested imperative `for...of` loops, pushing elements directly into a single result array.
+
+## 2025-02-23 - Memoizing Selectors vs Array Micro-optimizations
+**Learning:** In state selectors utilized by React components (via hooks like `useSelector`), simply changing array methods like `Object.values().filter()` to imperative `for...in` loops may slightly speed up array creation, but it completely misses the primary performance bottleneck. Since both approaches return a newly allocated array instance on every call, the components will still unnecessarily re-render on every state change. Such changes are textbook micro-optimizations that hurt readability without providing measurable UI performance gains.
+**Action:** When optimizing state selectors to prevent re-renders, prioritize structural memoization (e.g., using `WeakMap` cached by `state` and validated against revision numbers like `structuralRevision`) to maintain referential equality. This addresses the actual bottleneck (unnecessary re-renders) while preserving readable declarative array methods like `.filter()`.

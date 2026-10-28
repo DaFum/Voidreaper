@@ -53,13 +53,14 @@
   clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 0 100%);
 }
 
-.meta:not(:disabled):active,
-.meta:not(:disabled):hover {
+.meta:not(:disabled):not([aria-disabled="true"]):active,
+.meta:not(:disabled):not([aria-disabled="true"]):hover {
   border-color: var(--ice);
   transform: translateY(-2px);
 }
 
-.meta:disabled {
+.meta:disabled,
+.meta[aria-disabled="true"] {
   opacity: 0.36;
   cursor: default;
 }
@@ -571,10 +572,16 @@ button.item-card {
   font: inherit;
   cursor: pointer;
 }
-button.item-card:hover,
-button.item-card:focus-visible {
+button.item-card:not(:disabled):not([aria-disabled="true"]):hover,
+button.item-card:not(:disabled):not([aria-disabled="true"]):focus-visible {
   border-color: var(--ice);
   background-color: rgba(76, 201, 240, 0.07);
+}
+button.item-card:disabled,
+button.item-card[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
 }
 .item-card[data-state="locked"] {
   border-color: rgba(255, 143, 31, 0.28);
@@ -853,8 +860,8 @@ button.item-card:focus-visible {
   .hangar-tabs-shell::after {
     transition: none;
   }
-  .meta:not(:disabled):active,
-  .meta:not(:disabled):hover {
+  .meta:not(:disabled):not([aria-disabled="true"]):active,
+  .meta:not(:disabled):not([aria-disabled="true"]):hover {
     transform: none;
   }
 }
@@ -863,8 +870,8 @@ button.item-card:focus-visible {
 [data-reduced-motion="true"] .hangar-tabs-shell::after {
   transition: none;
 }
-[data-reduced-motion="true"] .meta:not(:disabled):active,
-[data-reduced-motion="true"] .meta:not(:disabled):hover {
+[data-reduced-motion="true"] .meta:not(:disabled):not([aria-disabled="true"]):active,
+[data-reduced-motion="true"] .meta:not(:disabled):not([aria-disabled="true"]):hover {
   transform: none;
 }
 

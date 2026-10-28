@@ -363,7 +363,7 @@ describe("codex screen", () => {
       onToggleFavorite,
     );
     expect(container.innerHTML).toContain(
-      '<span><span aria-hidden="true">☆</span></span> <small aria-hidden="true">Favorisieren</small>',
+      '<span aria-hidden="true">☆</span> <small aria-hidden="true">Favorisieren</small>',
     );
     container.querySelector('[data-favorite="b1"]').click();
     expect(onToggleFavorite).toHaveBeenCalledWith("b1");
@@ -1157,8 +1157,10 @@ describe("merchant screen", () => {
     const [expensive, cheap] = [
       ...container.querySelectorAll(".item-catalog .item-card"),
     ];
-    expect(expensive.disabled).toBe(true);
-    expect(expensive.getAttribute("aria-label")).toContain(
+    expect(expensive.getAttribute("aria-disabled")).toBe("true");
+    const reasonId = expensive.getAttribute("aria-describedby");
+    expect(reasonId).toBe("offer-reason-Teuer");
+    expect(expensive.querySelector(`#${reasonId}`).textContent).toContain(
       "nicht genügend Scrap",
     );
     cheap.click();

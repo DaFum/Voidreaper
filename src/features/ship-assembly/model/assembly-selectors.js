@@ -3,7 +3,7 @@
 // instead of Object.values().filter() to completely eliminate intermediate array allocations.
 const segmentsCache = new WeakMap();
 export const selectRealSegments = (state) => {
-  const cached = segmentsCache.get(state.nodesById);
+  const cached = state.nodesById ? segmentsCache.get(state.nodesById) : null;
   // Ensure the cache depends on both the objects and the root node.
   if (
     cached &&
@@ -14,20 +14,21 @@ export const selectRealSegments = (state) => {
   }
 
   const result = [];
-  for (const key in state.nodesById) {
-    if (Object.hasOwn(state.nodesById, key)) {
-      const node = state.nodesById[key];
-      if (node.nodeId !== state.rootNodeId && node.moduleInstanceId) {
-        result.push(node);
+  if (state.nodesById) {
+    for (const key in state.nodesById) {
+      if (Object.hasOwn(state.nodesById, key)) {
+        const node = state.nodesById[key];
+        if (node && node.nodeId !== state.rootNodeId && node.moduleInstanceId) {
+          result.push(node);
+        }
       }
     }
+    segmentsCache.set(state.nodesById, {
+      rootNodeId: state.rootNodeId,
+      structuralRevision: state.structuralRevision,
+      result,
+    });
   }
-
-  segmentsCache.set(state.nodesById, {
-    rootNodeId: state.rootNodeId,
-    structuralRevision: state.structuralRevision,
-    result,
-  });
   return result;
 };
 
@@ -35,25 +36,26 @@ export const selectRealSegments = (state) => {
 // imperative for-in loop on cache misses to prevent Object.values() allocations.
 const freePortsCache = new WeakMap();
 export const selectFreePorts = (state) => {
-  let cached = freePortsCache.get(state.portsById);
+  let cached = state.portsById ? freePortsCache.get(state.portsById) : null;
   if (cached && cached.structuralRevision === state.structuralRevision) {
     return cached.result;
   }
 
   const result = [];
-  for (const key in state.portsById) {
-    if (Object.hasOwn(state.portsById, key)) {
-      const port = state.portsById[key];
-      if (!port.occupiedByNodeId && !port.disabled) {
-        result.push(port);
+  if (state.portsById) {
+    for (const key in state.portsById) {
+      if (Object.hasOwn(state.portsById, key)) {
+        const port = state.portsById[key];
+        if (port && !port.occupiedByNodeId && !port.disabled) {
+          result.push(port);
+        }
       }
     }
+    freePortsCache.set(state.portsById, {
+      structuralRevision: state.structuralRevision,
+      result,
+    });
   }
-
-  freePortsCache.set(state.portsById, {
-    structuralRevision: state.structuralRevision,
-    result,
-  });
   return result;
 };
 export const selectModuleOwner = (state, moduleInstanceId) => {
