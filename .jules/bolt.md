@@ -133,6 +133,10 @@
 ## 2025-02-23 - Avoiding intermediate arrays in branch failure resolution
 **Learning:** During ship assembly branch failure evaluation, `Object.values(initial.nodesById).filter(...).map(...)` allocates multiple arrays when extracting child nodes for `resolveNodeLoss`. Since this path handles active gameplay events where damage causes pieces to detach, optimizing it reduces GC pressure.
 **Action:** Replace `Object.values(...).filter(...).map(...)` arrays in hot simulation paths with imperative `for...in` loops that populate a single pre-allocated (or dynamically filled) array.
+
+## 2025-02-24 - Avoiding cache invalidation bugs in selector memoization
+**Learning:** When optimizing state selectors (like `selectRealSegments`) using manual `WeakMap` memoization to reduce array allocations and preserve referential equality, ensure the cache mechanism explicitly tracks *all* selector dependencies. Memoizing solely on an object key (like `state.nodesById`) while evaluating other state primitives (like `state.rootNodeId`) causes severe cache invalidation bugs and stale returns when those primitives change independently.
+**Action:** Always store multi-dependency caches as objects (e.g., storing `{ rootNodeId: state.rootNodeId, result }` as the value in the `WeakMap`) and verify all dependent values before returning the cached result.
 ## 2025-02-23 - Replacing Object.values() with for-in loops in Assembly Geometry Service
 **Learning:** In the extremely hot `rebuild` path of `assembly-geometry-service.js` which recalculates collision and visuals constantly during ship construction, doing `for (const node of Object.values(snapshot.nodesById))` creates an intermediate array allocation of all nodes on every frame/change, compounding GC pressure.
 **Action:** Replace `Object.values(obj)` iterations in hot geometry and frame-bound game loop routines with a single-pass imperative `for...in` loop checking `Object.hasOwn(obj, key)` to extract properties without allocating arrays.
