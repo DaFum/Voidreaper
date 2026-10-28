@@ -136,3 +136,17 @@
 ## 2025-02-23 - Proper caching semantics for derived state arrays
 **Learning:** When optimizing state selectors using manual `WeakMap` memoization to eliminate intermediate array allocations, it is critical to explicitly track *all* dependencies of the selector. Memoizing solely on the object key (like `state.nodesById`) while evaluating other primitive state properties (like `state.rootNodeId`) can result in cache invalidation bugs and stale returns if those primitives update independently.
 **Action:** In manual memoization with `WeakMap`, store a composite value containing both the resulting array and the other dependent primitives (e.g., `{ rootNodeId: state.rootNodeId, result }`). Validate all dependencies within the cached result before returning a cache hit.
+
+## 2025-02-24 - Avoiding cache invalidation bugs in selector memoization
+**Learning:** When optimizing state selectors (like `selectRealSegments`) using manual `WeakMap` memoization to reduce array allocations and preserve referential equality, ensure the cache mechanism explicitly tracks *all* selector dependencies. Memoizing solely on an object key (like `state.nodesById`) while evaluating other state primitives (like `state.rootNodeId`) causes severe cache invalidation bugs and stale returns when those primitives change independently.
+**Action:** Always store multi-dependency caches as objects (e.g., storing `{ rootNodeId: state.rootNodeId, result }` as the value in the `WeakMap`) and verify all dependent values before returning the cached result.
+## 2025-02-23 - Replacing Object.values() with for-in loops in Assembly Geometry Service
+**Learning:** In the extremely hot `rebuild` path of `assembly-geometry-service.js` which recalculates collision and visuals constantly during ship construction, doing `for (const node of Object.values(snapshot.nodesById))` creates an intermediate array allocation of all nodes on every frame/change, compounding GC pressure.
+**Action:** Replace `Object.values(obj)` iterations in hot geometry and frame-bound game loop routines with a single-pass imperative `for...in` loop checking `Object.hasOwn(obj, key)` to extract properties without allocating arrays.
+## 2025-02-23 - Avoiding filter arrays in UI selectors
+**Learning:** In selector functions like `selectRealSegments` and `selectFreePorts` which are queried constantly for filtering UI representations of state, using chained `.values().filter()` creates unnecessary array allocations.
+**Action:** Replace `Object.values().filter()` with a single-pass imperative `for...in` loop checking `Object.hasOwn` when projecting filtered subsets from state maps.
+
+## 2024-05-18 - Safe memoization of in-place mutated state objects
+**Learning:** When optimizing state selectors (e.g., in `src/features/ship-assembly/model/assembly-selectors.js`) using manual `WeakMap` memoization, note that some state objects (like `nodesById` or `portsById`) are mutated in-place by services rather than being replaced immutably. To prevent stale cache returns, validation must include explicit revision checks (e.g., `cached.structuralRevision === state.structuralRevision`) alongside object identity and other primitive dependencies.
+**Action:** When memoizing selectors that read from mutable state, always verify if the module provides a specific revision counter (like `structuralRevision`) and include it in the cache validation check, rather than relying solely on object identity.
