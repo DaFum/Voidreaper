@@ -58,15 +58,24 @@ export function createBlueprintService({
       replaceBlueprintId = null,
       veteran = false,
     }) {
+      // ⚡ Bolt: Avoid intermediate array allocations from Object.values().map()
+      const nodes = [];
+      for (const key in assemblySnapshot.nodesById) {
+        if (!Object.hasOwn(assemblySnapshot.nodesById, key)) continue;
+        nodes.push(
+          toBlueprintNode(
+            assemblySnapshot.nodesById[key],
+            assemblySnapshot.portsById,
+          ),
+        );
+      }
       const id = replaceBlueprintId ?? idFactory.create("ship-blueprint"),
         previous = cached[id],
         blueprint = createBlueprint({
           id,
           name: name.trim().slice(0, 48) || "Unbenannter Bauplan",
           shipFrameId: assemblySnapshot.shipFrameId,
-          nodes: Object.values(assemblySnapshot.nodesById).map((node) =>
-            toBlueprintNode(node, assemblySnapshot.portsById),
-          ),
+          nodes,
           connections: Object.values(assemblySnapshot.secondaryConnectionsById),
           variants: previous?.visualVariants ?? [],
         });
@@ -125,12 +134,16 @@ export function createBlueprintService({
     },
     async createVariant(id, name, snapshot) {
       requireBlueprint(id);
+      // ⚡ Bolt: Avoid intermediate array allocations from Object.values().map()
+      const nodes = [];
+      for (const key in snapshot.nodesById) {
+        if (!Object.hasOwn(snapshot.nodesById, key)) continue;
+        nodes.push(toBlueprintNode(snapshot.nodesById[key], snapshot.portsById));
+      }
       const variant = {
         variantId: idFactory.create("blueprint-variant"),
         name: name.trim().slice(0, 48) || "Variante",
-        nodes: Object.values(snapshot.nodesById).map((node) =>
-          toBlueprintNode(node, snapshot.portsById),
-        ),
+        nodes,
         connections: Object.values(snapshot.secondaryConnectionsById),
         createdAt: new Date().toISOString(),
       };

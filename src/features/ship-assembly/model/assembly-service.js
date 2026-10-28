@@ -290,7 +290,10 @@ export function createAssemblyService({
     const rootParentPortId = requireNode(nodeId).parentPortId;
     const nodeIds = detachBranch ? getBranchNodeIds(state, nodeId) : [nodeId];
     const detachedSet = new Set(nodeIds);
-    for (const currentId of [...nodeIds].reverse()) {
+    // ⚡ Bolt: Iterate backwards through nodeIds to avoid intermediate array
+    // allocations and .reverse() overhead during node detachment.
+    for (let i = nodeIds.length - 1; i >= 0; i--) {
+      const currentId = nodeIds[i];
       const node = requireNode(currentId);
       if (recordDetached)
         state.detachedItems.push({
