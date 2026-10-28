@@ -36,3 +36,6 @@
 ## 2024-10-02 - Hide decorative icons from screen readers
 **Learning:** Screen readers often read out literal character names for decorative Unicode icons (e.g., `⟲`, `🔒`), which can be confusing for users (e.g., reading "anticlockwise open circle arrow" or "lock").
 **Action:** When adding or maintaining interactive elements with decorative text-based symbols or Unicode icons, wrap them in `<span aria-hidden="true">` to prevent assistive technologies from announcing them, while relying on `aria-label` or visible text for semantic meaning.
+## 2024-10-24 - Screen readers reading emoji and Unicode characters literally
+**Learning:** Screen readers often read out literal character names for decorative Unicode icons (e.g., `🔒`, `⟲`), which can be confusing for users.
+**Action:** Wrap decorative text-based symbols or Unicode icons inside interactive elements with `<span aria-hidden="true">` to prevent assistive technologies from announcing them, while relying on `aria-label` or visible text for semantic meaning.
