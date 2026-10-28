@@ -77,7 +77,11 @@ export function createAssemblyGeometryService({
   function rebuild(snapshot) {
     if (!snapshot) return getSnapshot();
     if (cache.revision === snapshot.structuralRevision) {
-      for (const node of Object.values(snapshot.nodesById)) {
+      // ⚡ Bolt: Avoid intermediate array allocations from Object.values()
+      // in frequent geometry cache validation by using a single-pass imperative loop.
+      for (const key in snapshot.nodesById) {
+        if (!Object.hasOwn(snapshot.nodesById, key)) continue;
+        const node = snapshot.nodesById[key];
         const cached = cache.nodeGeometry.get(node.nodeId);
         if (
           cached &&
