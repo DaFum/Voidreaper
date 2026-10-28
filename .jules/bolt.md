@@ -133,3 +133,7 @@
 ## 2025-02-23 - Avoiding intermediate arrays in branch failure resolution
 **Learning:** During ship assembly branch failure evaluation, `Object.values(initial.nodesById).filter(...).map(...)` allocates multiple arrays when extracting child nodes for `resolveNodeLoss`. Since this path handles active gameplay events where damage causes pieces to detach, optimizing it reduces GC pressure.
 **Action:** Replace `Object.values(...).filter(...).map(...)` arrays in hot simulation paths with imperative `for...in` loops that populate a single pre-allocated (or dynamically filled) array.
+
+## 2025-02-23 - Avoid intermediate arrays in React/Redux selectors
+**Learning:** Using chained array methods like `Object.values(obj).filter(...)` in state selectors (e.g., `selectRealSegments` in `assembly-selectors.js`) forces intermediate array allocations. When these selectors run frequently, it generates unnecessary garbage collection pressure.
+**Action:** Replace `Object.values().filter()` chains with an imperative `for...in` loop checking `Object.hasOwn()` that populates a single array to return. While structurally memoizing the selector using `createSelector` from `reselect` would further optimize React re-renders by preserving referential equality, the imperative loop itself provides a fundamental JS execution speedup by eliminating intermediate allocations.
