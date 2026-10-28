@@ -44,7 +44,7 @@ export function renderMerchantScreen(
   const rerollReason = !canReroll
     ? ` <small aria-hidden="true">(nicht genügend ${shortCurrency})</small>`
     : "";
-  root.innerHTML = `<section class="service-screen"><header>VOID BROKER <b>${escapeHtml(resources.scrap)} SCRAP · ${escapeHtml(resources.flux)} FLUX</b></header><div class="item-catalog" data-tutorial-id="merchant-offers"></div><div class="service-screen__actions"><button type="button" class="btn small" data-reroll${rerollDisabled}${rerollAriaTitle}>⟲ Angebote neu würfeln (${costLabel})${rerollReason}</button><button type="button" class="btn small" data-leave>ZURÜCK ZUR KARTE</button></div></section>`;
+  root.innerHTML = `<section class="service-screen"><header>VOID BROKER <b>${escapeHtml(resources.scrap)} SCRAP · ${escapeHtml(resources.flux)} FLUX</b></header><div class="item-catalog" data-tutorial-id="merchant-offers"></div><div class="service-screen__actions"><button type="button" class="btn small" data-reroll${rerollDisabled}${rerollAriaTitle}><span aria-hidden="true">⟲</span> Angebote neu würfeln (${costLabel})${rerollReason}</button><button type="button" class="btn small" data-leave>ZURÜCK ZUR KARTE</button></div></section>`;
   const catalog = root.querySelector(".item-catalog");
   for (const offer of offers) {
     const button = document.createElement("button");

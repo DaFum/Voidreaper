@@ -136,3 +136,6 @@
 ## 2025-02-23 - Replacing Object.values() with for-in loops in Assembly Geometry Service
 **Learning:** In the extremely hot `rebuild` path of `assembly-geometry-service.js` which recalculates collision and visuals constantly during ship construction, doing `for (const node of Object.values(snapshot.nodesById))` creates an intermediate array allocation of all nodes on every frame/change, compounding GC pressure.
 **Action:** Replace `Object.values(obj)` iterations in hot geometry and frame-bound game loop routines with a single-pass imperative `for...in` loop checking `Object.hasOwn(obj, key)` to extract properties without allocating arrays.
+## 2025-02-23 - Avoiding filter arrays in UI selectors
+**Learning:** In selector functions like `selectRealSegments` and `selectFreePorts` which are queried constantly for filtering UI representations of state, using chained `.values().filter()` creates unnecessary array allocations.
+**Action:** Replace `Object.values().filter()` with a single-pass imperative `for...in` loop checking `Object.hasOwn` when projecting filtered subsets from state maps.
