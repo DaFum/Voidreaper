@@ -36,3 +36,6 @@
 ## 2024-10-28 - Add visual feedback for disabled item cards
 **Learning:** `button.item-card` components had no CSS rules for their disabled state (`:disabled` or `[aria-disabled="true"]`), causing them to look interactive even when they were unclickable. It's important to provide visual feedback for disabled states to match user expectations.
 **Action:** Added distinct visual styling for disabled `.item-card` buttons by reducing opacity and changing the cursor to `default`. Hover and focus-visible effects were prevented from triggering on disabled items to avoid confusing UX. This ensures that users can easily distinguish between available and unavailable items in the UI.
+## 2024-10-28 - Preserve disabled opacity after entrance animation
+**Learning:** When using Web Animations API (WAAPI) functions to animate entrance opacities (e.g., `opacity: [0, 1]`), the final inline styles persist and will override subsequent CSS rules like `:disabled` or `[aria-disabled='true']`.
+**Action:** When a stagger entrance animation finishes, hook into its `.finished` promise and clear the inline styles (e.g., `element.style.opacity = ''`, `element.style.transform = ''`) so that standard CSS styling can resume control over the element's appearance.

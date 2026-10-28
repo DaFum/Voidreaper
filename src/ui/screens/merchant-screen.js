@@ -70,7 +70,20 @@ export function renderMerchantScreen(
   }
 
   if (catalog.children.length > 0) {
-    animateListStagger(catalog.children, { staggerDelay: 0.04, yOffset: 8 });
+    const anim = animateListStagger(catalog.children, {
+      staggerDelay: 0.04,
+      yOffset: 8,
+    });
+    if (anim?.finished) {
+      anim.finished
+        .then(() => {
+          for (const child of catalog.children) {
+            child.style.opacity = "";
+            child.style.transform = "";
+          }
+        })
+        .catch(() => {});
+    }
   }
 
   const rerollBtn = root.querySelector("[data-reroll]");
