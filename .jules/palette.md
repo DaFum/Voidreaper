@@ -51,6 +51,10 @@
 ## 2024-05-18 - Decorative Unicode characters in interactive elements
 **Learning:** Decorative Unicode characters (like `⟲`, `✕`, `◇`, or emojis) inside interactive elements are read out by screen readers using their literal character names (e.g., "anticlockwise open circle arrow", "white diamond"), which creates a poor audio experience.
 **Action:** Wrap decorative text-based symbols or Unicode icons inside interactive elements with `<span aria-hidden="true">` to prevent screen readers from reading out literal character names.
+
+## 2024-10-09 - Hide decorative symbols using aria-hidden
+**Learning:** Screen readers announce text-based symbols and emoji characters (e.g., `🔒`, `◇`, `⟲`) literally, often interrupting or confusing the intended context of interactive elements (e.g., "locked" vs "lock emoji").
+**Action:** When using decorative characters or emojis inside interactive elements or text nodes, always wrap them in `<span aria-hidden="true">` to prevent assistive technologies from reading them unnecessarily while retaining their visual meaning for sighted users.
 ## 2024-10-04 - Hiding decorative Unicode icons in Item Cards and Merchant Screen
 **Learning:** Screen readers often announce Unicode characters used purely for decoration or UI structure (like `🔒` or `⟲`), causing unnecessary and confusing audio clutter. We need to hide these explicitly when the visual state they represent is already covered by the surrounding text or accessibility attributes.
 **Action:** When working with UI elements that embed decorative Unicode icons (e.g. status indicators, reroll buttons), wrap the icon in a `<span aria-hidden="true">` tag to prevent screen readers from reading them out.
