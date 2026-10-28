@@ -188,7 +188,12 @@ function registerEvolutionEffects(effects) {
   });
 }
 
-function setupDevDebug(services, controller, getMetaSave, blueprintValidationContext) {
+function setupDevDebug(
+  services,
+  controller,
+  getMetaSave,
+  blueprintValidationContext,
+) {
   if (import.meta.env.DEV) {
     const flags = new Map(),
       firstModule = () =>
@@ -662,7 +667,12 @@ export async function bootstrap() {
 
   const controller = createGameController(services);
   if (import.meta.env.DEV) {
-    setupDevDebug(services, controller, () => metaSave, blueprintValidationContext);
+    setupDevDebug(
+      services,
+      controller,
+      () => metaSave,
+      blueprintValidationContext,
+    );
   }
   const input = createInputController({
     eventBus: events,
