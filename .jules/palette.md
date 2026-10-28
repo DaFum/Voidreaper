@@ -12,8 +12,6 @@
 **Learning:** Using the custom uiConfirm modal dialog ensures visual consistency and accessibility across the application, even when triggering actions from legacy runtime files.
 **Action:** Use the existing uiConfirm helper for confirmation dialogs to maintain a unified theme and consistent user experience.
 
-<<<<<<< HEAD
-=======
 ## 2024-05-24 - Contextual disabled states for HUD action buttons
 **Learning:** The active module slots in the HUD (`#active1btn`, `#active2btn`) were disabled when empty, but lacked visible context for why they couldn't be used, relying only on the word "EMPTY" and standard `disabled` attributes.
 **Action:** Always add a visible `<small aria-hidden="true">(Slot empty)</small>` and an updated `title`/`aria-label` to HUD action buttons that are disabled due to missing equipment, providing clear context for both sighted and touch users, consistent with secondary UI actions elsewhere.
@@ -29,7 +27,6 @@
 ## 2024-10-24 - Screen readers reading emoji and Unicode characters literally
 **Learning:** Screen readers often read out literal character names for decorative Unicode icons (e.g., `🔒`, `⟲`), which can be confusing for users.
 **Action:** Wrap decorative text-based symbols or Unicode icons inside interactive elements with `<span aria-hidden="true">` to prevent assistive technologies from announcing them, while relying on `aria-label` or visible text for semantic meaning.
->>>>>>> 99ed5dc6679fc9fa8b2d980756e808a0a25999dc
 ## 2025-05-18 - Improve Custom Modal Accessibility
 **Learning:** Custom modals generated via DOM API (like in `modal-dialog.js`) need unique dynamically generated IDs so that `aria-labelledby` and `aria-describedby` can be correctly mapped between the `<dialog>` (and nested `<input>`) elements and the text content. Reusing static IDs causes mapping conflicts when multiple modals open sequentially or simultaneously.
 **Action:** Always generate unique ID suffixes (e.g. using an incrementing counter) for modal title/message elements and tie them to ARIA reference attributes correctly inside custom dialog builders.
