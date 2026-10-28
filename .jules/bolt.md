@@ -139,3 +139,7 @@
 ## 2025-02-23 - Avoiding filter arrays in UI selectors
 **Learning:** In selector functions like `selectRealSegments` and `selectFreePorts` which are queried constantly for filtering UI representations of state, using chained `.values().filter()` creates unnecessary array allocations.
 **Action:** Replace `Object.values().filter()` with a single-pass imperative `for...in` loop checking `Object.hasOwn` when projecting filtered subsets from state maps.
+
+## 2024-05-18 - Safe memoization of in-place mutated state objects
+**Learning:** When optimizing state selectors (e.g., in `src/features/ship-assembly/model/assembly-selectors.js`) using manual `WeakMap` memoization, note that some state objects (like `nodesById` or `portsById`) are mutated in-place by services rather than being replaced immutably. To prevent stale cache returns, validation must include explicit revision checks (e.g., `cached.structuralRevision === state.structuralRevision`) alongside object identity and other primitive dependencies.
+**Action:** When memoizing selectors that read from mutable state, always verify if the module provides a specific revision counter (like `structuralRevision`) and include it in the cache validation check, rather than relying solely on object identity.

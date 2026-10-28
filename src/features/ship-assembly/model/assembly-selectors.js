@@ -1,31 +1,62 @@
+// ⚡ Bolt: Cache selectors manually using WeakMap and structuralRevision.
+// State objects (like nodesById or portsById) are mutated in-place by services
+// rather than being replaced immutably, so identity checks aren't enough.
+// We must also compare structuralRevision to detect changes.
+const segmentsCache = new WeakMap();
+const portsCache = new WeakMap();
+
 export const selectRealSegments = (state) => {
+  if (!state || !state.nodesById) return [];
+
+  const cached = segmentsCache.get(state);
+  if (cached && cached.structuralRevision === state.structuralRevision) {
+    return cached.result;
+  }
+
   const result = [];
-  if (state.nodesById) {
-    for (const key in state.nodesById) {
-      if (Object.hasOwn(state.nodesById, key)) {
-        const node = state.nodesById[key];
-        if (node.nodeId !== state.rootNodeId && node.moduleInstanceId) {
-          result.push(node);
-        }
+  for (const key in state.nodesById) {
+    if (Object.hasOwn(state.nodesById, key)) {
+      const node = state.nodesById[key];
+      if (node.nodeId !== state.rootNodeId && node.moduleInstanceId) {
+        result.push(node);
       }
     }
   }
+
+  segmentsCache.set(state, {
+    structuralRevision: state.structuralRevision,
+    result,
+  });
+
   return result;
 };
+
 export const selectFreePorts = (state) => {
+  if (!state || !state.portsById) return [];
+
+  const cached = portsCache.get(state);
+  if (cached && cached.structuralRevision === state.structuralRevision) {
+    return cached.result;
+  }
+
   const result = [];
-  if (state.portsById) {
-    for (const key in state.portsById) {
-      if (Object.hasOwn(state.portsById, key)) {
-        const port = state.portsById[key];
-        if (!port.occupiedByNodeId && !port.disabled) {
-          result.push(port);
-        }
+  for (const key in state.portsById) {
+    if (Object.hasOwn(state.portsById, key)) {
+      const port = state.portsById[key];
+      if (!port.occupiedByNodeId && !port.disabled) {
+        result.push(port);
       }
     }
   }
+
+  portsCache.set(state, {
+    structuralRevision: state.structuralRevision,
+    result,
+  });
+
   return result;
 };
+
 export const selectModuleOwner = (state, moduleInstanceId) => {
   if (!moduleInstanceId) return null;
   if (state.nodeIdByModuleInstanceId) {
