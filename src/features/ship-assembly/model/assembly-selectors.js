@@ -1,17 +1,18 @@
-const _realSegmentsCache = new WeakMap();
-// ⚡ Bolt: Optimize selector by eliminating intermediate arrays from Object.values().filter().
-// Uses WeakMap memoization based on nodesById, tracking structuralRevision and rootNodeId
-// to properly invalidate when assembly state mutates in-place (e.g., during mount/detach).
-// Impact: Eliminates O(N) intermediate array allocations and preserves O(1) equality checks for pure components.
+// ⚡ Bolt: Cache derived arrays using WeakMap keyed on state objects to preserve
+// referential equality across updates. When cache misses, use an imperative for-in loop
+// instead of Object.values().filter() to completely eliminate intermediate array allocations.
+const segmentsCache = new WeakMap();
 export const selectRealSegments = (state) => {
-  let cacheEntry = _realSegmentsCache.get(state.nodesById);
+  const cached = segmentsCache.get(state.nodesById);
+  // Ensure the cache depends on both the objects and the root node.
   if (
-    cacheEntry &&
-    cacheEntry.rootNodeId === state.rootNodeId &&
-    cacheEntry.structuralRevision === state.structuralRevision
+    cached &&
+    cached.rootNodeId === state.rootNodeId &&
+    cached.structuralRevision === state.structuralRevision
   ) {
-    return cacheEntry.result;
+    return cached.result;
   }
+
   const result = [];
   for (const key in state.nodesById) {
     if (Object.hasOwn(state.nodesById, key)) {
@@ -21,7 +22,8 @@ export const selectRealSegments = (state) => {
       }
     }
   }
-  _realSegmentsCache.set(state.nodesById, {
+
+  segmentsCache.set(state.nodesById, {
     rootNodeId: state.rootNodeId,
     structuralRevision: state.structuralRevision,
     result,
@@ -29,19 +31,15 @@ export const selectRealSegments = (state) => {
   return result;
 };
 
-const _freePortsCache = new WeakMap();
-// ⚡ Bolt: Optimize selector by eliminating intermediate arrays from Object.values().filter().
-// Uses WeakMap memoization on portsById, tracking structuralRevision to properly
-// invalidate when assembly state mutates in-place.
-// Impact: Eliminates O(N) intermediate array allocations and preserves O(1) equality checks for pure components.
+// ⚡ Bolt: Cache free ports array to preserve referential equality and use an
+// imperative for-in loop on cache misses to prevent Object.values() allocations.
+const freePortsCache = new WeakMap();
 export const selectFreePorts = (state) => {
-  let cacheEntry = _freePortsCache.get(state.portsById);
-  if (
-    cacheEntry &&
-    cacheEntry.structuralRevision === state.structuralRevision
-  ) {
-    return cacheEntry.result;
+  let cached = freePortsCache.get(state.portsById);
+  if (cached && cached.structuralRevision === state.structuralRevision) {
+    return cached.result;
   }
+
   const result = [];
   for (const key in state.portsById) {
     if (Object.hasOwn(state.portsById, key)) {
@@ -51,7 +49,8 @@ export const selectFreePorts = (state) => {
       }
     }
   }
-  _freePortsCache.set(state.portsById, {
+
+  freePortsCache.set(state.portsById, {
     structuralRevision: state.structuralRevision,
     result,
   });
