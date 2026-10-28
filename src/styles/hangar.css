@@ -571,10 +571,15 @@ button.item-card {
   font: inherit;
   cursor: pointer;
 }
-button.item-card:hover,
-button.item-card:focus-visible {
+button.item-card:not(:disabled):not([aria-disabled="true"]):hover,
+button.item-card:not(:disabled):not([aria-disabled="true"]):focus-visible {
   border-color: var(--ice);
   background-color: rgba(76, 201, 240, 0.07);
+}
+button.item-card:disabled,
+button.item-card[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: default;
 }
 .item-card[data-state="locked"] {
   border-color: rgba(255, 143, 31, 0.28);

@@ -33,3 +33,6 @@
 ## 2024-05-18 - Decorative Unicode characters in interactive elements
 **Learning:** Decorative Unicode characters (like `⟲`, `✕`, `◇`, or emojis) inside interactive elements are read out by screen readers using their literal character names (e.g., "anticlockwise open circle arrow", "white diamond"), which creates a poor audio experience.
 **Action:** Wrap decorative text-based symbols or Unicode icons inside interactive elements with `<span aria-hidden="true">` to prevent screen readers from reading out literal character names.
+## 2024-10-28 - Add visual feedback for disabled item cards
+**Learning:** `button.item-card` components had no CSS rules for their disabled state (`:disabled` or `[aria-disabled="true"]`), causing them to look interactive even when they were unclickable. It's important to provide visual feedback for disabled states to match user expectations.
+**Action:** Added distinct visual styling for disabled `.item-card` buttons by reducing opacity and changing the cursor to `default`. Hover and focus-visible effects were prevented from triggering on disabled items to avoid confusing UX. This ensures that users can easily distinguish between available and unavailable items in the UI.
