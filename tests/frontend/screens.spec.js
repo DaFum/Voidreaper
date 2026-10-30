@@ -1689,10 +1689,11 @@ describe("workshop screen", () => {
     const swap = buttons.find(
       (button) => button.textContent === "Modul wechseln",
     );
-    expect(swap.disabled).toBe(false);
-    expect(buttons.filter((button) => button.disabled).length).toBe(
-      buttons.length - 1,
-    );
+    expect(swap.getAttribute("aria-disabled")).toBeNull();
+    expect(
+      buttons.filter((button) => button.getAttribute("aria-disabled") === "true")
+        .length,
+    ).toBe(buttons.length - 1);
 
     swap.click();
     expect(container.querySelector("[data-preview]").textContent).toBe(
