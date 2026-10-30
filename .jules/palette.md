@@ -104,3 +104,6 @@
 ## 2024-10-28 - Preserve disabled opacity after entrance animation
 **Learning:** When using Web Animations API (WAAPI) functions to animate entrance opacities (e.g., `opacity: [0, 1]`), the final inline styles persist and will override subsequent CSS rules like `:disabled` or `[aria-disabled='true']`.
 **Action:** When a stagger entrance animation finishes, hook into its `.finished` promise and clear the inline styles (e.g., `element.style.opacity = ''`, `element.style.transform = ''`) so that standard CSS styling can resume control over the element's appearance.
+## 2026-11-20 - Contextually disabled workshop buttons styling regression
+**Learning:** Switching from the native `disabled` attribute to `aria-disabled="true"` for accessibility correctly allows keyboard focus but can inadvertently bypass native CSS `disabled` rules or custom `:disabled` pseudo-class styling, causing the button to visually appear active, leading to confusing UX.
+**Action:** When updating a component to use `aria-disabled="true"`, always ensure the CSS selectors are updated to target `[aria-disabled="true"]` alongside `:disabled` rules, and block interactions in the click handler without calling `event.preventDefault()` if the element is an implicit submit button.
