@@ -47,15 +47,21 @@ export function createCodexService(registries = {}) {
       };
     },
     filter(save, filters = {}) {
-      return entries
-        .map((entry) => this.view(entry, save.codex[entry.id]))
-        .filter(
-          (entry) =>
-            (!filters.category || entry.category === filters.category) &&
-            (!filters.status || entry.level === filters.status) &&
-            (!filters.source || entry.source === filters.source) &&
-            (!filters.tag || entry.tags.includes(filters.tag)),
-        );
+      // ⚡ Bolt: Avoid intermediate array allocations from .map().filter() chaining
+      // by using a single-pass imperative loop to reduce GC pressure.
+      const results = [];
+      for (let i = 0; i < entries.length; i++) {
+        const entry = this.view(entries[i], save.codex[entries[i].id]);
+        if (
+          (!filters.category || entry.category === filters.category) &&
+          (!filters.status || entry.level === filters.status) &&
+          (!filters.source || entry.source === filters.source) &&
+          (!filters.tag || entry.tags.includes(filters.tag))
+        ) {
+          results.push(entry);
+        }
+      }
+      return results;
     },
   };
 }
