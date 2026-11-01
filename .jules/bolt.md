@@ -177,3 +177,6 @@
 ## 2025-03-02 - Replacing chained array methods in codex service filtering
 **Learning:** Using chained `.map().filter()` inside `codex-service.js`'s `filter` method allocates intermediate arrays for view generation before filtering, which contributes to unnecessary garbage collection overhead when filtering large volumes of codex entries. Benchmarks showed replacing it with a single imperative loop yielded a ~30% improvement.
 **Action:** Replace functional array manipulations that map then filter arrays with a single-pass imperative loop that builds the view representation and immediately evaluates filter conditions, pushing passing results directly into a pre-allocated or new result array.
+## 2025-02-24 - Avoiding filter chains in Socket Service
+**Learning:** In equipment behaviors resolution (`behaviors(item)` in `socket-service.js`), chaining `.filter().map()` creates intermediate array allocations just to filter out unoccupied sockets. Since this method can be evaluated during high-frequency combat or rendering checks, this causes unnecessary garbage collection pressure.
+**Action:** Replace `.filter().map()` chains in equipment resolution logic with a single-pass imperative `for` loop that evaluates the condition and maps the data directly into a pre-allocated or accumulating array.

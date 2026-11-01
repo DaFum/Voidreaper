@@ -30,15 +30,18 @@ export function renderWorkshopScreen(
     button.className = "btn small";
     button.textContent = label;
     const preview = service.preview(session, id, target);
-    button.disabled = !preview.allowed;
+    if (!preview.allowed) {
+      button.setAttribute("aria-disabled", "true");
+    }
     const disabledReason = workshopDisabledReason(session, preview);
     if (disabledReason) {
-      const reasonStr = `${label} – ${disabledReason}`;
-      button.setAttribute("aria-label", reasonStr);
-      button.title = reasonStr;
-      button.innerHTML = `${label} <small aria-hidden="true">(${disabledReason})</small>`;
+      const reasonId = `workshop-reason-${id}`;
+      button.setAttribute("aria-describedby", reasonId);
+      button.title = `${label} – ${disabledReason}`;
+      button.innerHTML = `${label} <small id="${reasonId}" aria-hidden="true">(${disabledReason})</small>`;
     }
     button.addEventListener("click", async () => {
+      if (button.getAttribute("aria-disabled") === "true") return;
       root.querySelector("[data-preview]").textContent =
         `${preview.points} AP · ${preview.consequence}`;
       if (
