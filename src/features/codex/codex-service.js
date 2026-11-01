@@ -2,9 +2,20 @@ import { DISCOVERY_LEVELS } from "../../content/codex/codex-categories.js";
 import { CODEX_STRINGS } from "./codex-strings.js";
 
 export function createCodexService(registries = {}) {
-  const entries = Object.entries(registries).flatMap(
-    ([category, definitions]) =>
-      definitions.map((definition) => ({
+  // ⚡ Bolt: Use a single-pass imperative loop instead of .flatMap() and .map()
+  // chains when flattening nested entries to avoid allocating intermediate arrays
+  const entries = [];
+  for (const category in registries) {
+    if (!Object.hasOwn(registries, category)) continue;
+    const definitions = registries[category];
+    for (let i = 0; i < definitions.length; i++) {
+      const definition = definitions[i];
+      const sourceTags = definition.tags ?? [];
+      const tags = new Array(sourceTags.length);
+      for (let j = 0; j < sourceTags.length; j++) {
+        tags[j] = sourceTags[j].id ?? sourceTags[j];
+      }
+      entries.push({
         id: `${category}:${definition.id}`,
         contentId: definition.id,
         category,
@@ -13,11 +24,12 @@ export function createCodexService(registries = {}) {
           definition.description ??
           definition.reward ??
           CODEX_STRINGS.FALLBACK_DESCRIPTION,
-        tags: (definition.tags ?? []).map((tag) => tag.id ?? tag),
+        tags,
         source: definition.unlockSource ?? category,
         forbidden: category === "forbidden" || definition.forbidden,
-      })),
-  );
+      });
+    }
+  }
   return {
     entries,
     discover(save, id, evidence = 1) {
