@@ -199,7 +199,7 @@
   cursor: pointer;
 }
 .hangar-tabs-scroll:not(:disabled):not([aria-disabled="true"]):hover,
-.hangar-tabs-scroll:not(:disabled):not([aria-disabled="true"]):focus-visible {
+.hangar-tabs-scroll:not(:disabled):focus-visible {
   color: var(--phosphor);
   background: rgba(6, 255, 165, 0.1);
 }
@@ -305,7 +305,7 @@
   text-align: left;
 }
 .hangar-area-panel [data-hangar-area]:not(:disabled):not([aria-disabled="true"]):hover,
-.hangar-area-panel [data-hangar-area]:not(:disabled):not([aria-disabled="true"]):focus-visible {
+.hangar-area-panel [data-hangar-area]:not(:disabled):focus-visible {
   border-color: var(--ice);
   color: var(--bone);
 }
@@ -429,7 +429,7 @@
   letter-spacing: 0.06em;
 }
 .catalog-filter-group button:not(:disabled):not([aria-disabled="true"]):hover,
-.catalog-filter-group button:not(:disabled):not([aria-disabled="true"]):focus-visible {
+.catalog-filter-group button:not(:disabled):focus-visible {
   border-color: var(--ice);
   color: var(--bone);
 }
@@ -514,7 +514,7 @@
   text-align: left;
 }
 .catalog-selection__slots button:not(:disabled):not([aria-disabled="true"]):hover,
-.catalog-selection__slots button:not(:disabled):not([aria-disabled="true"]):focus-visible {
+.catalog-selection__slots button:not(:disabled):focus-visible {
   border-color: var(--phosphor);
   background: rgba(6, 255, 165, 0.07);
 }
@@ -573,7 +573,7 @@ button.item-card {
   cursor: pointer;
 }
 button.item-card:not(:disabled):not([aria-disabled="true"]):hover,
-button.item-card:not(:disabled):not([aria-disabled="true"]):focus-visible {
+button.item-card:not(:disabled):focus-visible {
   border-color: var(--ice);
   background-color: rgba(76, 201, 240, 0.07);
 }
@@ -763,7 +763,7 @@ button.item-card[aria-disabled="true"] {
   letter-spacing: 0.08em;
 }
 .loadout-picker__empty button:not(:disabled):not([aria-disabled="true"]):hover,
-.loadout-picker__empty button:not(:disabled):not([aria-disabled="true"]):focus-visible {
+.loadout-picker__empty button:not(:disabled):focus-visible {
   border-color: var(--phosphor);
   color: var(--phosphor);
 }
