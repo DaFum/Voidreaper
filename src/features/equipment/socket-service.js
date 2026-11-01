@@ -26,9 +26,16 @@ export function createSocketService(chipDefinitions) {
       return Boolean(result);
     },
     behaviors(item) {
-      return (item.sockets ?? [])
-        .filter((socket) => socket.chipId)
-        .map((socket) => chips.get(socket.chipId));
+      // ⚡ Bolt: Avoid intermediate array allocations from .filter().map() chaining
+      const result = [];
+      const sockets = item.sockets ?? [];
+      for (let i = 0; i < sockets.length; i++) {
+        const socket = sockets[i];
+        if (socket.chipId) {
+          result.push(chips.get(socket.chipId));
+        }
+      }
+      return result;
     },
   };
 }
