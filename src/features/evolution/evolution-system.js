@@ -27,18 +27,23 @@ export function createEvolutionSystem(
   );
   return {
     evaluate(context) {
+      // ⚡ Bolt: Avoid intermediate arrays and closures by replacing .map() and .every()
+      // chaining with a single imperative loop, which improves evaluation performance.
       return definitions.map((definition) => {
-        const requirements = definition.requirements.map((requirement) => ({
-          ...requirement,
-          met: meetsRequirement(requirement, context),
-        }));
+        const requirements = new Array(definition.requirements.length);
+        let allMet = true;
+        for (let i = 0; i < definition.requirements.length; i++) {
+          const req = definition.requirements[i];
+          const met = meetsRequirement(req, context);
+          requirements[i] = { ...req, met };
+          if (!met) allMet = false;
+        }
+
         const current = context.activeByWeapon?.get(definition.weaponFamily);
         return {
           definition,
           requirements,
-          eligible:
-            requirements.every((requirement) => requirement.met) &&
-            (!current || current === definition.id),
+          eligible: allMet && (!current || current === definition.id),
           blockedBy: current && current !== definition.id ? current : null,
         };
       });
