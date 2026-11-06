@@ -27,21 +27,32 @@ export function createEvolutionSystem(
   );
   return {
     evaluate(context) {
-      return definitions.map((definition) => {
-        const requirements = definition.requirements.map((requirement) => ({
-          ...requirement,
-          met: meetsRequirement(requirement, context),
-        }));
+      // ⚡ Bolt: Replace chained map/every with a single-pass imperative loop
+      // to avoid allocating multiple intermediate arrays per evolution check
+      const results = new Array(definitions.length);
+      for (let i = 0; i < definitions.length; i++) {
+        const definition = definitions[i];
+        const reqs = definition.requirements;
+        const reqCount = reqs.length;
+        const requirements = new Array(reqCount);
+        let allMet = true;
+
+        for (let j = 0; j < reqCount; j++) {
+          const req = reqs[j];
+          const met = meetsRequirement(req, context);
+          requirements[j] = { ...req, met };
+          if (!met) allMet = false;
+        }
+
         const current = context.activeByWeapon?.get(definition.weaponFamily);
-        return {
+        results[i] = {
           definition,
           requirements,
-          eligible:
-            requirements.every((requirement) => requirement.met) &&
-            (!current || current === definition.id),
+          eligible: allMet && (!current || current === definition.id),
           blockedBy: current && current !== definition.id ? current : null,
         };
-      });
+      }
+      return results;
     },
     async activate(id, context) {
       const definition = byId.get(id);
