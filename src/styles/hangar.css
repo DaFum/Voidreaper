@@ -176,7 +176,7 @@
   letter-spacing: 0.08em;
   cursor: pointer;
 }
-.hangar-tabs button:hover {
+.hangar-tabs button:not(:disabled):not([aria-disabled="true"]):hover {
   color: var(--bone);
 }
 .hangar-tabs button[aria-selected="true"] {
@@ -198,7 +198,7 @@
   font: 22px/1 var(--font-m);
   cursor: pointer;
 }
-.hangar-tabs-scroll:not(:disabled):hover,
+.hangar-tabs-scroll:not(:disabled):not([aria-disabled="true"]):hover,
 .hangar-tabs-scroll:not(:disabled):focus-visible {
   color: var(--phosphor);
   background: rgba(6, 255, 165, 0.1);
@@ -304,8 +304,8 @@
   letter-spacing: 0.08em;
   text-align: left;
 }
-.hangar-area-panel [data-hangar-area]:hover,
-.hangar-area-panel [data-hangar-area]:focus-visible {
+.hangar-area-panel [data-hangar-area]:not(:disabled):not([aria-disabled="true"]):hover,
+.hangar-area-panel [data-hangar-area]:not(:disabled):focus-visible {
   border-color: var(--ice);
   color: var(--bone);
 }
@@ -428,8 +428,8 @@
   font: 8px var(--font-m);
   letter-spacing: 0.06em;
 }
-.catalog-filter-group button:hover,
-.catalog-filter-group button:focus-visible {
+.catalog-filter-group button:not(:disabled):not([aria-disabled="true"]):hover,
+.catalog-filter-group button:not(:disabled):focus-visible {
   border-color: var(--ice);
   color: var(--bone);
 }
@@ -513,8 +513,8 @@
   background: rgba(4, 1, 10, 0.72);
   text-align: left;
 }
-.catalog-selection__slots button:hover,
-.catalog-selection__slots button:focus-visible {
+.catalog-selection__slots button:not(:disabled):not([aria-disabled="true"]):hover,
+.catalog-selection__slots button:not(:disabled):focus-visible {
   border-color: var(--phosphor);
   background: rgba(6, 255, 165, 0.07);
 }
@@ -573,7 +573,7 @@ button.item-card {
   cursor: pointer;
 }
 button.item-card:not(:disabled):not([aria-disabled="true"]):hover,
-button.item-card:not(:disabled):not([aria-disabled="true"]):focus-visible {
+button.item-card:not(:disabled):focus-visible {
   border-color: var(--ice);
   background-color: rgba(76, 201, 240, 0.07);
 }
@@ -581,7 +581,6 @@ button.item-card:disabled,
 button.item-card[aria-disabled="true"] {
   opacity: 0.4;
   cursor: default;
-  pointer-events: none;
 }
 .item-card[data-state="locked"] {
   border-color: rgba(255, 143, 31, 0.28);
@@ -763,8 +762,8 @@ button.item-card[aria-disabled="true"] {
   font: 9px var(--font-m);
   letter-spacing: 0.08em;
 }
-.loadout-picker__empty button:hover,
-.loadout-picker__empty button:focus-visible {
+.loadout-picker__empty button:not(:disabled):not([aria-disabled="true"]):hover,
+.loadout-picker__empty button:not(:disabled):focus-visible {
   border-color: var(--phosphor);
   color: var(--phosphor);
 }
