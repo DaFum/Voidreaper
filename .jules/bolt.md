@@ -180,3 +180,7 @@
 ## 2025-02-24 - Avoiding filter chains in Socket Service
 **Learning:** In equipment behaviors resolution (`behaviors(item)` in `socket-service.js`), chaining `.filter().map()` creates intermediate array allocations just to filter out unoccupied sockets. Since this method can be evaluated during high-frequency combat or rendering checks, this causes unnecessary garbage collection pressure.
 **Action:** Replace `.filter().map()` chains in equipment resolution logic with a single-pass imperative `for` loop that evaluates the condition and maps the data directly into a pre-allocated or accumulating array.
+
+## 2026-11-06 - Avoiding intermediate array allocations in nested condition evaluation
+**Learning:** In systems like the evolution evaluator (`evolution-system.js`), chaining `.map()` inside `.map()` and resolving them with `.every()` (e.g. `definitions.map` returning `requirements.map` that are then checked with `requirements.every`) dynamically allocates arrays and closures per requirement per definition on every evaluation. This increases garbage collection pressure, particularly when re-evaluated frequently (like UI render cycles or game loop updates).
+**Action:** Replace nested functional array methods like `.map()` and `.every()` in performance-sensitive contexts with nested imperative `for` loops. Pre-allocate arrays if necessary (e.g. `new Array(length)`), track conditions via simple boolean flags instead of `.every()`, and populate the arrays directly.
