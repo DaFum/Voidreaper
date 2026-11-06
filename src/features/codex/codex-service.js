@@ -9,11 +9,14 @@ export function createCodexService(registries = {}) {
     if (!Object.hasOwn(registries, category)) continue;
     const definitions = registries[category];
     for (let i = 0; i < definitions.length; i++) {
+      if (!(i in definitions)) continue;
       const definition = definitions[i];
       const sourceTags = definition.tags ?? [];
       const tags = new Array(sourceTags.length);
       for (let j = 0; j < sourceTags.length; j++) {
-        tags[j] = sourceTags[j].id ?? sourceTags[j];
+        if (j in sourceTags) {
+          tags[j] = sourceTags[j].id ?? sourceTags[j];
+        }
       }
       entries.push({
         id: `${category}:${definition.id}`,
