@@ -42,7 +42,7 @@ export function renderPrototypeVault(
     const favorite = event.target.closest("[data-favorite]");
     const dismantle = event.target.closest("[data-dismantle]");
     if (favorite) onFavorite(favorite.dataset.favorite);
-    if (dismantle) onDismantle(dismantle.dataset.dismantle);
+    if (dismantle && !dismantle.disabled) onDismantle(dismantle.dataset.dismantle);
   };
   if (onFilter)
     root.onchange = (event) => {

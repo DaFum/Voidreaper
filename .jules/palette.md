@@ -107,3 +107,6 @@
 ## 2026-11-20 - Contextually disabled workshop buttons styling regression
 **Learning:** Switching from the native `disabled` attribute to `aria-disabled="true"` for accessibility correctly allows keyboard focus but can inadvertently bypass native CSS `disabled` rules or custom `:disabled` pseudo-class styling, causing the button to visually appear active, leading to confusing UX.
 **Action:** When updating a component to use `aria-disabled="true"`, always ensure the CSS selectors are updated to target `[aria-disabled="true"]` alongside `:disabled` rules, and block interactions in the click handler without calling `event.preventDefault()` if the element is an implicit submit button.
+## 2024-11-20 - Delegate click events checking disabled state
+**Learning:** When using event delegation (e.g., `event.target.closest("[data-dismantle]")`) on a parent container, click events from nested children can bubble up and trigger the delegated handler even if the matched button has the native `disabled` attribute. The browser's native blocking of clicks on disabled elements only strictly applies when the disabled element itself is the target of the listener.
+**Action:** When handling clicks via event delegation, ensure you explicitly check the matched element's disabled state (e.g., `!element.disabled`) inside the handler before executing the action.
