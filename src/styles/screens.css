@@ -287,7 +287,6 @@ h1::after {
 .btn[aria-disabled="true"] {
   opacity: 0.4;
   cursor: default;
-  pointer-events: none;
 }
 
 .btn.small {
@@ -828,7 +827,7 @@ h1::after {
   letter-spacing: 0.18em;
   cursor: pointer;
 }
-.research-node button:not(:disabled):hover {
+.research-node button:not(:disabled):not([aria-disabled="true"]):hover {
   background: rgba(6, 255, 165, 0.16);
 }
 .research-node button:disabled {
@@ -920,7 +919,7 @@ dialog.vr-modal footer button {
   cursor: pointer;
   clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
 }
-dialog.vr-modal footer button:hover {
+dialog.vr-modal footer button:not(:disabled):not([aria-disabled="true"]):hover {
   border-color: rgba(239, 234, 247, 0.5);
   color: var(--bone);
 }
@@ -929,7 +928,7 @@ dialog.vr-modal footer [data-action="confirm"] {
   color: var(--phosphor);
   text-shadow: 0 0 8px rgba(6, 255, 165, 0.6);
 }
-dialog.vr-modal footer [data-action="confirm"]:hover {
+dialog.vr-modal footer [data-action="confirm"]:not(:disabled):not([aria-disabled="true"]):hover {
   background: rgba(6, 255, 165, 0.12);
   color: var(--phosphor);
 }

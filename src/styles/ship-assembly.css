@@ -241,7 +241,7 @@
   letter-spacing: 0.16em;
   cursor: pointer;
 }
-.blueprint-library > header button:hover {
+.blueprint-library > header button:not(:disabled):not([aria-disabled="true"]):hover {
   background: rgba(72, 234, 255, 0.18);
 }
 .blueprint-library__empty {
@@ -395,7 +395,7 @@ button.assembly-port {
   opacity: 0.45;
   pointer-events: none;
 }
-.assembly-port:hover i {
+.assembly-port:not(:disabled):not([aria-disabled="true"]):hover i {
   opacity: 1;
 }
 .assembly-port.assembly-port--valid {
@@ -480,7 +480,7 @@ button.assembly-port {
     border-color var(--motion-feedback, 0.15s);
   gap: 8px;
 }
-.assembly-workbench__inventory button:hover {
+.assembly-workbench__inventory button:not(:disabled):not([aria-disabled="true"]):hover {
   background: rgba(72, 234, 255, 0.12);
 }
 .assembly-workbench__inventory button[aria-pressed="true"] {
