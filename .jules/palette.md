@@ -107,6 +107,9 @@
 ## 2026-11-20 - Contextually disabled workshop buttons styling regression
 **Learning:** Switching from the native `disabled` attribute to `aria-disabled="true"` for accessibility correctly allows keyboard focus but can inadvertently bypass native CSS `disabled` rules or custom `:disabled` pseudo-class styling, causing the button to visually appear active, leading to confusing UX.
 **Action:** When updating a component to use `aria-disabled="true"`, always ensure the CSS selectors are updated to target `[aria-disabled="true"]` alongside `:disabled` rules, and block interactions in the click handler without calling `event.preventDefault()` if the element is an implicit submit button.
+## 2024-11-20 - Contextually disabled loadout unequip buttons
+**Learning:** When a loadout slot is empty, the "ENTFERNEN" (Unequip) button is contextually disabled. Using the native `disabled` attribute prevents keyboard focus, meaning screen reader users cannot navigate to it to hear *why* it is disabled (the empty state explanation).
+**Action:** Used `aria-disabled="true"` instead of `disabled` to allow keyboard focus, and linked the explanation `(Leer)` to the button using `aria-describedby` while setting `aria-hidden="true"` on the explanation element itself to prevent redundant readouts. Added an explicit check in the click handler to prevent activation and updated the CSS rules to cover `[aria-disabled="true"]`.
 ## 2023-11-01 - Tooltips missing on disabled buttons
 **Learning:** Using `pointer-events: none` on custom disabled buttons (`[aria-disabled="true"]` or `:disabled`) in CSS suppresses pointer events like mouse hovers, meaning native tooltips (`title` attribute) providing reasons for being unavailable are completely unreachable by mouse users.
 **Action:** Remove `pointer-events: none` from custom disabled button styles if they rely on native tooltips to provide contextual reasons for being unavailable.

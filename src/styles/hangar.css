@@ -729,11 +729,13 @@ button.item-card[aria-disabled="true"] {
   border: 1px solid rgba(76, 201, 240, 0.28);
   background: rgba(76, 201, 240, 0.06);
 }
-.loadout-picker > button:disabled {
+.loadout-picker > button:disabled,
+.loadout-picker > button[aria-disabled="true"] {
   opacity: 0.35;
   cursor: not-allowed;
 }
-.loadout-picker > button:disabled small {
+.loadout-picker > button:disabled small,
+.loadout-picker > button[aria-disabled="true"] small {
   color: var(--warn);
   font-weight: 500;
   margin-left: 0.5ch;
@@ -869,8 +871,10 @@ button.item-card[aria-disabled="true"] {
 [data-reduced-motion="true"] .hangar-tabs-shell::after {
   transition: none;
 }
-[data-reduced-motion="true"] .meta:not(:disabled):not([aria-disabled="true"]):active,
-[data-reduced-motion="true"] .meta:not(:disabled):not([aria-disabled="true"]):hover {
+[data-reduced-motion="true"]
+  .meta:not(:disabled):not([aria-disabled="true"]):active,
+[data-reduced-motion="true"]
+  .meta:not(:disabled):not([aria-disabled="true"]):hover {
   transform: none;
 }
 
