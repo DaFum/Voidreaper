@@ -110,3 +110,9 @@
 ## 2024-11-20 - Delegate click events checking disabled state
 **Learning:** When using event delegation (e.g., `event.target.closest("[data-dismantle]")`) on a parent container, click events from nested children can bubble up and trigger the delegated handler even if the matched button has the native `disabled` attribute. The browser's native blocking of clicks on disabled elements only strictly applies when the disabled element itself is the target of the listener.
 **Action:** When handling clicks via event delegation, ensure you explicitly check the matched element's disabled state (e.g., `!element.disabled`) inside the handler before executing the action.
+## 2024-11-20 - Contextually disabled loadout unequip buttons
+**Learning:** When a loadout slot is empty, the "ENTFERNEN" (Unequip) button is contextually disabled. Using the native `disabled` attribute prevents keyboard focus, meaning screen reader users cannot navigate to it to hear *why* it is disabled (the empty state explanation).
+**Action:** Used `aria-disabled="true"` instead of `disabled` to allow keyboard focus, and linked the explanation `(Leer)` to the button using `aria-describedby` while setting `aria-hidden="true"` on the explanation element itself to prevent redundant readouts. Added an explicit check in the click handler to prevent activation and updated the CSS rules to cover `[aria-disabled="true"]`.
+## 2023-11-01 - Tooltips missing on disabled buttons
+**Learning:** Using `pointer-events: none` on custom disabled buttons (`[aria-disabled="true"]` or `:disabled`) in CSS suppresses pointer events like mouse hovers, meaning native tooltips (`title` attribute) providing reasons for being unavailable are completely unreachable by mouse users.
+**Action:** Remove `pointer-events: none` from custom disabled button styles if they rely on native tooltips to provide contextual reasons for being unavailable.

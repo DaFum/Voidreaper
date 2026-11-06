@@ -500,7 +500,7 @@ describe("hangar screen", () => {
       container.querySelector('[role="tab"][aria-selected="true"]').dataset
         .hangarTab,
     ).toBe("Run starten");
-    expect(container.innerHTML).toContain("◇3");
+    expect(container.innerHTML).toContain('<span aria-hidden="true">◇</span><span class="sr-only">Void Shards </span>3');
     container.querySelector("[data-launch]").click();
     expect(onStart).toHaveBeenCalledOnce();
     container.querySelector("[data-resume]").click();
