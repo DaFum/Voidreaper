@@ -10,29 +10,43 @@ function encodeCollections(value, seen = new WeakSet()) {
   seen.add(value);
 
   let result;
-  if (value instanceof Map)
-    result = {
-      [COLLECTION]: "Map",
-      entries: [...value].map(([key, entry]) => [
+  if (value instanceof Map) {
+    const entries = [];
+    for (const [key, entry] of value.entries()) {
+      entries.push([
         encodeCollections(key, seen),
         encodeCollections(entry, seen),
-      ]),
+      ]);
+    }
+    result = {
+      [COLLECTION]: "Map",
+      entries,
     };
-  else if (value instanceof Set)
+  } else if (value instanceof Set) {
+    const values = [];
+    for (const v of value) {
+      values.push(encodeCollections(v, seen));
+    }
     result = {
       [COLLECTION]: "Set",
-      values: [...value].map((v) => encodeCollections(v, seen)),
+      values,
     };
-  else if (Array.isArray(value))
+  } else if (Array.isArray(value)) {
     result = value.map((v) => encodeCollections(v, seen));
-  else if (typeof value.toJSON === "function")
+  } else if (typeof value.toJSON === "function") {
     result = encodeCollections(value.toJSON(), seen);
-  else
-    result = Object.fromEntries(
-      Object.entries(value)
-        .filter(([, entry]) => typeof entry !== "function")
-        .map(([key, entry]) => [key, encodeCollections(entry, seen)]),
-    );
+  } else {
+    // ⚡ Bolt: Use imperative loops to avoid intermediate array allocations
+    // from Object.entries().filter().map()
+    result = {};
+    for (const key in value) {
+      if (!Object.hasOwn(value, key)) continue;
+      const entry = value[key];
+      if (typeof entry !== "function") {
+        result[key] = encodeCollections(entry, seen);
+      }
+    }
+  }
 
   seen.delete(value);
   return result;
@@ -50,12 +64,16 @@ function decodeCollections(value) {
     );
   if (value[COLLECTION] === "Set")
     return new Set(value.values.map(decodeCollections));
-  return Object.fromEntries(
-    Object.entries(value).map(([key, entry]) => [
-      key,
-      decodeCollections(entry),
-    ]),
-  );
+
+  // ⚡ Bolt: Use imperative loop to avoid intermediate array allocation
+  // from Object.entries().map()
+  const result = {};
+  for (const key in value) {
+    if (Object.hasOwn(value, key)) {
+      result[key] = decodeCollections(value[key]);
+    }
+  }
+  return result;
 }
 
 const asMap = (value) =>

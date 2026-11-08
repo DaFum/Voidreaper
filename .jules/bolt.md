@@ -184,3 +184,7 @@
 ## 2025-03-02 - Replacing chained map/every with imperative loops in nested array evaluations
 **Learning:** During evolution evaluation in `createEvolutionSystem` (`src/features/evolution/evolution-system.js`), chaining `.map()` over definitions and then `.map().every()` over requirements allocates multiple intermediate arrays on every check. Because this evaluation runs on state changes or specific triggers (like picking up items), eliminating these allocations reduces garbage collection pressure.
 **Action:** When evaluating nested conditions (like evaluating multiple requirements across arrays of definitions), avoid chaining `.map()` and `.every()`. Instead, replace them with nested imperative `for` loops and pre-allocate result arrays (e.g., `new Array(length)`) to optimize execution in performance-critical paths.
+
+## 2025-03-02 - Replacing intermediate tuple arrays in checkpoint serialization
+**Learning:** During recursive checkpoint serialization (`encodeCollections` / `decodeCollections`), chained functional map calls like `Object.entries(value).filter().map()` and `[...map].map(...)` are heavily penalized because they allocate intermediate tuple arrays (`[key, value]`) for every single node in the entire state tree. This creates massive memory churn when saving state.
+**Action:** Always replace functional object iteration chains with imperative `for...in` or `for...of` loops in deep recursive serialization routines to completely eliminate intermediate tuple array allocations and reduce garbage collection pressure.
