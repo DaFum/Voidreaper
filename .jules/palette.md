@@ -116,3 +116,6 @@
 ## 2023-11-01 - Tooltips missing on disabled buttons
 **Learning:** Using `pointer-events: none` on custom disabled buttons (`[aria-disabled="true"]` or `:disabled`) in CSS suppresses pointer events like mouse hovers, meaning native tooltips (`title` attribute) providing reasons for being unavailable are completely unreachable by mouse users.
 **Action:** Remove `pointer-events: none` from custom disabled button styles if they rely on native tooltips to provide contextual reasons for being unavailable.
+## 2024-11-10 - Accessible Disabled Actions in Ship Assembly
+**Learning:** Using `aria-disabled="true"` with `aria-describedby` provides superior accessibility to the native `disabled` attribute for buttons that need contextual explanations (e.g. why an action is blocked). The native `disabled` attribute removes focusability, and `aria-label` incorrectly overrides the entire button name.
+**Action:** Always prefer `aria-disabled` and a visually-hidden `<small id="reason">` for action buttons that can be conditionally unavailable. Ensure that click event listeners for these buttons include programmatic guards checking `getAttribute("aria-disabled") !== "true"`. Also, ensure Vitest tests assert on `getAttribute("aria-disabled")` instead of the `.disabled` property when replacing it.
