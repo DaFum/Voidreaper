@@ -46,7 +46,7 @@ function encodeCollections(value, seen = new WeakSet()) {
       if (!Object.hasOwn(value, key)) continue;
       const entry = value[key];
       if (typeof entry !== "function") {
-        result[key] = encodeCollections(entry, seen);
+        Object.defineProperty(result, key, { value: encodeCollections(entry, seen), enumerable: true, configurable: true, writable: true });
       }
     }
   }
@@ -83,7 +83,7 @@ function decodeCollections(value) {
   const result = {};
   for (const key in value) {
     if (Object.hasOwn(value, key)) {
-      result[key] = decodeCollections(value[key]);
+      Object.defineProperty(result, key, { value: decodeCollections(value[key]), enumerable: true, configurable: true, writable: true });
     }
   }
   return result;
