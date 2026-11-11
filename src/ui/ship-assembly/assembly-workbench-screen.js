@@ -31,7 +31,7 @@ export function createAssemblyWorkbenchScreen(root, { onAction } = {}) {
     (event) => {
       const control = event.target.closest("[data-action]"),
         action = control?.dataset.action;
-      if (action && !control.disabled) {
+      if (action && !control.disabled && control.getAttribute("aria-disabled") !== "true") {
         animatePressFeedback(control);
         onAction?.(action, control.dataset);
       }

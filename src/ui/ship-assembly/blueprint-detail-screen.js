@@ -24,11 +24,12 @@ export function renderBlueprintDetail(
   ]
     .map(
       ([action, label]) =>
-        `<button type="button" data-action="${action}"${action === "activate" && active ? ' disabled aria-label="Aktivieren nicht möglich (Bereits aktiv)" title="Bereits aktiv"' : ""}>${escapeHtml(label)}${action === "activate" && active ? ' <small aria-hidden="true">(Bereits aktiv)</small>' : ""}</button>`,
+        `<button type="button" data-action="${action}"${action === "activate" && active ? ' aria-disabled="true" aria-describedby="reason-activate" title="Bereits aktiv"' : ""}>${escapeHtml(label)}${action === "activate" && active ? ' <small id="reason-activate" aria-hidden="true">(Bereits aktiv)</small>' : ""}</button>`,
     )
     .join("")}</div></section>`;
   root.onclick = (event) => {
-    const action = event.target.closest("[data-action]")?.dataset.action;
-    if (isBlueprintDetailAction(action)) onAction?.(action, blueprint);
+    const control = event.target.closest("[data-action]");
+    const action = control?.dataset.action;
+    if (isBlueprintDetailAction(action) && control.getAttribute("aria-disabled") !== "true") onAction?.(action, blueprint);
   };
 }

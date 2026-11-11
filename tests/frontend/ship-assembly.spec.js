@@ -173,7 +173,7 @@ describe("assembly inspector panel", () => {
     expect(panel.innerHTML).toContain("KEINE AUSWAHL");
     expect(panel.innerHTML).toContain("Wähle ein Modul");
     for (const button of panel.querySelectorAll("[data-action]"))
-      expect(button.disabled).toBe(true);
+      expect(button.getAttribute("aria-disabled")).toBe("true");
   });
 
   test("renders node details, deltas, warnings and enabled actions", () => {
@@ -188,13 +188,11 @@ describe("assembly inspector panel", () => {
     expect(panel.innerHTML).toContain("core-x");
     expect(panel.innerHTML).toContain("MASSE");
     expect(panel.innerHTML).toContain("Überlast");
-    expect(panel.querySelector('[data-action="rotate"]').disabled).toBe(false);
-    expect(panel.querySelector('[data-action="move-branch"]').disabled).toBe(
-      true,
+    expect(panel.querySelector('[data-action="rotate"]').getAttribute("aria-disabled")).toBeNull();
+    expect(panel.querySelector('[data-action="move-branch"]').getAttribute("aria-disabled")).toBe(
+      "true",
     );
-    expect(panel.querySelector('[data-action="dismantle"]').disabled).toBe(
-      false,
-    );
+    expect(panel.querySelector('[data-action="dismantle"]').getAttribute("aria-disabled")).toBeNull();
   });
 
   test("escapes untrusted headings", () => {
@@ -497,8 +495,8 @@ describe("blueprint detail screen", () => {
       onAction = vi.fn();
     renderBlueprintDetail(container, { blueprint, active: true, onAction });
     expect(container.innerHTML).toContain("AKTIVE VORLAGE");
-    expect(container.querySelector('[data-action="activate"]').disabled).toBe(
-      true,
+    expect(container.querySelector('[data-action="activate"]').getAttribute("aria-disabled")).toBe(
+      "true",
     );
     container.querySelector('[data-action="export"]').click();
     expect(onAction).toHaveBeenCalledWith("export", blueprint);
