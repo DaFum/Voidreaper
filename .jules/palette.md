@@ -116,3 +116,6 @@
 ## 2023-11-01 - Tooltips missing on disabled buttons
 **Learning:** Using `pointer-events: none` on custom disabled buttons (`[aria-disabled="true"]` or `:disabled`) in CSS suppresses pointer events like mouse hovers, meaning native tooltips (`title` attribute) providing reasons for being unavailable are completely unreachable by mouse users.
 **Action:** Remove `pointer-events: none` from custom disabled button styles if they rely on native tooltips to provide contextual reasons for being unavailable.
+## 2024-11-21 - Keep unavailable assembly actions reachable by keyboard
+**Learning:** When an assembly action (like rotate or dismantle) is disabled because it's unavailable in the current context, using the native `disabled` attribute prevents keyboard focus entirely. This means screen reader users cannot navigate to it to hear *why* it is disabled.
+**Action:** Use `aria-disabled="true"` instead of `disabled` to allow keyboard focus. Append the disabled reason as a visually hidden element (`<small id="reason-id" aria-hidden="true">`) and link it to the button using `aria-describedby`. Add an explicit check in the click handler to prevent activation and updated the CSS rules to cover `[aria-disabled="true"]`.
