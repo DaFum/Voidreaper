@@ -10,52 +10,83 @@ function encodeCollections(value, seen = new WeakSet()) {
   seen.add(value);
 
   let result;
-  if (value instanceof Map)
-    result = {
-      [COLLECTION]: "Map",
-      entries: [...value].map(([key, entry]) => [
+  if (value instanceof Map) {
+    const entries = [];
+    for (const [key, entry] of value) {
+      entries.push([
         encodeCollections(key, seen),
         encodeCollections(entry, seen),
-      ]),
+      ]);
+    }
+    result = {
+      [COLLECTION]: "Map",
+      entries,
     };
-  else if (value instanceof Set)
+  } else if (value instanceof Set) {
+    const values = [];
+    for (const v of value) {
+      values.push(encodeCollections(v, seen));
+    }
     result = {
       [COLLECTION]: "Set",
-      values: [...value].map((v) => encodeCollections(v, seen)),
+      values,
     };
-  else if (Array.isArray(value))
-    result = value.map((v) => encodeCollections(v, seen));
-  else if (typeof value.toJSON === "function")
+  } else if (Array.isArray(value)) {
+    result = new Array(value.length);
+    for (let i = 0; i < value.length; i++) {
+      result[i] = encodeCollections(value[i], seen);
+    }
+  } else if (typeof value.toJSON === "function") {
     result = encodeCollections(value.toJSON(), seen);
-  else
-    result = Object.fromEntries(
-      Object.entries(value)
-        .filter(([, entry]) => typeof entry !== "function")
-        .map(([key, entry]) => [key, encodeCollections(entry, seen)]),
-    );
+  } else {
+    // ⚡ Bolt: Avoid intermediate tuple arrays from Object.entries().filter().map()
+    // by using a single-pass imperative loop to minimize GC pressure.
+    result = {};
+    for (const key in value) {
+      if (!Object.hasOwn(value, key)) continue;
+      const entry = value[key];
+      if (typeof entry !== "function") {
+        Object.defineProperty(result, key, { value: encodeCollections(entry, seen), enumerable: true, configurable: true, writable: true });
+      }
+    }
+  }
 
   seen.delete(value);
   return result;
 }
 
 function decodeCollections(value) {
-  if (Array.isArray(value)) return value.map(decodeCollections);
+  if (Array.isArray(value)) {
+    const result = new Array(value.length);
+    for (let i = 0; i < value.length; i++) {
+      result[i] = decodeCollections(value[i]);
+    }
+    return result;
+  }
   if (!value || typeof value !== "object") return value;
-  if (value[COLLECTION] === "Map")
-    return new Map(
-      value.entries.map(([key, entry]) => [
-        decodeCollections(key),
-        decodeCollections(entry),
-      ]),
-    );
-  if (value[COLLECTION] === "Set")
-    return new Set(value.values.map(decodeCollections));
-  return Object.fromEntries(
-    Object.entries(value).map(([key, entry]) => [
-      key,
-      decodeCollections(entry),
-    ]),
-  );
+  if (value[COLLECTION] === "Map") {
+    const map = new Map();
+    for (let i = 0; i < value.entries.length; i++) {
+      const [key, entry] = value.entries[i];
+      map.set(decodeCollections(key), decodeCollections(entry));
+    }
+    return map;
+  }
+  if (value[COLLECTION] === "Set") {
+    const set = new Set();
+    for (let i = 0; i < value.values.length; i++) {
+      set.add(decodeCollections(value.values[i]));
+    }
+    return set;
+  }
+
+  const result = {};
+  for (const key in value) {
+    if (Object.hasOwn(value, key)) {
+      Object.defineProperty(result, key, { value: decodeCollections(value[key]), enumerable: true, configurable: true, writable: true });
+    }
+  }
+  return result;
 }
 
 const asMap = (value) =>
